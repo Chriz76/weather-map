@@ -26,7 +26,7 @@ function formatToLocalDateTimeString(timestampStr) {
 const map = L.map('map', { 
     closePopupOnClick: false,
     zoomControl: false 
-}).setView([54.0, 8.5], 7);
+}).setView([48.3528, 10.9043], 8);
 
 // Fügt die Zoom-Knöpfe manuell oben rechts (topright) ein
 L.control.zoom({
