@@ -1,5 +1,5 @@
 // Globale Basis-URL für die Rohdaten
-const BASE_URL = "https://raw.githubusercontent.com/Chriz76/weather-data/main/output/";
+const BASE_URL = "https://chriz76.github.io/weather-data/";
 
 // Wandelt den Key in ein vollständiges lokales Datum + Uhrzeit um
 function formatToLocalDateTimeString(timestampStr) {
