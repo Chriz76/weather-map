@@ -9,6 +9,7 @@ The project uses the new **ICON-D2 RUC (Rapid Update Cycle)** model provided by 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries directly from the ICON-D2 RUC.
 
 > ⚠️ **Disclaimer:** This project is experimental and currently in active development.
+
 ---
 
 ## Technical Specifications & Advantages of ICON-D2 RUC
@@ -24,6 +25,7 @@ Most mainstream consumer weather applications render global or regional models w
 ### Application for Foiling:
 
 Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.1 km resolution of the ICON-D2 RUC model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
+
 ---
 
 ## Architecture & Data Pipeline
