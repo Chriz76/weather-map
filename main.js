@@ -49,6 +49,7 @@ let activeTimestampIndex = 0;
 let activeSpotMarker = null;
 let lastClickedLatLng = null; 
 let currentClusterData = null; 
+let currentBlobUrl = null; // Trackt die aktuell geladene Blob-URL für das Wetterbild
 
 // Background & Label-Layers (Sandwich)
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
@@ -145,17 +146,19 @@ function updateActiveWeatherView() {
                 return response.blob(); // Das Bild als Binärdaten (Blob) abfangen
             })
             .then(imageBlob => {
-                // Erstellt eine temporäre, rein lokale URL für das geladene Bild
-                const localBlobUrl = URL.createObjectURL(imageBlob);
+                // 1. Erstelle die neue Blob-URL
+                const newBlobUrl = URL.createObjectURL(imageBlob);
                 
-                // Altes Blob-Objekt im Speicher freigeben, um Memory Leaks zu verhindern
-                const oldUrl = windOverlay._url;
-                if (oldUrl && oldUrl.startsWith('blob:')) {
-                    URL.revokeObjectURL(oldUrl);
+                // 2. Setze die neue URL sofort in Leaflet ein
+                windOverlay.setUrl(newBlobUrl);
+
+                // 3. Erst DANACH: Den alten Blob sauber aus dem Speicher löschen
+                if (currentBlobUrl) {
+                    URL.revokeObjectURL(currentBlobUrl);
                 }
 
-                // Leaflet das exakt validierte Bild übergeben
-                windOverlay.setUrl(localBlobUrl);
+                // 4. Die neue URL als "aktuelle URL" für den nächsten Wechsel merken
+                currentBlobUrl = newBlobUrl;
             })
             .catch(err => {
                 console.error("🚨 Fehler beim ETag-Check des Wetterbildes:", err.message);
