@@ -49,7 +49,6 @@ let activeTimestampIndex = 0;
 let activeSpotMarker = null;
 let lastClickedLatLng = null; 
 let currentClusterData = null; 
-let currentBlobUrl = null; // Trackt die aktuell geladene Blob-URL für das Wetterbild
 
 // Background & Label-Layers (Sandwich)
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
@@ -139,30 +138,23 @@ function updateActiveWeatherView() {
         
         const imageUrl = `${BASE_URL}${currentKey}Z.png`;
 
-        // Trick: Bild per Fetch mit ETag-Prüfung anfordern
+        // Bild per Fetch mit ETag-Prüfung anfordern
         fetch(imageUrl, { cache: "no-cache" })
             .then(response => {
                 if (!response.ok) throw new Error("Bild konnte nicht geladen werden");
-                return response.blob(); // Das Bild als Binärdaten (Blob) abfangen
+                return response.blob();
             })
             .then(imageBlob => {
-                // 1. Erstelle die neue Blob-URL
-                const newBlobUrl = URL.createObjectURL(imageBlob);
-                
-                // 2. Setze die neue URL sofort in Leaflet ein
-                windOverlay.setUrl(newBlobUrl);
-
-                // 3. Erst DANACH: Den alten Blob sauber aus dem Speicher löschen
-                if (currentBlobUrl) {
-                    URL.revokeObjectURL(currentBlobUrl);
+                // FileReader wandelt den Blob in einen Base64-Text-String um
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    const base64data = reader.result; // Das ist die Data-URL
+                    windOverlay.setUrl(base64data);   // Direkt an Leaflet übergeben
                 }
-
-                // 4. Die neue URL als "aktuelle URL" für den nächsten Wechsel merken
-                currentBlobUrl = newBlobUrl;
+                reader.readAsDataURL(imageBlob);
             })
             .catch(err => {
                 console.error("🚨 Fehler beim ETag-Check des Wetterbildes:", err.message);
-                // Fallback: Versuche es normal zu laden, falls fetch fehlschlägt
                 windOverlay.setUrl(imageUrl);
             });
         
