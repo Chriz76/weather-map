@@ -82,7 +82,7 @@ function formatToLocalTimeString(timestampStr) {
 // =========================================================================
 // 2. DYNAMISCHE INITIALISIERUNG ÜBER INDEX.JSON
 // =========================================================================
-fetch(`${BASE_URL}index.json`)
+fetch(`${BASE_URL}index.json`, { cache: "no-cache" })
     .then(r => {
         if (!r.ok) throw new Error(`index.json konnte nicht geladen werden (Status: ${r.status})`);
         return r.json();
@@ -136,7 +136,32 @@ function updateActiveWeatherView() {
         const currentKey = availableTimestamps[activeTimestampIndex];
         if (!currentKey) return;
         
-        windOverlay.setUrl(`${BASE_URL}${currentKey}Z.png`);
+        const imageUrl = `${BASE_URL}${currentKey}Z.png`;
+
+        // Trick: Bild per Fetch mit ETag-Prüfung anfordern
+        fetch(imageUrl, { cache: "no-cache" })
+            .then(response => {
+                if (!response.ok) throw new Error("Bild konnte nicht geladen werden");
+                return response.blob(); // Das Bild als Binärdaten (Blob) abfangen
+            })
+            .then(imageBlob => {
+                // Erstellt eine temporäre, rein lokale URL für das geladene Bild
+                const localBlobUrl = URL.createObjectURL(imageBlob);
+                
+                // Altes Blob-Objekt im Speicher freigeben, um Memory Leaks zu verhindern
+                const oldUrl = windOverlay._url;
+                if (oldUrl && oldUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(oldUrl);
+                }
+
+                // Leaflet das exakt validierte Bild übergeben
+                windOverlay.setUrl(localBlobUrl);
+            })
+            .catch(err => {
+                console.error("🚨 Fehler beim ETag-Check des Wetterbildes:", err.message);
+                // Fallback: Versuche es normal zu laden, falls fetch fehlschlägt
+                windOverlay.setUrl(imageUrl);
+            });
         
         const localTimeDisplayStr = formatToLocalTimeString(currentKey);
         const el = document.getElementById('timeline-time-display');
@@ -175,7 +200,7 @@ map.on('click', function(e) {
         const row = Math.floor((clickLat - latMin) / 2.0);
         const clusterUrl = `${BASE_URL}grid_cluster/cluster_${col}_${row}.json`;
 
-        fetch(clusterUrl)
+        fetch(clusterUrl, { cache: "no-cache" })
             .then(response => {
                 if (!response.ok) throw new Error(`Cluster-Datei existiert nicht für diesen Ort (${response.status})`);
                 return response.json();
