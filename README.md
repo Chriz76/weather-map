@@ -4,6 +4,8 @@
 
 The app visualizes localized wind forecast data for **Germany**. With the highest **resolution of 2.2 km** and the **most frequent hourly updates**. 
 
+![App Screenshot](Screenshot_20260606-175259_Chrome.png)
+
 The project uses the new **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD). The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries directly from the ICON-D2 RUC.
