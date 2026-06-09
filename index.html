@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -7,7 +7,10 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/timeline.css" />
+    <link rel="stylesheet" href="css/forecast-table.css" />
+    <link rel="stylesheet" href="css/logo.css" />
 </head>
 <body>
 
@@ -15,24 +18,24 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script src="main.js"></script>
+    <script type="module" src="js/main.js"></script>
     
-    <div id="model-run-info">Modell-Basis: Lädt...</div>
+    <div id="model-run-info">Model run: Loading...</div>
     
 <div id="app-logo-widget">
     <div class="logo-container">
-        <!-- Das dynamische Wind-RUC Symbol -->
+        <!-- The dynamic Wind-RUC symbol -->
         <svg class="logo-icon" viewBox="0 0 32 32" style="width: 32px; height: 32px; fill: none;">
-            <!-- Dicker vertikaler Mast links -->
+            <!-- Thick vertical mast on the left -->
             <path d="M 6,30 L 6,6" stroke="#0077a4" stroke-width="2.5" stroke-linecap="round"/>
             
-            <!-- Die Halterung/Verbindung zum Sack oben -->
+            <!-- The bracket/connection to the windsock at the top -->
             <path d="M 6,6 L 9,3 L 9,11 L 6,8" stroke="#0077a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             
-            <!-- Die Außenkontur des Windsacks (weht gerade nach rechts) -->
+            <!-- The outer contour of the windsock (blowing to the right) -->
             <path d="M 9,3 L 29,5 L 29,11 L 9,11 Z" stroke="#0077a4" stroke-width="2.5" stroke-linejoin="round"/>
             
-            <!-- Die markanten vertikalen Streifen aus der Vorlage -->
+            <!-- The distinctive vertical stripes from the template -->
             <path d="M 14,3.5 L 14,10.5" stroke="#0077a4" stroke-width="2.5"/>
             <path d="M 19,4 L 19,11" stroke="#0077a4" stroke-width="2.5"/>
             <path d="M 24,4.5 L 24,11" stroke="#0077a4" stroke-width="2.5"/>

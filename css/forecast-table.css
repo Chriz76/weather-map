@@ -1,0 +1,111 @@
+/* Forecast table styles */
+.leaflet-weather-table-control {
+    background: #ffffff;
+    display: block;
+    width: calc(100vw - 20px);
+    max-width: 550px;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+
+    /* FIX FOR SMOOTH HIDE: initially hidden and collapsed */
+    height: 0;
+    opacity: 0;
+    pointer-events: none; /* Prevents invisible blocking on the map */
+    border: none;
+    box-shadow: none;
+    margin-bottom: 0 !important;
+
+    /* The transition for smooth expand/collapse */
+    transition: height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out, border 0.15s ease-out;
+}
+
+/* IMPORTANT NEW STATE: set by JS when data is loaded */
+.leaflet-weather-table-control.has-data {
+    height: 56px; /* Increased so the inset border of the active cell is not clipped */
+    opacity: 1;
+    pointer-events: auto; /* Make clickable again */
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 8px !important; /* Activates margin to the slider below */
+}
+
+/* The scrollable container fills the entire element */
+.forecast-scroll-container {
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: block;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Minimize scrollbar design */
+.forecast-scroll-container::-webkit-scrollbar {
+    height: 3px;
+}
+.forecast-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.forecast-scroll-container::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 10px;
+}
+
+/* Table styling */
+.forecast-table {
+    border-collapse: collapse;
+    width: max-content;
+    height: 100%;
+    table-layout: fixed;
+}
+
+/* Hour cells (reduced cell padding & smaller font to fit more content) */
+.forecast-table th {
+    min-width: 30px; /* Narrow to allow many hours to fit on the display */
+    height: 20px;
+    font-size: 10px; /* Compact font */
+    font-weight: bold;
+    color: #555555;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e5e5;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0 2px;  /* Minimal cell padding left and right */
+    box-sizing: border-box;
+}
+
+/* Wind value cells (reduced padding & smaller font) */
+.forecast-table td {
+    height: 28px;
+    font-size: 11px; /* Slightly reduced font for the nodes */
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    color: #000000;
+    padding: 0 2px;  /* Minimal cell padding */
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    box-sizing: border-box;
+}
+
+/* --- COLOR SCHEME FOR WIND VALUES (named by thresholds, opacity 0.65) --- */
+.w-under-3_0   { background-color: rgba(230, 255, 255, 0.65) !important; color: #333 !important; }
+.w-under-5_0   { background-color: rgba(0, 191, 255, 0.65)  !important; color: #fff !important; }
+.w-under-6_0   { background-color: rgba(0, 255, 204, 0.65)  !important; color: #333 !important; }
+.w-under-7_0   { background-color: rgba(0, 204, 0, 0.65)    !important; color: #fff !important; }
+.w-under-8_0   { background-color: rgba(153, 255, 0, 0.65)  !important; color: #333 !important; }
+.w-under-9_0   { background-color: rgba(255, 255, 0, 0.65)  !important; color: #333 !important; }
+.w-under-10_0  { background-color: rgba(209, 158, 0, 0.65)  !important; color: #fff !important; }
+.w-under-12_5  { background-color: rgba(255, 85, 0, 0.65)   !important; color: #fff !important; }
+.w-under-14_6  { background-color: rgba(255, 0, 0, 0.65)    !important; color: #fff !important; }
+.w-under-19_4  { background-color: rgba(255, 51, 153, 0.65) !important; color: #fff !important; }
+.w-under-24_3  { background-color: rgba(153, 0, 204, 0.65)  !important; color: #fff !important; }
+.w-over-24_3   { background-color: rgba(0, 0, 255, 0.65)    !important; color: #fff !important; }
+
+/* Markiert die aktive Stunde mit einem sauberen Rahmen */
+.active-hour-column {
+    position: relative;
+    /* Nur Rahmen; Hintergrund der Zelle (Farbklassse) soll nicht überschrieben werden */
+    box-shadow: inset 0 0 0 2px #0077a4;
+}

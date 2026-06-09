@@ -1,0 +1,113 @@
+/* Timeline / Slider styles */
+.leaflet-weather-timeline {
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+
+    /* Compute flexible width: viewport width minus 20px margin */
+    width: calc(100vw - 20px);
+    max-width: 550px; /* Prevents excessive width on desktop monitors */
+
+    height: 48px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    /* Pushes the control up to make room for copyrights below */
+    margin-bottom: 25px !important;
+}
+
+/* Time display on the left */
+.timeline-time-display {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333333;
+    min-width: 55px;
+    user-select: none;
+}
+
+/* Slider area in the center grows dynamically */
+.timeline-slider-wrapper {
+    flex: 1;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-slider {
+    width: 100%;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    outline: none;
+    margin: 0;
+}
+
+/* Slider thumb styling */
+.timeline-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #0077a4;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.timeline-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #0077a4;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Navigation buttons on the right */
+.timeline-navigation {
+    display: flex;
+    gap: 6px;
+}
+
+.timeline-nav-btn {
+    background-color: #ffffff;
+    border: 1px solid #ccc; 
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+
+    /* Exact Leaflet font configuration for bold controls */
+    font-family: "Lucida Grande", Verdana, Geneva, Lucida, sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    color: #333333;
+    -webkit-text-stroke: 0.5px #333333; /* Gives the arrows extra weight */
+
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    padding: 0;
+}
+
+/* Original Leaflet hover behavior */
+.timeline-nav-btn:hover {
+    background-color: #f4f4f4;
+    color: #000000;
+    border-color: #bbb;
+}
+
+/* Original Leaflet active/click behavior (on press) */
+.timeline-nav-btn:active {
+    background-color: #eeeeee;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
