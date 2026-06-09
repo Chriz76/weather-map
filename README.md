@@ -22,7 +22,37 @@ Most mainstream consumer weather applications render global or regional models w
 | **Forecast Range** | 0 to 14 hours | Multi-day extended range |
 
 ### Application for Foiling:
+
 Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.1 km resolution of the ICON-D2 RUC model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
 ---
+
 ## Architecture & Data Pipeline
+
 The project implements a decoupled, entirely serverless **Two-Repository Architecture** to eliminate backend hosting costs while maintaining high data throughput.
+
+
+### 1. Data Ingestion & Extraction (`weather-data`)
+* **Pipeline Branch (`main`):** A Python-based script triggered hourly via GitHub Actions fetches the latest GRIB2 payload from the DWD Open Data servers.
+* **Processing:** The pipeline crops the dataset to the target geographic bounding box, extracts wind speed arrays, and serializes the matrix data.
+* **Storage Branch (`gh-pages`):** The extracted data slices are pushed as static JSON structures to the [gh-pages branch](https://github.com/Chriz76/weather-data/tree/gh-pages), acting as a decentralized, free-tier CDN.
+
+### 2. Frontend Visualization (`weather-map`)
+* The client-side application loads the lightweight spatial arrays on-demand based on the user's selected timeline node.
+* **Coordinate Interpolation:** When a user interacts with the map interface, the application translates the mouse pointer's geospatial coordinate (Latitude/Longitude) to extract the precise point-forecast value from the underlying data matrix.
+
+---
+
+## Development & Contribution
+
+As this is an experimental project, contributions to optimize the JSON chunking sizes, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays are welcome. 
+
+* **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
+* **Author:** [Chriz76](https://github.com/Chriz76)
+
+## 📄 License & Terms of Use
+
+* **Meteorological Data Source:** Deutscher Wetterdienst (DWD) – OpenData terms apply to the underlying forecast parameters.
+* **Software License:** Copyright © 2026 by Chriz76. All rights reserved. 
+  
+This application is provided **free of charge** for personal and recreational use (e.g., wind/wing foiling planning). However, the source code, custom processing pipelines, and frontend logic remain the intellectual property of the author. You may not redistribute, modify, or commercially exploit this codebase without explicit written permission.
+
