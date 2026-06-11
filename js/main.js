@@ -44,10 +44,36 @@ fetch(`${BASE_URL}index.json`, { cache: 'no-cache' })
       setActiveTimestampIndex(closestIndex);
       window._activeTimestampIndex = closestIndex;
 
-      // Update model-run info
-      if (indexData.current_hour) {
-        const infoEl = document.getElementById('model-run-info');
-        if (infoEl) infoEl.innerText = `Modell-Basis: ${formatToLocalDateTimeString(indexData.current_hour)}`;
+      // --- ANPASSUNG: Update model-run info inkl. Generierungszeitpunkt ---
+      const infoEl = document.getElementById('model-run-info');
+      if (infoEl) {
+        let displayStr = "";
+
+        // 1. Erstelle den "Updated"-Teil falls generated_at existiert
+        if (indexData.generated_at) {
+          const updateDate = new Date(indexData.generated_at);
+          
+          // Formatiere lokal (z.B. "31.12. 16:45") mit führenden Nullen
+          const day = String(updateDate.getDate()).padStart(2, '0');
+          const month = String(updateDate.getMonth() + 1).padStart(2, '0');
+          const hours = String(updateDate.getHours()).padStart(2, '0');
+          const minutes = String(updateDate.getMinutes()).padStart(2, '0');
+          
+          displayStr += `Updated ${day}.${month}. ${hours}:${minutes} `;
+        }
+
+        // 2. Erstelle den "Modelbasis"-Teil
+        if (indexData.current_hour) {
+          // Extrahiere nur die Uhrzeit im lokalen Format (z.B. "16:00") aus deiner Funktion
+          // Alternativ falls formatToLocalDateTimeString das ganze Datum ausgibt, hier angepasst:
+          const modelTimeStr = formatToLocalDateTimeString(indexData.current_hour);
+          displayStr += `(Modelbasis ${modelTimeStr})`;
+        }
+
+        // Setze den Text ins UI
+        if (displayStr) {
+          infoEl.innerText = displayStr.trim();
+        }
       }
 
       // Initial view
