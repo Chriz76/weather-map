@@ -66,7 +66,7 @@ fetch(`${BASE_URL}index.json`, { cache: 'no-cache' })
         if (indexData.current_hour) {
           // Extrahiere nur die Uhrzeit im lokalen Format (z.B. "16:00") aus deiner Funktion
           // Alternativ falls formatToLocalDateTimeString das ganze Datum ausgibt, hier angepasst:
-          const modelTimeStr = formatToLocalDateTimeString(indexData.current_hour);
+          const modelTimeStr = formatToLocalTimeString(indexData.current_hour);
           displayStr += `(Modelbasis ${modelTimeStr})`;
         }
 
