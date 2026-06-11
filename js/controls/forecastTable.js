@@ -25,18 +25,18 @@ export function registerForecastTable(map) {
           if (!headerRow || !valuesRow) return;
 
           function getColorClass(wind) {
-            if (wind < 3.0)  return 'w-under-3_0';
-            if (wind < 5.0)  return 'w-under-5_0';
-            if (wind < 6.0)  return 'w-under-6_0';
-            if (wind < 7.0)  return 'w-under-7_0';
-            if (wind < 8.0)  return 'w-under-8_0';
-            if (wind < 9.0)  return 'w-under-9_0';
-            if (wind < 10.0) return 'w-under-10_0';
-            if (wind < 12.5) return 'w-under-12_5';
-            if (wind < 14.6) return 'w-under-14_6';
-            if (wind < 19.4) return 'w-under-19_4';
-            if (wind < 24.3) return 'w-under-24_3';
-            return 'w-over-24_3';
+            if (wind < 3.0)  return 'w-under-3';
+            if (wind < 5.0)  return 'w-under-5';
+            if (wind < 6.0)  return 'w-under-6';
+            if (wind < 7.0)  return 'w-under-7';
+            if (wind < 8.0)  return 'w-under-8';
+            if (wind < 9.0)  return 'w-under-9';
+            if (wind < 10.0) return 'w-under-10';
+            if (wind < 12) return 'w-under-12';
+            if (wind < 15) return 'w-under-15';
+            if (wind < 20) return 'w-under-20';
+            if (wind < 25) return 'w-under-25';
+            return 'w-over-25';
           }
 
           let headerHtml = '';

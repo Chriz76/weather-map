@@ -27,3 +27,15 @@ export function formatToLocalTimeString(timestampStr) {
         return timestampStr;
     }
 }
+
+// Format an ISO date string or Date object to local display "DD.MM. HH:MM"
+export function formatIsoOrDateToLocalDisplay(input) {
+    try {
+        const d = (input instanceof Date) ? input : new Date(input);
+        if (Number.isNaN(d.getTime())) throw new Error('Invalid date');
+        return d.toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        console.error('?? Error formatting ISO/date to local display:', e);
+        return String(input);
+    }
+}

@@ -90,18 +90,18 @@
 }
 
 /* --- COLOR SCHEME FOR WIND VALUES (named by thresholds, opacity 0.65) --- */
-.w-under-3_0   { background-color: rgba(230, 255, 255, 0.65) !important; color: #333 !important; }
-.w-under-5_0   { background-color: rgba(0, 191, 255, 0.65)  !important; color: #fff !important; }
-.w-under-6_0   { background-color: rgba(0, 255, 204, 0.65)  !important; color: #333 !important; }
-.w-under-7_0   { background-color: rgba(0, 204, 0, 0.65)    !important; color: #fff !important; }
-.w-under-8_0   { background-color: rgba(153, 255, 0, 0.65)  !important; color: #333 !important; }
-.w-under-9_0   { background-color: rgba(255, 255, 0, 0.65)  !important; color: #333 !important; }
-.w-under-10_0  { background-color: rgba(209, 158, 0, 0.65)  !important; color: #fff !important; }
-.w-under-12_5  { background-color: rgba(255, 85, 0, 0.65)   !important; color: #fff !important; }
-.w-under-14_6  { background-color: rgba(255, 0, 0, 0.65)    !important; color: #fff !important; }
-.w-under-19_4  { background-color: rgba(255, 51, 153, 0.65) !important; color: #fff !important; }
-.w-under-24_3  { background-color: rgba(153, 0, 204, 0.65)  !important; color: #fff !important; }
-.w-over-24_3   { background-color: rgba(0, 0, 255, 0.65)    !important; color: #fff !important; }
+.w-under-3   { background-color: rgba(230, 255, 255, 0.65) !important; color: #333 !important; }
+.w-under-5   { background-color: rgba(0, 191, 255, 0.65)  !important; color: #fff !important; }
+.w-under-6   { background-color: rgba(0, 255, 204, 0.65)  !important; color: #333 !important; }
+.w-under-7   { background-color: rgba(0, 204, 0, 0.65)    !important; color: #fff !important; }
+.w-under-8   { background-color: rgba(153, 255, 0, 0.65)  !important; color: #333 !important; }
+.w-under-9   { background-color: rgba(255, 255, 0, 0.65)  !important; color: #333 !important; }
+.w-under-10  { background-color: rgba(209, 158, 0, 0.65)  !important; color: #fff !important; }
+.w-under-12  { background-color: rgba(255, 85, 0, 0.65)   !important; color: #fff !important; }
+.w-under-15  { background-color: rgba(255, 0, 0, 0.65)    !important; color: #fff !important; }
+.w-under-20  { background-color: rgba(255, 51, 153, 0.65) !important; color: #fff !important; }
+.w-under-25  { background-color: rgba(153, 0, 204, 0.65)  !important; color: #fff !important; }
+.w-over-25   { background-color: rgba(0, 0, 255, 0.65)    !important; color: #fff !important; }
 
 /* Markiert die aktive Stunde mit einem sauberen Rahmen */
 .active-hour-column {

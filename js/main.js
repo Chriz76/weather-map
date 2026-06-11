@@ -1,33 +1,59 @@
-﻿import { state, setAvailableTimestamps, setActiveTimestampIndex, setLastClickedLatLng, setCurrentClusterData } from './state.js';
-import { BASE_URL, lonMin, latMin } from './config.js';
-import { formatToLocalDateTimeString, formatToLocalTimeString } from './utils/time.js';
+﻿import { BASE_URL, lonMin, latMin } from './config.js';
+import { formatToLocalDateTimeString, formatToLocalTimeString, formatIsoOrDateToLocalDisplay } from './utils/time.js';
+import { state, setAvailableTimestamps, setActiveTimestampIndex, setLastClickedLatLng, setCurrentClusterData } from './state.js';
 import { initMap, windOverlay } from './map-init.js';
 import { updateMapMarker, clearMarker } from './marker.js';
 import { calculateInterpolationFromLoadedCluster } from './interpolation.js';
 import { registerTimelineControl } from './controls/timeline.js';
 import { registerForecastTable } from './controls/forecastTable.js';
+import { registerLegend } from './controls/legend.js';
 
 // Initialize map and controls
 const { map } = initMap();
 registerTimelineControl(map);
 registerForecastTable(map);
+registerLegend(map);
 
 // Keep lightweight globals for compatibility
 window._availableTimestamps = state.availableTimestamps;
 window._activeTimestampIndex = state.activeTimestampIndex;
 
-// Fetch index.json and initialize timestamps
-fetch(`${BASE_URL}index.json`, { cache: 'no-cache' })
-  .then(r => {
-    if (!r.ok) throw new Error(`index.json could not be loaded (status: ${r.status})`);
-    return r.json();
-  })
-  .then(indexData => {
-    try {
-      const timestamps = (indexData.available_timestamps || []).sort();
-      setAvailableTimestamps(timestamps);
-      window._availableTimestamps = timestamps;
+// Fetch + processing helpers
+const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let pollTimer = null;
 
+async function fetchIndexAndProcess() {
+  try {
+    const r = await fetch(`${BASE_URL}index.json`, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(`index.json could not be loaded (status: ${r.status})`);
+    const indexData = await r.json();
+    processIndexData(indexData, { fromPoll: true });
+  } catch (e) {
+    console.error('❌ Error fetching index.json:', e.message);
+  }
+}
+
+function processIndexData(indexData, opts = {}) {
+  try {
+    const prevTimestamps = state.availableTimestamps || [];
+    const prevCurrentKey = prevTimestamps[state.activeTimestampIndex];
+
+    const timestamps = (indexData.available_timestamps || []).sort();
+    setAvailableTimestamps(timestamps);
+    window._availableTimestamps = timestamps;
+
+    // Try to keep displaying the same absolute time key if possible
+    let newActiveIndex = state.activeTimestampIndex;
+    if (prevCurrentKey) {
+      const idxOfPrev = timestamps.indexOf(prevCurrentKey);
+      if (idxOfPrev !== -1) {
+        newActiveIndex = idxOfPrev;
+      } else if (newActiveIndex >= timestamps.length) {
+        // out of range -> clamp to last
+        newActiveIndex = Math.max(0, timestamps.length - 1);
+      }
+    } else {
+      // no previous key, pick closest to now as before
       const now = new Date();
       let closestIndex = 0;
       let minDiff = Infinity;
@@ -40,50 +66,52 @@ fetch(`${BASE_URL}index.json`, { cache: 'no-cache' })
         const diff = Math.abs(now - tDate);
         if (diff < minDiff) { minDiff = diff; closestIndex = idx; }
       });
-
-      setActiveTimestampIndex(closestIndex);
-      window._activeTimestampIndex = closestIndex;
-
-      // --- ANPASSUNG: Update model-run info inkl. Generierungszeitpunkt ---
-      const infoEl = document.getElementById('model-run-info');
-      if (infoEl) {
-        let displayStr = "";
-
-        // 1. Erstelle den "Updated"-Teil falls generated_at existiert
-        if (indexData.generated_at) {
-          const updateDate = new Date(indexData.generated_at);
-          
-          // Formatiere lokal (z.B. "31.12. 16:45") mit führenden Nullen
-          const day = String(updateDate.getDate()).padStart(2, '0');
-          const month = String(updateDate.getMonth() + 1).padStart(2, '0');
-          const hours = String(updateDate.getHours()).padStart(2, '0');
-          const minutes = String(updateDate.getMinutes()).padStart(2, '0');
-          
-          displayStr += `Updated ${day}.${month}. ${hours}:${minutes} `;
-        }
-
-        // 2. Erstelle den "Modelbasis"-Teil
-        if (indexData.current_hour) {
-          // Extrahiere nur die Uhrzeit im lokalen Format (z.B. "16:00") aus deiner Funktion
-          // Alternativ falls formatToLocalDateTimeString das ganze Datum ausgibt, hier angepasst:
-          const modelTimeStr = formatToLocalTimeString(indexData.current_hour);
-          displayStr += `(Modelbasis ${modelTimeStr})`;
-        }
-
-        // Setze den Text ins UI
-        if (displayStr) {
-          infoEl.innerText = displayStr.trim();
-        }
-      }
-
-      // Initial view
-      updateActiveWeatherView();
-
-    } catch (innerError) {
-      console.error('🚨 Error processing index data:', innerError.message);
+      newActiveIndex = closestIndex;
     }
-  })
-  .catch(e => console.error('❌ Critical error during app start:', e.message));
+
+    setActiveTimestampIndex(newActiveIndex);
+    window._activeTimestampIndex = newActiveIndex;
+
+    // Update model-run info
+    const infoEl = document.getElementById('model-run-info');
+    if (infoEl) {
+      let displayStr = '';
+      if (indexData.generated_at) {
+        displayStr += `Updated ${formatIsoOrDateToLocalDisplay(indexData.generated_at)} `;
+      }
+      if (indexData.current_hour) {
+        const modelTimeStr = formatToLocalTimeString(indexData.current_hour);
+        displayStr += `(Model run ${modelTimeStr})`;
+      }
+      if (displayStr) infoEl.innerText = displayStr.trim();
+    }
+
+    // Refresh overlay and UI for current selection without full page reload
+    updateActiveWeatherView();
+
+    // If a cluster is loaded and a point was selected, recalc forecast
+    if (state.lastClickedLatLng && state.currentClusterData) {
+      calculateInterpolationFromLoadedCluster(state.lastClickedLatLng, state.currentClusterData, state.availableTimestamps, state.activeTimestampIndex, window.updateForecastTableUI, (lat, lng, value) => updateMapMarker(map, lat, lng, value));
+    }
+
+  } catch (innerError) {
+    console.error('🚨 Error processing index data:', innerError.message);
+  }
+}
+
+// Initial fetch
+fetchIndexAndProcess().then(() => {
+  // start polling
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(fetchIndexAndProcess, POLL_INTERVAL_MS);
+});
+
+// If tab becomes visible again, fetch immediately to catch up missed updates
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    fetchIndexAndProcess();
+  }
+});
 
 // Listen to timeline changes
 window.addEventListener('timeline-change', (e) => {
