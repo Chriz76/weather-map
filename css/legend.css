@@ -3,8 +3,8 @@
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 6px; /* Etwas knackigerer Radius passend zur kleineren Box */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    /* HIER REDUZIERT: Oben/Unten 6px, Links/Rechts 8px (vorher 10px 14px) */
-    padding: 6px 8px;
+    /* Slightly reduced left/right padding; keep no top padding and small bottom padding */
+    padding: 0 4px 6px 4px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     width: fit-content;
     margin-top: 48px;
@@ -23,8 +23,8 @@
 .leaflet-legend .legend-body {
     display: flex;
     align-items: stretch;
-    /* HIER REDUZIERT: Abstand zwischen Farbbalken und Zahlen auf 6px (vorher 10px) */
-    gap: 6px;
+    /* Further reduce gap between color bar and labels by 1px */
+    gap: 4px;
 }
 
 .leaflet-legend .color-bar {
