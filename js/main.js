@@ -7,12 +7,14 @@ import { calculateInterpolationFromLoadedCluster } from './interpolation.js';
 import { registerTimelineControl } from './controls/timeline.js';
 import { registerForecastTable } from './controls/forecastTable.js';
 import { registerLegend } from './controls/legend.js';
+import { registerLogoControl } from './controls/logoWidget.js';
 
 // Initialize map and controls
 const { map } = initMap();
 registerTimelineControl(map);
 registerForecastTable(map);
 registerLegend(map);
+registerLogoControl(map);
 
 // Keep lightweight globals for compatibility
 window._availableTimestamps = state.availableTimestamps;
