@@ -17,3 +17,19 @@ html, body {
     /* Keep land white; make gray areas (rivers/seas) deep black for contrast */
     filter: brightness(0.6) contrast(6) !important;
 }
+
+/* Unaufdringliche Modell-Info unten links absolut über der Karte positioniert */
+/* model run info (kept as absolute element) */
+#model-run-info {
+    position: absolute;
+    bottom: 0px;
+    left: 13px;
+    z-index: 1000; /* Sits safely above the Leaflet map */
+    color: #777777;
+    font-family: sans-serif;
+    font-size: 11px;
+    padding: 2px 5px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    pointer-events: none; /* Does not interfere with clicks on the map below */
+}
