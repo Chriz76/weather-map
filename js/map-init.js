@@ -16,7 +16,7 @@ export function initMap() {
 
   // Background & label layers (stack)
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20, zIndex: 1, tileSize: 512, zoomOffset: -1, className: 'v', detectRetina: true
+    maxZoom: 20, zIndex: 1, tileSize: 512, zoomOffset: -1, className: 'map-redesign', detectRetina: true
   }).addTo(map);
 
   windOverlay = L.imageOverlay('', imageBounds, { opacity: 0.65, zIndex: 10 }).addTo(map);
