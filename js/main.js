@@ -24,6 +24,29 @@ window._activeTimestampIndex = state.activeTimestampIndex;
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 let pollTimer = null;
 
+// Hilfsfunktion: Ermittelt den Index, der dem aktuellen Zeitpunkt am nächsten liegt
+function findClosestTimestampIndex(timestamps) {
+    if (!timestamps || timestamps.length === 0) return 0;
+
+    const now = new Date();
+    let closestIndex = 0;
+    let minDiff = Infinity;
+
+    timestamps.forEach((tKey, idx) => {
+        const year = parseInt(tKey.substring(0, 4), 10);
+        const month = parseInt(tKey.substring(4, 6), 10) - 1;
+        const day = parseInt(tKey.substring(6, 8), 10);
+        const hour = parseInt(tKey.substring(9, 11), 10);
+        const tDate = new Date(Date.UTC(year, month, day, hour, 0, 0));
+        const diff = Math.abs(now - tDate);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = idx;
+        }
+    });
+    return closestIndex;
+}
+
 async function fetchIndexAndProcess() {
     try {
         const r = await fetch(`${BASE_URL}index.json`, { cache: 'no-cache' });
@@ -78,31 +101,20 @@ function processIndexData(indexData, opts = {}) {
         setAvailableTimestamps(timestamps);
         window._availableTimestamps = timestamps;
 
-        // Try to keep displaying the same absolute time key if possible
+        // Versuche, denselben absoluten Zeitpunkt beizubehalten
         let newActiveIndex = state.activeTimestampIndex;
         if (prevCurrentKey) {
             const idxOfPrev = timestamps.indexOf(prevCurrentKey);
             if (idxOfPrev !== -1) {
                 newActiveIndex = idxOfPrev;
-            } else if (newActiveIndex >= timestamps.length) {
-                // out of range -> clamp to last
-                newActiveIndex = Math.max(0, timestamps.length - 1);
+            } else {
+                // Der alte Timestamp ist aus der Timeline geflogen (Zeit vergangen).
+                // Springe automatisch zum Eintrag, der am nächsten an "Jetzt" liegt.
+                newActiveIndex = findClosestTimestampIndex(timestamps);
             }
         } else {
-            // no previous key, pick closest to now as before
-            const now = new Date();
-            let closestIndex = 0;
-            let minDiff = Infinity;
-            timestamps.forEach((tKey, idx) => {
-                const year = parseInt(tKey.substring(0, 4), 10);
-                const month = parseInt(tKey.substring(4, 6), 10) - 1;
-                const day = parseInt(tKey.substring(6, 8), 10);
-                const hour = parseInt(tKey.substring(9, 11), 10);
-                const tDate = new Date(Date.UTC(year, month, day, hour, 0, 0));
-                const diff = Math.abs(now - tDate);
-                if (diff < minDiff) { minDiff = diff; closestIndex = idx; }
-            });
-            newActiveIndex = closestIndex;
+            // Kein vorheriger Key vorhanden (erster Start)
+            newActiveIndex = findClosestTimestampIndex(timestamps);
         }
 
         setActiveTimestampIndex(newActiveIndex);
@@ -122,10 +134,11 @@ function processIndexData(indexData, opts = {}) {
             if (displayStr) infoEl.innerText = displayStr.trim();
         }
 
-        // Refresh overlay and UI for current selection without full page reload
+        // 1. Karte und Slider visuell anpassen
         updateActiveWeatherView();
 
-        // AKTUALISIERT: Wenn ein Punkt aktiv ist, laden wir bei neuen Modelldaten den Cluster frisch nach
+        // 2. Wenn ein Punkt aktiv ist, laden wir das dazu passende Cluster frisch nach.
+        // fetchClusterAndRefreshUI berechnet die Tabelle neu, sobald die Daten da sind.
         if (state.lastClickedLatLng) {
             fetchClusterAndRefreshUI(state.lastClickedLatLng);
         }
@@ -149,18 +162,34 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Listen to timeline changes
+// Listen to timeline changes (Händisches Schieben des Sliders)
 window.addEventListener('timeline-change', (e) => {
     const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
     if (idx !== null) {
         setActiveTimestampIndex(idx);
         window._activeTimestampIndex = idx;
+
+        // 1. Karte und Slider visuell updaten
         updateActiveWeatherView();
+
+        // 2. Tabelle für den neuen Zeitpunkt sofort neu berechnen (da die Cluster-Daten unverändert sind)
+        if (state.lastClickedLatLng && state.currentClusterData) {
+            calculateInterpolationFromLoadedCluster(
+                state.lastClickedLatLng,
+                state.currentClusterData,
+                state.availableTimestamps,
+                state.activeTimestampIndex,
+                window.updateForecastTableUI,
+                (lat, lng, value) => updateMapMarker(map, lat, lng, value)
+            );
+        }
+
         if (window.highlightActiveForecastHour) window.highlightActiveForecastHour();
         if (window.scrollActiveForecastHourToCenter) window.scrollActiveForecastHourToCenter();
     }
 });
 
+// Aktualisiert ausschließlich das visuelle Wetterbild und die Slider-Position
 function updateActiveWeatherView() {
     try {
         if (!state.availableTimestamps || state.availableTimestamps.length === 0) return;
@@ -196,10 +225,6 @@ function updateActiveWeatherView() {
         const slider = document.getElementById('time-slider');
         if (slider) slider.value = state.activeTimestampIndex;
 
-        if (state.lastClickedLatLng && state.currentClusterData) {
-            calculateInterpolationFromLoadedCluster(state.lastClickedLatLng, state.currentClusterData, state.availableTimestamps, state.activeTimestampIndex, window.updateForecastTableUI, (lat, lng, value) => updateMapMarker(map, lat, lng, value));
-        }
-
     } catch (error) {
         console.error('🚨 Error updating map view (slider change):', error.message);
     }
@@ -209,10 +234,7 @@ function updateActiveWeatherView() {
 map.on('click', function (e) {
     try {
         setLastClickedLatLng(e.latlng);
-
-        // KORRIGIERT & ENTKOPPELT: Nutzt jetzt die zentrale, dublettenfreie Funktion
         fetchClusterAndRefreshUI(e.latlng);
-
     } catch (error) {
         console.error('🚨 General error in map click event:', error.message);
     }
