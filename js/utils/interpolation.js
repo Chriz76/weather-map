@@ -1,4 +1,4 @@
-import { formatToLocalTimeString } from './utils/time.js';
+import { formatToLocalTimeString } from './time.js';
 
 export function calculateInterpolationFromLoadedCluster(latlng, cluster, availableTimestamps, activeIndex, updateForecastTableUI, updateMapMarker) {
   try {

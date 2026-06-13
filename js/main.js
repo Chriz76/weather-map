@@ -1,15 +1,16 @@
 ﻿import { BASE_URL, lonMin, latMin } from './config.js';
 import { formatToLocalDateTimeString, formatToLocalTimeString, formatIsoOrDateToLocalDisplay } from './utils/time.js';
-import { state, setAvailableTimestamps, setActiveTimestampIndex, setLastClickedLatLng, setCurrentClusterData } from './state.js';
+import { state, setAvailableTimestamps, setActiveTimestampIndex, setLastClickedLatLng, setCurrentClusterData } from './weatherModel.js';
 import { initMap, windOverlay } from './map-init.js';
-import { updateMapMarker, clearMarker } from './marker.js';
-import { calculateInterpolationFromLoadedCluster } from './interpolation.js';
-import { registerTimelineControl } from './controls/timeline.js';
-import { registerForecastTable } from './controls/forecastTable.js';
-import { registerLegend } from './controls/legend.js';
-import { registerLogoControl } from './controls/logoWidget.js';
+import { updateMapMarker, clearMarker } from './views/marker.js';
+import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
+import { registerTimelineControl } from './views/timeline.js';
+import { registerForecastTable } from './views/forecastTable.js';
+import { registerLegend } from './views/legend.js';
+import { registerLogoControl } from './views/logoWidget.js';
+import { weatherApi } from './weatherApi.js';
 
-// Initialize map and controls
+// Initialize map and views
 const { map } = initMap();
 registerTimelineControl(map);
 registerForecastTable(map);
@@ -49,9 +50,7 @@ function findClosestTimestampIndex(timestamps) {
 
 async function fetchIndexAndProcess() {
     try {
-        const r = await fetch(`${BASE_URL}index.json`, { cache: 'no-cache' });
-        if (!r.ok) throw new Error(`index.json could not be loaded (status: ${r.status})`);
-        const indexData = await r.json();
+        const indexData = await weatherApi.fetchIndex(BASE_URL);
         processIndexData(indexData, { fromPoll: true });
     } catch (e) {
         console.error('❌ Error fetching index.json:', e.message);
@@ -59,37 +58,23 @@ async function fetchIndexAndProcess() {
 }
 
 // Zentrale Funktion: Holt Cluster-Daten frisch vom Server und rendert die UI neu
-function fetchClusterAndRefreshUI(latlng) {
+async function fetchClusterAndRefreshUI(latlng) {
     if (!latlng) return;
 
-    const clickLat = latlng.lat;
-    const clickLng = latlng.lng;
-    const col = Math.floor((clickLng - lonMin) / 2.0);
-    const row = Math.floor((clickLat - latMin) / 2.0);
-    const clusterUrl = `${BASE_URL}grid_cluster/cluster_${col}_${row}.json`;
+    const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
 
-    fetch(clusterUrl, { cache: 'no-cache' })
-        .then(response => {
-            if (!response.ok) throw new Error(`Cluster file could not be loaded (${response.status})`);
-            return response.json();
-        })
-        .then(cluster => {
-            if (!cluster || !cluster.timeline || !cluster.lats) throw new Error('Cluster data structure is invalid.');
+    // State aktualisieren
+    setCurrentClusterData(cluster);
 
-            // State aktualisieren
-            setCurrentClusterData(cluster);
-
-            // UI / Tabelle berechnen & updaten mit frischen Daten
-            calculateInterpolationFromLoadedCluster(
-                latlng,
-                cluster,
-                state.availableTimestamps,
-                state.activeTimestampIndex,
-                window.updateForecastTableUI,
-                (lat, lng, value) => updateMapMarker(map, lat, lng, value)
-            );
-        })
-        .catch(err => console.warn('📍 Error processing cluster for location:', err.message));
+    // UI / Tabelle berechnen & updaten mit frischen Daten
+    calculateInterpolationFromLoadedCluster(
+        latlng,
+        cluster,
+        state.availableTimestamps,
+        state.activeTimestampIndex,
+        window.updateForecastTableUI,
+        (lat, lng, value) => updateMapMarker(map, lat, lng, value)
+    );
 }
 
 function processIndexData(indexData, opts = {}) {
@@ -197,14 +182,7 @@ function updateActiveWeatherView() {
         const currentKey = state.availableTimestamps[state.activeTimestampIndex];
         if (!currentKey) return;
 
-        const imageUrl = `${BASE_URL}${currentKey}Z.png`;
-
-        // Fetch image (with ETag check if available)
-        fetch(imageUrl, { cache: 'no-cache' })
-            .then(response => {
-                if (!response.ok) throw new Error('Image could not be loaded');
-                return response.blob();
-            })
+        weatherApi.fetchWeatherImageBlob(currentKey, BASE_URL)
             .then(imageBlob => {
                 const reader = new FileReader();
                 reader.onloadend = function () {
@@ -215,7 +193,8 @@ function updateActiveWeatherView() {
             })
             .catch(err => {
                 console.error('🚨 Error during ETag check for weather image:', err.message);
-                if (windOverlay) windOverlay.setUrl(imageUrl);
+                // Fallback: Die rohe URL direkt setzen, falls der Blob-Fetch fehlschlägt
+                if (windOverlay) windOverlay.setUrl(`${BASE_URL}${currentKey}Z.png`);
             });
 
         const localTimeDisplayStr = formatToLocalTimeString(currentKey);

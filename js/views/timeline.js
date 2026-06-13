@@ -1,4 +1,4 @@
-import { state, setActiveTimestampIndex } from '../state.js';
+import { state, setActiveTimestampIndex } from '../weatherModel.js';
 
 export function registerTimelineControl(map) {
   L.Control.WeatherTimeline = L.Control.extend({
