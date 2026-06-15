@@ -9,6 +9,23 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* NEU: Verhindert, dass der Link blau/unterstrichen wird und hält das Layout kompakt */
+.leaflet-app-logo .logo-link,
+.leaflet-app-logo .logo-link:visited {
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+    border: none;
+    display: flex; /* Sorgt dafür, dass der Link den gesamten inneren Bereich ausfüllt */
+}
+
+/* NEU: Ein dezenter Hover-Effekt, damit Nutzer merken, dass das Logo klickbar ist */
+.leaflet-app-logo .logo-link:hover,
+.leaflet-app-logo .logo-link:focus {
+    opacity: 0.85;
+    cursor: pointer;
+}
+
 .leaflet-app-logo .logo-container {
     display: flex;
     /* keep items the same height so svg can match top/bottom of text */
@@ -35,7 +52,7 @@
     font-size: 17px;
     line-height: 17px;
     margin: 0;
-    color: #111;
+    color: #111; /* Bleibt anthrazit/schwarz */
     font-weight: 700;
     letter-spacing: -0.3px;
 }
@@ -44,7 +61,7 @@
     font-size: 9.5px;
     line-height: 10px;
     margin: 0;
-    color: #0077a4; /* Accent color for the unique selling point */
+    color: #0077a4; /* Behält deine gewünschte Akzentfarbe */
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
