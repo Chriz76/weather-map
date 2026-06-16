@@ -5,7 +5,7 @@ import { initMap, windOverlay } from './map-init.js';
 import { updateMapMarker, clearMarker } from './views/marker.js';
 import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
 import { registerTimelineControl } from './views/timeline.js';
-import { registerForecastTable } from './views/forecastTable.js';
+import { registerForecastView } from './views/forecastView.js';
 import { registerLegend } from './views/legend.js';
 import { registerLogoControl } from './views/logoWidget.js';
 import { weatherApi } from './weatherApi.js';
@@ -13,7 +13,7 @@ import { weatherApi } from './weatherApi.js';
 // Initialize map and views
 const { map } = initMap();
 registerTimelineControl(map);
-registerForecastTable(map);
+registerForecastView(map);
 registerLegend(map);
 registerLogoControl(map);
 

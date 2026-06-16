@@ -1,7 +1,10 @@
 ﻿import { weatherModel } from '../weatherModel.js';
 
-export function registerForecastTable(map) {
-    L.Control.WeatherForecastTable = L.Control.extend({
+// 1. Export-Funktionsname angepasst auf "View"
+export function registerForecastView(map) {
+
+    // 2. Leaflet-Klassennamen konsequent auf "ForecastView" umgestellt
+    L.Control.ForecastView = L.Control.extend({
         options: { position: 'bottomleft' },
         onAdd: function (map) {
             const self = this;
@@ -28,7 +31,6 @@ export function registerForecastTable(map) {
                 const valuesRow = document.getElementById('forecast-row-values');
                 if (!headerRow || !valuesRow) return;
 
-                // 🎨 HIER SIND DIE HINTERGRUNDFARBEN WIEDER!
                 function getColorClass(wind) {
                     if (wind < 3.0) return 'w-under-3';
                     if (wind < 5.0) return 'w-under-5';
@@ -52,7 +54,6 @@ export function registerForecastTable(map) {
                     const formattedValue = item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1);
 
                     headerHtml += `<th data-time="${item.fullKey}">${item.hour}h</th>`;
-                    // Die CSS-Klasse wird hier wieder korrekt auf das td-Element angewendet
                     valuesHtml += `<td data-time="${item.fullKey}" class="${colorClass}">${formattedValue}</td>`;
                 });
 
@@ -94,6 +95,7 @@ export function registerForecastTable(map) {
         }
     });
 
-    L.control.weatherForecastTable = function (options) { return new L.Control.WeatherForecastTable(options); };
-    map.weatherForecastTableControl = L.control.weatherForecastTable().addTo(map);
+    // 3. Leaflet-Factory und globale Control-Instanz umbenannt
+    L.control.forecastView = function (options) { return new L.Control.ForecastView(options); };
+    map.forecastViewControl = L.control.forecastView().addTo(map);
 }
