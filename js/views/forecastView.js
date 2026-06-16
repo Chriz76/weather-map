@@ -22,8 +22,8 @@ export function registerForecastView(map) {
             `;
 
             // Reine Render-Funktion für die Tabelle
-            self.renderTable = function (forecastData) {
-                if (!forecastData) {
+            self.renderTable = function (forecast) {
+                if (!forecast) {
                     container.classList.remove('forecast-view--has-data');
                     return;
                 }
@@ -53,7 +53,7 @@ export function registerForecastView(map) {
                 let headerHtml = '';
                 let valuesHtml = '';
 
-                forecastData.forEach(item => {
+                forecast.forEach(item => {
                     const colorClass = getColorClass(item.wind);
                     const formattedValue = item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1);
 

@@ -4,9 +4,9 @@
  * REINE FUNKTION: Berechnet die interpolierten Windwerte für einen Klickpunkt.
  * Erwartet keine Callbacks mehr, sondern gibt das Ergebnis direkt zurück.
  */
-export function calculateInterpolationFromLoadedCluster(latlng, cluster, activeTimestamp) {
+export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
     try {
-        if (!latlng || !cluster) return { forecastData: null, interpolatedValue: null };
+        if (!latlng || !cluster) return { forecast: null, windSpeed: null };
 
         const clickLat = latlng.lat;
         const clickLng = latlng.lng;
@@ -68,12 +68,12 @@ export function calculateInterpolationFromLoadedCluster(latlng, cluster, activeT
 
         // 🌟 FIX: Statt Callbacks aufzurufen, geben wir die Daten einfach per return zurück!
         return {
-            forecastData: dynamicForecastArray,
-            interpolatedValue: { lat: clickLat, lng: clickLng, value: interpolatedWind }
+            forecast: dynamicForecastArray,
+            windSpeed: { lat: clickLat, lng: clickLng, value: interpolatedWind }
         };
 
     } catch (mathError) {
         console.error("🚨 Mathematical interpolation error:", mathError.message);
-        return { forecastData: null, interpolatedValue: null };
+        return { forecast: null, windSpeed: null };
     }
 }

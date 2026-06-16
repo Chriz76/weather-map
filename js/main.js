@@ -1,9 +1,9 @@
 ﻿import { BASE_URL, lonMin, latMin } from './config.js';
 import { weatherModel } from './weatherModel.js';
 import { initMap } from './map-init.js';
-import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
+import { calculatewindSpeeds } from './utils/interpolation.js';
 import { weatherApi } from './weatherApi.js';
-import { determineActiveIndex } from './utils/time.js'; // 🌟 Saubere, neue Methode importiert
+import { determineActiveIndex } from './utils/time.js';
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
@@ -60,37 +60,43 @@ async function syncAppWithServer() {
     try {
         const indexData = await weatherApi.fetchIndex(BASE_URL);
 
-        // 1. 🌟 SORTIERUNG DER LISTE: Direkt an der Quelle nach dem Fetch
+        // 1. BLITZSCHNELLER CHECK: Wenn sich das Erstellungsdatum nicht geändert hat -> Abbruch
+        if (weatherModel.generatedAt === indexData.generated_at && weatherModel.generatedAt) {
+            return;
+        }
+
+        // 2. SORTIERUNG DER LISTE: Direkt an der Quelle nach dem Fetch
         const timestamps = (indexData.available_timestamps || []).sort();
 
-        // 2. Index-Bestimmung schlank über die ausgelagerte Methode
+        // 3. Index-Bestimmung schlank über die schnelle Fallback-Methode
         const activeIndex = determineActiveIndex(timestamps, weatherModel.activeTimestamp);
 
-        // 3. Bildpfad basierend auf dem errechneten Key ermitteln
+        // 4. Bildpfad basierend auf dem errechneten Key ermitteln
         const activeTimestamp = timestamps[activeIndex];
         const overlayUrl = await fetchWeatherOverlayUrl(activeTimestamp);
 
-        // 4. Bestehenden Gitterpunkt-Cluster aktualisieren (falls ein Ort aktiv ist)
-        let clusterData = weatherModel.currentClusterData;
+        // Variablen für Punkt-spezifische Daten vorbereiten
+        let clusterData = null;
+        let interpolation = { forecast: null, windSpeed: null };
+
+        // 5. NUR RECHNEN & LADEN, WENN EIN PUNKT AKTIV IST
         if (weatherModel.lastClickedLatLng) {
             clusterData = await weatherApi.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin });
+            interpolation = calculatewindSpeeds(
+                weatherModel.lastClickedLatLng,
+                clusterData,
+                activeTimestamp
+            );
         }
 
-        // 5. Interpolation für UI-Komponenten ausführen
-        const interpolation = calculateInterpolationFromLoadedCluster(
-            weatherModel.lastClickedLatLng,
-            clusterData,
-            activeTimestamp
-        );
-
-        // 6. ATOMARER STATE-UPDATE: Komplett transparent aus den lokalen Variablen & indexData befüllt
+        // 6. ATOMARER STATE-UPDATE: Komplett transparent untereinander weggeschrieben
         weatherModel.setAvailableTimestamps(timestamps);
         weatherModel.setActiveTimestampIndex(activeIndex);
         weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
-        weatherModel.setActiveOverlayUrl(overlayUrl);
         weatherModel.setCurrentClusterData(clusterData);
-        weatherModel.setForecastData(interpolation.forecastData);
-        weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
+        weatherModel.setActiveOverlayUrl(overlayUrl);
+        weatherModel.setforecast(interpolation.forecast);
+        weatherModel.setwindSpeed(interpolation.windSpeed);
 
     } catch (e) {
         console.error('❌ Error during application synchronization:', e.message);
@@ -126,16 +132,15 @@ window.addEventListener('timeline-change', async (e) => {
 
     // 2. Daten laden (Bild & Interpolation)
     const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
-    const interpolation = calculateInterpolationFromLoadedCluster(
-        weatherModel.lastClickedLatLng,
-        weatherModel.currentClusterData,
-        weatherModel.activeTimestamp
-    );
+
+    const interpolation = weatherModel.lastClickedLatLng && weatherModel.currentClusterData
+        ? calculatewindSpeeds(weatherModel.lastClickedLatLng, weatherModel.currentClusterData, weatherModel.activeTimestamp)
+        : { forecast: null, windSpeed: null };
 
     // 3. Store-Zustand transparent aktualisieren
     weatherModel.setActiveOverlayUrl(overlayUrl);
-    weatherModel.setForecastData(interpolation.forecastData);
-    weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
+    weatherModel.setforecast(interpolation.forecast);
+    weatherModel.setwindSpeed(interpolation.windSpeed);
 });
 
 map.on('click', async function (e) {
@@ -147,14 +152,14 @@ map.on('click', async function (e) {
         const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin });
         if (lastClusterClickToken !== currentClickToken) return;
 
-        // 2. Werte für Interpolation berechnen
-        const interpolation = calculateInterpolationFromLoadedCluster(e.latlng, cluster, weatherModel.activeTimestamp);
+        // 2. Forecast Tabelle und Windwert für den ausgewählten Punkt berechnen
+        const interpolation = calculatewindSpeeds(e.latlng, cluster, weatherModel.activeTimestamp);
 
         // 3. Erst wenn alles bereitsteht: State in einem Rutsch setzen
         weatherModel.setLastClickedLatLng(e.latlng);
         weatherModel.setCurrentClusterData(cluster);
-        weatherModel.setForecastData(interpolation.forecastData);
-        weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
+        weatherModel.setforecast(interpolation.forecast);
+        weatherModel.setwindSpeed(interpolation.windSpeed);
 
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
@@ -169,6 +174,6 @@ map.on('popupclose', function () {
     // Direktes, unverschachteltes Ausmisten des Zustands
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
-    weatherModel.setForecastData(null);
-    weatherModel.setInterpolatedValue(null);
+    weatherModel.setforecast(null);
+    weatherModel.setwindSpeed(null);
 });

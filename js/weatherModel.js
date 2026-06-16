@@ -12,9 +12,9 @@ class WeatherModel extends EventTarget {
             currentClusterData: null,
             modelGeneratedAt: null,
             modelCurrentHour: null,
-            interpolatedValue: null, // Hält den aktuellen Punkt-Wert (z.B. {lat, lng, value})
+            windSpeed: null, // Hält den aktuellen Punkt-Wert (z.B. {lat, lng, value})
             activeOverlayUrl: null,  // Hält die fertige Base64-Data-URL oder Bild-URL für die Karte
-            forecastData: null       // Hält die interpolierten Vorhersagedaten für die Tabelle
+            forecast: null       // Hält die interpolierten Vorhersagedaten für die Tabelle
         };
     }
 
@@ -25,9 +25,9 @@ class WeatherModel extends EventTarget {
     get currentClusterData() { return this.state.currentClusterData; }
     get modelGeneratedAt() { return this.state.modelGeneratedAt; }
     get modelCurrentHour() { return this.state.modelCurrentHour; }
-    get interpolatedValue() { return this.state.interpolatedValue; }
+    get windSpeed() { return this.state.windSpeed; }
     get activeOverlayUrl() { return this.state.activeOverlayUrl; }
-    get forecastData() { return this.state.forecastData; }
+    get forecast() { return this.state.forecast; }
 
     get activeTimestamp() {
         return this.state.availableTimestamps[this.state.activeTimestampIndex] || null;
@@ -67,8 +67,8 @@ class WeatherModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:metadata-updated'));
     }
 
-    setInterpolatedValue(val) {
-        this.state.interpolatedValue = val;
+    setwindSpeed(val) {
+        this.state.windSpeed = val;
         this.dispatchEvent(new CustomEvent('model:interpolated-value-updated', { detail: val }));
     }
 
@@ -77,8 +77,8 @@ class WeatherModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:overlay-url-updated', { detail: url }));
     }
 
-    setForecastData(data) {
-        this.state.forecastData = data;
+    setforecast(data) {
+        this.state.forecast = data;
         this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: data }));
     }
 }
