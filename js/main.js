@@ -76,19 +76,19 @@ async function syncAppWithServer() {
             clusterData = await weatherApi.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin });
         }
 
-        // 5. ATOMARER STATE-UPDATE: Komplett transparent aus den lokalen Variablen & indexData befüllt
-        weatherModel.setAvailableTimestamps(timestamps);
-        weatherModel.setActiveTimestampIndex(activeIndex);
-        weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
-        weatherModel.setActiveOverlayUrl(overlayUrl);
-        weatherModel.setCurrentClusterData(clusterData);
-
-        // 6. Interpolation für UI-Komponenten ausführen
+        // 5. Interpolation für UI-Komponenten ausführen
         const interpolation = calculateInterpolationFromLoadedCluster(
             weatherModel.lastClickedLatLng,
             clusterData,
             activeTimestamp
         );
+
+        // 6. ATOMARER STATE-UPDATE: Komplett transparent aus den lokalen Variablen & indexData befüllt
+        weatherModel.setAvailableTimestamps(timestamps);
+        weatherModel.setActiveTimestampIndex(activeIndex);
+        weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
+        weatherModel.setActiveOverlayUrl(overlayUrl);
+        weatherModel.setCurrentClusterData(clusterData);
         weatherModel.setForecastData(interpolation.forecastData);
         weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
 
