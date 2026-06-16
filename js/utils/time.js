@@ -40,25 +40,42 @@ export function formatIsoOrDateToLocalDisplay(input) {
     }
 }
 
-// Exporte das einfach aus deiner js/utils/time.js
-export function findClosestTimestampIndex(timestamps) {
-    if (!timestamps || timestamps.length === 0) return 0;
+/**
+ * ZENTRALE ZEITLOGIK: Bestimmt den passenden Index für die Timeline.
+ * Sucht bevorzugt nach dem exakten vorherigen Zeitstempel (Zustandserhalt).
+ * Falls dieser nicht existiert, wird atomar der zeitlich am nächsten liegende Index ermittelt.
+ * * @param {string[]} sortedTimestamps - Die sortierten Zeitstempel vom Server
+ * @param {string|null} prevActiveTimestamp - Der aktuell im Modell aktive Zeitstempel
+ * @returns {number} Der zu setzende aktive Index
+ */
+export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
+    if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
+    // 1. Blitzschnelle Abkürzung: Wenn der alte Timestamp existiert, nimm direkt dessen Index
+    if (prevActiveTimestamp) {
+        const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
+        if (exactMatchIndex !== -1) return exactMatchIndex;
+    }
+
+    // 2. Fallback in derselben Funktion: Nächsten Zeitstempel zu "jetzt" ermitteln
     const now = new Date();
     let closestIndex = 0;
     let minDiff = Infinity;
 
-    timestamps.forEach((tKey, idx) => {
+    sortedTimestamps.forEach((tKey, idx) => {
         const year = parseInt(tKey.substring(0, 4), 10);
         const month = parseInt(tKey.substring(4, 6), 10) - 1;
         const day = parseInt(tKey.substring(6, 8), 10);
         const hour = parseInt(tKey.substring(9, 11), 10);
+
         const tDate = new Date(Date.UTC(year, month, day, hour, 0, 0));
         const diff = Math.abs(now - tDate);
+
         if (diff < minDiff) {
             minDiff = diff;
             closestIndex = idx;
         }
     });
+
     return closestIndex;
 }

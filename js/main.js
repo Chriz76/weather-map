@@ -3,7 +3,7 @@ import { weatherModel } from './weatherModel.js';
 import { initMap } from './map-init.js';
 import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
 import { weatherApi } from './weatherApi.js';
-import { findClosestTimestampIndex } from './utils/time.js';
+import { determineActiveIndex } from './utils/time.js'; // 🌟 Saubere, neue Methode importiert
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
@@ -22,134 +22,90 @@ registerLogoView(map);
 registerModelInfoView(map);
 registerMapOverlayView(map, windOverlay);
 
-const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 Minutes
+const POLL_INTERVAL_MS = 5 * 60 * 1000;
 let pollTimer = null;
 let lastClusterClickToken = null;
 let currentOverlayBlobUrl = null;
 
 
-// --- 2. LOGIK-PIPELINE (Reine Datenströme, kein Hilfs-Spaghetti) ---
+// --- 2. LOGIK-PIPELINE (Reine Datenbeschaffung) ---
 
 /**
- * ZENTRALE UPDATE-METHODE: Berechnet Daten und füttert den Store atomar in einem Rutsch.
+ * Holt ein Wetter-Bild und liefert die Object-URL zurück (ohne das Modell zu kennen).
  */
-function updateModelInterpolation() {
-    const latlng = weatherModel.lastClickedLatLng;
-    const cluster = weatherModel.currentClusterData;
-
-    // Direkt die neue, saubere Rechenfunktion aufrufen (liefert das fertige Objekt zurück)
-    const result = calculateInterpolationFromLoadedCluster(
-        latlng,
-        cluster,
-        weatherModel.activeTimestamp
-    );
-
-    // Zustand direkt an die Modell-Setter übergeben
-    weatherModel.setForecastData(result.forecastData);
-    weatherModel.setInterpolatedValue(result.interpolatedValue);
-}
-
-/**
- * Lädt das Wetter-Bild und verwaltet die Speicherbereinigung.
- */
-async function loadActiveWeatherOverlayData() {
+async function fetchWeatherOverlayUrl(timestamp) {
+    if (!timestamp) return null;
     try {
-        if (!weatherModel.availableTimestamps?.length) return;
-
-        const currentKey = weatherModel.activeTimestamp;
-        if (!currentKey) return;
-
-        const imageBlob = await weatherApi.fetchWeatherImageBlob(currentKey, BASE_URL);
+        const imageBlob = await weatherApi.fetchWeatherImageBlob(timestamp, BASE_URL);
 
         if (currentOverlayBlobUrl) {
             URL.revokeObjectURL(currentOverlayBlobUrl);
         }
 
         currentOverlayBlobUrl = URL.createObjectURL(imageBlob);
-        weatherModel.setActiveOverlayUrl(currentOverlayBlobUrl);
-
+        return currentOverlayBlobUrl;
     } catch (error) {
         console.error('🚨 Error loading map overlay data:', error.message);
-        const currentKey = weatherModel.activeTimestamp;
-        if (currentKey) {
-            weatherModel.setActiveOverlayUrl(`${BASE_URL}${currentKey}Z.png`);
-        }
+        return `${BASE_URL}${timestamp}Z.png`; // Fallback-Pfad
     }
 }
+
+
+// --- 3. ZENTRALE KOORDINATION ---
 
 /**
- * Holt die Gitter-Daten für einen Koordinatenpunkt vom Server.
+ * Lädt die API-Struktur (index.json), verarbeitet Bilder sowie Cluster und setzt den State atomar.
  */
-async function fetchClusterAndRefreshUI(latlng) {
-    if (!latlng) return;
-
-    const currentClickToken = Date.now();
-    lastClusterClickToken = currentClickToken;
-
-    try {
-        const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
-
-        if (lastClusterClickToken !== currentClickToken) return;
-
-        weatherModel.setCurrentClusterData(cluster);
-        updateModelInterpolation();
-    } catch (e) {
-        if (lastClusterClickToken === currentClickToken) {
-            console.error('🚨 Error fetching cluster data:', e.message);
-        }
-    }
-}
-
-/**
- * Verarbeitet die Metadaten der index.json.
- */
-async function processIndexData(indexData) {
-    try {
-        const prevTimestamps = weatherModel.availableTimestamps || [];
-        const prevCurrentKey = prevTimestamps[weatherModel.activeTimestampIndex];
-
-        const timestamps = (indexData.available_timestamps || []).sort();
-        weatherModel.setAvailableTimestamps(timestamps);
-
-        let newActiveIndex = weatherModel.activeTimestampIndex;
-        if (prevCurrentKey && timestamps.indexOf(prevCurrentKey) !== -1) {
-            newActiveIndex = timestamps.indexOf(prevCurrentKey);
-        } else {
-            newActiveIndex = findClosestTimestampIndex(timestamps);
-        }
-
-        weatherModel.setActiveTimestampIndex(newActiveIndex);
-        weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
-
-        await loadActiveWeatherOverlayData();
-
-        if (weatherModel.lastClickedLatLng) {
-            await fetchClusterAndRefreshUI(weatherModel.lastClickedLatLng);
-        }
-
-    } catch (innerError) {
-        console.error('🚨 Error processing index data:', innerError.message);
-    }
-}
-
-async function fetchIndexAndProcess() {
+async function syncAppWithServer() {
     try {
         const indexData = await weatherApi.fetchIndex(BASE_URL);
-        await processIndexData(indexData);
+
+        // 1. 🌟 SORTIERUNG DER LISTE: Direkt an der Quelle nach dem Fetch
+        const timestamps = (indexData.available_timestamps || []).sort();
+
+        // 2. Index-Bestimmung schlank über die ausgelagerte Methode
+        const activeIndex = determineActiveIndex(timestamps, weatherModel.activeTimestamp);
+
+        // 3. Bildpfad basierend auf dem errechneten Key ermitteln
+        const activeTimestamp = timestamps[activeIndex];
+        const overlayUrl = await fetchWeatherOverlayUrl(activeTimestamp);
+
+        // 4. Bestehenden Gitterpunkt-Cluster aktualisieren (falls ein Ort aktiv ist)
+        let clusterData = weatherModel.currentClusterData;
+        if (weatherModel.lastClickedLatLng) {
+            clusterData = await weatherApi.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin });
+        }
+
+        // 5. ATOMARER STATE-UPDATE: Komplett transparent aus den lokalen Variablen & indexData befüllt
+        weatherModel.setAvailableTimestamps(timestamps);
+        weatherModel.setActiveTimestampIndex(activeIndex);
+        weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
+        weatherModel.setActiveOverlayUrl(overlayUrl);
+        weatherModel.setCurrentClusterData(clusterData);
+
+        // 6. Interpolation für UI-Komponenten ausführen
+        const interpolation = calculateInterpolationFromLoadedCluster(
+            weatherModel.lastClickedLatLng,
+            clusterData,
+            activeTimestamp
+        );
+        weatherModel.setForecastData(interpolation.forecastData);
+        weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
+
     } catch (e) {
-        console.error('❌ Error fetching index.json:', e.message);
+        console.error('❌ Error during application synchronization:', e.message);
     }
 }
 
 
-// --- 3. ASYNCHRONER APP LIFECYCLE & EVENT LISTENERS ---
+// --- 4. APP LIFECYCLE & EVENT LISTENERS (Die Controller) ---
 
 async function startAppAndSetupPolling() {
-    await fetchIndexAndProcess();
+    await syncAppWithServer();
 
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(async () => {
-        await fetchIndexAndProcess();
+        await syncAppWithServer();
     }, POLL_INTERVAL_MS);
 }
 
@@ -157,35 +113,62 @@ startAppAndSetupPolling();
 
 document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
-        await fetchIndexAndProcess();
+        await syncAppWithServer();
     }
 });
 
 window.addEventListener('timeline-change', async (e) => {
     const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
-    if (idx !== null) {
-        weatherModel.setActiveTimestampIndex(idx);
-        await loadActiveWeatherOverlayData();
-        updateModelInterpolation();
-    }
+    if (idx === null) return;
+
+    // 1. Expliziten Zeitindex im Store setzen
+    weatherModel.setActiveTimestampIndex(idx);
+
+    // 2. Daten laden (Bild & Interpolation)
+    const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+    const interpolation = calculateInterpolationFromLoadedCluster(
+        weatherModel.lastClickedLatLng,
+        weatherModel.currentClusterData,
+        weatherModel.activeTimestamp
+    );
+
+    // 3. Store-Zustand transparent aktualisieren
+    weatherModel.setActiveOverlayUrl(overlayUrl);
+    weatherModel.setForecastData(interpolation.forecastData);
+    weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
 });
 
 map.on('click', async function (e) {
+    const currentClickToken = Date.now();
+    lastClusterClickToken = currentClickToken;
+
     try {
+        // 1. Cluster asynchron anfordern
+        const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin });
+        if (lastClusterClickToken !== currentClickToken) return;
+
+        // 2. Werte für Interpolation berechnen
+        const interpolation = calculateInterpolationFromLoadedCluster(e.latlng, cluster, weatherModel.activeTimestamp);
+
+        // 3. Erst wenn alles bereitsteht: State in einem Rutsch setzen
         weatherModel.setLastClickedLatLng(e.latlng);
-        await fetchClusterAndRefreshUI(e.latlng);
+        weatherModel.setCurrentClusterData(cluster);
+        weatherModel.setForecastData(interpolation.forecastData);
+        weatherModel.setInterpolatedValue(interpolation.interpolatedValue);
+
     } catch (error) {
-        console.error('🚨 General error in map click event:', error.message);
+        if (lastClusterClickToken === currentClickToken) {
+            console.error('🚨 Error processing map click:', error.message);
+        }
     }
 });
 
 map.on('popupclose', function () {
-    // 1. Laufende asynchrone Netzwerk-Anfragen ungültig machen
     lastClusterClickToken = null;
 
-    // 2. Den Zustand direkt, transparent und ohne Umwege im Modell leeren
+    // Direktes, unverschachteltes Ausmisten des Zustands
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
-    weatherModel.setForecastData(null);        // 👈 Löscht direkt die Tabellendaten
-    weatherModel.setInterpolatedValue(null);   // 👈 Löscht direkt den Karten-Marker
+    weatherModel.setForecastData(null);
+    weatherModel.setInterpolatedValue(null);
 });
