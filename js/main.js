@@ -1,6 +1,6 @@
 ﻿import { BASE_URL, lonMin, latMin } from './config.js';
-import { formatToLocalTimeString, formatIsoOrDateToLocalDisplay } from './utils/time.js';
-import { weatherModel } from './weatherModel.js'; // Clean state object
+import { formatToLocalTimeString } from './utils/time.js';
+import { weatherModel } from './weatherModel.js';
 import { initMap, windOverlay } from './map-init.js';
 import { updateMapMarker, clearMarker } from './views/markerView.js';
 import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
@@ -8,6 +8,7 @@ import { registerTimelineView } from './views/timelineView.js';
 import { registerForecastView } from './views/forecastView.js';
 import { registerLegendView } from './views/legendView.js';
 import { registerLogoView } from './views/logoView.js';
+import { registerModelInfoView } from './views/modelInfoView.js';
 import { weatherApi } from './weatherApi.js';
 
 // Initialize map and views
@@ -16,6 +17,7 @@ registerTimelineView(map);
 registerForecastView(map);
 registerLegendView(map);
 registerLogoView(map);
+registerModelInfoView(map);
 
 // Fetch + processing helpers
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -26,7 +28,6 @@ function triggerCentralInterpolation() {
     const latlng = weatherModel.lastClickedLatLng;
     const cluster = weatherModel.currentClusterData;
 
-    // Wenn der State geleert wurde (Popup zu), löschen wir auch die Tabellendaten im Modell
     if (!latlng || !cluster) {
         weatherModel.dispatchEvent(new CustomEvent('model:interpolated-data-updated', { detail: { forecastData: null } }));
         return;
@@ -38,13 +39,11 @@ function triggerCentralInterpolation() {
         weatherModel.availableTimestamps,
         weatherModel.activeTimestampIndex,
         (interpolatedTableData) => {
-            // 1. Wir feuern die fertigen Daten direkt über das Modell an die Tabelle
             weatherModel.dispatchEvent(new CustomEvent('model:interpolated-data-updated', {
                 detail: { forecastData: interpolatedTableData }
             }));
         },
         (lat, lng, value) => {
-            // 2. Wir aktualisieren den Marker direkt von der main.js aus!
             updateMapMarker(map, lat, lng, value);
         }
     );
@@ -82,13 +81,12 @@ async function fetchIndexAndProcess() {
     }
 }
 
-// Zentrale Funktion: Holt Cluster-Daten frisch vom Server und rendert die UI neu
 async function fetchClusterAndRefreshUI(latlng) {
     if (!latlng) return;
     const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
 
     weatherModel.setCurrentClusterData(cluster);
-    triggerCentralInterpolation(); // Berechnen starten!
+    triggerCentralInterpolation();
 }
 
 function processIndexData(indexData, opts = {}) {
@@ -98,10 +96,8 @@ function processIndexData(indexData, opts = {}) {
 
         const timestamps = (indexData.available_timestamps || []).sort();
 
-        // Über das Objekt schreiben!
         weatherModel.setAvailableTimestamps(timestamps);
 
-        // Versuche, denselben absoluten Zeitpunkt beizubehalten
         let newActiveIndex = weatherModel.activeTimestampIndex;
         if (prevCurrentKey) {
             const idxOfPrev = timestamps.indexOf(prevCurrentKey);
@@ -114,27 +110,15 @@ function processIndexData(indexData, opts = {}) {
             newActiveIndex = findClosestTimestampIndex(timestamps);
         }
 
-        // Über das Objekt schreiben!
         weatherModel.setActiveTimestampIndex(newActiveIndex);
 
-        // Update model-run info
-        const infoEl = document.getElementById('model-run-info');
-        if (infoEl) {
-            let displayStr = '';
-            if (indexData.generated_at) {
-                displayStr += `Updated ${formatIsoOrDateToLocalDisplay(indexData.generated_at)} `;
-            }
-            if (indexData.current_hour) {
-                const modelTimeStr = formatToLocalTimeString(indexData.current_hour);
-                displayStr += `(Model run ${modelTimeStr})`;
-            }
-            if (displayStr) infoEl.innerText = displayStr.trim();
-        }
+        // Event mit geladenen indexData an die Views rausfeuern
+        window.dispatchEvent(new CustomEvent('state:timestampsUpdated', {
+            detail: { indexData: indexData }
+        }));
 
-        // 1. Nur noch das Karten-Overlay anpassen (Timeline aktualisiert sich via Event selbst)
         updateActiveWeatherOverlay();
 
-        // 2. Wenn ein Punkt aktiv ist, laden wir das dazu passende Cluster frisch nach.
         if (weatherModel.lastClickedLatLng) {
             fetchClusterAndRefreshUI(weatherModel.lastClickedLatLng);
         }
@@ -150,22 +134,19 @@ fetchIndexAndProcess().then(() => {
     pollTimer = setInterval(fetchIndexAndProcess, POLL_INTERVAL_MS);
 });
 
-// If tab becomes visible again, fetch immediately to catch up missed updates
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         fetchIndexAndProcess();
     }
 });
 
-// Listen to timeline changes (Händisches Schieben des Sliders)
+// Listen to timeline changes
 window.addEventListener('timeline-change', (e) => {
     const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
     if (idx !== null) {
         weatherModel.setActiveTimestampIndex(idx);
         updateActiveWeatherOverlay();
 
-        // 🚀 PERFORMANCE-FIX: Nicht die ganze Tabelle neu berechnen!
-        // Wir aktualisieren nur den Punkt auf der Karte blitzschnell neu:
         const latlng = weatherModel.lastClickedLatLng;
         const cluster = weatherModel.currentClusterData;
 
@@ -175,16 +156,15 @@ window.addEventListener('timeline-change', (e) => {
                 cluster,
                 weatherModel.availableTimestamps,
                 weatherModel.activeTimestampIndex,
-                () => { }, // 💡 Leere Funktion: Die Tabelle wird IGNORIERT und nicht neu gebaut!
+                () => { },
                 (lat, lng, value) => {
-                    updateMapMarker(map, lat, lng, value); // Nur der Marker zieht mit
+                    updateMapMarker(map, lat, lng, value);
                 }
             );
         }
     }
 });
 
-// 🚀 ENTKOPPELT: Aktualisiert ausschließlich das visuelle Wetterbild der Karte.
 function updateActiveWeatherOverlay() {
     try {
         if (!weatherModel.availableTimestamps || weatherModel.availableTimestamps.length === 0) return;
@@ -211,7 +191,6 @@ function updateActiveWeatherOverlay() {
     }
 }
 
-// Map click: load cluster and interpolate
 map.on('click', function (e) {
     try {
         weatherModel.setLastClickedLatLng(e.latlng);
@@ -221,11 +200,9 @@ map.on('click', function (e) {
     }
 });
 
-// Popup close handler
 map.on('popupclose', function () {
     clearMarker(map);
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
-
-    triggerCentralInterpolation(); // Sorgt dafür, dass sich die Tabelle schließt!
+    triggerCentralInterpolation();
 });
