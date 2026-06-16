@@ -1,10 +1,10 @@
 ﻿import { BASE_URL, lonMin, latMin } from './config.js';
-import { formatToLocalDateTimeString, formatToLocalTimeString, formatIsoOrDateToLocalDisplay } from './utils/time.js';
-import { weatherModel } from './weatherModel.js'; // 👈 Nur noch das saubere Objekt importieren!
+import { formatToLocalTimeString, formatIsoOrDateToLocalDisplay } from './utils/time.js';
+import { weatherModel } from './weatherModel.js'; // Clean state object
 import { initMap, windOverlay } from './map-init.js';
-import { updateMapMarker, clearMarker } from './views/marker.js';
+import { updateMapMarker, clearMarker } from './views/markerView.js';
 import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
-import { registerTimelineControl } from './views/timeline.js';
+import { registerTimelineView } from './views/timelineView.js';
 import { registerForecastView } from './views/forecastView.js';
 import { registerLegendView } from './views/legendView.js';
 import { registerLogoView } from './views/logoView.js';
@@ -12,14 +12,10 @@ import { weatherApi } from './weatherApi.js';
 
 // Initialize map and views
 const { map } = initMap();
-registerTimelineControl(map);
+registerTimelineView(map);
 registerForecastView(map);
 registerLegendView(map);
 registerLogoView(map);
-
-// Keep lightweight globals for compatibility
-window._availableTimestamps = weatherModel.availableTimestamps;
-window._activeTimestampIndex = weatherModel.activeTimestampIndex;
 
 // Fetch + processing helpers
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -92,7 +88,7 @@ async function fetchClusterAndRefreshUI(latlng) {
     const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
 
     weatherModel.setCurrentClusterData(cluster);
-    triggerCentralInterpolation(); // 👈 Berechnen starten!
+    triggerCentralInterpolation(); // Berechnen starten!
 }
 
 function processIndexData(indexData, opts = {}) {
@@ -102,9 +98,8 @@ function processIndexData(indexData, opts = {}) {
 
         const timestamps = (indexData.available_timestamps || []).sort();
 
-        // 👈 Über das Objekt schreiben!
+        // Über das Objekt schreiben!
         weatherModel.setAvailableTimestamps(timestamps);
-        window._availableTimestamps = timestamps;
 
         // Versuche, denselben absoluten Zeitpunkt beizubehalten
         let newActiveIndex = weatherModel.activeTimestampIndex;
@@ -119,9 +114,8 @@ function processIndexData(indexData, opts = {}) {
             newActiveIndex = findClosestTimestampIndex(timestamps);
         }
 
-        // 👈 Über das Objekt schreiben!
+        // Über das Objekt schreiben!
         weatherModel.setActiveTimestampIndex(newActiveIndex);
-        window._activeTimestampIndex = newActiveIndex;
 
         // Update model-run info
         const infoEl = document.getElementById('model-run-info');
@@ -137,8 +131,8 @@ function processIndexData(indexData, opts = {}) {
             if (displayStr) infoEl.innerText = displayStr.trim();
         }
 
-        // 1. Karte und Slider visuell anpassen
-        updateActiveWeatherView();
+        // 1. Nur noch das Karten-Overlay anpassen (Timeline aktualisiert sich via Event selbst)
+        updateActiveWeatherOverlay();
 
         // 2. Wenn ein Punkt aktiv ist, laden wir das dazu passende Cluster frisch nach.
         if (weatherModel.lastClickedLatLng) {
@@ -164,13 +158,11 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // Listen to timeline changes (Händisches Schieben des Sliders)
-// Im timeline-change Listener in main.js:
 window.addEventListener('timeline-change', (e) => {
     const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
     if (idx !== null) {
         weatherModel.setActiveTimestampIndex(idx);
-        window._activeTimestampIndex = idx;
-        updateActiveWeatherView();
+        updateActiveWeatherOverlay();
 
         // 🚀 PERFORMANCE-FIX: Nicht die ganze Tabelle neu berechnen!
         // Wir aktualisieren nur den Punkt auf der Karte blitzschnell neu:
@@ -192,8 +184,8 @@ window.addEventListener('timeline-change', (e) => {
     }
 });
 
-// Aktualisiert ausschließlich das visuelle Wetterbild und die Slider-Position
-function updateActiveWeatherView() {
+// 🚀 ENTKOPPELT: Aktualisiert ausschließlich das visuelle Wetterbild der Karte.
+function updateActiveWeatherOverlay() {
     try {
         if (!weatherModel.availableTimestamps || weatherModel.availableTimestamps.length === 0) return;
 
@@ -214,22 +206,14 @@ function updateActiveWeatherView() {
                 if (windOverlay) windOverlay.setUrl(`${BASE_URL}${currentKey}Z.png`);
             });
 
-        const localTimeDisplayStr = formatToLocalTimeString(currentKey);
-        const el = document.getElementById('timeline-time-display');
-        if (el) el.innerText = localTimeDisplayStr;
-
-        const slider = document.getElementById('time-slider');
-        if (slider) slider.value = weatherModel.activeTimestampIndex;
-
     } catch (error) {
-        console.error('🚨 Error updating map view (slider change):', error.message);
+        console.error('🚨 Error updating map overlay:', error.message);
     }
 }
 
 // Map click: load cluster and interpolate
 map.on('click', function (e) {
     try {
-        // 👈 Über das Objekt schreiben!
         weatherModel.setLastClickedLatLng(e.latlng);
         fetchClusterAndRefreshUI(e.latlng);
     } catch (error) {
@@ -243,5 +227,5 @@ map.on('popupclose', function () {
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
 
-    triggerCentralInterpolation(); // 👈 Sorgt dafür, dass sich die Tabelle schließt!
+    triggerCentralInterpolation(); // Sorgt dafür, dass sich die Tabelle schließt!
 });

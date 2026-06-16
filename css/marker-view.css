@@ -1,0 +1,40 @@
+/* Marker Popup Styles - BEM Muster */
+
+.marker-popup {
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-width: 110px;
+    padding: 2px 4px;
+}
+
+.marker-popup__value-box {
+    color: #333333;
+    margin-bottom: 2px;
+}
+
+.marker-popup__value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.marker-popup__unit {
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+.marker-popup__coords {
+    font-size: 10px;
+    color: #777777;
+    white-space: nowrap;
+}
+
+/* Optional: Verfeinerung des Standard-Leaflet-Popups (weniger klobig) */
+.leaflet-popup-content-wrapper {
+    border-radius: 6px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+}
+
+.leaflet-popup-content {
+    margin: 8px 12px !important;
+}
