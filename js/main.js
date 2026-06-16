@@ -13,7 +13,7 @@ import { registerLogoView } from './views/logoView.js';
 import { registerModelInfoView } from './views/modelInfoView.js';
 import { registerMapOverlayView } from './views/mapOverlayView.js';
 
-// Initialize map, layer and views
+// --- 1. INITIALISIERUNG ---
 const { map, windOverlay } = initMap();
 registerTimelineView(map);
 registerForecastView(map);
@@ -22,41 +22,67 @@ registerLogoView(map);
 registerModelInfoView(map);
 registerMapOverlayView(map, windOverlay);
 
-// Fetch + processing helpers
-const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 Minutes
 let pollTimer = null;
+let lastClusterClickToken = null;
+let currentOverlayBlobUrl = null;
 
-// Berechnet die Interpolation zentral und verteilt sie an das Modell
-function triggerCentralInterpolation() {
-    const latlng = weatherModel.lastClickedLatLng;
-    const cluster = weatherModel.currentClusterData;
 
+// --- 2. LOGIK-PIPELINE (Kein Spaghetti, klare Datenflüsse) ---
+
+/**
+ * REINE FUNKTION: Berechnet die Interpolation isoliert.
+ * Kapselt das alte Callback-Verhalten und liefert ein sauberes Datenobjekt zurück.
+ */
+function calculateInterpolation(latlng, cluster, timestamps, activeTimestampIndex) {
     if (!latlng || !cluster) {
-        weatherModel.setForecastData(null);
-        weatherModel.setInterpolatedValue(null);
-        return;
+        return { forecastData: null, interpolatedValue: null };
     }
+
+    let tableResult = null;
+    let singleValueResult = null;
 
     calculateInterpolationFromLoadedCluster(
         latlng,
         cluster,
-        weatherModel.availableTimestamps,
-        weatherModel.activeTimestampIndex,
-        (interpolatedTableData) => {
-            weatherModel.setForecastData(interpolatedTableData);
-        },
-        (lat, lng, value) => {
-            weatherModel.setInterpolatedValue({ lat, lng, value });
-        }
+        timestamps,
+        activeTimestampIndex,
+        (tableData) => { tableResult = tableData; },
+        (lat, lng, value) => { singleValueResult = { lat, lng, value }; }
     );
+
+    return {
+        forecastData: tableResult,
+        interpolatedValue: singleValueResult
+    };
 }
 
-// Trackt die aktive Blob-URL für den Speicher-Cleanup
-let currentOverlayBlobUrl = null;
+/**
+ * ZENTRALE UPDATE-METHODE: Berechnet Daten und füttert den Store in einem Rutsch.
+ */
+function updateModelInterpolation() {
+    const latlng = weatherModel.lastClickedLatLng;
+    const cluster = weatherModel.currentClusterData;
 
+    // 1. Berechnung anstoßen
+    const result = calculateInterpolation(
+        latlng,
+        cluster,
+        weatherModel.availableTimestamps,
+        weatherModel.activeTimestampIndex
+    );
+
+    // 2. Zustand atomar in das Modell fließen lassen (Modell triggert daraufhin die Events)
+    weatherModel.setForecastData(result.forecastData);
+    weatherModel.setInterpolatedValue(result.interpolatedValue);
+}
+
+/**
+ * Lädt das Wetter-Bild und verwaltet die Speicherbereinigung.
+ */
 async function loadActiveWeatherOverlayData() {
     try {
-        if (!weatherModel.availableTimestamps || weatherModel.availableTimestamps.length === 0) return;
+        if (!weatherModel.availableTimestamps?.length) return;
 
         const currentKey = weatherModel.activeTimestamp;
         if (!currentKey) return;
@@ -79,41 +105,32 @@ async function loadActiveWeatherOverlayData() {
     }
 }
 
-async function fetchIndexAndProcess() {
-    try {
-        const indexData = await weatherApi.fetchIndex(BASE_URL);
-        await processIndexData(indexData);
-    } catch (e) {
-        console.error('❌ Error fetching index.json:', e.message);
-    }
-}
-
-// --- FIX: Race Conditions absichern & async/await aktivieren ---
-let lastClusterClickToken = null;
-
+/**
+ * Holt die Gitter-Daten für einen Koordinatenpunkt vom Server.
+ */
 async function fetchClusterAndRefreshUI(latlng) {
     if (!latlng) return;
 
-    // Erzeuge einen eindeutigen Zeitstempel für diesen spezifischen Klick
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
 
     try {
         const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
 
-        // Wenn in der Zwischenzeit ein neuerer Klick passiert ist, brechen wir hier ab!
         if (lastClusterClickToken !== currentClickToken) return;
 
         weatherModel.setCurrentClusterData(cluster);
-        triggerCentralInterpolation();
+        updateModelInterpolation();
     } catch (e) {
-        // Auch im Fehlerfall prüfen, ob die Anfrage noch aktuell ist
         if (lastClusterClickToken === currentClickToken) {
             console.error('🚨 Error fetching cluster data:', e.message);
         }
     }
 }
 
+/**
+ * Verarbeitet die Metadaten der index.json.
+ */
 async function processIndexData(indexData) {
     try {
         const prevTimestamps = weatherModel.availableTimestamps || [];
@@ -143,6 +160,18 @@ async function processIndexData(indexData) {
     }
 }
 
+async function fetchIndexAndProcess() {
+    try {
+        const indexData = await weatherApi.fetchIndex(BASE_URL);
+        await processIndexData(indexData);
+    } catch (e) {
+        console.error('❌ Error fetching index.json:', e.message);
+    }
+}
+
+
+// --- 3. ASYNCHRONER APP LIFECYCLE & EVENT LISTENERS ---
+
 async function startAppAndSetupPolling() {
     await fetchIndexAndProcess();
 
@@ -165,7 +194,7 @@ window.addEventListener('timeline-change', async (e) => {
     if (idx !== null) {
         weatherModel.setActiveTimestampIndex(idx);
         await loadActiveWeatherOverlayData();
-        triggerCentralInterpolation();
+        updateModelInterpolation();
     }
 });
 
@@ -179,10 +208,9 @@ map.on('click', async function (e) {
 });
 
 map.on('popupclose', function () {
-    // Falls noch ein Klick-Request fliegt, entwerten wir ihn hier
     lastClusterClickToken = null;
 
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
-    triggerCentralInterpolation();
+    updateModelInterpolation();
 });
