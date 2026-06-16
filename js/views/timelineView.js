@@ -1,26 +1,28 @@
-﻿import { state, setActiveTimestampIndex } from '../weatherModel.js';
-import { formatToLocalTimeString } from '../utils/time.js'; // 👈 Deine bewährte Formatierung direkt importiert!
+﻿import { weatherModel } from '../weatherModel.js';
+import { formatToLocalTimeString } from '../utils/time.js';
 
 export function registerTimelineView(map) {
     // 1. Einheitlicher Leaflet-Klassenname: TimelineView
     L.Control.TimelineView = L.Control.extend({
         options: { position: 'bottomleft' },
         onAdd: function (map) {
-            // 2. Hauptklasse auf das neue BEM-Muster umgestellt
+            // 2. Hauptklasse auf das BEM-Muster umgestellt
             const container = L.DomUtil.create('div', 'timeline-view');
             L.DomEvent.disableClickPropagation(container);
             L.DomEvent.disableScrollPropagation(container);
 
             try {
-                // 3. HTML-Struktur auf BEM-Klassen umgestellt (IDs entfernt)
+                const totalTimestamps = weatherModel.availableTimestamps.length;
+
+                // 3. HTML-Struktur auf BEM-Klassen umgestellt (IDs entfernt, Getter genutzt)
                 container.innerHTML = `
           <div class="timeline-view__time-display">--:--</div>
           <div class="timeline-view__slider-wrapper">
             <input type="range" 
                    class="timeline-view__slider" 
                    min="0" 
-                   max="${Math.max(0, state.availableTimestamps.length - 1)}" 
-                   value="${state.activeTimestampIndex}">
+                   max="${Math.max(0, totalTimestamps - 1)}" 
+                   value="${weatherModel.activeTimestampIndex}">
           </div>
           <div class="timeline-view__navigation">
             <button class="timeline-view__nav-btn timeline-view__nav-btn--prev">&#10094;</button>
@@ -37,9 +39,8 @@ export function registerTimelineView(map) {
                 // 4. Zentrale, interne Update-Funktion für die Zeitanzeige
                 const updateTimeDisplay = () => {
                     if (!timeDisplay) return;
-                    const currentKey = state.availableTimestamps[state.activeTimestampIndex];
+                    const currentKey = weatherModel.activeTimestamp; // Nutzt den bequemen Modell-Getter
                     if (currentKey) {
-                        // Nutzt deine originale Logik aus den Utilities
                         timeDisplay.innerText = formatToLocalTimeString(currentKey);
                     } else {
                         timeDisplay.innerText = '--:--';
@@ -53,43 +54,46 @@ export function registerTimelineView(map) {
 
                 slider.addEventListener('input', (e) => {
                     const idx = parseInt(e.target.value, 10);
-                    setActiveTimestampIndex(idx);
-                    updateTimeDisplay(); // 👈 Aktualisiert sich sofort selbst!
+                    weatherModel.setActiveTimestampIndex(idx);
+                    updateTimeDisplay();
                     window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: idx } }));
                 });
 
                 btnPrev.addEventListener('click', () => {
-                    if (state.activeTimestampIndex > 0) {
-                        const newIndex = state.activeTimestampIndex - 1;
-                        setActiveTimestampIndex(newIndex);
+                    const activeIndex = weatherModel.activeTimestampIndex;
+                    if (activeIndex > 0) {
+                        const newIndex = activeIndex - 1;
+                        weatherModel.setActiveTimestampIndex(newIndex);
                         slider.value = newIndex;
-                        updateTimeDisplay(); // 👈 Aktualisiert sich sofort selbst!
+                        updateTimeDisplay();
                         window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: newIndex } }));
                     }
                 });
 
                 btnNext.addEventListener('click', () => {
-                    if (state.activeTimestampIndex < state.availableTimestamps.length - 1) {
-                        const newIndex = state.activeTimestampIndex + 1;
-                        setActiveTimestampIndex(newIndex);
+                    const activeIndex = weatherModel.activeTimestampIndex;
+                    const timestamps = weatherModel.availableTimestamps;
+                    if (activeIndex < timestamps.length - 1) {
+                        const newIndex = activeIndex + 1;
+                        weatherModel.setActiveTimestampIndex(newIndex);
                         slider.value = newIndex;
-                        updateTimeDisplay(); // 👈 Aktualisiert sich sofort selbst!
+                        updateTimeDisplay();
                         window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: newIndex } }));
                     }
                 });
 
-                // --- Event-Listener für Zustandsänderungen aus dem Modell ---
+                // --- Event-Listener für Zustandsänderungen direkt aus dem Modell ---
 
-                window.addEventListener('state:timestampsUpdated', () => {
+                weatherModel.addEventListener('model:timestamps-updated', () => {
                     if (!slider) return;
-                    slider.max = Math.max(0, state.availableTimestamps.length - 1);
-                    slider.value = state.activeTimestampIndex;
+                    slider.max = Math.max(0, weatherModel.availableTimestamps.length - 1);
+                    slider.value = weatherModel.activeTimestampIndex;
                     updateTimeDisplay();
                 });
 
-                window.addEventListener('state:activeIndexUpdated', (e) => {
+                weatherModel.addEventListener('model:index-updated', (e) => {
                     if (!slider) return;
-                    const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : state.activeTimestampIndex;
+                    const idx = e.detail && typeof e.detail === 'number' ? e.detail : weatherModel.activeTimestampIndex;
                     slider.value = idx;
                     updateTimeDisplay();
                 });

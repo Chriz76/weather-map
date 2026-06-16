@@ -1,6 +1,6 @@
 ﻿/**
  * Modernized WeatherModel extending EventTarget.
- * Now with proper getters so main.js can read the data!
+ * Actively manages application state and notifications.
  */
 class WeatherModel extends EventTarget {
     constructor() {
@@ -9,25 +9,34 @@ class WeatherModel extends EventTarget {
             availableTimestamps: [],
             activeTimestampIndex: 0,
             lastClickedLatLng: null,
-            currentClusterData: null
+            currentClusterData: null,
+            modelGeneratedAt: null,
+            modelCurrentHour: null,
+            interpolatedValue: null, // Hält den aktuellen Punkt-Wert (z.B. {lat, lng, value})
+            activeOverlayUrl: null,  // Hält die fertige Base64-Data-URL oder Bild-URL für die Karte
+            forecastData: null       // Hält die interpolierten Vorhersagedaten für die Tabelle
         };
     }
 
-    // --- 👇 DIESE GETTER HABEN GEFEHLT! 👇 ---
+    // --- GETTER (Read-Only State Access) ---
     get availableTimestamps() { return this.state.availableTimestamps; }
     get activeTimestampIndex() { return this.state.activeTimestampIndex; }
     get lastClickedLatLng() { return this.state.lastClickedLatLng; }
     get currentClusterData() { return this.state.currentClusterData; }
+    get modelGeneratedAt() { return this.state.modelGeneratedAt; }
+    get modelCurrentHour() { return this.state.modelCurrentHour; }
+    get interpolatedValue() { return this.state.interpolatedValue; }
+    get activeOverlayUrl() { return this.state.activeOverlayUrl; }
+    get forecastData() { return this.state.forecastData; }
 
     get activeTimestamp() {
         return this.state.availableTimestamps[this.state.activeTimestampIndex] || null;
     }
-    // --- 👆 Nun kann main.js die Daten fehlerfrei lesen 👆 ---
 
+    // --- SETTER (State Mutation + Event Dispatching) ---
     setAvailableTimestamps(arr) {
         this.state.availableTimestamps = arr;
         this.dispatchEvent(new CustomEvent('model:timestamps-updated', { detail: arr }));
-        window.dispatchEvent(new CustomEvent('state:timestampsUpdated'));
     }
 
     setActiveTimestampIndex(i) {
@@ -40,7 +49,6 @@ class WeatherModel extends EventTarget {
 
         this.state.activeTimestampIndex = i;
         this.dispatchEvent(new CustomEvent('model:index-updated', { detail: i }));
-        window.dispatchEvent(new CustomEvent('state:activeIndexUpdated', { detail: { index: i } }));
     }
 
     setLastClickedLatLng(latlng) {
@@ -52,14 +60,28 @@ class WeatherModel extends EventTarget {
         this.state.currentClusterData = cluster;
         this.dispatchEvent(new CustomEvent('model:cluster-updated', { detail: cluster }));
     }
+
+    setIndexMetadata(generatedAt, currentHour) {
+        this.state.modelGeneratedAt = generatedAt;
+        this.state.modelCurrentHour = currentHour;
+        this.dispatchEvent(new CustomEvent('model:metadata-updated'));
+    }
+
+    setInterpolatedValue(val) {
+        this.state.interpolatedValue = val;
+        this.dispatchEvent(new CustomEvent('model:interpolated-value-updated', { detail: val }));
+    }
+
+    setActiveOverlayUrl(url) {
+        this.state.activeOverlayUrl = url;
+        this.dispatchEvent(new CustomEvent('model:overlay-url-updated', { detail: url }));
+    }
+
+    setForecastData(data) {
+        this.state.forecastData = data;
+        this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: data }));
+    }
 }
 
-// Export a single instance
+// Export a single, global state instance
 export const weatherModel = new WeatherModel();
-
-// BACKWARD COMPATIBILITY EXPORTS: 
-export const state = weatherModel.state;
-export function setAvailableTimestamps(arr) { weatherModel.setAvailableTimestamps(arr); }
-export function setActiveTimestampIndex(i) { weatherModel.setActiveTimestampIndex(i); }
-export function setLastClickedLatLng(latlng) { weatherModel.setLastClickedLatLng(latlng); }
-export function setCurrentClusterData(cluster) { weatherModel.setCurrentClusterData(cluster); }

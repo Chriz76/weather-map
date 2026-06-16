@@ -1,25 +1,37 @@
-import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString } from '../utils/time.js';
+﻿import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString } from '../utils/time.js';
+import { weatherModel } from '../weatherModel.js'; // 👈 Wichtig: Modell importieren!
 
 export function registerModelInfoView(map) {
     const infoEl = document.querySelector('.model-info');
     if (!infoEl) return;
 
-    window.addEventListener('state:timestampsUpdated', (e) => {
-        // Sicherstellen, dass detail und indexData existieren
-        const indexData = e && e.detail && e.detail.indexData;
-        if (!indexData) return;
+    // Standard-Text setzen, falls die API noch lädt
+    if (infoEl.innerText === '--' || !infoEl.innerText) {
+        infoEl.innerText = 'Model run: Loading...';
+    }
 
-        let displayStr = '';
-        if (indexData.generated_at) {
-            displayStr += `Updated ${formatIsoOrDateToLocalDisplay(indexData.generated_at)} `;
-        }
-        if (indexData.current_hour) {
-            const modelTimeStr = formatToLocalTimeString(indexData.current_hour);
-            displayStr += `(Model run ${modelTimeStr})`;
-        }
+    // 👈 GEÄNDERT: Wir lauschen direkt am weatherModel auf das neue Event
+    weatherModel.addEventListener('model:metadata-updated', () => {
+        try {
+            let displayStr = '';
 
-        if (displayStr) {
-            infoEl.innerText = displayStr.trim();
+            // Werte direkt über die Getter aus dem Store lesen
+            if (weatherModel.modelGeneratedAt) {
+                displayStr += `Updated ${formatIsoOrDateToLocalDisplay(weatherModel.modelGeneratedAt)} `;
+            }
+            if (weatherModel.modelCurrentHour) {
+                const modelTimeStr = formatToLocalTimeString(weatherModel.modelCurrentHour);
+                displayStr += `(Model run ${modelTimeStr})`;
+            }
+
+            if (displayStr) {
+                infoEl.innerText = displayStr.trim();
+            } else {
+                infoEl.innerText = 'Model data active';
+            }
+        } catch (err) {
+            console.error('🚨 Error formatting model info:', err.message);
+            infoEl.innerText = 'Error loading model info';
         }
     });
 }
