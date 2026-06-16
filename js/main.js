@@ -32,7 +32,8 @@ function triggerCentralInterpolation() {
     const cluster = weatherModel.currentClusterData;
 
     if (!latlng || !cluster) {
-        weatherModel.dispatchEvent(new CustomEvent('model:interpolated-data-updated', { detail: { forecastData: null } }));
+        // --- GEÄNDERT: Übergabe an den neuen Store-Setter bei Leerung ---
+        weatherModel.setForecastData(null);
         weatherModel.setInterpolatedValue(null); // 👈 Setzt auch den Marker-Zustand zurück
         return;
     }
@@ -43,9 +44,8 @@ function triggerCentralInterpolation() {
         weatherModel.availableTimestamps,
         weatherModel.activeTimestampIndex,
         (interpolatedTableData) => {
-            weatherModel.dispatchEvent(new CustomEvent('model:interpolated-data-updated', {
-                detail: { forecastData: interpolatedTableData }
-            }));
+            // --- GEÄNDERT: Kein manuelles dispatchEvent mehr, sondern Aufruf des Setters im Modell ---
+            weatherModel.setForecastData(interpolatedTableData);
         },
         (lat, lng, value) => {
             // 👈 Ändert nur noch den Zustand im Store!

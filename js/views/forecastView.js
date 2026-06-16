@@ -93,9 +93,9 @@ export function registerForecastView(map) {
                 }
             };
 
-            // Die View reagiert völlig passiv auf den berechneten State aus dem Modell
-            weatherModel.addEventListener('model:interpolated-data-updated', (e) => {
-                self.renderTable(e.detail.forecastData);
+            // --- FIX HIER: e.detail ist direkt das übergebene Array aus dem Model ---
+            weatherModel.addEventListener('model:forecast-data-updated', (e) => {
+                self.renderTable(e.detail);
             });
 
             weatherModel.addEventListener('model:index-updated', () => {
