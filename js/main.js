@@ -6,16 +6,16 @@ import { updateMapMarker, clearMarker } from './views/marker.js';
 import { calculateInterpolationFromLoadedCluster } from './utils/interpolation.js';
 import { registerTimelineControl } from './views/timeline.js';
 import { registerForecastView } from './views/forecastView.js';
-import { registerLegend } from './views/legend.js';
-import { registerLogoControl } from './views/logoWidget.js';
+import { registerLegendView } from './views/legendView.js';
+import { registerLogoView } from './views/logoView.js';
 import { weatherApi } from './weatherApi.js';
 
 // Initialize map and views
 const { map } = initMap();
 registerTimelineControl(map);
 registerForecastView(map);
-registerLegend(map);
-registerLogoControl(map);
+registerLegendView(map);
+registerLogoView(map);
 
 // Keep lightweight globals for compatibility
 window._availableTimestamps = weatherModel.availableTimestamps;
