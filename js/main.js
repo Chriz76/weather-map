@@ -28,51 +28,23 @@ let lastClusterClickToken = null;
 let currentOverlayBlobUrl = null;
 
 
-// --- 2. LOGIK-PIPELINE (Kein Spaghetti, klare Datenflüsse) ---
+// --- 2. LOGIK-PIPELINE (Reine Datenströme, kein Hilfs-Spaghetti) ---
 
 /**
- * REINE FUNKTION: Berechnet die Interpolation isoliert.
- * Kapselt das alte Callback-Verhalten und liefert ein sauberes Datenobjekt zurück.
- */
-function calculateInterpolation(latlng, cluster, timestamps, activeTimestampIndex) {
-    if (!latlng || !cluster) {
-        return { forecastData: null, interpolatedValue: null };
-    }
-
-    let tableResult = null;
-    let singleValueResult = null;
-
-    calculateInterpolationFromLoadedCluster(
-        latlng,
-        cluster,
-        timestamps,
-        activeTimestampIndex,
-        (tableData) => { tableResult = tableData; },
-        (lat, lng, value) => { singleValueResult = { lat, lng, value }; }
-    );
-
-    return {
-        forecastData: tableResult,
-        interpolatedValue: singleValueResult
-    };
-}
-
-/**
- * ZENTRALE UPDATE-METHODE: Berechnet Daten und füttert den Store in einem Rutsch.
+ * ZENTRALE UPDATE-METHODE: Berechnet Daten und füttert den Store atomar in einem Rutsch.
  */
 function updateModelInterpolation() {
     const latlng = weatherModel.lastClickedLatLng;
     const cluster = weatherModel.currentClusterData;
 
-    // 1. Berechnung anstoßen
-    const result = calculateInterpolation(
+    // Direkt die neue, saubere Rechenfunktion aufrufen (liefert das fertige Objekt zurück)
+    const result = calculateInterpolationFromLoadedCluster(
         latlng,
         cluster,
-        weatherModel.availableTimestamps,
-        weatherModel.activeTimestampIndex
+        weatherModel.activeTimestamp
     );
 
-    // 2. Zustand atomar in das Modell fließen lassen (Modell triggert daraufhin die Events)
+    // Zustand direkt an die Modell-Setter übergeben
     weatherModel.setForecastData(result.forecastData);
     weatherModel.setInterpolatedValue(result.interpolatedValue);
 }
@@ -208,9 +180,12 @@ map.on('click', async function (e) {
 });
 
 map.on('popupclose', function () {
+    // 1. Laufende asynchrone Netzwerk-Anfragen ungültig machen
     lastClusterClickToken = null;
 
+    // 2. Den Zustand direkt, transparent und ohne Umwege im Modell leeren
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
-    updateModelInterpolation();
+    weatherModel.setForecastData(null);        // 👈 Löscht direkt die Tabellendaten
+    weatherModel.setInterpolatedValue(null);   // 👈 Löscht direkt den Karten-Marker
 });
