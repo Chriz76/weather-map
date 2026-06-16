@@ -11,7 +11,7 @@ import { registerForecastView } from './views/forecastView.js';
 import { registerLegendView } from './views/legendView.js';
 import { registerLogoView } from './views/logoView.js';
 import { registerModelInfoView } from './views/modelInfoView.js';
-import { registerMapOverlayView } from './views/mapOverlayView.js'; // 👈 Neu importiert
+import { registerMapOverlayView } from './views/mapOverlayView.js';
 
 // Initialize map, layer and views
 const { map, windOverlay } = initMap();
@@ -20,7 +20,7 @@ registerForecastView(map);
 registerLegendView(map);
 registerLogoView(map);
 registerModelInfoView(map);
-registerMapOverlayView(map, windOverlay); // 👈 Verwaltet jetzt autonom Marker und Bild-Updates!
+registerMapOverlayView(map, windOverlay);
 
 // Fetch + processing helpers
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -32,9 +32,8 @@ function triggerCentralInterpolation() {
     const cluster = weatherModel.currentClusterData;
 
     if (!latlng || !cluster) {
-        // --- GEÄNDERT: Übergabe an den neuen Store-Setter bei Leerung ---
         weatherModel.setForecastData(null);
-        weatherModel.setInterpolatedValue(null); // 👈 Setzt auch den Marker-Zustand zurück
+        weatherModel.setInterpolatedValue(null);
         return;
     }
 
@@ -44,68 +43,83 @@ function triggerCentralInterpolation() {
         weatherModel.availableTimestamps,
         weatherModel.activeTimestampIndex,
         (interpolatedTableData) => {
-            // --- GEÄNDERT: Kein manuelles dispatchEvent mehr, sondern Aufruf des Setters im Modell ---
             weatherModel.setForecastData(interpolatedTableData);
         },
         (lat, lng, value) => {
-            // 👈 Ändert nur noch den Zustand im Store!
             weatherModel.setInterpolatedValue({ lat, lng, value });
         }
     );
 }
 
-// Lädt das aktuelle Wetter-Overlay-Bild und schiebt das Ergebnis in das Modell
-function loadActiveWeatherOverlayData() {
+// Trackt die aktive Blob-URL für den Speicher-Cleanup
+let currentOverlayBlobUrl = null;
+
+async function loadActiveWeatherOverlayData() {
     try {
         if (!weatherModel.availableTimestamps || weatherModel.availableTimestamps.length === 0) return;
 
         const currentKey = weatherModel.activeTimestamp;
         if (!currentKey) return;
 
-        weatherApi.fetchWeatherImageBlob(currentKey, BASE_URL)
-            .then(imageBlob => {
-                const reader = new FileReader();
-                reader.onloadend = function () {
-                    // 👈 Daten fertig verarbeitet? Ab in den Store!
-                    weatherModel.setActiveOverlayUrl(reader.result);
-                };
-                reader.readAsDataURL(imageBlob);
-            })
-            .catch(err => {
-                console.error('🚨 Error during weather image fetch:', err.message);
-                // Fallback-Pfad direkt in den Store jagen
-                weatherModel.setActiveOverlayUrl(`${BASE_URL}${currentKey}Z.png`);
-            });
+        const imageBlob = await weatherApi.fetchWeatherImageBlob(currentKey, BASE_URL);
+
+        if (currentOverlayBlobUrl) {
+            URL.revokeObjectURL(currentOverlayBlobUrl);
+        }
+
+        currentOverlayBlobUrl = URL.createObjectURL(imageBlob);
+        weatherModel.setActiveOverlayUrl(currentOverlayBlobUrl);
 
     } catch (error) {
         console.error('🚨 Error loading map overlay data:', error.message);
+        const currentKey = weatherModel.activeTimestamp;
+        if (currentKey) {
+            weatherModel.setActiveOverlayUrl(`${BASE_URL}${currentKey}Z.png`);
+        }
     }
 }
 
 async function fetchIndexAndProcess() {
     try {
         const indexData = await weatherApi.fetchIndex(BASE_URL);
-        processIndexData(indexData);
+        await processIndexData(indexData);
     } catch (e) {
         console.error('❌ Error fetching index.json:', e.message);
     }
 }
 
+// --- FIX: Race Conditions absichern & async/await aktivieren ---
+let lastClusterClickToken = null;
+
 async function fetchClusterAndRefreshUI(latlng) {
     if (!latlng) return;
-    const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
 
-    weatherModel.setCurrentClusterData(cluster);
-    triggerCentralInterpolation();
+    // Erzeuge einen eindeutigen Zeitstempel für diesen spezifischen Klick
+    const currentClickToken = Date.now();
+    lastClusterClickToken = currentClickToken;
+
+    try {
+        const cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin });
+
+        // Wenn in der Zwischenzeit ein neuerer Klick passiert ist, brechen wir hier ab!
+        if (lastClusterClickToken !== currentClickToken) return;
+
+        weatherModel.setCurrentClusterData(cluster);
+        triggerCentralInterpolation();
+    } catch (e) {
+        // Auch im Fehlerfall prüfen, ob die Anfrage noch aktuell ist
+        if (lastClusterClickToken === currentClickToken) {
+            console.error('🚨 Error fetching cluster data:', e.message);
+        }
+    }
 }
 
-function processIndexData(indexData) {
+async function processIndexData(indexData) {
     try {
         const prevTimestamps = weatherModel.availableTimestamps || [];
         const prevCurrentKey = prevTimestamps[weatherModel.activeTimestampIndex];
 
         const timestamps = (indexData.available_timestamps || []).sort();
-
         weatherModel.setAvailableTimestamps(timestamps);
 
         let newActiveIndex = weatherModel.activeTimestampIndex;
@@ -118,10 +132,10 @@ function processIndexData(indexData) {
         weatherModel.setActiveTimestampIndex(newActiveIndex);
         weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
 
-        loadActiveWeatherOverlayData(); // 👈 Bilddaten initial anfordern
+        await loadActiveWeatherOverlayData();
 
         if (weatherModel.lastClickedLatLng) {
-            fetchClusterAndRefreshUI(weatherModel.lastClickedLatLng);
+            await fetchClusterAndRefreshUI(weatherModel.lastClickedLatLng);
         }
 
     } catch (innerError) {
@@ -129,40 +143,45 @@ function processIndexData(indexData) {
     }
 }
 
-// Initial fetch & Polling
-fetchIndexAndProcess().then(() => {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(fetchIndexAndProcess, POLL_INTERVAL_MS);
-});
+async function startAppAndSetupPolling() {
+    await fetchIndexAndProcess();
 
-document.addEventListener('visibilitychange', () => {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+        await fetchIndexAndProcess();
+    }, POLL_INTERVAL_MS);
+}
+
+startAppAndSetupPolling();
+
+document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
-        fetchIndexAndProcess();
+        await fetchIndexAndProcess();
     }
 });
 
-// Listen to timeline changes
-window.addEventListener('timeline-change', (e) => {
+window.addEventListener('timeline-change', async (e) => {
     const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
     if (idx !== null) {
         weatherModel.setActiveTimestampIndex(idx);
-        loadActiveWeatherOverlayData(); // 👈 Aktualisiert das Bild über den Store
+        await loadActiveWeatherOverlayData();
         triggerCentralInterpolation();
     }
 });
 
-// Map User-Interactions
-map.on('click', function (e) {
+map.on('click', async function (e) {
     try {
         weatherModel.setLastClickedLatLng(e.latlng);
-        fetchClusterAndRefreshUI(e.latlng);
+        await fetchClusterAndRefreshUI(e.latlng);
     } catch (error) {
         console.error('🚨 General error in map click event:', error.message);
     }
 });
 
 map.on('popupclose', function () {
-    // 👈 Alle Zustandsänderungen laufen sauber über das Modell
+    // Falls noch ein Klick-Request fliegt, entwerten wir ihn hier
+    lastClusterClickToken = null;
+
     weatherModel.setLastClickedLatLng(null);
     weatherModel.setCurrentClusterData(null);
     triggerCentralInterpolation();
