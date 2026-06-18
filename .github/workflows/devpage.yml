@@ -36,17 +36,27 @@ jobs:
         with:
           path: dev_site
 
-      # 3. Schritt: Wir bauen das Ganze im "Root"-Ordner zusammen
+      # 3. Beide Welten sicher verschmelzen
       - name: Merge sites together
         run: |
           mkdir workspace
-          # Kopiere die Hauptseite in das Hauptverzeichnis
-          cp -r main_site/* workspace/
-          # Erstelle den dev-Unterordner und kopiere den Entwicklungs-Code hinein
+          
+          # Hauptseite ins Root-Verzeichnis kopieren
+          if [ -d "main_site" ]; then
+            cp -r main_site/* workspace/
+          fi
+          
+          # Dev-Seite sauber in den Unterordner isolieren
           mkdir -p workspace/dev
-          cp -r dev_site/* workspace/dev/
-          # Bereinige die temporären Checkout-Ordner, damit sie nicht mit hochgeladen werden
-          rm -rf workspace/dev/main_site workspace/dev/dev_site workspace/main_site workspace/workspace
+          if [ -d "dev_site" ]; then
+            # Wir kopieren explizit alles einzeln rüber, um Linux-Fehler zu vermeiden
+            cd dev_site
+            cp -r . ../workspace/dev/
+            cd ..
+          fi
+          
+          # Extrem vorsichtiges Löschen NUR der temporären Checkout-Ordner
+          rm -rf workspace/main_site workspace/dev_site
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
