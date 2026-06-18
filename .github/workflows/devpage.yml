@@ -3,8 +3,9 @@ name: Deploy Develop to Subfolder
 on:
   push:
     branches:
-      - mvc # Trigger bei jedem Push auf develop
-  workflow_dispatch: # Ermöglicht das manuelle Starten per Button 🚀
+      - develop
+      - mvc  # Füge hier die Branches hinzu, die du nutzt
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,17 +23,30 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}dev/
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      # 1. Schritt: Wir holen uns den aktuellen Stand aus dem MAIN Branch (die Hauptseite)
+      - name: Checkout Main Branch
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main_site
 
-      # Dieser Schritt verschiebt alle deine Dateien in einen Unterordner namens "dev"
-      - name: Move files to dev subfolder
+      # 2. Schritt: Wir holen uns den Code aus dem aktuellen Entwicklungs-Branch (mvc/develop)
+      - name: Checkout Current Branch
+        uses: actions/checkout@v4
+        with:
+          path: dev_site
+
+      # 3. Schritt: Wir bauen das Ganze im "Root"-Ordner zusammen
+      - name: Merge sites together
         run: |
-          mkdir temp_dev
-          find . -maxdepth 1 ! -name '.' ! -name 'temp_dev' -exec mv {} temp_dev/ \;
-          mkdir dev
-          mv temp_dev/* dev/
-          rm -rf temp_dev
+          mkdir workspace
+          # Kopiere die Hauptseite in das Hauptverzeichnis
+          cp -r main_site/* workspace/
+          # Erstelle den dev-Unterordner und kopiere den Entwicklungs-Code hinein
+          mkdir -p workspace/dev
+          cp -r dev_site/* workspace/dev/
+          # Bereinige die temporären Checkout-Ordner, damit sie nicht mit hochgeladen werden
+          rm -rf workspace/dev/main_site workspace/dev/dev_site workspace/main_site workspace/workspace
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -40,7 +54,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: './workspace'
 
       - name: Deploy to GitHub Pages
         id: deployment
