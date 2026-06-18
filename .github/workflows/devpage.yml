@@ -1,0 +1,47 @@
+name: Deploy Develop to Subfolder
+
+on:
+  push:
+    branches:
+      - mvc # Trigger bei jedem Push auf develop
+  workflow_dispatch: # Ermöglicht das manuelle Starten per Button 🚀
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}dev/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Dieser Schritt verschiebt alle deine Dateien in einen Unterordner namens "dev"
+      - name: Move files to dev subfolder
+        run: |
+          mkdir temp_dev
+          find . -maxdepth 1 ! -name '.' ! -name 'temp_dev' -exec mv {} temp_dev/ \;
+          mkdir dev
+          mv temp_dev/* dev/
+          rm -rf temp_dev
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
