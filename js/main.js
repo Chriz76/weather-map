@@ -11,6 +11,7 @@ import { registerLegendView } from './views/legendView.js';
 import { registerLogoView } from './views/logoView.js';
 import { registerModelInfoView } from './views/modelInfoView.js';
 import { registerMapOverlayView } from './views/mapOverlayView.js';
+import { registerGpsView } from './views/gpsView.js';
 
 // --- 1. INITIALISIERUNG ---
 const { map, windOverlay } = initMap();
@@ -20,6 +21,13 @@ registerLegendView(map);
 registerLogoView(map);
 registerModelInfoView(map);
 registerMapOverlayView(map, windOverlay);
+registerGpsView(map, () => {
+    weatherModel.setIsLocating(true);     
+    map.locate({ 
+        setView: false, 
+        enableHighAccuracy: true 
+    });
+});
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 let pollTimer = null;
@@ -150,4 +158,29 @@ map.on('popupclose', function () {
 
     // Direktes, unverschachteltes Ausmisten des Zustands
     weatherModel.removePointData();
+});
+
+map.on('locationfound', async function (e) {
+    const currentClickToken = Date.now();
+    lastClusterClickToken = currentClickToken;
+
+    try {
+        const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin });
+        if (lastClusterClickToken !== currentClickToken) return;
+
+        map.setView(e.latlng, 14, { animate: true });
+        weatherModel.setPointData(e.latlng, cluster);
+    } catch (error) {
+        if (lastClusterClickToken === currentClickToken) {
+            console.error('🚨 Error processing GPS location:', error.message);
+        }
+    } {
+        // Schaltet den Ladezustand im Modell aus -> View reagiert automatisch!
+        weatherModel.setIsLocating(false);
+    }
+});
+
+map.on('locationerror', function (e) {
+    alert(`Standort-Fehler: ${e.message}`);
+    weatherModel.setIsLocating(false); // Ausschalten bei Fehler
 });

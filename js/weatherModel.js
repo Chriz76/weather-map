@@ -17,7 +17,8 @@ class WeatherModel extends EventTarget {
             modelCurrentHour: null,
             windSpeed: null, 
             activeOverlayUrl: null,  
-            forecast: null       
+            forecast: null,
+            isLocationg: false       
         };
     }
 
@@ -31,12 +32,19 @@ class WeatherModel extends EventTarget {
     get windSpeed() { return this.state.windSpeed; }
     get activeOverlayUrl() { return this.state.activeOverlayUrl; }
     get forecast() { return this.state.forecast; }
+    get isLocating() { return this.state.isLocating; }
 
     get activeTimestamp() {
         return this.state.availableTimestamps[this.state.activeTimestampIndex] || null;
     }
 
     // --- MUTATORS (State Changes + Safe Event Flow) ---
+
+    setIsLocating(value) {
+        this._isLocating = value;
+        // Event feuern, damit die gpsView Bescheid weiß!
+        this.dispatchEvent(new CustomEvent('model:locating-changed', { detail: this._isLocating }));
+    }
 
     setActiveTimestampIndex(i) {
         const maxIndex = this.state.availableTimestamps.length;
