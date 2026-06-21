@@ -4,6 +4,7 @@ import { initMap } from './map-init.js';
 import { calculatewindSpeeds } from './utils/interpolation.js';
 import { weatherApi } from './weatherApi.js';
 import { determineActiveIndex } from './utils/time.js';
+import { storage } from './utils/storage.js'; // Behalten für Map-State
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
@@ -67,9 +68,10 @@ async function syncAppWithServer() {
 
         // 2. SORTIERUNG DER LISTE: Direkt an der Quelle nach dem Fetch
         const timestamps = (indexData.available_timestamps || []).sort();
+        if (timestamps.length === 0) return;
 
-        // 3. Index-Bestimmung schlank über die schnelle Fallback-Methode
-        const activeIndex = determineActiveIndex(timestamps, weatherModel.activeTimestamp);
+        // 3. Index-Bestimmung über die schnelle Methode
+        let activeIndex = determineActiveIndex(timestamps, weatherModel.activeTimestamp);
 
         // 4. Bildpfad basierend auf dem errechneten Key ermitteln
         const activeTimestamp = timestamps[activeIndex];
@@ -141,6 +143,16 @@ window.addEventListener('timeline-change', async (e) => {
     weatherModel.setActiveOverlayUrl(overlayUrl);
     weatherModel.setforecast(interpolation.forecast);
     weatherModel.setwindSpeed(interpolation.windSpeed);
+});
+
+// MAP EXTENSION: Kartenzustand debounct sichern bei Bewegung
+map.on('moveend', () => {
+    const center = map.getCenter();
+    storage.saveMapState({
+        lat: center.lat,
+        lng: center.lng,
+        zoom: map.getZoom()
+    });
 });
 
 map.on('click', async function (e) {
