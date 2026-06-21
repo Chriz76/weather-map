@@ -1,7 +1,7 @@
 ﻿let activeSpotMarker = null;
 
 /**
- * Reiner HTML-Generator für den Popup-Inhalt (im BEM-Design)
+ * REINER HTML-GENERATOR: Erstellt den Popup-Inhalt (im BEM-Design)
  */
 function createPopupHtml(formattedValue, coordsDisplay) {
     return `
@@ -15,40 +15,82 @@ function createPopupHtml(formattedValue, coordsDisplay) {
   `;
 }
 
-export function updateMapMarker(map, lat, lng, value) {
+/**
+ * NEUE EXTRAHIERTE HILFSFUNKTION: Erstellt die Leaflet-Instanz atomar an einem Ort
+ */
+function createMarker(map, lat, lng, popupContent) {
+    activeSpotMarker = L.circleMarker([lat, lng], {
+        radius: 6,
+        color: '#ffffff',
+        fillColor: '#0077a4',
+        fillOpacity: 1,
+        weight: 2
+    }).addTo(map);
+
+    activeSpotMarker.bindPopup(popupContent, { offset: [0, -10] }).openPopup();
+}
+
+/**
+ * Hilfsfunktion: Holt die aktuellen Koordinaten formatiert als Text aus dem Marker
+ */
+function getExistingCoordsDisplay() {
+    if (!activeSpotMarker) return '0.0000, 0.0000';
+    const latlng = activeSpotMarker.getLatLng();
+    return `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+}
+
+/**
+ * Hilfsfunktion: Holt den aktuellen reinen Zahlenwert aus dem bestehenden HTML-Inhalt des Popups
+ */
+function getExistingValueDisplay() {
+    if (!activeSpotMarker) return '?';
+    const popup = activeSpotMarker.getPopup();
+    if (!popup) return '?';
+    
+    const container = document.createElement('div');
+    container.innerHTML = popup.getContent();
+    const valueEl = container.querySelector('.marker-popup__value');
+    return valueEl ? valueEl.textContent : '?';
+}
+
+
+// --- EXPORTIERTE HAUPTFUNKTIONEN (Jetzt wunderbar schlank!) ---
+
+export function updateMapMarkerWindspeed(map, value) {
     try {
-        const formattedValue = isNaN(value) ? '?' : value.toFixed(1);
-        const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        const formattedValue = (value === null || isNaN(value)) ? '?' : value.toFixed(1);
+        const coordsDisplay = getExistingCoordsDisplay();
         const popupContent = createPopupHtml(formattedValue, coordsDisplay);
 
-        // FALL 1: Marker existiert noch nicht -> Neu erstellen
         if (!activeSpotMarker) {
-            activeSpotMarker = L.circleMarker([lat, lng], {
-                radius: 6,
-                color: '#ffffff',
-                fillColor: '#0077a4',
-                fillOpacity: 1,
-                weight: 2
-            }).addTo(map);
-
-            activeSpotMarker.bindPopup(popupContent, { offset: [0, -10] }).openPopup();
-
-            // FALL 2: Marker existiert bereits -> Rein passiv updaten (Ohne document.getElementById!)
+            createMarker(map, 0, 0, popupContent); // Nutzt die extrahierte Funktion
         } else {
-            // 1. Marker an neue Position bewegen
-            activeSpotMarker.setLatLng([lat, lng]);
+            activeSpotMarker.setPopupContent(popupContent);
+        }
+    } catch (markerError) {
+        console.error("❌ Error updating map marker windspeed:", markerError.message);
+    }
+}
 
-            // 2. Neuen HTML-Inhalt direkt in das Leaflet-Popup jagen
+export function updateMapMarkerLocation(map, lat, lng) {
+    try {
+        const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        const formattedValue = getExistingValueDisplay();
+        const popupContent = createPopupHtml(formattedValue, coordsDisplay);
+
+        if (!activeSpotMarker) {
+            createMarker(map, lat, lng, popupContent); // Nutzt die extrahierte Funktion
+        } else {
+            activeSpotMarker.setLatLng([lat, lng]);
             activeSpotMarker.setPopupContent(popupContent);
 
-            // 3. Falls das Popup offen ist, an die neue Position heften
             const popup = activeSpotMarker.getPopup();
             if (popup && popup.isOpen()) {
                 popup.setLatLng([lat, lng]);
             }
         }
     } catch (markerError) {
-        console.error("❌ Error moving map marker/popup:", markerError.message);
+        console.error("❌ Error moving map marker location:", markerError.message);
     }
 }
 

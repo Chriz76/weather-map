@@ -91,7 +91,7 @@ export function registerTimelineView(map) {
                     updateTimeDisplay();
                 });
 
-                weatherModel.addEventListener('model:index-updated', (e) => {
+                weatherModel.addEventListener('model:timestamp-index-updated', (e) => {
                     if (!slider) return;
                     const idx = e.detail && typeof e.detail === 'number' ? e.detail : weatherModel.activeTimestampIndex;
                     slider.value = idx;

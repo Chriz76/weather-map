@@ -66,10 +66,9 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
             dynamicForecastArray.push({ hour: displayHour, wind: tWindInterpolated, fullKey: tKey });
         });
 
-        // 🌟 FIX: Statt Callbacks aufzurufen, geben wir die Daten einfach per return zurück!
         return {
             forecast: dynamicForecastArray,
-            windSpeed: { lat: clickLat, lng: clickLng, value: interpolatedWind }
+            windSpeed: interpolatedWind // Nur noch die nackte Zahl! (z.B. 14.5)
         };
 
     } catch (mathError) {

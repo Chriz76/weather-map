@@ -1,4 +1,7 @@
-﻿/**
+﻿import { calculatewindSpeeds } from './utils/interpolation.js';
+import { determineActiveIndex } from './utils/time.js';
+
+/**
  * Modernized WeatherModel extending EventTarget.
  * Actively manages application state and notifications.
  */
@@ -12,9 +15,9 @@ class WeatherModel extends EventTarget {
             currentClusterData: null,
             modelGeneratedAt: null,
             modelCurrentHour: null,
-            windSpeed: null, // Hält den aktuellen Punkt-Wert (z.B. {lat, lng, value})
-            activeOverlayUrl: null,  // Hält die fertige Base64-Data-URL oder Bild-URL für die Karte
-            forecast: null       // Hält die interpolierten Vorhersagedaten für die Tabelle
+            windSpeed: null, 
+            activeOverlayUrl: null,  
+            forecast: null       
         };
     }
 
@@ -33,55 +36,89 @@ class WeatherModel extends EventTarget {
         return this.state.availableTimestamps[this.state.activeTimestampIndex] || null;
     }
 
-    // --- SETTER (State Mutation + Event Dispatching) ---
-    setAvailableTimestamps(arr) {
-        this.state.availableTimestamps = arr;
-        this.dispatchEvent(new CustomEvent('model:timestamps-updated', { detail: arr }));
-    }
+    // --- MUTATORS (State Changes + Safe Event Flow) ---
 
     setActiveTimestampIndex(i) {
         const maxIndex = this.state.availableTimestamps.length;
-
         if (i < 0 || (maxIndex > 0 && i >= maxIndex)) {
             console.warn(`Index ${i} is out of bounds!`);
             return;
+        }   
+
+        // 1. Erst den RAM synchronisieren
+        this.state.activeTimestampIndex = i;
+        if (this.lastClickedLatLng && this.currentClusterData) {
+            const interpolation = calculatewindSpeeds(this.lastClickedLatLng, this.currentClusterData, this.activeTimestamp);
+            this.state.forecast = interpolation.forecast;
+            this.state.windSpeed = interpolation.windSpeed;
         }
 
-        this.state.activeTimestampIndex = i;
-        this.dispatchEvent(new CustomEvent('model:index-updated', { detail: i }));
+        // 2. Events in logischer Reihenfolge feuern
+        this.dispatchEvent(new CustomEvent('model:timestamp-index-updated', { detail: i }));
+        
+        if (this.lastClickedLatLng && this.currentClusterData) {
+            this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: this.state.forecast }));
+            this.dispatchEvent(new CustomEvent('model:windspeed-updated', { detail: this.state.windSpeed }));            
+        }
     }
 
-    setLastClickedLatLng(latlng) {
+    setIndexMetadata(indexData) {
+        const sortedTimestamps = (indexData.available_timestamps || []).sort();
+        let activeIndex = determineActiveIndex(sortedTimestamps, this.activeTimestamp);
+
+        // 1. Erst den RAM komplett befüllen
+        this.state.availableTimestamps = sortedTimestamps;
+        this.state.activeTimestampIndex = activeIndex;
+        this.state.modelGeneratedAt = indexData.generated_at;
+        this.state.modelCurrentHour = indexData.current_hour;
+
+        if (this.lastClickedLatLng && this.currentClusterData) {
+            const interpolation = calculatewindSpeeds(this.lastClickedLatLng, this.currentClusterData, this.activeTimestamp);
+            this.state.forecast = interpolation.forecast;
+            this.state.windSpeed = interpolation.windSpeed;
+        }
+
+        // 2. Jetzt die Events feuern
+        this.dispatchEvent(new CustomEvent('model:timestamps-updated', { detail: sortedTimestamps }));
+        this.dispatchEvent(new CustomEvent('model:timestamp-index-updated', { detail: activeIndex }));
+        this.dispatchEvent(new CustomEvent('model:model-metadata-updated'));
+
+        if (this.lastClickedLatLng && this.currentClusterData) {
+            this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: this.state.forecast }));
+            this.dispatchEvent(new CustomEvent('model:windspeed-updated', { detail: this.state.windSpeed }));            
+        }
+    }
+
+    setPointData(latlng, cluster) {
+        const interpolation = calculatewindSpeeds(latlng, cluster, this.activeTimestamp);
+
+        // 1. Erst den RAM komplett konsistent machen
         this.state.lastClickedLatLng = latlng;
-        this.dispatchEvent(new CustomEvent('model:location-updated', { detail: latlng }));
-    }
-
-    setCurrentClusterData(cluster) {
         this.state.currentClusterData = cluster;
-        this.dispatchEvent(new CustomEvent('model:cluster-updated', { detail: cluster }));
+        this.state.forecast = interpolation.forecast;
+        this.state.windSpeed = interpolation.windSpeed;
+
+        // 2. Dann die Events abfeuern
+        this.dispatchEvent(new CustomEvent('model:location-updated', { detail: latlng }));
+        this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: interpolation.forecast }));
+        this.dispatchEvent(new CustomEvent('model:windspeed-updated', { detail: interpolation.windSpeed }));
     }
 
-    setIndexMetadata(generatedAt, currentHour) {
-        this.state.modelGeneratedAt = generatedAt;
-        this.state.modelCurrentHour = currentHour;
-        this.dispatchEvent(new CustomEvent('model:metadata-updated'));
-    }
+    removePointData() {
+        this.state.lastClickedLatLng = null;
+        this.state.currentClusterData = null;
+        this.state.forecast = null;
+        this.state.windSpeed = null;
 
-    setwindSpeed(val) {
-        this.state.windSpeed = val;
-        this.dispatchEvent(new CustomEvent('model:interpolated-value-updated', { detail: val }));
+        this.dispatchEvent(new CustomEvent('model:location-updated', { detail: null }));
+        this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: null }));
+        this.dispatchEvent(new CustomEvent('model:windspeed-updated', { detail: null }));
     }
 
     setActiveOverlayUrl(url) {
         this.state.activeOverlayUrl = url;
         this.dispatchEvent(new CustomEvent('model:overlay-url-updated', { detail: url }));
     }
-
-    setforecast(data) {
-        this.state.forecast = data;
-        this.dispatchEvent(new CustomEvent('model:forecast-data-updated', { detail: data }));
-    }
 }
 
-// Export a single, global state instance
 export const weatherModel = new WeatherModel();

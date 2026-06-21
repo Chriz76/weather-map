@@ -98,7 +98,7 @@ export function registerForecastView(map) {
                 self.renderTable(e.detail);
             });
 
-            weatherModel.addEventListener('model:index-updated', () => {
+            weatherModel.addEventListener('model:timestamp-index-updated', () => {
                 if (container.classList.contains('forecast-view--has-data')) {
                     self.highlightActiveForecastHour();
                     self.scrollActiveForecastHourToCenter();

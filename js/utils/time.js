@@ -41,41 +41,44 @@ export function formatIsoOrDateToLocalDisplay(input) {
 }
 
 /**
- * ZENTRALE ZEITLOGIK: Bestimmt den passenden Index für die Timeline.
+ * ZENTRALE ZEITLOGIK: Bestimmt den passenden Index fÃ¼r die Timeline.
  * Sucht bevorzugt nach dem exakten vorherigen Zeitstempel (Zustandserhalt).
- * Falls dieser nicht existiert, wird atomar der zeitlich am nächsten liegende Index ermittelt.
+ * Falls dieser nicht existiert, wird der zeitlich am nÃ¤chsten liegende zukÃ¼nftige Index ermittelt.
  * * @param {string[]} sortedTimestamps - Die sortierten Zeitstempel vom Server
  * @param {string|null} prevActiveTimestamp - Der aktuell im Modell aktive Zeitstempel
  * @returns {number} Der zu setzende aktive Index
  */
 export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
+    // Sicherheitsanker: Leere Listen abfangen
     if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
-    // 1. Blitzschnelle Abkürzung: Wenn der alte Timestamp existiert, nimm direkt dessen Index
+    // 1. Zustandserhalt: Wenn der alte Timestamp existiert, nimm direkt dessen Index
     if (prevActiveTimestamp) {
         const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
         if (exactMatchIndex !== -1) return exactMatchIndex;
     }
 
-    // 2. Fallback in derselben Funktion: Nächsten Zeitstempel zu "jetzt" ermitteln
+    // 2. Fallback fÃ¼r Kaltstart / >24 Stunden InaktivitÃ¤t:
+    // Wir suchen den ERSTEN Eintrag, der JETZT oder in der Zukunft liegt.
     const now = new Date();
-    let closestIndex = 0;
-    let minDiff = Infinity;
-
-    sortedTimestamps.forEach((tKey, idx) => {
+    
+    for (let idx = 0; idx < sortedTimestamps.length; idx++) {
+        const tKey = sortedTimestamps[idx]; // Format: "YYYYMMDD_HH"
         const year = parseInt(tKey.substring(0, 4), 10);
         const month = parseInt(tKey.substring(4, 6), 10) - 1;
         const day = parseInt(tKey.substring(6, 8), 10);
         const hour = parseInt(tKey.substring(9, 11), 10);
 
         const tDate = new Date(Date.UTC(year, month, day, hour, 0, 0));
-        const diff = Math.abs(now - tDate);
-
-        if (diff < minDiff) {
-            minDiff = diff;
-            closestIndex = idx;
+        
+        // Sobald wir einen Zeitschritt finden, der >= "Jetzt" ist, nehmen wir ihn sofort!
+        if (tDate >= now) {
+            return idx;
         }
-    });
+    }
 
-    return closestIndex;
+    // 3. Letzter Rettungsanker (Pipeline-Verzug): 
+    // Sollten alle Stricke reiÃŸen und ALLE Daten in der Vergangenheit liegen,
+    // nimm stur den neuesten verfÃ¼gbaren Eintrag (das Ende der Liste).
+    return sortedTimestamps.length - 1;
 }

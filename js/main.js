@@ -1,9 +1,7 @@
 ﻿import { BASE_URL, lonMin, latMin } from './config.js';
 import { weatherModel } from './weatherModel.js';
 import { initMap } from './map-init.js';
-import { calculatewindSpeeds } from './utils/interpolation.js';
 import { weatherApi } from './weatherApi.js';
-import { determineActiveIndex } from './utils/time.js';
 import { storage } from './utils/storage.js'; // Behalten für Map-State
 
 // Views
@@ -66,39 +64,19 @@ async function syncAppWithServer() {
             return;
         }
 
-        // 2. SORTIERUNG DER LISTE: Direkt an der Quelle nach dem Fetch
-        const timestamps = (indexData.available_timestamps || []).sort();
-        if (timestamps.length === 0) return;
-
-        // 3. Index-Bestimmung über die schnelle Methode
-        let activeIndex = determineActiveIndex(timestamps, weatherModel.activeTimestamp);
-
-        // 4. Bildpfad basierend auf dem errechneten Key ermitteln
-        const activeTimestamp = timestamps[activeIndex];
-        const overlayUrl = await fetchWeatherOverlayUrl(activeTimestamp);
-
-        // Variablen für Punkt-spezifische Daten vorbereiten
-        let clusterData = null;
-        let interpolation = { forecast: null, windSpeed: null };
-
-        // 5. NUR RECHNEN & LADEN, WENN EIN PUNKT AKTIV IST
         if (weatherModel.lastClickedLatLng) {
-            clusterData = await weatherApi.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin });
-            interpolation = calculatewindSpeeds(
-                weatherModel.lastClickedLatLng,
-                clusterData,
-                activeTimestamp
-            );
+            let clusterData = await weatherApi.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin });
+            weatherModel.setIndexMetadata(indexData);
+            weatherModel.setPointData(weatherModel.lastClickedLatLng, clusterData);
+        } else {
+            weatherModel.setIndexMetadata(indexData);
         }
 
-        // 6. ATOMARER STATE-UPDATE: Komplett transparent untereinander weggeschrieben
-        weatherModel.setAvailableTimestamps(timestamps);
-        weatherModel.setActiveTimestampIndex(activeIndex);
-        weatherModel.setIndexMetadata(indexData.generated_at, indexData.current_hour);
-        weatherModel.setCurrentClusterData(clusterData);
+        // 2. Daten laden (Bild & Interpolation)
+        const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+
+        // 3. Store-Zustand transparent aktualisieren
         weatherModel.setActiveOverlayUrl(overlayUrl);
-        weatherModel.setforecast(interpolation.forecast);
-        weatherModel.setwindSpeed(interpolation.windSpeed);
 
     } catch (e) {
         console.error('❌ Error during application synchronization:', e.message);
@@ -135,14 +113,8 @@ window.addEventListener('timeline-change', async (e) => {
     // 2. Daten laden (Bild & Interpolation)
     const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
 
-    const interpolation = weatherModel.lastClickedLatLng && weatherModel.currentClusterData
-        ? calculatewindSpeeds(weatherModel.lastClickedLatLng, weatherModel.currentClusterData, weatherModel.activeTimestamp)
-        : { forecast: null, windSpeed: null };
-
     // 3. Store-Zustand transparent aktualisieren
     weatherModel.setActiveOverlayUrl(overlayUrl);
-    weatherModel.setforecast(interpolation.forecast);
-    weatherModel.setwindSpeed(interpolation.windSpeed);
 });
 
 // MAP EXTENSION: Kartenzustand debounct sichern bei Bewegung
@@ -164,15 +136,8 @@ map.on('click', async function (e) {
         const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin });
         if (lastClusterClickToken !== currentClickToken) return;
 
-        // 2. Forecast Tabelle und Windwert für den ausgewählten Punkt berechnen
-        const interpolation = calculatewindSpeeds(e.latlng, cluster, weatherModel.activeTimestamp);
-
-        // 3. Erst wenn alles bereitsteht: State in einem Rutsch setzen
-        weatherModel.setLastClickedLatLng(e.latlng);
-        weatherModel.setCurrentClusterData(cluster);
-        weatherModel.setforecast(interpolation.forecast);
-        weatherModel.setwindSpeed(interpolation.windSpeed);
-
+        // 2. Erst wenn alles bereitsteht: State in einem Rutsch setzen
+        weatherModel.setPointData(e.latlng, cluster);
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
             console.error('🚨 Error processing map click:', error.message);
@@ -184,8 +149,5 @@ map.on('popupclose', function () {
     lastClusterClickToken = null;
 
     // Direktes, unverschachteltes Ausmisten des Zustands
-    weatherModel.setLastClickedLatLng(null);
-    weatherModel.setCurrentClusterData(null);
-    weatherModel.setforecast(null);
-    weatherModel.setwindSpeed(null);
+    weatherModel.removePointData();
 });

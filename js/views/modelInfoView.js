@@ -11,7 +11,7 @@ export function registerModelInfoView(map) {
     }
 
     // 👈 GEÄNDERT: Wir lauschen direkt am weatherModel auf das neue Event
-    weatherModel.addEventListener('model:metadata-updated', () => {
+    weatherModel.addEventListener('model:model-metadata-updated', () => {
         try {
             let displayStr = '';
 
