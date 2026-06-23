@@ -1,5 +1,6 @@
-/* Forecast table styles */
-.leaflet-weather-table-control {
+/* Forecast table styles - Umgestellt auf BEM-Namensschema */
+
+.forecast-view {
     background: #ffffff;
     display: block;
     width: calc(100vw - 20px);
@@ -7,7 +8,6 @@
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     overflow: hidden;
-
     /* FIX FOR SMOOTH HIDE: initially hidden and collapsed */
     height: 0;
     opacity: 0;
@@ -15,13 +15,12 @@
     border: none;
     box-shadow: none;
     margin-bottom: 0 !important;
-
     /* The transition for smooth expand/collapse */
     transition: height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out, border 0.15s ease-out;
 }
 
 /* IMPORTANT NEW STATE: set by JS when data is loaded */
-.leaflet-weather-table-control.has-data {
+.forecast-view--has-data {
     height: 56px; /* Increased so the inset border of the active cell is not clipped */
     opacity: 1;
     pointer-events: auto; /* Make clickable again */
@@ -32,7 +31,7 @@
 }
 
 /* The scrollable container fills the entire element */
-.forecast-scroll-container {
+.forecast-view__scroll-container {
     width: 100%;
     height: 100%;
     overflow-x: auto;
@@ -41,20 +40,22 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* Minimize scrollbar design */
-.forecast-scroll-container::-webkit-scrollbar {
-    height: 3px;
-}
-.forecast-scroll-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-.forecast-scroll-container::-webkit-scrollbar-thumb {
-    background: #bbb;
-    border-radius: 10px;
-}
+    /* Minimize scrollbar design */
+    .forecast-view__scroll-container::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    .forecast-view__scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .forecast-view__scroll-container::-webkit-scrollbar-thumb {
+        background: #bbb;
+        border-radius: 10px;
+    }
 
 /* Table styling */
-.forecast-table {
+.forecast-view__table {
     border-collapse: collapse;
     width: max-content;
     height: 100%;
@@ -62,7 +63,7 @@
 }
 
 /* Hour cells (reduced cell padding & smaller font to fit more content) */
-.forecast-table th {
+.forecast-view__cell-header {
     min-width: 30px; /* Narrow to allow many hours to fit on the display */
     height: 20px;
     font-size: 10px; /* Compact font */
@@ -72,40 +73,88 @@
     border-bottom: 1px solid #e5e5e5;
     text-align: center;
     vertical-align: middle;
-    padding: 0 2px;  /* Minimal cell padding left and right */
+    padding: 0 2px; /* Minimal cell padding left and right */
     box-sizing: border-box;
 }
 
 /* Wind value cells (reduced padding & smaller font) */
-.forecast-table td {
+.forecast-view__cell-value {
     height: 28px;
     font-size: 11px; /* Slightly reduced font for the nodes */
     font-weight: bold;
     text-align: center;
     vertical-align: middle;
     color: #000000;
-    padding: 0 2px;  /* Minimal cell padding */
+    padding: 0 2px; /* Minimal cell padding */
     border-right: 1px solid rgba(255, 255, 255, 0.25);
     box-sizing: border-box;
 }
 
-/* --- COLOR SCHEME FOR WIND VALUES (named by thresholds, opacity 0.65) --- */
-.w-under-3   { background-color: rgba(230, 255, 255, 0.65) !important; color: #333 !important; }
-.w-under-5   { background-color: rgba(0, 191, 255, 0.65)  !important; color: #fff !important; }
-.w-under-6   { background-color: rgba(0, 255, 204, 0.65)  !important; color: #333 !important; }
-.w-under-7   { background-color: rgba(0, 204, 0, 0.65)    !important; color: #fff !important; }
-.w-under-8   { background-color: rgba(153, 255, 0, 0.65)  !important; color: #333 !important; }
-.w-under-9   { background-color: rgba(255, 255, 0, 0.65)  !important; color: #333 !important; }
-.w-under-10  { background-color: rgba(209, 158, 0, 0.65)  !important; color: #fff !important; }
-.w-under-12  { background-color: rgba(255, 85, 0, 0.65)   !important; color: #fff !important; }
-.w-under-15  { background-color: rgba(255, 0, 0, 0.65)    !important; color: #fff !important; }
-.w-under-20  { background-color: rgba(255, 51, 153, 0.65) !important; color: #fff !important; }
-.w-under-25  { background-color: rgba(153, 0, 204, 0.65)  !important; color: #fff !important; }
-.w-over-25   { background-color: rgba(0, 0, 255, 0.65)    !important; color: #fff !important; }
-
 /* Markiert die aktive Stunde mit einem sauberen Rahmen */
-.active-hour-column {
+.forecast-view__cell--active {
     position: relative;
     /* Nur Rahmen; Hintergrund der Zelle (Farbklassse) soll nicht überschrieben werden */
     box-shadow: inset 0 0 0 2px #0077a4;
+}
+
+
+/* --- COLOR SCHEME FOR WIND VALUES (named by thresholds, opacity 0.65) --- */
+.w-under-3 {
+    background-color: rgba(230, 255, 255, 0.65) !important;
+    color: #333 !important;
+}
+
+.w-under-5 {
+    background-color: rgba(0, 191, 255, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-under-6 {
+    background-color: rgba(0, 255, 204, 0.65) !important;
+    color: #333 !important;
+}
+
+.w-under-7 {
+    background-color: rgba(0, 204, 0, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-under-8 {
+    background-color: rgba(153, 255, 0, 0.65) !important;
+    color: #333 !important;
+}
+
+.w-under-9 {
+    background-color: rgba(255, 255, 0, 0.65) !important;
+    color: #333 !important;
+}
+
+.w-under-10 {
+    background-color: rgba(209, 158, 0, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-under-12 {
+    background-color: rgba(255, 85, 0, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-under-15 {
+    background-color: rgba(255, 0, 0, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-under-20 {
+    background-color: rgba(255, 51, 153, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-under-25 {
+    background-color: rgba(153, 0, 204, 0.65) !important;
+    color: #fff !important;
+}
+
+.w-over-25 {
+    background-color: rgba(0, 0, 255, 0.65) !important;
+    color: #fff !important;
 }

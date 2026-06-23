@@ -1,5 +1,6 @@
-/* Logo control (moved into Leaflet control .leaflet-app-logo) */
-.leaflet-app-logo {
+/* Logo View Styles - Umgestellt auf BEM-Namensschema */
+
+.logo-view {
     /* Opaque background for the logo control */
     background: #ffffff; /* fully opaque white */
     /* Compact vertical padding */
@@ -9,9 +10,9 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* NEU: Verhindert, dass der Link blau/unterstrichen wird und hält das Layout kompakt */
-.leaflet-app-logo .logo-link,
-.leaflet-app-logo .logo-link:visited {
+/* Verhindert, dass der Link blau/unterstrichen wird und hält das Layout kompakt */
+.logo-view__link,
+.logo-view__link:visited {
     text-decoration: none;
     color: inherit;
     outline: none;
@@ -19,14 +20,14 @@
     display: flex; /* Sorgt dafür, dass der Link den gesamten inneren Bereich ausfüllt */
 }
 
-/* NEU: Ein dezenter Hover-Effekt, damit Nutzer merken, dass das Logo klickbar ist */
-.leaflet-app-logo .logo-link:hover,
-.leaflet-app-logo .logo-link:focus {
-    opacity: 0.85;
-    cursor: pointer;
-}
+    /* Ein dezenter Hover-Effekt, damit Nutzer merken, dass das Logo klickbar ist */
+    .logo-view__link:hover,
+    .logo-view__link:focus {
+        opacity: 0.85;
+        cursor: pointer;
+    }
 
-.leaflet-app-logo .logo-container {
+.logo-view__container {
     display: flex;
     /* keep items the same height so svg can match top/bottom of text */
     align-items: center;
@@ -34,13 +35,13 @@
 }
 
 /* Make the svg icon match the combined height of the two text lines */
-.leaflet-app-logo .logo-icon {
+.logo-view__icon {
     width: auto;
     height: 30px; /* target combined text height (approx) */
     display: block;
 }
 
-.leaflet-app-logo .logo-text {
+.logo-view__text-box {
     display: flex;
     flex-direction: column;
     /* ensure the text block has same height as the svg */
@@ -48,7 +49,7 @@
     justify-content: space-between; /* h1 top, h2 bottom */
 }
 
-.leaflet-app-logo .logo-text h1 {
+.logo-view__title {
     font-size: 17px;
     line-height: 17px;
     margin: 0;
@@ -57,7 +58,7 @@
     letter-spacing: -0.3px;
 }
 
-.leaflet-app-logo .logo-text h2 {
+.logo-view__subtitle {
     font-size: 9.5px;
     line-height: 10px;
     margin: 0;

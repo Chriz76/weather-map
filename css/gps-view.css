@@ -1,0 +1,61 @@
+/* ==========================================================================
+   GPS VIEW COMPONENT (Scoped to .gps-view)
+   ========================================================================== */
+
+/* Der Button-Container von Leaflet */
+.gps-view {
+    width: 30px !important;
+    height: 30px !important;
+    
+    /* Absolute Zentrierung für SVGs */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Überschreibt störende Leaflet-Standardwerte */
+    line-height: 30px !important; 
+    padding: 0 !important;
+    margin: 0 !important;
+    
+    color: #555;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Hover-Zustand */
+.gps-view:hover {
+    color: #0077a4;
+    background-color: #f4f4f4;
+}
+
+/* Aktiver/Gedrückter Zustand (während das Modell sucht) */
+.gps-view--active {
+    color: #0077a4 !important;
+    background-color: #eef7fc !important;
+    /* Drückt den Button optisch leicht nach innen */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important; 
+    
+    /* Ruft die lokal gescoopte Pulsier-Animation auf */
+    animation: gps-view--pulse 1.5s infinite ease-in-out;
+    pointer-events: none; /* Verhindert Mehrfachklicks während der Suche */
+}
+
+/* * LOKAL GESCOOPTE KEYFRAMES
+ * Sorgt für ein sanftes Pulsieren und leichtes Skalieren des Fadenkreuzes,
+ * ohne dass das SVG eiert oder aus der Mitte springt.
+ */
+@keyframes gps-view--pulse {
+    0% { 
+        opacity: 0.4; 
+        transform: scale(0.92); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+    100% { 
+        opacity: 0.4; 
+        transform: scale(0.92); 
+    }
+}

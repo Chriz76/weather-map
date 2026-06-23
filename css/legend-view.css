@@ -1,4 +1,6 @@
-.leaflet-legend {
+/* Legend View Styles - Umgestellt auf BEM-Namensschema */
+
+.legend-view {
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 6px; /* Etwas knackigerer Radius passend zur kleineren Box */
@@ -11,7 +13,7 @@
     box-sizing: border-box;
 }
 
-.leaflet-legend .legend-title {
+.legend-view__title {
     font-size: 11px; /* Minimal kleiner für kompaktere Optik */
     font-weight: 700;
     text-align: center;
@@ -20,14 +22,14 @@
     text-transform: lowercase;
 }
 
-.leaflet-legend .legend-body {
+.legend-view__body {
     display: flex;
     align-items: stretch;
     /* Further reduce gap between color bar and labels by 1px */
     gap: 4px;
 }
 
-.leaflet-legend .color-bar {
+.legend-view__color-bar {
     display: flex;
     flex-direction: column;
     width: 18px; /* Etwas schlanker für Leaflet-Optik */
@@ -37,16 +39,16 @@
     border: 1px solid rgba(0, 0, 0, 0.1); /* Leichter Rand um die Farbleiste */
 }
 
-.leaflet-legend .swatch {
+.legend-view__swatch {
     flex: 1;
     width: 100%;
 }
 
-.leaflet-legend .labels-column {
+.legend-view__labels-column {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 240px; /* Muss exakt der Höhe der .color-bar entsprechen */
+    height: 240px; /* Muss exakt der Höhe der .legend-view__color-bar entsprechen */
     font-size: 11px;
     font-weight: 600;
     color: #444444; /* Dunkelgrau für guten Kontrast auf Weiß */
@@ -54,7 +56,7 @@
     padding: 0;
 }
 
-.leaflet-legend .label-item {
+.legend-view__label-item {
     display: flex;
     align-items: center;
     height: 0;
