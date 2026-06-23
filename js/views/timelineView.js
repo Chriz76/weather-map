@@ -1,12 +1,17 @@
 ﻿import { weatherModel } from '../weatherModel.js';
 import { formatToLocalTimeString } from '../utils/time.js';
 
+/**
+ * Registers the timeline control and binds model synchronization events.
+ * @param {L.Map} map Leaflet map instance.
+ * @returns {void}
+ */
 export function registerTimelineView(map) {
     // 1. Einheitlicher Leaflet-Klassenname: TimelineView
     L.Control.TimelineView = L.Control.extend({
         options: { position: 'bottomleft' },
         onAdd: function (map) {
-            // 2. Hauptklasse auf das BEM-Muster umgestellt
+            // 2. Main class switched to BEM pattern
             const container = L.DomUtil.create('div', 'timeline-view');
             L.DomEvent.disableClickPropagation(container);
             L.DomEvent.disableScrollPropagation(container);
@@ -14,7 +19,7 @@ export function registerTimelineView(map) {
             try {
                 const totalTimestamps = weatherModel.availableTimestamps.length;
 
-                // 3. HTML-Struktur auf BEM-Klassen umgestellt (IDs entfernt, Getter genutzt)
+                // 3. HTML structure switched to BEM classes (IDs removed, getters used)
                 container.innerHTML = `
           <div class="timeline-view__time-display">--:--</div>
           <div class="timeline-view__slider-wrapper">
@@ -36,10 +41,14 @@ export function registerTimelineView(map) {
                 const btnNext = container.querySelector('.timeline-view__nav-btn--next');
                 const timeDisplay = container.querySelector('.timeline-view__time-display');
 
-                // 4. Zentrale, interne Update-Funktion für die Zeitanzeige
+                // 4. Central, internal update function for time display
+                /**
+                 * Renders the currently active timestamp in local time.
+                 * @returns {void}
+                 */
                 const updateTimeDisplay = () => {
                     if (!timeDisplay) return;
-                    const currentKey = weatherModel.activeTimestamp; // Nutzt den bequemen Modell-Getter
+                    const currentKey = weatherModel.activeTimestamp; // Uses convenient model getter
                     if (currentKey) {
                         timeDisplay.innerText = formatToLocalTimeString(currentKey);
                     } else {
@@ -47,10 +56,10 @@ export function registerTimelineView(map) {
                     }
                 };
 
-                // Initiale Anzeige beim Laden direkt setzen
+                // Set initial display on load directly
                 updateTimeDisplay();
 
-                // --- Event-Listener für Benutzer-Aktionen ---
+                // --- Event listeners for user actions ---
 
                 slider.addEventListener('input', (e) => {
                     const idx = parseInt(e.target.value, 10);
@@ -82,7 +91,7 @@ export function registerTimelineView(map) {
                     }
                 });
 
-                // --- Event-Listener für Zustandsänderungen direkt aus dem Modell ---
+                // --- Event listeners for state changes directly from model ---
 
                 weatherModel.addEventListener('model:timestamps-updated', () => {
                     if (!slider) return;
@@ -106,7 +115,7 @@ export function registerTimelineView(map) {
         }
     });
 
-    // 5. Factory-Methode und Registrierung angepasst
+    // 5. Factory method and registration adapted
     L.control.timelineView = function (options) { return new L.Control.TimelineView(options); };
     map.timelineViewControl = L.control.timelineView().addTo(map);
 }

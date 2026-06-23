@@ -3,13 +3,20 @@
 .marker-popup {
     text-align: center;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-width: 110px;
-    padding: 2px 4px;
+    padding: 2px 3px;
+    width: fit-content;
+}
+
+.marker-popup__wind-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 1px;
 }
 
 .marker-popup__value-box {
     color: #333333;
-    margin-bottom: 2px;
 }
 
 .marker-popup__value {
@@ -21,6 +28,29 @@
     font-size: 12px;
     font-weight: 600;
     margin-left: 2px;
+}
+
+.marker-popup__direction {
+    display: flex;                /* Von inline-flex auf flex geändert */
+    justify-content: center;
+    align-items: center;
+    width: 16px;                  /* Fest auf 16px gesetzt (passend zu den 16px font-size) */
+    height: 16px;                 /* Absolut quadratisch */
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1;
+    color: #1f2933;
+    transform: rotate(var(--dir-deg));
+    transform-origin: center center; /* Explizite Achsen für den Drehpunkt */
+    margin: 0;                    /* Margin auf 0, da das Alignment über das parent flex (gap: 6px) läuft */
+    
+    /* Schützt vor ungewollten Verschiebungen durch Text-Eigenschaften */
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.marker-popup__direction--unknown {
+    transform: none;
 }
 
 .marker-popup__coords {
@@ -36,5 +66,5 @@
 }
 
 .leaflet-popup-content {
-    margin: 8px 12px !important;
+    margin: 6px 8px !important;
 }

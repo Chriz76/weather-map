@@ -1,21 +1,26 @@
 ﻿import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString } from '../utils/time.js';
 import { weatherModel } from '../weatherModel.js'; // 👈 Wichtig: Modell importieren!
 
+/**
+ * Registers the model metadata info renderer.
+ * @param {L.Map} map Leaflet map instance.
+ * @returns {void}
+ */
 export function registerModelInfoView(map) {
     const infoEl = document.querySelector('.model-info');
     if (!infoEl) return;
 
-    // Standard-Text setzen, falls die API noch lädt
+    // Set default text if API still loading
     if (infoEl.innerText === '--' || !infoEl.innerText) {
         infoEl.innerText = 'Model run: Loading...';
     }
 
-    // 👈 GEÄNDERT: Wir lauschen direkt am weatherModel auf das neue Event
+    // 👈 CHANGED: We listen directly on weatherModel for the new event
     weatherModel.addEventListener('model:model-metadata-updated', () => {
         try {
             let displayStr = '';
 
-            // Werte direkt über die Getter aus dem Store lesen
+            // Read values directly via getters from store
             if (weatherModel.modelGeneratedAt) {
                 displayStr += `Updated ${formatIsoOrDateToLocalDisplay(weatherModel.modelGeneratedAt)} `;
             }

@@ -1,22 +1,75 @@
 ﻿let activeSpotMarker = null;
 
 /**
- * REINER HTML-GENERATOR: Erstellt den Popup-Inhalt (im BEM-Design)
+ * Normalizes different wind payload shapes into one object.
+ * @param {number|{speed:number|null,direction:number|null}|null} windData Wind payload from model.
+ * @returns {{speed:number|null,direction:number|null}} Normalized wind payload.
  */
-function createPopupHtml(formattedValue, coordsDisplay) {
+function normalizeWindData(windData) {
+        if (typeof windData === 'number') {
+                return {
+                        speed: Number.isFinite(windData) ? windData : null,
+                        direction: null
+                };
+        }
+
+        if (!windData || typeof windData !== 'object') {
+                return { speed: null, direction: null };
+        }
+
+        return {
+                speed: Number.isFinite(windData.speed) ? windData.speed : null,
+                direction: Number.isFinite(windData.direction) ? ((windData.direction % 360) + 360) % 360 : null
+        };
+}
+
+/**
+ * Builds popup HTML for a direction icon with continuous rotation.
+ * @param {number|null} direction Wind direction in degrees.
+ * @returns {string} Direction icon HTML.
+ */
+function renderDirectionIcon(direction) {
+    if (direction === null) {
+        return '<strong class="marker-popup__direction marker-popup__direction--unknown">?</strong>';
+    }
+
+    const normalizedDirection = ((direction % 360) + 360) % 360;
+    const iconRotation = ((normalizedDirection + 270) % 360);
+    return `<strong class="marker-popup__direction" style="--dir-deg:${iconRotation}deg">➤</strong>`;
+}
+
+/**
+ * Creates popup HTML content for the marker.
+ * @param {string} formattedValue Preformatted wind speed value.
+ * @param {number|null} direction Wind direction in degrees.
+ * @param {string} coordsDisplay Preformatted coordinate text.
+ * @returns {string} Popup HTML string.
+ */
+function createPopupHtml(formattedValue, direction, coordsDisplay) {
+        const directionDataAttr = direction === null ? '' : String(direction);
+        const directionIcon = renderDirectionIcon(direction);
+
     return `
-    <div class="marker-popup">
-      <div class="marker-popup__value-box">
-        <strong class="marker-popup__value">${formattedValue}</strong>
-        <span class="marker-popup__unit">kts</span>
-      </div>
+        <div class="marker-popup" data-direction="${directionDataAttr}">
+                        <div class="marker-popup__wind-line">
+                                ${directionIcon}
+                                <div class="marker-popup__value-box">
+                                        <strong class="marker-popup__value">${formattedValue}</strong>
+                                        <span class="marker-popup__unit">kts</span>
+                                </div>
+                        </div>
       <div class="marker-popup__coords">${coordsDisplay}</div>
     </div>
   `;
 }
 
 /**
- * NEUE EXTRAHIERTE HILFSFUNKTION: Erstellt die Leaflet-Instanz atomar an einem Ort
+ * Creates the Leaflet marker instance and opens its popup.
+ * @param {L.Map} map Leaflet map instance.
+ * @param {number} lat Latitude.
+ * @param {number} lng Longitude.
+ * @param {string} popupContent Popup HTML content.
+ * @returns {void}
  */
 function createMarker(map, lat, lng, popupContent) {
     activeSpotMarker = L.circleMarker([lat, lng], {
@@ -31,7 +84,8 @@ function createMarker(map, lat, lng, popupContent) {
 }
 
 /**
- * Hilfsfunktion: Holt die aktuellen Koordinaten formatiert als Text aus dem Marker
+ * Reads coordinates from the existing marker and formats them.
+ * @returns {string} Formatted coordinates.
  */
 function getExistingCoordsDisplay() {
     if (!activeSpotMarker) return '0.0000, 0.0000';
@@ -40,30 +94,48 @@ function getExistingCoordsDisplay() {
 }
 
 /**
- * Hilfsfunktion: Holt den aktuellen reinen Zahlenwert aus dem bestehenden HTML-Inhalt des Popups
+ * Reads current wind values from the existing popup content.
+ * @returns {{speedDisplay:string,direction:number|null}} Current speed text and direction.
  */
-function getExistingValueDisplay() {
-    if (!activeSpotMarker) return '?';
+function getExistingWindDisplay() {
+    if (!activeSpotMarker) return { speedDisplay: '?', direction: null };
+
     const popup = activeSpotMarker.getPopup();
-    if (!popup) return '?';
+    if (!popup) return { speedDisplay: '?', direction: null };
     
     const container = document.createElement('div');
     container.innerHTML = popup.getContent();
+
     const valueEl = container.querySelector('.marker-popup__value');
-    return valueEl ? valueEl.textContent : '?';
+    const popupEl = container.querySelector('.marker-popup');
+
+    const directionRaw = popupEl ? Number(popupEl.getAttribute('data-direction')) : NaN;
+    const direction = Number.isFinite(directionRaw) ? directionRaw : null;
+
+    return {
+        speedDisplay: valueEl ? valueEl.textContent : '?',
+        direction
+    };
 }
 
 
 // --- EXPORTIERTE HAUPTFUNKTIONEN (Jetzt wunderbar schlank!) ---
 
-export function updateMapMarkerWindspeed(map, value) {
+/**
+ * Updates the marker popup wind speed while preserving current coordinates.
+ * @param {L.Map} map Leaflet map instance.
+ * @param {number|{speed:number|null,direction:number|null}|null} windData Interpolated wind payload.
+ * @returns {void}
+ */
+export function updateMapMarkerWindspeed(map, windData) {
     try {
-        const formattedValue = (value === null || isNaN(value)) ? '?' : value.toFixed(1);
+        const normalized = normalizeWindData(windData);
+        const formattedValue = (normalized.speed === null || isNaN(normalized.speed)) ? '?' : normalized.speed.toFixed(1);
         const coordsDisplay = getExistingCoordsDisplay();
-        const popupContent = createPopupHtml(formattedValue, coordsDisplay);
+        const popupContent = createPopupHtml(formattedValue, normalized.direction, coordsDisplay);
 
         if (!activeSpotMarker) {
-            createMarker(map, 0, 0, popupContent); // Nutzt die extrahierte Funktion
+            createMarker(map, 0, 0, popupContent);
         } else {
             activeSpotMarker.setPopupContent(popupContent);
         }
@@ -72,14 +144,21 @@ export function updateMapMarkerWindspeed(map, value) {
     }
 }
 
+/**
+ * Updates marker location while preserving current wind speed text.
+ * @param {L.Map} map Leaflet map instance.
+ * @param {number} lat Latitude.
+ * @param {number} lng Longitude.
+ * @returns {void}
+ */
 export function updateMapMarkerLocation(map, lat, lng) {
     try {
         const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        const formattedValue = getExistingValueDisplay();
-        const popupContent = createPopupHtml(formattedValue, coordsDisplay);
+        const existingWind = getExistingWindDisplay();
+        const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.direction, coordsDisplay);
 
         if (!activeSpotMarker) {
-            createMarker(map, lat, lng, popupContent); // Nutzt die extrahierte Funktion
+            createMarker(map, lat, lng, popupContent);
         } else {
             activeSpotMarker.setLatLng([lat, lng]);
             activeSpotMarker.setPopupContent(popupContent);
@@ -94,6 +173,11 @@ export function updateMapMarkerLocation(map, lat, lng) {
     }
 }
 
+/**
+ * Removes the active spot marker from the map.
+ * @param {L.Map} map Leaflet map instance.
+ * @returns {void}
+ */
 export function clearMarker(map) {
     if (activeSpotMarker) {
         map.removeLayer(activeSpotMarker);

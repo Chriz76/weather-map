@@ -1,3 +1,8 @@
+/**
+ * Converts a model timestamp key to local date and time string.
+ * @param {string} timestampStr Timestamp key in format YYYYMMDD_HH.
+ * @returns {string} Localized date/time representation.
+ */
 export function formatToLocalDateTimeString(timestampStr) {
     try {
         const year = parseInt(timestampStr.substring(0, 4), 10);
@@ -13,6 +18,11 @@ export function formatToLocalDateTimeString(timestampStr) {
     }
 }
 
+/**
+ * Converts a model timestamp key to local time string.
+ * @param {string} timestampStr Timestamp key in format YYYYMMDD_HH.
+ * @returns {string} Localized time representation.
+ */
 export function formatToLocalTimeString(timestampStr) {
     try {
         const year = parseInt(timestampStr.substring(0, 4), 10);
@@ -28,7 +38,11 @@ export function formatToLocalTimeString(timestampStr) {
     }
 }
 
-// Format an ISO date string or Date object to local display "DD.MM. HH:MM"
+/**
+ * Formats an ISO date string or Date object to local display text.
+ * @param {string|Date} input ISO date string or Date instance.
+ * @returns {string} Localized short display string.
+ */
 export function formatIsoOrDateToLocalDisplay(input) {
     try {
         const d = (input instanceof Date) ? input : new Date(input);
@@ -41,25 +55,25 @@ export function formatIsoOrDateToLocalDisplay(input) {
 }
 
 /**
- * ZENTRALE ZEITLOGIK: Bestimmt den passenden Index für die Timeline.
- * Sucht bevorzugt nach dem exakten vorherigen Zeitstempel (Zustandserhalt).
- * Falls dieser nicht existiert, wird der zeitlich am nächsten liegende zukünftige Index ermittelt.
- * * @param {string[]} sortedTimestamps - Die sortierten Zeitstempel vom Server
- * @param {string|null} prevActiveTimestamp - Der aktuell im Modell aktive Zeitstempel
- * @returns {number} Der zu setzende aktive Index
+ * Determines the active timeline index after metadata updates.
+ * Prefers the previous active timestamp when still available, otherwise picks
+ * the nearest future timestamp, or the newest available fallback.
+ * @param {string[]} sortedTimestamps Sorted timestamp keys from the backend.
+ * @param {string|null} prevActiveTimestamp Previously selected timestamp.
+ * @returns {number} Index that should become active.
  */
 export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
-    // Sicherheitsanker: Leere Listen abfangen
+    // Safety anchor: Catch empty lists
     if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
-    // 1. Zustandserhalt: Wenn der alte Timestamp existiert, nimm direkt dessen Index
+    // 1. State preservation: If old timestamp exists, take its index directly
     if (prevActiveTimestamp) {
         const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
         if (exactMatchIndex !== -1) return exactMatchIndex;
     }
 
-    // 2. Fallback für Kaltstart / >24 Stunden Inaktivität:
-    // Wir suchen den ERSTEN Eintrag, der JETZT oder in der Zukunft liegt.
+    // 2. Fallback for cold start / >24 hours inactivity:
+    // We search for first entry that is now or in future.
     const now = new Date();
     
     for (let idx = 0; idx < sortedTimestamps.length; idx++) {
@@ -71,14 +85,14 @@ export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
 
         const tDate = new Date(Date.UTC(year, month, day, hour, 0, 0));
         
-        // Sobald wir einen Zeitschritt finden, der >= "Jetzt" ist, nehmen wir ihn sofort!
+        // As soon as we find a time step >= 'now', take it immediately!
         if (tDate >= now) {
             return idx;
         }
     }
 
-    // 3. Letzter Rettungsanker (Pipeline-Verzug): 
-    // Sollten alle Stricke reißen und ALLE Daten in der Vergangenheit liegen,
-    // nimm stur den neuesten verfügbaren Eintrag (das Ende der Liste).
+    // 3. Last resort (pipeline delay):
+    // If all else fails and ALL data is in past,
+    // stubbornly take newest available entry (end of list).
     return sortedTimestamps.length - 1;
 }

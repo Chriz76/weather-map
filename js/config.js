@@ -1,4 +1,6 @@
-export const BASE_URL = "https://chriz76.github.io/weather-data/";
+export const BASE_URL = "https://d2rucdata.netlify.app/";
+
+export const GRID_CELL_SIZE = 1.0;
 
 export const imageBounds = [
     [43.0440, -4.1616],

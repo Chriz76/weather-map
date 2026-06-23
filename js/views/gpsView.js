@@ -1,5 +1,11 @@
 import { weatherModel } from '../weatherModel.js';
 
+/**
+ * Registers a GPS control button and binds locating state updates.
+ * @param {L.Map} map Leaflet map instance.
+ * @param {Function} onGpsClick Callback triggered on control click.
+ * @returns {void}
+ */
 export function registerGpsView(map, onGpsClick) {
     const GpsControl = L.Control.extend({
         options: {
@@ -22,7 +28,7 @@ export function registerGpsView(map, onGpsClick) {
             button.title = 'Find my location';
             button.style.cursor = 'pointer';
 
-            // Klick an den Controller (main.js) weitergeben
+            // Pass click to controller (main.js)
             L.DomEvent.on(button, 'click', (e) => {
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
@@ -30,7 +36,7 @@ export function registerGpsView(map, onGpsClick) {
                 if (onGpsClick) onGpsClick();
             });
 
-            // Auf Zustandsänderungen im Modell reagieren
+            // React to state changes in model
             weatherModel.addEventListener('model:locating-changed', (e) => {
                 const isLoading = e.detail;
                 if (isLoading) {

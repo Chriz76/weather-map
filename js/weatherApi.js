@@ -1,6 +1,8 @@
 export const weatherApi = {
     /**
-     * 1. Lädt die zentrale index.json
+    * Loads the central index.json metadata file.
+    * @param {string} baseUrl Base URL where weather assets are hosted.
+    * @returns {Promise<Object>} Parsed index payload.
      */
     async fetchIndex(baseUrl) {
         const response = await fetch(`${baseUrl}index.json`, { cache: 'no-cache' });
@@ -9,7 +11,10 @@ export const weatherApi = {
     },
 
     /**
-     * 2. Berechnet anhand von Lat/Lng und den Config-Grenzen das richtige Cluster
+        * Resolves the matching grid-cluster file for a given map click location.
+        * @param {{lat:number,lng:number}|null} latlng Geographic position.
+        * @param {{BASE_URL:string,lonMin:number,latMin:number,gridCellSize:number}|null} config Runtime map config.
+        * @returns {Promise<Object|null>} Cluster data or null when input is incomplete.
      */
     async fetchCluster(latlng, config) {
         if (!latlng || !config) return null;
@@ -17,9 +22,8 @@ export const weatherApi = {
         const clickLat = latlng.lat;
         const clickLng = latlng.lng;
 
-        // Die mathematische Logik nutzt nun die übergebenen Config-Werte
-        const col = Math.floor((clickLng - config.lonMin) / 2.0);
-        const row = Math.floor((clickLat - config.latMin) / 2.0);
+        const col = Math.floor((clickLng - config.lonMin) / config.gridCellSize);
+        const row = Math.floor((clickLat - config.latMin) / config.gridCellSize);
         const clusterUrl = `${config.BASE_URL}grid_cluster/cluster_${col}_${row}.json`;
 
         const response = await fetch(clusterUrl, { cache: 'no-cache' });
@@ -34,7 +38,10 @@ export const weatherApi = {
     },
 
     /**
-     * 3. Lädt das Wetter-Bild als Blob (für den ETag-Check)
+        * Loads the weather image for a timestamp as a Blob.
+        * @param {string} timestamp Timestamp key in format YYYYMMDD_HH.
+        * @param {string} baseUrl Base URL where weather assets are hosted.
+        * @returns {Promise<Blob>} Downloaded image blob.
      */
     async fetchWeatherImageBlob(timestamp, baseUrl) {
         const imageUrl = `${baseUrl}${timestamp}Z.png`;
