@@ -18,7 +18,7 @@ export function registerForecastView(map) {
         }
 
         const normalizedDirection = ((direction % 360) + 360) % 360;
-        const iconRotation = ((normalizedDirection + 270) % 360);
+        const iconRotation = ((normalizedDirection + 90) % 360);
         return `<span class="forecast-view__dir-icon" style="--dir-deg:${iconRotation}deg">➤</span>`;
     }
 

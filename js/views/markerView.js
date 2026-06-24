@@ -34,7 +34,7 @@ function renderDirectionIcon(direction) {
     }
 
     const normalizedDirection = ((direction % 360) + 360) % 360;
-    const iconRotation = ((normalizedDirection + 270) % 360);
+    const iconRotation = ((normalizedDirection + 90) % 360);
     return `<strong class="marker-popup__direction" style="--dir-deg:${iconRotation}deg">➤</strong>`;
 }
 
