@@ -142,6 +142,13 @@ map.on('moveend', () => {
     });
 });
 
+/**
+ * Handles Leaflet map click events by loading the corresponding grid cluster
+ * and updating the weather model for the clicked location.
+ * @param {Object} e Leaflet event object.
+ * @param {{lat:number,lng:number}} e.latlng Clicked geographic coordinates.
+ * @returns {Promise<void>}
+ */
 map.on('click', async function (e) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
@@ -167,6 +174,13 @@ map.on('popupclose', function () {
     weatherModel.removePointData();
 });
 
+/**
+ * Handles successful browser geolocation events by loading the
+ * matching cluster and updating the map view.
+ * @param {Object} e Leaflet locationfound event object.
+ * @param {{lat:number,lng:number}} e.latlng Found geographic coordinates.
+ * @returns {Promise<void>}
+ */
 map.on('locationfound', async function (e) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
