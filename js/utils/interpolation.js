@@ -1,13 +1,12 @@
-﻿/**
- * Extracts the hour string from a timeline key.
+﻿import { formatToLocalTimeString } from './time.js';
+
+/**
+ * Extracts the hour string from a timeline key and converts it to local time.
  * @param {string} tKey Timeline key in the form "YYYYMMDD_HH".
- * @returns {string} Two-digit hour portion of the timeline key.
+ * @returns {string} Localized hour portion of the timeline key.
  */
 function getDisplayHour(tKey) {
-    // Falls tKey das Format "YYYYMMDD_HH" hat, ist das der schnellste Weg (unter 0.1ms):
-    return tKey.slice(-2);
-    // Falls du zwingend das alte Verhalten brauchst, entkommentiere die nächste Zeile:
-    // return formatToLocalTimeString(tKey).split(':')[0];
+    return formatToLocalTimeString(tKey).split(':')[0];
 }
 
 /**
