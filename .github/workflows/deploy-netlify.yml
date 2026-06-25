@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - mvc # Triggered die Action nur bei Änderungen auf dem Branch "mvc"
-workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
+  workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
 
 jobs:
   deploy:
