@@ -1,0 +1,28 @@
+name: Deploy mvc Branch to Netlify
+
+on:
+  push:
+    branches:
+      - mvc # Triggered die Action nur bei Änderungen auf dem Branch "mvc"
+workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Code aus dem Repository auschecken
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Direkt zu Netlify hochladen (ohne Node.js oder Build-Schritt)
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: '.' # '.' bedeutet, dass das gesamte Hauptverzeichnis hochgeladen wird
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy mvc branch from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 78531f6c-d42b-49c1-b17f-db88a954912d
