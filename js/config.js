@@ -1,4 +1,4 @@
-export const BASE_URL = "https://d2rucdata.netlify.app/";
+export const BASE_URL = "https://winddata.pages.dev/";
 
 export const GRID_CELL_SIZE = 1.0;
 
