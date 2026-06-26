@@ -1,0 +1,25 @@
+name: Deploy mvc Branch to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - mvc # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
+  workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Code aus dem Repository auschecken
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Direkt zu Cloudflare Pages hochladen
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          accountId: c728452fcd5090f3d7f2bacc5e75fcd2
+          projectName: 'windapp-preview' # Der Name deines Cloudflare-Projekts
+          directory: '.'         # '.' bedeutet, dass das gesamte Hauptverzeichnis hochgeladen wird
