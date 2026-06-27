@@ -27,6 +27,27 @@
     <script type="module" src="js/main.js"></script>
     
     <div class="model-info">Model run: Loading...</div>
-
+<script>
+  // Prüfen, ob der Debug-Modus in der URL aktiv ist
+  if (new URLSearchParams(window.location.search).get('debug') === 'true') {
+    // 1. Eruda Skript dynamisch nachladen
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    document.body.appendChild(script);
+    
+    // 2. Initialisieren, sobald das Skript geladen ist
+    script.onload = function () {
+      eruda.init({
+        theme: 'dark',
+        defaults: {
+          displaySize: 50, // Macht das Fenster standardmäßig auf halbe Bildschirmhöhe
+          transparency: 90
+        }
+      });
+      console.log('Eruda DevTools erfolgreich geladen. Viel Spaß beim Debuggen!');
+    };
+  }
+</script>
+    
 </body>
 </html>
