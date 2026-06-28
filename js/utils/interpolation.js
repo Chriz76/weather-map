@@ -1,4 +1,4 @@
-﻿import { formatToLocalTimeString } from './time.js';
+import { formatToLocalTimeString } from './time.js';
 
 /**
  * Extracts the hour string from a timeline key and converts it to local time.
@@ -10,12 +10,12 @@ function getDisplayHour(tKey) {
 }
 
 /**
- * Interpolates wind speed and direction for a clicked location and builds
+ * Interpolates wind speed, direction, and gusts for a clicked location and builds
  * a forecast array for every timestamp in the cluster payload.
  * @param {{lat:number,lng:number}} latlng Clicked map coordinates.
- * @param {{lats:number[],lons:number[],timeline:Object<string,{speeds:Array<number|undefined>,dirs:Array<number|null|undefined>}>}} cluster Cluster payload with grid point coordinates and timeline arrays.
+ * @param {{lats:number[],lons:number[],timeline:Object<string,{speeds:Array<number|undefined>,dirs:Array<number|null|undefined>,gusts:Array<number|undefined>}>}} cluster Cluster payload with grid point coordinates and timeline arrays.
  * @param {string|null} activeTimestamp Selected timestamp key or null to use the first available timestamp.
- * @returns {{forecast:Array<{hour:string,wind:number,direction:number|null,fullKey:string}>|null,windData:{speed:number|null,direction:number|null}|null}} Interpolation result.
+ * @returns {{forecast:Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}>|null,windData:{speed:number|null,gust:number|null,direction:number|null}|null}} Interpolation result.
  */
 export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
     try {
@@ -72,9 +72,9 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
         // ---------------------------------------------------------------------
         // REINE MATHEMATIK ALS INLINE-SCHLEIFEN-HELPER
         // ---------------------------------------------------------------------
-        const calcScalar = (speeds) => {
-            if (exactMatch) return speeds[idx1] || 0;
-            return ((speeds[idx1] || 0) * w1 + (speeds[idx2] || 0) * w2 + (speeds[idx3] || 0) * w3) / sumW;
+        const calcScalar = (values) => {
+            if (exactMatch) return values[idx1] || 0;
+            return ((values[idx1] || 0) * w1 + (values[idx2] || 0) * w2 + (values[idx3] || 0) * w3) / sumW;
         };
 
         const calcDirection = (dirs) => {
@@ -97,8 +97,9 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
         };
 
         // 2. Interpolation für den AKTUELLEN Zeitschritt (Map-Marker)
-        const currentTimeline = cluster.timeline[currentTimeKey] || { speeds: [], dirs: [] };
+        const currentTimeline = cluster.timeline[currentTimeKey] || { speeds: [], dirs: [], gusts: [] };
         const interpolatedSpeed = calcScalar(currentTimeline.speeds);
+        const interpolatedGust = calcScalar(currentTimeline.gusts || []);
         const interpolatedDirection = calcDirection(currentTimeline.dirs);
 
         // 3. Interpolation über die GESAMTE Timeline (Forecast-Tabelle)
@@ -107,14 +108,16 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
 
         for (let k = 0; k < len; k++) {
             const tKey = timelineKeys[k];
-            const tData = cluster.timeline[tKey] || { speeds: [], dirs: [] };
+            const tData = cluster.timeline[tKey] || { speeds: [], dirs: [], gusts: [] };
             
             const tWindInterpolated = calcScalar(tData.speeds);
+            const tGustInterpolated = calcScalar(tData.gusts || []);
             const tDirectionInterpolated = calcDirection(tData.dirs);
 
             dynamicForecastArray[k] = {
                 hour: getDisplayHour(tKey),
                 wind: Math.round(tWindInterpolated * 10) / 10,
+                gust: Math.round(tGustInterpolated * 10) / 10,
                 direction: tDirectionInterpolated === null ? null : Math.round(tDirectionInterpolated * 10) / 10,
                 fullKey: tKey
             };
@@ -124,6 +127,7 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
             forecast: dynamicForecastArray,
             windData: {
                 speed: Math.round(interpolatedSpeed * 10) / 10,
+                gust: Math.round(interpolatedGust * 10) / 10,
                 direction: interpolatedDirection === null ? null : Math.round(interpolatedDirection * 10) / 10
             }
         };
