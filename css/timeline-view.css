@@ -12,22 +12,25 @@
     max-width: 550px; /* Prevents excessive width on desktop monitors */
 
     height: 54px; /* Erhöht von 48px für zweizeilige Anzeige */
-    padding: 0 12px;
+    padding: 0 12px; /* Rechter Abstand (12px) definiert nun den Abstand vom rechten Button zum Rand */
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     /* Pushes the control up to make room for copyrights below */
     margin-bottom: 25px !important;
 }
 
-/* Time display on the left (jetzt zweizeilig über Flexbox-Column) */
+/* Time display on the left (zweizeilig, flexibel und zentriert) */
 .timeline-view__time-display {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center; /* Geändert von flex-start auf center für horizontale Zentrierung */
-    min-width: 65px; /* Erhöht von 55px, damit "Feb 28" sicher passt */
+    align-items: center;
     user-select: none;
-    text-align: center; /* Garantiert Zentrierung auch bei Textumbrüchen */
+    text-align: center;
+    /* Abstand links entspricht jetzt exakt dem rechten Rand (12px des Containers minus 12px hier ausgeglichen) */
+    padding-left: 0; 
+    /* Spiegelt exakt den Abstand zwischen Slider und rechtem Nav-Button */
+    padding-right: 15px; 
 }
 
 /* Große Uhrzeit oben */
@@ -50,7 +53,8 @@
 /* Slider area in the center grows dynamically */
 .timeline-view__slider-wrapper {
     flex: 1;
-    padding: 0 15px;
+    /* padding-left entfernt, da das padding-right der Uhrzeit diesen Platz nun perfekt einnimmt */
+    padding: 0 15px 0 0; 
     display: flex;
     align-items: center;
 }
