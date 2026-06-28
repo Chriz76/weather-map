@@ -94,7 +94,8 @@ export function registerForecastView(map) {
 
                     headerHtml += `<th class="forecast-view__cell-header" data-time="${item.fullKey}">${item.hour}h</th>`;
                     valuesHtml += `<td class="forecast-view__cell-value ${colorClass}" data-time="${item.fullKey}">${formattedValue}</td>`;
-                    gustsHtml += `<td class="forecast-view__cell-gust ${gustColorClass}" data-time="${item.fullKey}">${formattedGust}</td>`;
+                    // 🌟 KORREKTUR: Klassenstruktur exakt an das neue CSS angepasst für perfekte Symmetrie und Zentrierung
+                    gustsHtml += `<td class="forecast-view__cell-value forecast-view__cell-gust ${gustColorClass}" data-time="${item.fullKey}">${formattedGust}</td>`;
                     directionHtml += `<td class="forecast-view__cell-direction" data-time="${item.fullKey}">${directionIcon}</td>`;
                 });
 
@@ -111,7 +112,6 @@ export function registerForecastView(map) {
                 const currentKey = weatherModel.activeTimestamp;
                 if (!currentKey) return;
 
-                // .forecast-view__cell-gust zur massenhaften Deaktivierung/Aktivierung hinzugefügt
                 container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction')
                     .forEach(el => el.classList.remove('forecast-view__cell--active'));
 
