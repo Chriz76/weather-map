@@ -41,7 +41,7 @@ function renderDirectionIcon(direction) {
 }
 
 /**
- * Creates popup HTML content for the marker.
+ * Creates popup HTML content for the marker with left-aligned wind info.
  * @param {string} formattedValue Preformatted wind speed value.
  * @param {string} formattedGust Preformatted gust value.
  * @param {number|null} direction Wind direction in degrees.
@@ -54,10 +54,10 @@ function createPopupHtml(formattedValue, formattedGust, direction, coordsDisplay
 
     return `
         <div class="marker-popup" data-direction="${directionDataAttr}" data-gust="${formattedGust}">
-                        <div class="marker-popup__wind-line">
+                        <div class="marker-popup__wind-line" style="display: flex; align-items: center; gap: 8px;">
                                 ${directionIcon}
-                                <div class="marker-popup__value-box">
-                                        <div>
+                                <div class="marker-popup__value-container" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
+                                        <div class="marker-popup__value-box">
                                                 <strong class="marker-popup__value">${formattedValue}</strong>
                                                 <span class="marker-popup__unit">kts</span>
                                         </div>
