@@ -11,7 +11,7 @@
     width: calc(100vw - 20px);
     max-width: 550px; /* Prevents excessive width on desktop monitors */
 
-    height: 48px;
+    height: 54px; /* Erhöht von 48px für zweizeilige Anzeige */
     padding: 0 12px;
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -19,13 +19,31 @@
     margin-bottom: 25px !important;
 }
 
-/* Time display on the left */
+/* Time display on the left (jetzt zweizeilig über Flexbox-Column) */
 .timeline-view__time-display {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: 65px; /* Erhöht von 55px, damit "Feb 28" sicher passt */
+    user-select: none;
+}
+
+/* Große Uhrzeit oben */
+.timeline-view__time-main {
     font-size: 16px;
     font-weight: bold;
     color: #333333;
-    min-width: 55px;
-    user-select: none;
+    line-height: 1.2;
+}
+
+/* Kleiner Subtext unten (Today, Tomorrow, Datum) */
+.timeline-view__time-subtext {
+    font-size: 11px;
+    font-weight: 500;
+    color: #757575;
+    line-height: 1.1;
+    text-transform: uppercase; /* Lässt das Datum/Text cleaner wirken */
 }
 
 /* Slider area in the center grows dynamically */
