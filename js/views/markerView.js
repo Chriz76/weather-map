@@ -1,25 +1,27 @@
-﻿let activeSpotMarker = null;
+let activeSpotMarker = null;
 
 /**
- * Normalizes different wind payload shapes into one object.
- * @param {number|{speed:number|null,direction:number|null}|null} windData Wind payload from model.
- * @returns {{speed:number|null,direction:number|null}} Normalized wind payload.
+ * Normalizes different wind payload shapes into one object including gusts.
+ * @param {number|{speed:number|null,direction:number|null,gust:number|null}|null} windData Wind payload from model.
+ * @returns {{speed:number|null,direction:number|null,gust:number|null}} Normalized wind payload.
  */
 function normalizeWindData(windData) {
         if (typeof windData === 'number') {
                 return {
                         speed: Number.isFinite(windData) ? windData : null,
-                        direction: null
+                        direction: null,
+                        gust: null
                 };
         }
 
         if (!windData || typeof windData !== 'object') {
-                return { speed: null, direction: null };
+                return { speed: null, direction: null, gust: null };
         }
 
         return {
                 speed: Number.isFinite(windData.speed) ? windData.speed : null,
-                direction: Number.isFinite(windData.direction) ? ((windData.direction % 360) + 360) % 360 : null
+                direction: Number.isFinite(windData.direction) ? ((windData.direction % 360) + 360) % 360 : null,
+                gust: Number.isFinite(windData.gust) ? windData.gust : null
         };
 }
 
@@ -41,21 +43,27 @@ function renderDirectionIcon(direction) {
 /**
  * Creates popup HTML content for the marker.
  * @param {string} formattedValue Preformatted wind speed value.
+ * @param {string} formattedGust Preformatted gust value.
  * @param {number|null} direction Wind direction in degrees.
  * @param {string} coordsDisplay Preformatted coordinate text.
  * @returns {string} Popup HTML string.
  */
-function createPopupHtml(formattedValue, direction, coordsDisplay) {
+function createPopupHtml(formattedValue, formattedGust, direction, coordsDisplay) {
         const directionDataAttr = direction === null ? '' : String(direction);
         const directionIcon = renderDirectionIcon(direction);
 
     return `
-        <div class="marker-popup" data-direction="${directionDataAttr}">
+        <div class="marker-popup" data-direction="${directionDataAttr}" data-gust="${formattedGust}">
                         <div class="marker-popup__wind-line">
                                 ${directionIcon}
                                 <div class="marker-popup__value-box">
-                                        <strong class="marker-popup__value">${formattedValue}</strong>
-                                        <span class="marker-popup__unit">kts</span>
+                                        <div>
+                                                <strong class="marker-popup__value">${formattedValue}</strong>
+                                                <span class="marker-popup__unit">kts</span>
+                                        </div>
+                                        <div class="marker-popup__gusts-row" style="font-size: 0.85em; opacity: 0.8; margin-top: 1px;">
+                                                max <strong class="marker-popup__gust-value">${formattedGust}</strong>
+                                        </div>
                                 </div>
                         </div>
       <div class="marker-popup__coords">${coordsDisplay}</div>
@@ -72,7 +80,7 @@ function createPopupHtml(formattedValue, direction, coordsDisplay) {
  * @returns {void}
  */
 function createMarker(map, lat, lng, popupContent) {
-    activeSpotMarker = L.circleMarker([lat, lng], {
+activeSpotMarker = L.circleMarker([lat, lng], {
         radius: 6,
         color: '#ffffff',
         fillColor: '#0077a4',
@@ -95,44 +103,54 @@ function getExistingCoordsDisplay() {
 
 /**
  * Reads current wind values from the existing popup content.
- * @returns {{speedDisplay:string,direction:number|null}} Current speed text and direction.
+ * @returns {{speedDisplay:string,gustDisplay:string,direction:number|null}} Current speed text, gust text and direction.
  */
 function getExistingWindDisplay() {
-    if (!activeSpotMarker) return { speedDisplay: '?', direction: null };
+    if (!activeSpotMarker) return { speedDisplay: '?', gustDisplay: '?', direction: null };
 
     const popup = activeSpotMarker.getPopup();
-    if (!popup) return { speedDisplay: '?', direction: null };
+    if (!popup) return { speedDisplay: '?', gustDisplay: '?', direction: null };
     
     const container = document.createElement('div');
     container.innerHTML = popup.getContent();
 
     const valueEl = container.querySelector('.marker-popup__value');
     const popupEl = container.querySelector('.marker-popup');
+    
+    let gustDisplay = '?';
+    if (popupEl && popupEl.hasAttribute('data-gust')) {
+        gustDisplay = popupEl.getAttribute('data-gust');
+    } else {
+        const gustEl = container.querySelector('.marker-popup__gust-value');
+        if (gustEl) gustDisplay = gustEl.textContent;
+    }
 
     const directionRaw = popupEl ? Number(popupEl.getAttribute('data-direction')) : NaN;
     const direction = Number.isFinite(directionRaw) ? directionRaw : null;
 
     return {
         speedDisplay: valueEl ? valueEl.textContent : '?',
+        gustDisplay,
         direction
     };
 }
 
 
-// --- EXPORTIERTE HAUPTFUNKTIONEN (Jetzt wunderbar schlank!) ---
+// --- EXPORTIERTE HAUPTFUNKTIONEN ---
 
 /**
  * Updates the marker popup wind speed while preserving current coordinates.
  * @param {L.Map} map Leaflet map instance.
- * @param {number|{speed:number|null,direction:number|null}|null} windData Interpolated wind payload.
+ * @param {number|{speed:number|null,direction:number|null,gust:number|null}|null} windData Interpolated wind payload.
  * @returns {void}
  */
 export function updateMapMarkerWindspeed(map, windData) {
     try {
         const normalized = normalizeWindData(windData);
         const formattedValue = (normalized.speed === null || isNaN(normalized.speed)) ? '?' : normalized.speed.toFixed(1);
+        const formattedGust = (normalized.gust === null || isNaN(normalized.gust)) ? '?' : normalized.gust.toFixed(0);
         const coordsDisplay = getExistingCoordsDisplay();
-        const popupContent = createPopupHtml(formattedValue, normalized.direction, coordsDisplay);
+        const popupContent = createPopupHtml(formattedValue, formattedGust, normalized.direction, coordsDisplay);
 
         if (!activeSpotMarker) {
             createMarker(map, 0, 0, popupContent);
@@ -155,7 +173,7 @@ export function updateMapMarkerLocation(map, lat, lng) {
     try {
         const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         const existingWind = getExistingWindDisplay();
-        const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.direction, coordsDisplay);
+        const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.gustDisplay, existingWind.direction, coordsDisplay);
 
         if (!activeSpotMarker) {
             createMarker(map, lat, lng, popupContent);
