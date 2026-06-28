@@ -19,9 +19,10 @@
     transition: height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out, border 0.15s ease-out;
 }
 
-/* IMPORTANT NEW STATE: set by JS when data is loaded */
+/* 🌟 KORREKTUR: Feste, starre Höhe auf 104px gesetzt, um die Box präzise zu vergrößern 
+   und den blauen Aktivitätsrahmen vor der Scrollbar zu schützen */
 .forecast-view--has-data {
-    height: 74px;
+    height: 104px;
     opacity: 1;
     pointer-events: auto; /* Make clickable again */
     border: 2px solid rgba(0, 0, 0, 0.15);
@@ -77,8 +78,10 @@
     box-sizing: border-box;
 }
 
-/* Wind value cells (reduced padding & smaller font) */
-.forecast-view__cell-value {
+/* 🌟 ERWEITERT: .forecast-view__cell-gust hinzugefügt. 
+   Teilt sich nun alle Layout- und Zentrierungs-Eigenschaften mit der Wind-Zelle */
+.forecast-view__cell-value,
+.forecast-view__cell-gust {
     height: 30px;
     font-size: 11px; /* Slightly reduced font for the nodes */
     font-weight: bold;
@@ -88,6 +91,12 @@
     padding: 0 2px; /* Minimal cell padding */
     border-right: 1px solid rgba(255, 255, 255, 0.25);
     box-sizing: border-box;
+}
+
+/* 🌟 OPTIONAL: Macht die Böen dezent kursiv unterscheidbar (wie bei Windfinder), 
+   kannst du auch auskommentieren, wenn es normaler Text sein soll */
+.forecast-view__cell-gust {
+    font-style: italic;
 }
 
 .forecast-view__cell-direction {
@@ -127,7 +136,7 @@
 /* Markiert die aktive Stunde mit einem sauberen Rahmen */
 .forecast-view__cell--active {
     position: relative;
-    /* Nur Rahmen; Hintergrund der Zelle (Farbklassse) soll nicht �berschrieben werden */
+    /* Nur Rahmen; Hintergrund der Zelle (Farbklassse) soll nicht überschrieben werden */
     box-shadow: inset 0 0 0 2px #0077a4;
 }
 
