@@ -39,6 +39,53 @@ export function formatToLocalTimeString(timestampStr) {
 }
 
 /**
+ * Converts a model timestamp key to a local time string and a relative day description.
+ * @param {string} timestampStr Timestamp key in format YYYYMMDD_HH.
+ * @returns {{time: string, description: string}} Object containing localized time and day description.
+ */
+export function formatToLocalTimeAndDescription(timestampStr) {
+    try {
+        // 1. Parsing analog zu deinen bestehenden Methoden
+        const year = parseInt(timestampStr.substring(0, 4), 10);
+        const month = parseInt(timestampStr.substring(4, 6), 10) - 1;
+        const day = parseInt(timestampStr.substring(6, 8), 10);
+        const hour = parseInt(timestampStr.substring(9, 11), 10);
+
+        const utcDate = new Date(Date.UTC(year, month, day, hour, 0, 0));
+        
+        // 2. Lokale Uhrzeit formatieren
+        const timeStr = utcDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // 3. Relative Beschreibung (Today, Tomorrow, etc.) ermitteln
+        const today = new Date();
+        const compareDate = new Date(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate());
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        const diffTime = compareDate - todayDate;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        let description = '';
+        if (diffDays === 0) {
+            description = 'Today';
+        } else if (diffDays === 1) {
+            description = 'Tomorrow';
+        } else if (diffDays === -1) {
+            description = 'Yesterday';
+        } else {
+            // Fallback für ältere/weitere Daten (z.B. "Jun 28")
+            description = utcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        return { time: timeStr, description: description };
+
+    } catch (error) {
+        console.error("❌ Error converting to local time and description:", error);
+        return { time: '--:--', description: '--' };
+    }
+}
+
+
+/**
  * Formats an ISO date string or Date object to local display text.
  * @param {string|Date} input ISO date string or Date instance.
  * @returns {string} Localized short display string.
