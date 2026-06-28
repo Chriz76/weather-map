@@ -1,5 +1,5 @@
 import { weatherModel } from '../weatherModel.js';
-import { formatToLocalTimeString } from '../utils/time.js';
+import { formatToLocalTimeAndDescription } from '../utils/time.js';
 
 /**
  * Registers the timeline control and binds model synchronization events.
@@ -45,29 +45,6 @@ export function registerTimelineView(map) {
                 const timeMain = container.querySelector('.timeline-view__time-main');
                 const timeSubtext = container.querySelector('.timeline-view__time-subtext');
 
-                /**
-                 * Hilfsfunktion zur Ermittlung des relativen Tages oder Datums
-                 * @param {Date} date 
-                 * @returns {string}
-                 */
-                const getRelativeDayOrDate = (date) => {
-                    const today = new Date();
-                    
-                    // Datumsabgleich ohne Uhrzeit
-                    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-                    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                    
-                    const diffTime = compareDate - todayDate;
-                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (diffDays === 0) return 'Today';
-                    if (diffDays === 1) return 'Tomorrow';
-                    if (diffDays === -1) return 'Yesterday';
-                    
-                    // Fallback: Formatierung als "Jan 28" (unabhängig von externen Bibliotheken)
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                };
-
                 // 4. Central, internal update function for time display
                 /**
                  * Renders the currently active timestamp in local time.
@@ -78,17 +55,11 @@ export function registerTimelineView(map) {
                     const currentKey = weatherModel.activeTimestamp; // Uses convenient model getter
                     
                     if (currentKey) {
-                        const dateObj = new Date(currentKey);
+                        // Nutzt die neue zentrale Formatierungs-Methode aus time.js
+                        const { time, description } = formatToLocalTimeAndDescription(currentKey);
                         
-                        // Hauptuhrzeit setzen (deine bestehende Formatierungsfunktion)
-                        timeMain.innerText = formatToLocalTimeString(currentKey);
-                        
-                        // Subtext anhand des Datums berechnen und setzen
-                        if (!isNaN(dateObj.getTime())) {
-                            timeSubtext.innerText = getRelativeDayOrDate(dateObj);
-                        } else {
-                            timeSubtext.innerText = '--';
-                        }
+                        timeMain.innerText = time;
+                        timeSubtext.innerText = description;
                     } else {
                         timeMain.innerText = '--:--';
                         timeSubtext.innerText = '--';
