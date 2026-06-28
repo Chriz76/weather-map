@@ -1,4 +1,4 @@
-﻿import { weatherModel } from '../weatherModel.js';
+import { weatherModel } from '../weatherModel.js';
 import { formatToLocalTimeString } from '../utils/time.js';
 
 /**
@@ -19,9 +19,12 @@ export function registerTimelineView(map) {
             try {
                 const totalTimestamps = weatherModel.availableTimestamps.length;
 
-                // 3. HTML structure switched to BEM classes (IDs removed, getters used)
+                // 3. HTML structure with main time and subtext elements
                 container.innerHTML = `
-          <div class="timeline-view__time-display">--:--</div>
+          <div class="timeline-view__time-display">
+            <span class="timeline-view__time-main">--:--</span>
+            <span class="timeline-view__time-subtext">--</span>
+          </div>
           <div class="timeline-view__slider-wrapper">
             <input type="range" 
                    class="timeline-view__slider" 
@@ -39,7 +42,31 @@ export function registerTimelineView(map) {
                 const slider = container.querySelector('.timeline-view__slider');
                 const btnPrev = container.querySelector('.timeline-view__nav-btn--prev');
                 const btnNext = container.querySelector('.timeline-view__nav-btn--next');
-                const timeDisplay = container.querySelector('.timeline-view__time-display');
+                const timeMain = container.querySelector('.timeline-view__time-main');
+                const timeSubtext = container.querySelector('.timeline-view__time-subtext');
+
+                /**
+                 * Hilfsfunktion zur Ermittlung des relativen Tages oder Datums
+                 * @param {Date} date 
+                 * @returns {string}
+                 */
+                const getRelativeDayOrDate = (date) => {
+                    const today = new Date();
+                    
+                    // Datumsabgleich ohne Uhrzeit
+                    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    
+                    const diffTime = compareDate - todayDate;
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 0) return 'Today';
+                    if (diffDays === 1) return 'Tomorrow';
+                    if (diffDays === -1) return 'Yesterday';
+                    
+                    // Fallback: Formatierung als "Jan 28" (unabhängig von externen Bibliotheken)
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                };
 
                 // 4. Central, internal update function for time display
                 /**
@@ -47,12 +74,24 @@ export function registerTimelineView(map) {
                  * @returns {void}
                  */
                 const updateTimeDisplay = () => {
-                    if (!timeDisplay) return;
+                    if (!timeMain || !timeSubtext) return;
                     const currentKey = weatherModel.activeTimestamp; // Uses convenient model getter
+                    
                     if (currentKey) {
-                        timeDisplay.innerText = formatToLocalTimeString(currentKey);
+                        const dateObj = new Date(currentKey);
+                        
+                        // Hauptuhrzeit setzen (deine bestehende Formatierungsfunktion)
+                        timeMain.innerText = formatToLocalTimeString(currentKey);
+                        
+                        // Subtext anhand des Datums berechnen und setzen
+                        if (!isNaN(dateObj.getTime())) {
+                            timeSubtext.innerText = getRelativeDayOrDate(dateObj);
+                        } else {
+                            timeSubtext.innerText = '--';
+                        }
                     } else {
-                        timeDisplay.innerText = '--:--';
+                        timeMain.innerText = '--:--';
+                        timeSubtext.innerText = '--';
                     }
                 };
 
