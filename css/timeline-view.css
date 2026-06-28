@@ -27,8 +27,10 @@
     align-items: center;
     user-select: none;
     text-align: center;
-    padding-left: 4px; /* Minimaler Abstand zum linken Rand (ergibt zusammen mit Container-Padding 12px für optische Balance) */
-    padding-right: 10px; /* Abstand zwischen Uhrzeit und Slider auf 10px verkürzt */
+    /* Auf 0 gesetzt, damit der Abstand links rein durch das Container-Padding (8px) bestimmt wird, exakt wie rechts */
+    padding-left: 0; 
+    /* Abstand zwischen Uhrzeit und Slider auf 10px verkürzt */
+    padding-right: 10px; 
 }
 
 /* Große Uhrzeit oben */
