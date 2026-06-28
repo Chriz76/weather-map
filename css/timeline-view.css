@@ -24,9 +24,10 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center; /* Geändert von flex-start auf center für horizontale Zentrierung */
     min-width: 65px; /* Erhöht von 55px, damit "Feb 28" sicher passt */
     user-select: none;
+    text-align: center; /* Garantiert Zentrierung auch bei Textumbrüchen */
 }
 
 /* Große Uhrzeit oben */
@@ -39,11 +40,11 @@
 
 /* Kleiner Subtext unten (Today, Tomorrow, Datum) */
 .timeline-view__time-subtext {
-    font-size: 11px;
+    font-size: 9.5px; /* Reduziert von 11px für eine deutliche Verkleinerung */
     font-weight: 500;
     color: #757575;
     line-height: 1.1;
-    text-transform: uppercase; /* Lässt das Datum/Text cleaner wirken */
+    text-transform: lowercase; /* Geändert von uppercase auf lowercase für reine Kleinschreibung */
 }
 
 /* Slider area in the center grows dynamically */
