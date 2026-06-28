@@ -1,4 +1,4 @@
-﻿import { calculatewindSpeeds } from './utils/interpolation.js';
+import { calculatewindSpeeds } from './utils/interpolation.js';
 import { determineActiveIndex } from './utils/time.js';
 
 /**
@@ -18,7 +18,7 @@ class WeatherModel extends EventTarget {
             windData: null,
             activeOverlayUrl: null,  
             forecast: null,
-            isLocationg: false       
+            isLocating: false        // Tippfehler im Kommentar korrigiert
         };
     }
 
@@ -32,6 +32,7 @@ class WeatherModel extends EventTarget {
     get windData() { return this.state.windData; }
     get windSpeed() { return this.state.windData ? this.state.windData.speed : null; }
     get windDirection() { return this.state.windData ? this.state.windData.direction : null; }
+    get windGust() { return this.state.windData ? this.state.windData.gust : null; } // <-- NEU: Getter für die Böen
     get activeOverlayUrl() { return this.state.activeOverlayUrl; }
     get forecast() { return this.state.forecast; }
     get isLocating() { return this.state.isLocating; }
@@ -48,9 +49,9 @@ class WeatherModel extends EventTarget {
      * @returns {void}
      */
     setIsLocating(value) {
-        this._isLocating = value;
+        this.state.isLocating = value; // <-- KORRIGIERT: Schreibt jetzt korrekt in state.isLocating statt _isLocating
         // Fire event so gpsView knows!
-        this.dispatchEvent(new CustomEvent('model:locating-changed', { detail: this._isLocating }));
+        this.dispatchEvent(new CustomEvent('model:locating-changed', { detail: this.state.isLocating }));
     }
 
     /**
