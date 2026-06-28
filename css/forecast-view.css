@@ -22,7 +22,7 @@
 /* 🌟 KORREKTUR: Feste, starre Höhe auf 104px gesetzt, um die Box präzise zu vergrößern 
    und den blauen Aktivitätsrahmen vor der Scrollbar zu schützen */
 .forecast-view--has-data {
-    height: 104px;
+    height: 105px;
     opacity: 1;
     pointer-events: auto; /* Make clickable again */
     border: 2px solid rgba(0, 0, 0, 0.15);
@@ -89,14 +89,9 @@
     vertical-align: middle;
     color: #000000;
     padding: 0 2px; /* Minimal cell padding */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25); 
     border-right: 1px solid rgba(255, 255, 255, 0.25);
     box-sizing: border-box;
-}
-
-/* 🌟 OPTIONAL: Macht die Böen dezent kursiv unterscheidbar (wie bei Windfinder), 
-   kannst du auch auskommentieren, wenn es normaler Text sein soll */
-.forecast-view__cell-gust {
-    font-style: italic;
 }
 
 .forecast-view__cell-direction {
@@ -107,7 +102,6 @@
     vertical-align: middle;
     color: #1f2933;
     background: #f4f7f9;
-    border-top: 1px solid #e5e5e5;
     border-right: 1px solid #dfe6eb;
     padding: 0 2px;
     box-sizing: border-box;
