@@ -3,6 +3,7 @@ import { weatherModel } from './weatherModel.js';
 import { initMap } from './map-init.js';
 import { weatherApi } from './weatherApi.js';
 import { storage } from './utils/storage.js'; // Keep for map state
+import { loadingManager } from './utils/loadingManager.js';
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
@@ -12,6 +13,8 @@ import { registerLogoView } from './views/logoView.js';
 import { registerModelInfoView } from './views/modelInfoView.js';
 import { registerMapOverlayView } from './views/mapOverlayView.js';
 import { registerGpsView } from './views/gpsView.js';
+import { registerLoadingView } from './views/loadingSpinnerView.js';
+import { registerToastView } from './views/toastView.js';
 
 // --- 1. INITIALISIERUNG ---
 const { map, windOverlay } = initMap();
@@ -28,6 +31,8 @@ registerGpsView(map, () => {
         enableHighAccuracy: true 
     });
 });
+registerLoadingView();
+registerToastView();
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 let pollTimer = null;
@@ -44,19 +49,15 @@ let currentOverlayBlobUrl = null;
  */
 async function fetchWeatherOverlayUrl(timestamp) {
     if (!timestamp) return null;
-    try {
-        const imageBlob = await weatherApi.fetchWeatherImageBlob(timestamp, BASE_URL);
 
-        if (currentOverlayBlobUrl) {
-            URL.revokeObjectURL(currentOverlayBlobUrl);
-        }
+    const imageBlob = await weatherApi.fetchWeatherImageBlob(timestamp, BASE_URL);
 
-        currentOverlayBlobUrl = URL.createObjectURL(imageBlob);
-        return currentOverlayBlobUrl;
-    } catch (error) {
-        console.error('🚨 Error loading map overlay data:', error.message);
-        return `${BASE_URL}${timestamp}Z.png`; // Fallback path
+    if (currentOverlayBlobUrl) {
+        URL.revokeObjectURL(currentOverlayBlobUrl);
     }
+
+    currentOverlayBlobUrl = URL.createObjectURL(imageBlob);
+    return currentOverlayBlobUrl;
 }
 
 
@@ -83,13 +84,21 @@ async function syncAppWithServer() {
             weatherModel.setIndexMetadata(indexData);
         }
 
-        // 2. Load data (image & interpolation)
-        const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+        let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.png`; // Fallback path
 
+        // 2. Load data (image & interpolation)
+        try {
+            const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+        } catch (e) {
+            console.error('❌ Error fetching weather overlay image:', e.message);
+            weatherModel.setShowError("Error fetching weather overlay image: " + e.message);
+        }
+        
         // 3. Update store state transparently
         weatherModel.setActiveOverlayUrl(overlayUrl);
 
     } catch (e) {
+        weatherModel.setShowError("Error during application synchronization: " + e.message);
         console.error('❌ Error during application synchronization:', e.message);
     }
 }
@@ -102,7 +111,10 @@ async function syncAppWithServer() {
  * @returns {Promise<void>}
  */
 async function startAppAndSetupPolling() {
-    await syncAppWithServer();
+    // Erstmaliger Aufruf soll animieren -> in .track() einhüllen
+    await loadingManager.track(async () => {
+        await syncAppWithServer();
+    });
 
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = setInterval(async () => {
@@ -114,7 +126,9 @@ startAppAndSetupPolling();
 
 document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
-        await syncAppWithServer();
+        await loadingManager.track(async () => {
+            await syncAppWithServer();
+        });
     }
 });
 
@@ -125,11 +139,19 @@ window.addEventListener('timeline-change', async (e) => {
     // 1. Set explicit time index in store
     weatherModel.setActiveTimestampIndex(idx);
 
+    let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.png`; // Fallback path
     // 2. Load data (image & interpolation)
-    const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+    await loadingManager.track(async () => {
+        try {
+            overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+        } catch (e) {
+            console.error('❌ Error fetching weather overlay image:', e.message);
+            weatherModel.setShowError("Error fetching weather overlay image: " + e.message);
+        }
+    });
 
     // 3. Update store state transparently
-    weatherModel.setActiveOverlayUrl(overlayUrl);
+    weatherModel.setActiveOverlayUrl(overlayUrl);    
 });
 
 // MAP EXTENSION: Kartenzustand debounct sichern bei Bewegung
@@ -154,8 +176,12 @@ map.on('click', async function (e) {
     lastClusterClickToken = currentClickToken;
 
     try {
+        let cluster = null;
         // 1. Request cluster asynchronously
-        const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
+        await loadingManager.track(async () => {
+            cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
+        });
+
         if (lastClusterClickToken !== currentClickToken) return;
 
         // 2. Once everything is ready: set state in one go
@@ -163,6 +189,7 @@ map.on('click', async function (e) {
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
             console.error('🚨 Error processing map click:', error.message);
+            weatherModel.setShowError("Error loading location data: " + error.message);
         }
     }
 });
@@ -185,7 +212,7 @@ map.on('locationfound', async function (e) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
 
-    try {
+    try { 
         const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
         if (lastClusterClickToken !== currentClickToken) return;
 
@@ -194,14 +221,16 @@ map.on('locationfound', async function (e) {
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
             console.error('🚨 Error processing GPS location:', error.message);
+            weatherModel.setShowError("Error processing GPS location: " + error.message);
         }
-    } {
+    } finally {
         // Turns off loading state in model → View reacts automatically!
         weatherModel.setIsLocating(false);
     }
 });
 
 map.on('locationerror', function (e) {
-    alert(`Location error: ${e.message}`);
+    weatherModel.setShowError("Error processing GPS location: " + e.message);
     weatherModel.setIsLocating(false); // Turn off on error
 });
+

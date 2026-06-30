@@ -14,7 +14,6 @@
     height: 44px; /* Reduziert von 54px für ein deutlich kompakteres Design */
     padding: 0 8px; /* Abstand rechts zum Button auf 8px verringert (vorher 12px) */
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     /* Pushes the control up to make room for copyrights below */
     margin-bottom: 25px !important;
 }
@@ -106,8 +105,6 @@
     border-radius: 4px;
     width: 28px; /* Von 30px auf 28px verkleinert, passt perfekt zur 44px Container-Höhe */
     height: 28px;
-    /* Exact Leaflet font configuration for bold controls */
-    font-family: "Lucida Grande", Verdana, Geneva, Lucida, sans-serif;
     font-size: 12px;
     font-weight: 900;
     color: #333333;

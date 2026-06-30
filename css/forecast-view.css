@@ -6,7 +6,6 @@
     width: calc(100vw - 20px);
     max-width: 550px;
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     overflow: hidden;
     /* FIX FOR SMOOTH HIDE: initially hidden and collapsed */
     height: 0;
@@ -19,10 +18,10 @@
     transition: height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out, border 0.15s ease-out;
 }
 
-/* 🌟 KORREKTUR: Feste, starre Höhe auf 104px gesetzt, um die Box präzise zu vergrößern 
+/* 🌟 KORREKTUR: Feste, starre Höhe auf 95px gesetzt, um die Box präzise zu vergrößern 
    und den blauen Aktivitätsrahmen vor der Scrollbar zu schützen */
 .forecast-view--has-data {
-    height: 105px;
+    height: 95px;
     opacity: 1;
     pointer-events: auto; /* Make clickable again */
     border: 2px solid rgba(0, 0, 0, 0.15);
@@ -82,7 +81,7 @@
    Teilt sich nun alle Layout- und Zentrierungs-Eigenschaften mit der Wind-Zelle */
 .forecast-view__cell-value,
 .forecast-view__cell-gust {
-    height: 30px;
+    height: 25px;
     font-size: 11px; /* Slightly reduced font for the nodes */
     font-weight: bold;
     text-align: center;

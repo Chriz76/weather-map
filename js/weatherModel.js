@@ -8,6 +8,7 @@ import { determineActiveIndex } from './utils/time.js';
 class WeatherModel extends EventTarget {
     constructor() {
         super();
+        this._errorTimer = null; // Timer for auto-clearing error messages
         this.state = {
             availableTimestamps: [],
             activeTimestampIndex: 0,
@@ -18,7 +19,9 @@ class WeatherModel extends EventTarget {
             windData: null,
             activeOverlayUrl: null,  
             forecast: null,
-            isLocating: false        // Tippfehler im Kommentar korrigiert
+            isLocating: false,        // Tippfehler im Kommentar korrigiert
+            isActiveLoading: false,
+            showError: null
         };
     }
 
@@ -36,12 +39,42 @@ class WeatherModel extends EventTarget {
     get activeOverlayUrl() { return this.state.activeOverlayUrl; }
     get forecast() { return this.state.forecast; }
     get isLocating() { return this.state.isLocating; }
-
+    get isActiveLoading() { return this.state.isActiveLoading; }
+    get showError() { return this.state.showError; }
     get activeTimestamp() {
         return this.state.availableTimestamps[this.state.activeTimestampIndex] || null;
     }
 
     // --- MUTATORS (State Changes + Safe Event Flow) ---
+
+    setShowError(message) {
+        this.state.showError = message;
+        this.dispatchEvent(new CustomEvent('model:show-error-changed', { detail: message }));
+
+        // Wenn ein Fehler gesetzt wird, starte den Selbstlösch-Timer
+        if (message) {
+            clearTimeout(this.errorTimer);
+            this._errorTimer = setTimeout(() => {
+                this.setShowError(null); // Löscht sich selbst und feuert das Event mit null ab
+            }, 4000);
+        }
+    }
+
+
+    /**
+     * Toggles the global "active loading" flag in the model and notifies listeners.
+     * This flag represents whether some primary application process is currently
+     * loading (e.g. fetching or rendering data). The method updates internal state
+     * and dispatches a "model:active-loading-changed" CustomEvent with the new boolean
+     * value in its detail.
+     *
+     * @param {boolean} value - True when active loading is in progress, false otherwise.
+     * @returns {void}
+     */
+    setIsActiveLoading(value) {
+        this.state.isActiveLoading = value;
+        this.dispatchEvent(new CustomEvent('model:active-loading-changed', { detail: this.state.isActiveLoading }));
+    }
 
     /**
      * Updates GPS locating state and emits UI update event.
