@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="css/marker-view.css" />
     <link rel="stylesheet" href="css/model-info-view.css" />
     <link rel="stylesheet" href="css/gps-view.css" />
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="8a85a60f-4770-4ff7-9210-63badbb5d34c"></script>
 </head>
 <body>
 
@@ -46,6 +45,13 @@
       });
       console.log('Eruda DevTools erfolgreich geladen. Viel Spaß beim Debuggen!');
     };
+  } else {
+    // 2. Tracking Skript dynamisch nachladen (wenn debug DEAKTIVIERT ist)
+    const trackingScript = document.createElement('script');
+    trackingScript.src = 'https://cloud.umami.is/script.js';
+    trackingScript.setAttribute('data-website-id', '8a85a60f-4770-4ff7-9210-63badbb5d34c');
+    trackingScript.defer = true;
+    document.head.appendChild(trackingScript);
   }
 </script>
     
