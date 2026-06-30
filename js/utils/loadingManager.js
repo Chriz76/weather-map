@@ -48,4 +48,4 @@ class LoadingManager {
     }
 }
 
-export const loadingManager = new LoadingManager(500);
+export const loadingManager = new LoadingManager(1000);
