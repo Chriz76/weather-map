@@ -41,8 +41,10 @@ class WeatherModel extends EventTarget {
     get isLocating() { return this.state.isLocating; }
     get isActiveLoading() { return this.state.isActiveLoading; }
     get showError() { return this.state.showError; }
-    get activeTimestamp() {
-        return this.state.availableTimestamps[this.state.activeTimestampIndex] || null;
+    get activeTimestamp() { return this.getTimestamp(this.state.activeTimestampIndex); }
+    
+    getTimestamp(idx) {
+        return this.state.availableTimestamps[idx] || null;
     }
 
     // --- MUTATORS (State Changes + Safe Event Flow) ---
@@ -53,7 +55,7 @@ class WeatherModel extends EventTarget {
 
         // Wenn ein Fehler gesetzt wird, starte den Selbstlösch-Timer
         if (message) {
-            clearTimeout(this.errorTimer);
+            clearTimeout(this._errorTimer);
             this._errorTimer = setTimeout(() => {
                 this.setShowError(null); // Löscht sich selbst und feuert das Event mit null ab
             }, 4000);

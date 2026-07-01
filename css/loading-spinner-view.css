@@ -1,22 +1,20 @@
 /* views/loadingView.css */
 
-/* Das Haupt-Overlay: Liegt unsichtbar über der App */
+/* Das Haupt-Overlay: Nur der Spinner, kein grauer Vollbild-Hintergrund */
 .loading-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999; /* Über allen Leaflet-Layern (Karten-Controls enden meist bei 1000-2000) */
-    background-color: rgba(255, 255, 255, 0.4); /* Sanfte weiße Abdunkelung */
-    backdrop-filter: blur(2px); /* Moderner Milchglas-Effekt (optional, extrem edel) */
+    left: 50%;
+    bottom: 218px; /* Nähe Forecast-Box, bei Bedarf anpassen */
+    transform: translateX(-50%);
+    width: auto;
+    height: auto;
+    z-index: 9999; /* Über allen Leaflet-Layern */
+    background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    /* Weicher Übergang beim Ein-/Ausblenden */
     opacity: 0;
-    pointer-events: none; /* Klicks gehen durch, wenn unsichtbar */
+    pointer-events: none;
     transition: opacity 0.2s ease-in-out;
     will-change: opacity;
 }
@@ -24,7 +22,6 @@
 /* Der Modifikator für den aktiven Zustand */
 .loading-overlay--visible {
     opacity: 1;
-    pointer-events: auto; /* Blockiert Eingaben auf der Karte, während geladen wird */
 }
 
 /* Der reine CSS-Spinner (Keine Bilder nötig!) */

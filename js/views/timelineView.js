@@ -50,13 +50,12 @@ export function registerTimelineView(map) {
                  * Renders the currently active timestamp in local time.
                  * @returns {void}
                  */
-                const updateTimeDisplay = () => {
+                const updateTimeDisplay = (timestamp) => {
                     if (!timeMain || !timeSubtext) return;
-                    const currentKey = weatherModel.activeTimestamp; // Uses convenient model getter
                     
-                    if (currentKey) {
+                    if (timestamp) {
                         // Nutzt die neue zentrale Formatierungs-Methode aus time.js
-                        const { time, description } = formatToLocalTimeAndDescription(currentKey);
+                        const { time, description } = formatToLocalTimeAndDescription(timestamp);
                         
                         timeMain.innerText = time;
                         timeSubtext.innerText = description;
@@ -67,24 +66,27 @@ export function registerTimelineView(map) {
                 };
 
                 // Set initial display on load directly
-                updateTimeDisplay();
+                updateTimeDisplay(weatherModel.activeTimestamp);
 
                 // --- Event listeners for user actions ---
 
                 slider.addEventListener('input', (e) => {
                     const idx = parseInt(e.target.value, 10);
-                    weatherModel.setActiveTimestampIndex(idx);
-                    updateTimeDisplay();
+                    window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: idx } }));                
+                });
+                
+                /*
+                slider.addEventListener('change', (e) => {
+                    const idx = parseInt(e.target.value, 10);
                     window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: idx } }));
                 });
+                */
 
                 btnPrev.addEventListener('click', () => {
                     const activeIndex = weatherModel.activeTimestampIndex;
                     if (activeIndex > 0) {
                         const newIndex = activeIndex - 1;
-                        weatherModel.setActiveTimestampIndex(newIndex);
                         slider.value = newIndex;
-                        updateTimeDisplay();
                         window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: newIndex } }));
                     }
                 });
@@ -94,9 +96,7 @@ export function registerTimelineView(map) {
                     const timestamps = weatherModel.availableTimestamps;
                     if (activeIndex < timestamps.length - 1) {
                         const newIndex = activeIndex + 1;
-                        weatherModel.setActiveTimestampIndex(newIndex);
                         slider.value = newIndex;
-                        updateTimeDisplay();
                         window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: newIndex } }));
                     }
                 });
@@ -107,14 +107,14 @@ export function registerTimelineView(map) {
                     if (!slider) return;
                     slider.max = Math.max(0, weatherModel.availableTimestamps.length - 1);
                     slider.value = weatherModel.activeTimestampIndex;
-                    updateTimeDisplay();
+                    updateTimeDisplay(weatherModel.activeTimestamp);
                 });
 
                 weatherModel.addEventListener('model:timestamp-index-updated', (e) => {
                     if (!slider) return;
                     const idx = e.detail && typeof e.detail === 'number' ? e.detail : weatherModel.activeTimestampIndex;
                     slider.value = idx;
-                    updateTimeDisplay();
+                    updateTimeDisplay(weatherModel.getTimestamp(idx));
                 });
 
             } catch (uiError) {
