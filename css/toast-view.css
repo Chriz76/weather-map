@@ -1,0 +1,39 @@
+/* views/toastView.css */
+
+.toast-notification {
+    position: fixed;
+    /* Exakte Zentrierung in der Mitte des Viewports */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9); /* Startet minimal kleiner für Pop-Effekt */
+    
+    z-index: 10000; /* Liegt über ALLEM (sogar über dem Loading-Spinner) */
+    
+    /* Styling: Dunkel, kontrastreich und gut lesbar über hellen Karten */
+    background-color: rgba(33, 33, 33, 0.95);
+    color: #ffffff;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 80vw; /* Verhindert das Anecken an den Displayrändern auf dem Handy */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    
+    /* Animationen */
+    opacity: 0;
+    pointer-events: none; /* Klicks gehen im unsichtbaren Zustand durch */
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Modifikator für den sichtbaren Zustand */
+.toast-notification--visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1); /* Zoomt sanft auf Originalgröße */
+}
+
+/* Das Icon im Toast */
+.toast-notification__icon {
+    margin-right: 6px;
+}

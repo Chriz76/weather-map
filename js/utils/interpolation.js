@@ -1,78 +1,139 @@
-﻿import { formatToLocalTimeString } from './time.js';
+import { formatToLocalTimeString } from './time.js';
 
 /**
- * REINE FUNKTION: Berechnet die interpolierten Windwerte für einen Klickpunkt.
- * Erwartet keine Callbacks mehr, sondern gibt das Ergebnis direkt zurück.
+ * Extracts the hour string from a timeline key and converts it to local time.
+ * @param {string} tKey Timeline key in the form "YYYYMMDD_HH".
+ * @returns {string} Localized hour portion of the timeline key.
+ */
+function getDisplayHour(tKey) {
+    return formatToLocalTimeString(tKey).split(':')[0];
+}
+
+/**
+ * Interpolates wind speed, direction, and gusts for a clicked location and builds
+ * a forecast array for every timestamp in the cluster payload.
+ * @param {{lat:number,lng:number}} latlng Clicked map coordinates.
+ * @param {{lats:number[],lons:number[],timeline:Object<string,{speeds:Array<number|undefined>,dirs:Array<number|null|undefined>,gusts:Array<number|undefined>}>}} cluster Cluster payload with grid point coordinates and timeline arrays.
+ * @param {string|null} activeTimestamp Selected timestamp key or null to use the first available timestamp.
+ * @returns {{forecast:Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}>|null,windData:{speed:number|null,gust:number|null,direction:number|null}|null}} Interpolation result.
  */
 export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
     try {
-        if (!latlng || !cluster) return { forecast: null, windSpeed: null };
+        if (!latlng || !cluster || !cluster.timeline) {
+            return { forecast: null, windData: null };
+        }
 
         const clickLat = latlng.lat;
         const clickLng = latlng.lng;
 
-        // 🌟 SAUBER: Wenn kein aktiver Timestamp übergeben wurde, nimm den ersten verfügbaren aus dem Cluster
-        const currentTimeKey = activeTimestamp || Object.keys(cluster.timeline).sort()[0];
+        const timelineKeys = Object.keys(cluster.timeline).sort();
+        const currentTimeKey = activeTimestamp || timelineKeys[0];
 
         const totalPoints = cluster.lats.length;
-        let distances = [];
+        if (totalPoints < 3) return { forecast: null, windData: null };
 
-        // 1. Distanzen zu allen Gitterpunkten berechnen
+        // 1. Die 3 kleinsten quadrierten Distanzen in EINEM Durchlauf finden (Kein Array, kein Sortieren!)
+        let idx1 = -1, idx2 = -1, idx3 = -1;
+        let dSq1 = Infinity, dSq2 = Infinity, dSq3 = Infinity;
+
+        const lats = cluster.lats;
+        const lons = cluster.lons;
+
         for (let i = 0; i < totalPoints; i++) {
-            const dLat = cluster.lats[i] - clickLat;
-            const dLng = cluster.lons[i] - clickLng;
+            const dLat = lats[i] - clickLat;
+            const dLng = lons[i] - clickLng;
             const distSq = (dLat * dLat) + (dLng * dLng);
-            distances.push({ index: i, dist: Math.sqrt(distSq) });
-        }
 
-        // Sortieren, um die 3 nächsten Nachbarn zu finden
-        distances.sort((a, b) => a.dist - b.dist);
-        const d1 = distances[0], d2 = distances[1], d3 = distances[2];
-
-        // 2. Interpolation für den AKTUELLEN Zeitschritt (für den Map-Marker)
-        const currentTimelineWinds = cluster.timeline[currentTimeKey] || [];
-        let interpolatedWind = 0;
-
-        if (d1.dist < 0.005) {
-            interpolatedWind = currentTimelineWinds[d1.index];
-        } else {
-            const w1 = 1 / d1.dist, w2 = 1 / d2.dist, w3 = 1 / d3.dist;
-            const sumW = w1 + w2 + w3;
-            const wind1 = currentTimelineWinds[d1.index] || 0;
-            const wind2 = currentTimelineWinds[d2.index] || 0;
-            const wind3 = currentTimelineWinds[d3.index] || 0;
-            interpolatedWind = (wind1 * w1 + wind2 * w2 + wind3 * w3) / sumW;
-        }
-        interpolatedWind = Math.round(interpolatedWind * 10) / 10;
-
-        // 3. Interpolation über die GESAMTE Timeline (für die Forecast-Tabelle)
-        let dynamicForecastArray = [];
-        const sortedTimelineKeys = Object.keys(cluster.timeline).sort();
-
-        sortedTimelineKeys.forEach(tKey => {
-            const tWinds = cluster.timeline[tKey];
-            let tWindInterpolated = 0;
-
-            if (d1.dist < 0.005) {
-                tWindInterpolated = tWinds[d1.index];
-            } else {
-                const w1 = 1 / d1.dist, w2 = 1 / d2.dist, w3 = 1 / d3.dist;
-                tWindInterpolated = ((tWinds[d1.index] || 0) * w1 + (tWinds[d2.index] || 0) * w2 + (tWinds[d3.index] || 0) * w3) / (w1 + w2 + w3);
+            if (distSq < dSq1) {
+                dSq3 = dSq2; idx3 = idx2;
+                dSq2 = dSq1; idx2 = idx1;
+                dSq1 = distSq; idx1 = i;
+            } else if (distSq < dSq2) {
+                dSq3 = dSq2; idx3 = idx2;
+                dSq2 = distSq; idx2 = i;
+            } else if (distSq < dSq3) {
+                dSq3 = distSq; idx3 = i;
             }
+        }
 
-            const localTimeStr = formatToLocalTimeString(tKey);
-            const displayHour = localTimeStr.split(':')[0];
+        // Jetzt die echte Distanz berechnen (Nur noch 3x statt 1650x Math.sqrt!)
+        const dist1 = Math.sqrt(dSq1);
+        const dist2 = Math.sqrt(dSq2);
+        const dist3 = Math.sqrt(dSq3);
 
-            dynamicForecastArray.push({ hour: displayHour, wind: tWindInterpolated, fullKey: tKey });
-        });
+        // Gewichte vorbereiten
+        const w1 = 1 / Math.max(dist1, 0.00001);
+        const w2 = 1 / Math.max(dist2, 0.00001);
+        const w3 = 1 / Math.max(dist3, 0.00001);
+        const sumW = w1 + w2 + w3;
+
+        const exactMatch = dist1 < 0.005;
+
+        // ---------------------------------------------------------------------
+        // REINE MATHEMATIK ALS INLINE-SCHLEIFEN-HELPER
+        // ---------------------------------------------------------------------
+        const calcScalar = (values) => {
+            if (exactMatch) return values[idx1] || 0;
+            return ((values[idx1] || 0) * w1 + (values[idx2] || 0) * w2 + (values[idx3] || 0) * w3) / sumW;
+        };
+
+        const calcDirection = (dirs) => {
+            if (exactMatch) return dirs[idx1];
+
+            const r1 = dirs[idx1] ?? null;
+            const r2 = dirs[idx2] ?? null;
+            const r3 = dirs[idx3] ?? null;
+
+            let sumSin = 0, sumCos = 0, weightTotal = 0;
+
+            if (r1 !== null) { const rad = r1 * 0.017453292519943295; sumSin += Math.sin(rad) * w1; sumCos += Math.cos(rad) * w1; weightTotal += w1; }
+            if (r2 !== null) { const rad = r2 * 0.017453292519943295; sumSin += Math.sin(rad) * w2; sumCos += Math.cos(rad) * w2; weightTotal += w2; }
+            if (r3 !== null) { const rad = r3 * 0.017453292519943295; sumSin += Math.sin(rad) * w3; sumCos += Math.cos(rad) * w3; weightTotal += w3; }
+
+            if (weightTotal === 0 || (Math.abs(sumSin) < 1e-9 && Math.abs(sumCos) < 1e-9)) return null;
+
+            let angle = Math.atan2(sumSin, sumCos) * 57.29577951308232;
+            return (angle + 360) % 360;
+        };
+
+        // 2. Interpolation für den AKTUELLEN Zeitschritt (Map-Marker)
+        const currentTimeline = cluster.timeline[currentTimeKey] || { speeds: [], dirs: [], gusts: [] };
+        const interpolatedSpeed = calcScalar(currentTimeline.speeds);
+        const interpolatedGust = calcScalar(currentTimeline.gusts || []);
+        const interpolatedDirection = calcDirection(currentTimeline.dirs);
+
+        // 3. Interpolation über die GESAMTE Timeline (Forecast-Tabelle)
+        const len = timelineKeys.length;
+        let dynamicForecastArray = new Array(len); // Array-Größe im Vorfeld fixieren
+
+        for (let k = 0; k < len; k++) {
+            const tKey = timelineKeys[k];
+            const tData = cluster.timeline[tKey] || { speeds: [], dirs: [], gusts: [] };
+            
+            const tWindInterpolated = calcScalar(tData.speeds);
+            const tGustInterpolated = calcScalar(tData.gusts || []);
+            const tDirectionInterpolated = calcDirection(tData.dirs);
+
+            dynamicForecastArray[k] = {
+                hour: getDisplayHour(tKey),
+                wind: Math.round(tWindInterpolated * 10) / 10,
+                gust: Math.round(tGustInterpolated * 10) / 10,
+                direction: tDirectionInterpolated === null ? null : Math.round(tDirectionInterpolated * 10) / 10,
+                fullKey: tKey
+            };
+        }
 
         return {
             forecast: dynamicForecastArray,
-            windSpeed: interpolatedWind // Nur noch die nackte Zahl! (z.B. 14.5)
+            windData: {
+                speed: Math.round(interpolatedSpeed * 10) / 10,
+                gust: Math.round(interpolatedGust * 10) / 10,
+                direction: interpolatedDirection === null ? null : Math.round(interpolatedDirection * 10) / 10
+            }
         };
 
     } catch (mathError) {
         console.error("🚨 Mathematical interpolation error:", mathError.message);
-        return { forecast: null, windSpeed: null };
+        return { forecast: null, windData: null };
     }
 }

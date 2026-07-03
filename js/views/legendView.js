@@ -1,13 +1,18 @@
+/**
+ * Registers the static wind legend control.
+ * @param {L.Map} map Leaflet map instance.
+ * @returns {void}
+ */
 export function registerLegendView(map) {
     // 1. Einheitlicher Leaflet-Klassenname: LegendView
     L.Control.LegendView = L.Control.extend({
-        options: { position: 'topright' },
+        options: { position: 'topleft' },
         onAdd: function (map) {
-            // 2. Hauptklasse auf BEM umgestellt
+            // 2. Main class switched to BEM
             const container = L.DomUtil.create('div', 'legend-view');
             L.DomEvent.disableClickPropagation(container);
 
-            // 3. Alle inneren Klassen auf das BEM-Muster ("legend-view__...") angepasst
+            // 3. All inner classes adapted to BEM pattern ("legend-view__...")
             container.innerHTML = `
                 <div class="legend-view__title">knots</div>
                 <div class="legend-view__body">
@@ -48,7 +53,7 @@ export function registerLegendView(map) {
         }
     });
 
-    // 4. Factory-Methode und Registrierung angepasst
+    // 4. Factory method and registration adapted
     L.control.legendView = function (options) { return new L.Control.LegendView(options); };
     map.legendViewControl = L.control.legendView().addTo(map);
 }

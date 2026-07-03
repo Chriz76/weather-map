@@ -7,14 +7,13 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     /* Slightly reduced left/right padding; keep no top padding and small bottom padding */
     padding: 0 4px 6px 4px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     width: fit-content;
     margin-top: 48px;
     box-sizing: border-box;
 }
 
 .legend-view__title {
-    font-size: 11px; /* Minimal kleiner für kompaktere Optik */
+    font-size: 11px; /* Minimal kleiner fï¿½r kompaktere Optik */
     font-weight: 700;
     text-align: center;
     margin-bottom: 4px; /* Abstand nach unten verringert */
@@ -32,8 +31,8 @@
 .legend-view__color-bar {
     display: flex;
     flex-direction: column;
-    width: 18px; /* Etwas schlanker für Leaflet-Optik */
-    height: 240px; /* Kompaktere Höhe für Mobilgeräte */
+    width: 18px; /* Etwas schlanker fï¿½r Leaflet-Optik */
+    height: 240px; /* Kompaktere Hï¿½he fï¿½r Mobilgerï¿½te */
     border-radius: 3px;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.1); /* Leichter Rand um die Farbleiste */
@@ -48,10 +47,10 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 240px; /* Muss exakt der Höhe der .legend-view__color-bar entsprechen */
+    height: 240px; /* Muss exakt der Hï¿½he der .legend-view__color-bar entsprechen */
     font-size: 11px;
     font-weight: 600;
-    color: #444444; /* Dunkelgrau für guten Kontrast auf Weiß */
+    color: #444444; /* Dunkelgrau fï¿½r guten Kontrast auf Weiï¿½ */
     line-height: 0;
     padding: 0;
 }

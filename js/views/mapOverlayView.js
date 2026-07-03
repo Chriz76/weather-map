@@ -1,9 +1,15 @@
 import { weatherModel } from '../weatherModel.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
+/**
+ * Connects model events to overlay and marker rendering on the map.
+ * @param {L.Map} map Leaflet map instance.
+ * @param {L.ImageOverlay} windOverlay Leaflet image overlay instance.
+ * @returns {void}
+ */
 export function registerMapOverlayView(map, windOverlay) {
 
-    // 1. Lauscht auf neue Interpolationswerte -> Marker setzen
+    // 1. Listens for new interpolation values → set marker
     weatherModel.addEventListener('model:windspeed-updated', (e) => {
         const data = e.detail;
         if (data && data !== null) {
@@ -13,7 +19,7 @@ export function registerMapOverlayView(map, windOverlay) {
         }
     });
 
-    // Lauscht auf neue neue location werte -> Marker setzen
+    // Listens for new location values → set marker
     weatherModel.addEventListener('model:location-updated', (e) => {
         const data = e.detail;
         if (data && data !== null) {
@@ -24,7 +30,7 @@ export function registerMapOverlayView(map, windOverlay) {
     });
 
 
-    // 2. Lauscht auf fertige Bild-URLs aus dem Modell -> Direkt auf die Karte werfen!
+    // 2. Listens for finished image URLs from model → throw directly on map!
     weatherModel.addEventListener('model:overlay-url-updated', (e) => {
         const url = e.detail;
         if (windOverlay && url) {

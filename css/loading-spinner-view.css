@@ -1,0 +1,42 @@
+/* views/loadingView.css */
+
+/* Das Haupt-Overlay: Nur der Spinner, kein grauer Vollbild-Hintergrund */
+.loading-overlay {
+    position: fixed;
+    left: 50%;
+    bottom: 218px; /* Nähe Forecast-Box, bei Bedarf anpassen */
+    transform: translateX(-50%);
+    width: auto;
+    height: auto;
+    z-index: 9999; /* Über allen Leaflet-Layern */
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+    will-change: opacity;
+}
+
+/* Der Modifikator für den aktiven Zustand */
+.loading-overlay--visible {
+    opacity: 1;
+}
+
+/* Der reine CSS-Spinner (Keine Bilder nötig!) */
+.loading-overlay__spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 120, 168, 0.15); /* Dein Leaflet-Blau in ganz hell */
+    border-top-color: #0078A8; /* Dein Leaflet-Blau als Akzent */
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Die Rotations-Animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

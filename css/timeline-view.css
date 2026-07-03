@@ -11,27 +11,49 @@
     width: calc(100vw - 20px);
     max-width: 550px; /* Prevents excessive width on desktop monitors */
 
-    height: 48px;
-    padding: 0 12px;
+    height: 44px; /* Reduziert von 54px für ein deutlich kompakteres Design */
+    padding: 0 8px; /* Abstand rechts zum Button auf 8px verringert (vorher 12px) */
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     /* Pushes the control up to make room for copyrights below */
     margin-bottom: 25px !important;
 }
 
-/* Time display on the left */
+/* Time display on the left (zweizeilig, flexibel und zentriert) */
 .timeline-view__time-display {
-    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    text-align: center;
+    /* Auf 0 gesetzt, damit der Abstand links rein durch das Container-Padding (8px) bestimmt wird, exakt wie rechts */
+    padding-left: 0; 
+    /* Abstand zwischen Uhrzeit und Slider auf 10px verkürzt */
+    padding-right: 10px; 
+}
+
+/* Große Uhrzeit oben */
+.timeline-view__time-main {
+    font-size: 15px; /* Minimal verkleinert von 16px, um vertikalen Platz zu sparen */
     font-weight: bold;
     color: #333333;
-    min-width: 55px;
-    user-select: none;
+    line-height: 1.2; /* Abstand zur Uhrzeit bleibt wie ursprünglich gewünscht */
+}
+
+/* Kleiner Subtext unten (Today, Tomorrow, Datum) */
+.timeline-view__time-subtext {
+    font-size: 9.5px; 
+    font-weight: 500;
+    color: #757575;
+    line-height: 1.1; /* Abstand zur Uhrzeit bleibt wie ursprünglich gewünscht */
+    text-transform: lowercase; 
 }
 
 /* Slider area in the center grows dynamically */
 .timeline-view__slider-wrapper {
     flex: 1;
-    padding: 0 15px;
+    /* Spiegelt die linke Seite: 0px links (da die Uhrzeit 10px rechts schiebt) und exakt 10px rechts zum ersten Knopf */
+    padding: 0 10px 0 0; 
     display: flex;
     align-items: center;
 }
@@ -41,7 +63,7 @@
     cursor: pointer;
     -webkit-appearance: none;
     appearance: none;
-    height: 6px;
+    height: 5px; /* Leicht dünnerer Slider (5px statt 6px) wirkt eleganter im flachen Container */
     background: #e0e0e0;
     border-radius: 3px;
     outline: none;
@@ -52,8 +74,8 @@
     .timeline-view__slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 18px;
-        height: 18px;
+        width: 16px; /* Thumb von 18px auf 16px verkleinert, damit er nicht oben/unten aneckt */
+        height: 16px;
         border-radius: 50%;
         background: #0077a4;
         cursor: pointer;
@@ -62,8 +84,8 @@
 
     /* Slider thumb styling (Firefox) */
     .timeline-view__slider::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
+        width: 16px; /* Thumb von 18px auf 16px verkleinert */
+        height: 16px;
         border-radius: 50%;
         background: #0077a4;
         cursor: pointer;
@@ -74,21 +96,19 @@
 /* Navigation buttons on the right */
 .timeline-view__navigation {
     display: flex;
-    gap: 6px;
+    gap: 4px; /* Abstand zwischen den beiden Buttons leicht verringert */
 }
 
 .timeline-view__nav-btn {
     background-color: #ffffff;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 30px;
-    height: 30px;
-    /* Exact Leaflet font configuration for bold controls */
-    font-family: "Lucida Grande", Verdana, Geneva, Lucida, sans-serif;
-    font-size: 13px;
+    width: 28px; /* Von 30px auf 28px verkleinert, passt perfekt zur 44px Container-Höhe */
+    height: 28px;
+    font-size: 12px;
     font-weight: 900;
     color: #333333;
-    -webkit-text-stroke: 0.5px #333333; /* Gives the arrows extra weight */
+    -webkit-text-stroke: 0.5px #333333; 
 
     cursor: pointer;
     display: flex;

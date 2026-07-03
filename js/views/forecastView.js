@@ -1,6 +1,26 @@
-﻿import { weatherModel } from '../weatherModel.js';
+import { weatherModel } from '../weatherModel.js';
 
+/**
+ * Registers the forecast table control and binds it to model events.
+ * @param {L.Map} map Leaflet map instance.
+ * @returns {void}
+ */
 export function registerForecastView(map) {
+
+    /**
+     * Builds direction icon HTML with continuous rotation.
+     * @param {number|null} direction Wind direction in degrees.
+     * @returns {string} Direction icon HTML.
+     */
+    function renderDirectionIcon(direction) {
+        if (direction === null || Number.isNaN(direction)) {
+            return '<span class="forecast-view__dir-icon forecast-view__dir-icon--unknown">?</span>';
+        }
+
+        const normalizedDirection = ((direction % 360) + 360) % 360;
+        const iconRotation = ((normalizedDirection + 90) % 360);
+        return `<span class="forecast-view__dir-icon" style="--dir-deg:${iconRotation}deg">➤</span>`;
+    }
 
     L.Control.ForecastView = L.Control.extend({
         options: { position: 'bottomleft' },
@@ -8,20 +28,21 @@ export function registerForecastView(map) {
             const self = this;
 
             const container = L.DomUtil.create('div', 'forecast-view');
-            // Verhindert, dass Klicks auf die Tabelle ungewollt Aktionen auf der Karte auslösen
+            // Prevents clicks on table from accidentally triggering map actions
             L.DomEvent.disableClickPropagation(container);
 
-            // 🌟 CLEANUP: Alle unnötigen IDs gelöscht – wir selektieren jetzt nur noch über BEM-Klassen
             container.innerHTML = `
                 <div class="forecast-view__scroll-container">
                     <table class="forecast-view__table">
                         <tr class="forecast-view__row-header"></tr>
                         <tr class="forecast-view__row-values"></tr>
+                        <tr class="forecast-view__row-gusts"></tr>
+                        <tr class="forecast-view__row-direction"></tr>
                     </table>
                 </div>
             `;
 
-            // Reine Render-Funktion für die Tabelle
+            // Pure render function for table
             self.renderTable = function (forecast) {
                 if (!forecast) {
                     container.classList.remove('forecast-view--has-data');
@@ -30,11 +51,17 @@ export function registerForecastView(map) {
 
                 container.classList.add('forecast-view--has-data');
 
-                // 🚀 SAUBER: Suche jetzt lokal IM container, statt auf dem gesamten document
                 const headerRow = container.querySelector('.forecast-view__row-header');
                 const valuesRow = container.querySelector('.forecast-view__row-values');
-                if (!headerRow || !valuesRow) return;
+                const gustsRow = container.querySelector('.forecast-view__row-gusts');
+                const directionRow = container.querySelector('.forecast-view__row-direction');
+                if (!headerRow || !valuesRow || !gustsRow || !directionRow) return;
 
+                /**
+                 * Maps wind speed to the color class used by forecast cells.
+                 * @param {number} wind Wind speed in knots.
+                 * @returns {string} CSS class name.
+                 */
                 function getColorClass(wind) {
                     if (wind < 3.0) return 'w-under-3';
                     if (wind < 5.0) return 'w-under-5';
@@ -52,17 +79,30 @@ export function registerForecastView(map) {
 
                 let headerHtml = '';
                 let valuesHtml = '';
+                let gustsHtml = '';
+                let directionHtml = '';
 
                 forecast.forEach(item => {
                     const colorClass = getColorClass(item.wind);
                     const formattedValue = item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1);
+                    
+                    // Böen analog zu Wind verarbeiten (Farbklasse & Rundung)
+                    const gustColorClass = getColorClass(item.gust || 0);
+                    const formattedGust = item.gust >= 10 ? Math.round(item.gust) : (item.gust ?? 0).toFixed(1);
+                    
+                    const directionIcon = renderDirectionIcon(item.direction);
 
                     headerHtml += `<th class="forecast-view__cell-header" data-time="${item.fullKey}">${item.hour}h</th>`;
                     valuesHtml += `<td class="forecast-view__cell-value ${colorClass}" data-time="${item.fullKey}">${formattedValue}</td>`;
+                    // 🌟 KORREKTUR: Klassenstruktur exakt an das neue CSS angepasst für perfekte Symmetrie und Zentrierung
+                    gustsHtml += `<td class="forecast-view__cell-value forecast-view__cell-gust ${gustColorClass}" data-time="${item.fullKey}">${formattedGust}</td>`;
+                    directionHtml += `<td class="forecast-view__cell-direction" data-time="${item.fullKey}">${directionIcon}</td>`;
                 });
 
                 headerRow.innerHTML = headerHtml;
                 valuesRow.innerHTML = valuesHtml;
+                gustsRow.innerHTML = gustsHtml;
+                directionRow.innerHTML = directionHtml;
 
                 self.highlightActiveForecastHour();
                 setTimeout(() => { self.scrollActiveForecastHourToCenter(); }, 50);
@@ -72,8 +112,7 @@ export function registerForecastView(map) {
                 const currentKey = weatherModel.activeTimestamp;
                 if (!currentKey) return;
 
-                // 🚀 SAUBER: Nur Elemente innerhalb dieser Tabellen-Komponente manipulieren
-                container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value')
+                container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction')
                     .forEach(el => el.classList.remove('forecast-view__cell--active'));
 
                 container.querySelectorAll(`[data-time="${currentKey}"]`)
@@ -81,7 +120,6 @@ export function registerForecastView(map) {
             };
 
             self.scrollActiveForecastHourToCenter = function () {
-                // 🚀 SAUBER: Lokale Selektion schützt vor Konflikten mit anderen Leaflet-Controls
                 const scrollBox = container.querySelector('.forecast-view__scroll-container');
                 const activeTh = container.querySelector('.forecast-view__cell-header.forecast-view__cell--active');
 
@@ -93,7 +131,6 @@ export function registerForecastView(map) {
                 }
             };
 
-            // --- FIX HIER: e.detail ist direkt das übergebene Array aus dem Model ---
             weatherModel.addEventListener('model:forecast-data-updated', (e) => {
                 self.renderTable(e.detail);
             });

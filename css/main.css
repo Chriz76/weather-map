@@ -1,3 +1,7 @@
+html, body, #map, .leaflet-container, .leaflet-control {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 html, body {
     padding: 0;
     margin: 0;

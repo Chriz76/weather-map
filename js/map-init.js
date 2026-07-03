@@ -2,22 +2,26 @@
 import { imageBounds } from './config.js';
 import { storage } from './utils/storage.js';
 
-// Interne Modul-Variablen (von außen nicht direkt manipulierbar)
+// Internal module variables (not directly manipulable from outside)
 let mapInstance = null;
 let windOverlayInstance = null;
 
+/**
+ * Initializes the Leaflet map once and returns singleton instances.
+ * @returns {{map: L.Map, windOverlay: L.ImageOverlay}} Map and weather overlay references.
+ */
 export function initMap() {
     if (mapInstance) return { map: mapInstance, windOverlay: windOverlayInstance };
 
-    // 1. Hole den letzten Zustand aus dem Storage. 
-    // Falls leer/nicht vorhanden, greift direkt das übergebene Standard-Objekt (Augsburg).
+    // 1. Get last state from storage.
+    // If empty/missing, falls back directly to the provided default object (Augsburg).
     const savedState = storage.getMapState({ 
         lat: 48.3528, 
         lng: 10.9043, 
         zoom: 8 
     });
 
-    // 2. Karte mit den ermittelten Werten initialisieren
+    // 2. Initialize map with determined values
     mapInstance = L.map('map', {
         closePopupOnClick: false,
         zoomControl: false

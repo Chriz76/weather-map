@@ -7,8 +7,7 @@
     padding: 3px 7px;
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+ }
 
 /* Verhindert, dass der Link blau/unterstrichen wird und hält das Layout kompakt */
 .logo-view__link,
