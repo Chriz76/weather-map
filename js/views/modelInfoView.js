@@ -3,11 +3,11 @@ import { weatherModel } from '../weatherModel.js'; // 👈 Wichtig: Modell impor
 
 /**
  * Registers the model metadata info renderer.
- * @param {L.Map} map Leaflet map instance.
+ * @param {Object} map Leaflet map instance.
  * @returns {void}
  */
 export function registerModelInfoView(map) {
-    const infoEl = document.querySelector('.model-info');
+    const infoEl = /** @type {HTMLElement|null} */ (document.querySelector('.model-info'));
     if (!infoEl) return;
 
     // Set default text if API still loading
@@ -35,7 +35,8 @@ export function registerModelInfoView(map) {
                 infoEl.innerText = 'Model data active';
             }
         } catch (err) {
-            console.error('🚨 Error formatting model info:', err.message);
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            console.error('🚨 Error formatting model info:', errorMessage);
             infoEl.innerText = 'Error loading model info';
         }
     });

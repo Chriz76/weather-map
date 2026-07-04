@@ -1,3 +1,6 @@
+/* global L */
+const L = /** @type {any} */ (window.L);
+/** @type {any|null} */
 let activeSpotMarker = null;
 
 /**
@@ -20,8 +23,8 @@ function normalizeWindData(windData) {
 
         return {
                 speed: Number.isFinite(windData.speed) ? windData.speed : null,
-                direction: Number.isFinite(windData.direction) ? ((windData.direction % 360) + 360) % 360 : null,
-                gust: Number.isFinite(windData.gust) ? windData.gust : null
+                direction: windData.direction !== null && Number.isFinite(windData.direction) ? ((windData.direction % 360) + 360) % 360 : null,
+                gust: windData.gust !== null && Number.isFinite(windData.gust) ? windData.gust : null
         };
 }
 
@@ -73,14 +76,14 @@ function createPopupHtml(formattedValue, formattedGust, direction, coordsDisplay
 
 /**
  * Creates the Leaflet marker instance and opens its popup.
- * @param {L.Map} map Leaflet map instance.
+ * @param {any} map Leaflet map instance.
  * @param {number} lat Latitude.
  * @param {number} lng Longitude.
  * @param {string} popupContent Popup HTML content.
  * @returns {void}
  */
 function createMarker(map, lat, lng, popupContent) {
-activeSpotMarker = L.circleMarker([lat, lng], {
+    activeSpotMarker = L.circleMarker([lat, lng], {
         radius: 6,
         color: '#ffffff',
         fillColor: '#0077a4',
@@ -119,17 +122,17 @@ function getExistingWindDisplay() {
     
     let gustDisplay = '?';
     if (popupEl && popupEl.hasAttribute('data-gust')) {
-        gustDisplay = popupEl.getAttribute('data-gust');
+        gustDisplay = popupEl.getAttribute('data-gust') || '?';
     } else {
         const gustEl = container.querySelector('.marker-popup__gust-value');
-        if (gustEl) gustDisplay = gustEl.textContent;
+        if (gustEl) gustDisplay = gustEl.textContent || '?';
     }
 
     const directionRaw = popupEl ? Number(popupEl.getAttribute('data-direction')) : NaN;
     const direction = Number.isFinite(directionRaw) ? directionRaw : null;
 
     return {
-        speedDisplay: valueEl ? valueEl.textContent : '?',
+        speedDisplay: valueEl ? (valueEl.textContent || '?') : '?',
         gustDisplay,
         direction
     };
@@ -158,7 +161,8 @@ export function updateMapMarkerWindspeed(map, windData) {
             activeSpotMarker.setPopupContent(popupContent);
         }
     } catch (markerError) {
-        console.error("❌ Error updating map marker windspeed:", markerError.message);
+        const errorMessage = markerError instanceof Error ? markerError.message : String(markerError);
+        console.error("❌ Error updating map marker windspeed:", errorMessage);
     }
 }
 
@@ -187,7 +191,8 @@ export function updateMapMarkerLocation(map, lat, lng) {
             }
         }
     } catch (markerError) {
-        console.error("❌ Error moving map marker location:", markerError.message);
+        const errorMessage = markerError instanceof Error ? markerError.message : String(markerError);
+        console.error("❌ Error moving map marker location:", errorMessage);
     }
 }
 

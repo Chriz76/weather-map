@@ -2,6 +2,7 @@ export const BASE_URL = "https://winddata.pages.dev/";
 
 export const GRID_CELL_SIZE = 1.0;
 
+/** @type {[[number, number], [number, number]]} */
 export const imageBounds = [
     [43.0440, -4.1616],
     [58.1647, 20.5444]

@@ -1,14 +1,20 @@
+/* global L */
 // --- src/map-init.js ---
 import { imageBounds } from './config.js';
 import { storage } from './utils/storage.js';
 
+/** @type {any} */
+const L = window.L;
+
 // Internal module variables (not directly manipulable from outside)
+/** @type {any|null} */
 let mapInstance = null;
+/** @type {any|null} */
 let windOverlayInstance = null;
 
 /**
  * Initializes the Leaflet map once and returns singleton instances.
- * @returns {{map: L.Map, windOverlay: L.ImageOverlay}} Map and weather overlay references.
+ * @returns {{map: Object, windOverlay: Object}} Map and weather overlay references.
  */
 export function initMap() {
     if (mapInstance) return { map: mapInstance, windOverlay: windOverlayInstance };

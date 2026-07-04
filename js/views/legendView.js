@@ -1,12 +1,16 @@
+/* global L */
+/** @type {any} */
+const L = window.L;
 /**
  * Registers the static wind legend control.
- * @param {L.Map} map Leaflet map instance.
+ * @param {any} map Leaflet map instance.
  * @returns {void}
  */
 export function registerLegendView(map) {
     // 1. Einheitlicher Leaflet-Klassenname: LegendView
     L.Control.LegendView = L.Control.extend({
         options: { position: 'topleft' },
+        /** @param {any} map */
         onAdd: function (map) {
             // 2. Main class switched to BEM
             const container = L.DomUtil.create('div', 'legend-view');
@@ -54,6 +58,7 @@ export function registerLegendView(map) {
     });
 
     // 4. Factory method and registration adapted
+    /** @param {any} options */
     L.control.legendView = function (options) { return new L.Control.LegendView(options); };
     map.legendViewControl = L.control.legendView().addTo(map);
 }

@@ -34,8 +34,9 @@ export function registerLoadingView() {
     toggleSpinner(weatherModel.isActiveLoading);
 
     // 2. Event-Listener: Lausche direkt auf das Modell
-    weatherModel.addEventListener('model:active-loading-changed', (e) => {
-        const isLoading = e.detail;
+    weatherModel.addEventListener('model:active-loading-changed', /** @param {Event} e */ (e) => {
+        const customEvent = /** @type {CustomEvent<boolean>} */ (e);
+        const isLoading = customEvent.detail;
         toggleSpinner(isLoading);
     });
 }

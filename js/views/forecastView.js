@@ -1,8 +1,11 @@
+/* global L */
+/** @type {any} */
+const L = window.L;
 import { weatherModel } from '../weatherModel.js';
 
 /**
  * Registers the forecast table control and binds it to model events.
- * @param {L.Map} map Leaflet map instance.
+ * @param {any} map Leaflet map instance.
  * @returns {void}
  */
 export function registerForecastView(map) {
@@ -24,8 +27,9 @@ export function registerForecastView(map) {
 
     L.Control.ForecastView = L.Control.extend({
         options: { position: 'bottomleft' },
+        /** @param {any} map */
         onAdd: function (map) {
-            const self = this;
+            const self = /** @type {any} */ (this);
 
             const container = L.DomUtil.create('div', 'forecast-view');
             // Prevents clicks on table from accidentally triggering map actions
@@ -43,6 +47,9 @@ export function registerForecastView(map) {
             `;
 
             // Pure render function for table
+            /**
+             * @param {{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}[]|null} forecast
+             */
             self.renderTable = function (forecast) {
                 if (!forecast) {
                     container.classList.remove('forecast-view--has-data');
@@ -51,10 +58,10 @@ export function registerForecastView(map) {
 
                 container.classList.add('forecast-view--has-data');
 
-                const headerRow = container.querySelector('.forecast-view__row-header');
-                const valuesRow = container.querySelector('.forecast-view__row-values');
-                const gustsRow = container.querySelector('.forecast-view__row-gusts');
-                const directionRow = container.querySelector('.forecast-view__row-direction');
+                const headerRow = /** @type {HTMLElement|null} */ (container.querySelector('.forecast-view__row-header'));
+                const valuesRow = /** @type {HTMLElement|null} */ (container.querySelector('.forecast-view__row-values'));
+                const gustsRow = /** @type {HTMLElement|null} */ (container.querySelector('.forecast-view__row-gusts'));
+                const directionRow = /** @type {HTMLElement|null} */ (container.querySelector('.forecast-view__row-direction'));
                 if (!headerRow || !valuesRow || !gustsRow || !directionRow) return;
 
                 /**
@@ -112,16 +119,20 @@ export function registerForecastView(map) {
                 const currentKey = weatherModel.activeTimestamp;
                 if (!currentKey) return;
 
-                container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction')
-                    .forEach(el => el.classList.remove('forecast-view__cell--active'));
+                const activeElements = /** @type {NodeListOf<HTMLElement>} */ (
+                    container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction')
+                );
+                activeElements.forEach(el => el.classList.remove('forecast-view__cell--active'));
 
-                container.querySelectorAll(`[data-time="${currentKey}"]`)
-                    .forEach(el => el.classList.add('forecast-view__cell--active'));
+                const highlightedElements = /** @type {NodeListOf<HTMLElement>} */ (
+                    container.querySelectorAll(`[data-time="${currentKey}"]`)
+                );
+                highlightedElements.forEach(el => el.classList.add('forecast-view__cell--active'));
             };
 
             self.scrollActiveForecastHourToCenter = function () {
-                const scrollBox = container.querySelector('.forecast-view__scroll-container');
-                const activeTh = container.querySelector('.forecast-view__cell-header.forecast-view__cell--active');
+                const scrollBox = /** @type {HTMLElement|null} */ (container.querySelector('.forecast-view__scroll-container'));
+                const activeTh = /** @type {HTMLElement|null} */ (container.querySelector('.forecast-view__cell-header.forecast-view__cell--active'));
 
                 if (scrollBox && activeTh) {
                     scrollBox.scrollTo({
@@ -131,8 +142,9 @@ export function registerForecastView(map) {
                 }
             };
 
-            weatherModel.addEventListener('model:forecast-data-updated', (e) => {
-                self.renderTable(e.detail);
+            weatherModel.addEventListener('model:forecast-data-updated', /** @param {Event} e */ (e) => {
+                const customEvent = /** @type {CustomEvent<any>} */ (e);
+                self.renderTable(customEvent.detail);
             });
 
             weatherModel.addEventListener('model:timestamp-index-updated', () => {
@@ -146,6 +158,7 @@ export function registerForecastView(map) {
         }
     });
 
+    /** @param {any} options */
     L.control.forecastView = function (options) { return new L.Control.ForecastView(options); };
     map.forecastViewControl = L.control.forecastView().addTo(map);
 }

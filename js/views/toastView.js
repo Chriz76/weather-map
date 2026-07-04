@@ -12,6 +12,7 @@ export function registerToastView() {
 
     /**
      * Blendet den Toast ein
+     * @param {string} message
      */
     const showToast = (message) => {
         toastEl.innerHTML = `<span class="toast-notification__icon">⚠️</span> ${message}`;
@@ -26,12 +27,18 @@ export function registerToastView() {
     };
 
     // Event-Listener reagiert stur auf den Zustand im Model
-    weatherModel.addEventListener('model:show-error-changed', (e) => {
-        const errorMsg = e.detail;
+    /**
+     * @param {Event} e
+     */
+    const onShowErrorChanged = (e) => {
+        const customEvent = /** @type {CustomEvent<string|null>} */ (e);
+        const errorMsg = customEvent.detail;
         if (errorMsg) {
             showToast(errorMsg);
         } else {
             hideToast();
         }
-    });
+    };
+
+    weatherModel.addEventListener('model:show-error-changed', onShowErrorChanged);
 }

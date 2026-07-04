@@ -17,7 +17,9 @@ import { registerLoadingView } from './views/loadingSpinnerView.js';
 import { registerToastView } from './views/toastView.js';
 
 // --- 1. INITIALISIERUNG ---
-const { map, windOverlay } = initMap();
+const initResult = /** @type {{map:any, windOverlay:any}} */ (initMap());
+const map = initResult.map;
+const windOverlay = initResult.windOverlay;
 registerTimelineView(map);
 registerForecastView(map);
 registerLogoView(map);
@@ -35,8 +37,10 @@ registerLoadingView();
 registerToastView();
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
+/** @type {number|null} */
 let pollTimer = null;
 let lastClusterClickToken = null;
+/** @type {string|null} */
 let currentOverlayBlobUrl = null;
 
 
@@ -69,10 +73,10 @@ async function fetchWeatherOverlayUrl(timestamp) {
  */
 async function syncAppWithServer() {
     try {
-        const indexData = await weatherApi.fetchIndex(BASE_URL);
+        const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string}} */ (await weatherApi.fetchIndex(BASE_URL));
 
         // 1. LIGHTNING-FAST CHECK: If creation date hasn't changed → abort
-        if (weatherModel.generatedAt === indexData.generated_at && weatherModel.generatedAt) {
+        if (weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
             return;
         }
 
@@ -84,22 +88,25 @@ async function syncAppWithServer() {
             weatherModel.setIndexMetadata(indexData);
         }
 
+        /** @type {string|null} */
         let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.png`; // Fallback path
 
         // 2. Load data (image & interpolation)
         try {
-            const overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+            overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
         } catch (e) {
-            console.error('❌ Error fetching weather overlay image:', e.message);
-            weatherModel.setShowError("Error fetching weather overlay image: " + e.message);
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            console.error('❌ Error fetching weather overlay image:', errorMessage);
+            weatherModel.setShowError("Error fetching weather overlay image: " + errorMessage);
         }
         
         // 3. Update store state transparently
         weatherModel.setActiveOverlayUrl(overlayUrl);
 
     } catch (e) {
-        weatherModel.setShowError("Error during application synchronization: " + e.message);
-        console.error('❌ Error during application synchronization:', e.message);
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        weatherModel.setShowError("Error during application synchronization: " + errorMessage);
+        console.error('❌ Error during application synchronization:', errorMessage);
     }
 }
 
@@ -133,20 +140,23 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 window.addEventListener('timeline-change', async (e) => {
-    const idx = e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
+    const timelineEvent = /** @type {CustomEvent<{index:number}>} */ (e);
+    const idx = timelineEvent.detail && typeof timelineEvent.detail.index === 'number' ? timelineEvent.detail.index : null;
     if (idx === null) return;
 
     // 1. Set explicit time index in store
     weatherModel.setActiveTimestampIndex(idx);
 
+    /** @type {string|null} */
     let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.png`; // Fallback path
     // 2. Load data (image & interpolation)
     await loadingManager.track(async () => {
         try {
             overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
         } catch (e) {
-            console.error('❌ Error fetching weather overlay image:', e.message);
-            weatherModel.setShowError("Error fetching weather overlay image: " + e.message);
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            console.error('❌ Error fetching weather overlay image:', errorMessage);
+            weatherModel.setShowError("Error fetching weather overlay image: " + errorMessage);
         }
     });
 
@@ -167,11 +177,10 @@ map.on('moveend', () => {
 /**
  * Handles Leaflet map click events by loading the corresponding grid cluster
  * and updating the weather model for the clicked location.
- * @param {Object} e Leaflet event object.
- * @param {{lat:number,lng:number}} e.latlng Clicked geographic coordinates.
+ * @param {{latlng:{lat:number,lng:number}}} e Leaflet event object.
  * @returns {Promise<void>}
  */
-map.on('click', async function (e) {
+async function handleMapClick(e) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
 
@@ -188,11 +197,14 @@ map.on('click', async function (e) {
         weatherModel.setPointData(e.latlng, cluster);
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
-            console.error('🚨 Error processing map click:', error.message);
-            weatherModel.setShowError("Error loading location data: " + error.message);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('🚨 Error processing map click:', errorMessage);
+            weatherModel.setShowError("Error loading location data: " + errorMessage);
         }
     }
-});
+}
+
+map.on('click', handleMapClick);
 
 map.on('popupclose', function () {
     lastClusterClickToken = null;
@@ -208,11 +220,17 @@ map.on('popupclose', function () {
  * @param {{lat:number,lng:number}} e.latlng Found geographic coordinates.
  * @returns {Promise<void>}
  */
-map.on('locationfound', async function (e) {
+/**
+ * Handles successful browser geolocation events by loading the
+ * matching cluster and updating the map view.
+ * @param {{latlng:{lat:number,lng:number}}} e Leaflet locationfound event object.
+ * @returns {Promise<void>}
+ */
+async function handleLocationFound(e) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
 
-    try { 
+    try {
         const cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
         if (lastClusterClickToken !== currentClickToken) return;
 
@@ -220,17 +238,25 @@ map.on('locationfound', async function (e) {
         weatherModel.setPointData(e.latlng, cluster);
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
-            console.error('🚨 Error processing GPS location:', error.message);
-            weatherModel.setShowError("Error processing GPS location: " + error.message);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('🚨 Error processing GPS location:', errorMessage);
+            weatherModel.setShowError("Error processing GPS location: " + errorMessage);
         }
     } finally {
         // Turns off loading state in model → View reacts automatically!
         weatherModel.setIsLocating(false);
     }
-});
+}
 
-map.on('locationerror', function (e) {
+map.on('locationfound', handleLocationFound);
+
+/**
+ * @param {{message:string}} e
+ */
+function handleLocationError(e) {
     weatherModel.setShowError("Error processing GPS location: " + e.message);
     weatherModel.setIsLocating(false); // Turn off on error
-});
+}
+
+map.on('locationerror', handleLocationError);
 

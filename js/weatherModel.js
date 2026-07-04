@@ -2,13 +2,35 @@ import { calculatewindSpeeds } from './utils/interpolation.js';
 import { determineActiveIndex } from './utils/time.js';
 
 /**
+ * @typedef {{lat:number,lng:number}} LatLng
+ * @typedef {{speed:number|null,gust:number|null,direction:number|null}} WindData
+ * @typedef {{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}} ForecastItem
+ * @typedef {{
+ *   availableTimestamps:string[],
+ *   activeTimestampIndex:number,
+ *   lastClickedLatLng:LatLng|null,
+ *   currentClusterData:any|null,
+ *   modelGeneratedAt:string|null,
+ *   modelCurrentHour:string|null,
+ *   windData:WindData|null,
+ *   activeOverlayUrl:string|null,
+ *   forecast:ForecastItem[]|null,
+ *   isLocating:boolean,
+ *   isActiveLoading:boolean,
+ *   showError:string|null
+ * }} WeatherModelState
+ */
+
+/**
  * Modernized WeatherModel extending EventTarget.
  * Actively manages application state and notifications.
  */
 class WeatherModel extends EventTarget {
     constructor() {
         super();
+        /** @type {number|null} */
         this._errorTimer = null; // Timer for auto-clearing error messages
+        /** @type {WeatherModelState} */
         this.state = {
             availableTimestamps: [],
             activeTimestampIndex: 0,
@@ -17,7 +39,7 @@ class WeatherModel extends EventTarget {
             modelGeneratedAt: null,
             modelCurrentHour: null,
             windData: null,
-            activeOverlayUrl: null,  
+            activeOverlayUrl: null,
             forecast: null,
             isLocating: false,        // Tippfehler im Kommentar korrigiert
             isActiveLoading: false,
@@ -43,19 +65,29 @@ class WeatherModel extends EventTarget {
     get showError() { return this.state.showError; }
     get activeTimestamp() { return this.getTimestamp(this.state.activeTimestampIndex); }
     
+    /**
+     * @param {number} idx
+     * @returns {string|null}
+     */
     getTimestamp(idx) {
         return this.state.availableTimestamps[idx] || null;
     }
 
     // --- MUTATORS (State Changes + Safe Event Flow) ---
 
+    /**
+     * @param {string|null} message
+     * @returns {void}
+     */
     setShowError(message) {
         this.state.showError = message;
         this.dispatchEvent(new CustomEvent('model:show-error-changed', { detail: message }));
 
         // Wenn ein Fehler gesetzt wird, starte den Selbstlösch-Timer
         if (message) {
-            clearTimeout(this._errorTimer);
+            if (this._errorTimer !== null) {
+                clearTimeout(this._errorTimer);
+            }
             this._errorTimer = setTimeout(() => {
                 this.setShowError(null); // Löscht sich selbst und feuert das Event mit null ab
             }, 4000);
@@ -130,8 +162,8 @@ class WeatherModel extends EventTarget {
         // 1. First fill RAM completely
         this.state.availableTimestamps = sortedTimestamps;
         this.state.activeTimestampIndex = activeIndex;
-        this.state.modelGeneratedAt = indexData.generated_at;
-        this.state.modelCurrentHour = indexData.current_hour;
+        this.state.modelGeneratedAt = indexData.generated_at ?? null;
+        this.state.modelCurrentHour = indexData.current_hour ?? null;
 
         if (this.lastClickedLatLng && this.currentClusterData) {
             const interpolation = calculatewindSpeeds(this.lastClickedLatLng, this.currentClusterData, this.activeTimestamp);
@@ -152,8 +184,8 @@ class WeatherModel extends EventTarget {
 
     /**
      * Sets currently selected map point and computed weather data.
-     * @param {{lat:number,lng:number}} latlng Selected location.
-     * @param {Object} cluster Cluster payload for interpolation.
+     * @param {LatLng} latlng Selected location.
+     * @param {any} cluster Cluster payload for interpolation.
      * @returns {void}
      */
     setPointData(latlng, cluster) {

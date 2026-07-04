@@ -10,21 +10,48 @@ const KEYS = {
  * @returns {Function} Debounced function.
  */
 function debounce(func, delayMs = 250) {
-    let timeoutId;
+    /** @type {number|null} */
+    let timeoutId = null;
+    /**
+     * @param {...any} args
+     */
     return (...args) => {
-        clearTimeout(timeoutId);
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+        }
         timeoutId = setTimeout(() => func(...args), delayMs);
     };
 }
 
 // Basis-Operationen (intern genutzt)
 const core = {
-    set: (key, val) => { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { console.error(e); } },
-    get: (key, fallback, isObj) => { try { const item = localStorage.getItem(key); return item ? (isObj ? JSON.parse(item) : item) : fallback; } catch (e) { return fallback; } },
-    remove: (key) => { try { localStorage.removeItem(key); } catch (e) {} }
+    /**
+     * @param {string} key
+     * @param {any} val
+     */
+    set(key, val) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { console.error(e); } },
+    /**
+     * @param {string} key
+     * @param {any} fallback
+     * @param {boolean} isObj
+     * @returns {any}
+     */
+    get(key, fallback, isObj) { try { const item = localStorage.getItem(key); return item ? (isObj ? JSON.parse(item) : item) : fallback; } catch (e) { return fallback; } },
+    /**
+     * @param {string} key
+     */
+    remove(key) { try { localStorage.removeItem(key); } catch (e) {} }
 };
 
-const setDebounced = debounce((key, val) => core.set(key, val), 300);
+/**
+ * @param {string} key
+ * @param {any} val
+ */
+function setStorageValue(key, val) {
+    core.set(key, val);
+}
+
+const setDebounced = debounce(setStorageValue, 300);
 
 // --- The exported interface for your app ---
 export const storage = {

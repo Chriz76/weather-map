@@ -1,6 +1,7 @@
+/* global L */
 /**
  * Registers the logo/info control.
- * @param {L.Map} map Leaflet map instance.
+ * @param {Object} map Leaflet map instance.
  * @returns {void}
  */
 export function registerLogoView(map) {

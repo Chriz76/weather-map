@@ -14,7 +14,9 @@ class LoadingManager {
     start() {
         this.activeTracks++;
         if (this.activeTracks === 1) {
-            clearTimeout(this.timeout);
+            if (this.timeout !== null) {
+                clearTimeout(this.timeout);
+            }
             this.timeout = setTimeout(() => {
                 // Nutzt deine Methode aus dem gezeigten Code
                 weatherModel.setIsActiveLoading(true);
@@ -28,7 +30,9 @@ class LoadingManager {
     stop() {
         this.activeTracks = Math.max(0, this.activeTracks - 1);
         if (this.activeTracks === 0) {
-            clearTimeout(this.timeout);
+            if (this.timeout !== null) {
+                clearTimeout(this.timeout);
+            }
             weatherModel.setIsActiveLoading(false);
         }
     }
@@ -37,6 +41,9 @@ class LoadingManager {
      * Ein "Decorator" für asynchrone Funktionen. 
      * Hüllt jede Funktion automatisch in das Start/Stop-Szenario
      * und meldet Fehler zentral an das weatherModel.
+     */
+    /**
+     * @param {() => Promise<any>} asyncFn
      */
     async track(asyncFn) {
         this.start();
