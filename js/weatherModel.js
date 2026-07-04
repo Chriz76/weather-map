@@ -28,8 +28,6 @@ import { determineActiveIndex } from './utils/time.js';
 class WeatherModel extends EventTarget {
     constructor() {
         super();
-        /** @type {number|null} */
-        this._errorTimer = null; // Timer for auto-clearing error messages
         /** @type {WeatherModelState} */
         this.state = {
             availableTimestamps: [],
@@ -82,16 +80,6 @@ class WeatherModel extends EventTarget {
     setShowError(message) {
         this.state.showError = message;
         this.dispatchEvent(new CustomEvent('model:show-error-changed', { detail: message }));
-
-        // Wenn ein Fehler gesetzt wird, starte den Selbstlösch-Timer
-        if (message) {
-            if (this._errorTimer !== null) {
-                clearTimeout(this._errorTimer);
-            }
-            this._errorTimer = setTimeout(() => {
-                this.setShowError(null); // Löscht sich selbst und feuert das Event mit null ab
-            }, 4000);
-        }
     }
 
 
