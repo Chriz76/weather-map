@@ -44,7 +44,7 @@ export const weatherApi = {
      * @returns {Promise<Blob>} Downloaded image blob.
      */
     async fetchWeatherImageBlob(timestamp, baseUrl) {
-        const imageUrl = `${baseUrl}${timestamp}Z.png`;
+        const imageUrl = `${baseUrl}${timestamp}Z.webp`; // Use .webp for better compression
         const response = await fetch(imageUrl, { cache: 'no-cache' });
         if (!response.ok) throw new Error('Image could not be loaded');
         return await response.blob();

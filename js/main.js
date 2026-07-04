@@ -97,7 +97,7 @@ async function syncAppWithServer() {
         }
 
         /** @type {string|null} */
-        let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.png`; // Fallback path
+        let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.webp`; // Fallback path
 
         // 2. Load data (image & interpolation)
         try {
@@ -171,7 +171,7 @@ window.addEventListener('timeline-change', (e) => {
         lastTimelineTimestampToken = targetTimestamp;
 
         /** @type {string|null} */
-        let overlayUrl = `${BASE_URL}${targetTimestamp}Z.png`; // Fallback Pfad
+        let overlayUrl = `${BASE_URL}${targetTimestamp}Z.webp`; // Fallback Pfad
 
         // Bild asynchron über das Netzwerk laden
         await loadingManager.track(async () => {
