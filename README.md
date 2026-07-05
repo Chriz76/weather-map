@@ -10,6 +10,8 @@ The project uses the new **ICON-D2 RUC (Rapid Update Cycle)** model provided by 
 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries directly from the ICON-D2 RUC.
 
+[See my article on medium for some more background](https://medium.com/@christianzink/why-standard-wind-forecasts-fail-the-power-of-dwds-icon-d2-ruc-model-for-wind-sports-acf2ebd88412?sharedUserId=christianzink)
+
 > ⚠️ **Disclaimer:** This project is experimental and currently in active development.
 
 ---
