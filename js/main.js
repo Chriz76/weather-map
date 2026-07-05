@@ -2,7 +2,7 @@
 import { weatherModel } from './weatherModel.js';
 import { initMap } from './map-init.js';
 import { weatherApi } from './weatherApi.js';
-import { storage } from './utils/storage.js'; // Keep for map state
+import { storage } from './utils/storage.js'; // Fallback für normalen Zustand
 import { loadingManager } from './utils/loadingManager.js';
 import { errorController } from './utils/errorController.js';
 
@@ -44,36 +44,56 @@ let lastClusterClickToken = null;
 /** @type {string|null} */
 let currentOverlayBlobUrl = null;
 
-// NEU: Token und Timer zur Absicherung der Slider-Bewegungen (Debounce & Race-Conditions)
 /** @type {string|null} */
 let lastTimelineTimestampToken = null;
 /** @type {number|null} */
 let timelineDebounceTimer = null;
-const SLIDER_DEBOUNCE_MS = 50; // Der besprochene 50ms Geschwindigkeits-Indikator
+const SLIDER_DEBOUNCE_MS = 50; 
 
 
-// --- 2. LOGIC PIPELINE (Pure data fetching) ---
+// --- 2. LOGIC PIPELINE ---
 
 /**
- * Fetches a weather image and returns a Blob object URL.
- * @param {string|null} timestamp Timestamp key in format YYYYMMDD_HH.
- * @returns {Promise<string|null>} Overlay URL for Leaflet image layer or null.
+ * @param {string|null} timestamp
+ * @returns {Promise<string|null>}
  */
 async function fetchWeatherOverlayUrl(timestamp) {
     if (!timestamp) return null;
-
     const imageBlob = await weatherApi.fetchWeatherImageBlob(timestamp, BASE_URL);
-
     if (currentOverlayBlobUrl) {
         URL.revokeObjectURL(currentOverlayBlobUrl);
     }
-
     currentOverlayBlobUrl = URL.createObjectURL(imageBlob);
     return currentOverlayBlobUrl;
 }
 
 
-// --- 3. CENTRAL COORDINATION ---
+// --- 3. CENTRAL COORDINATION & URL HANDLING ---
+
+/**
+ * NEU: Prüft die URL auf lat/lon Parameter (?lat=54.4150&lon=11.1022)
+ * Falls vorhanden, wird die Karte zentriert und der Klick-Handler simuliert.
+ */
+async function checkAndHandleUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const latParam = urlParams.get('lat');
+    const lonParam = urlParams.get('lon');
+
+    if (latParam && lonParam) {
+        const lat = parseFloat(latParam);
+        const lng = parseFloat(lonParam); // Leaflet nutzt 'lng'
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+            const targetLatLng = { lat, lng };
+            
+            // 1. Karte sofort dorthin bewegen (z.B. Zoom 12 für Spots)
+            map.setView(targetLatLng, 12);
+            
+            // 2. Wetterdaten für diesen Spot direkt laden
+            await handleMapClick({ latlng: targetLatLng });
+        }
+    }
+}
 
 /**
  * Synchronizes model state with current backend data.
@@ -83,7 +103,6 @@ async function syncAppWithServer() {
     try {
         const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string}} */ (await weatherApi.fetchIndex(BASE_URL));
 
-        // 1. LIGHTNING-FAST CHECK: If creation date hasn't changed → abort
         if (weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
             return;
         }
@@ -97,9 +116,8 @@ async function syncAppWithServer() {
         }
 
         /** @type {string|null} */
-        let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.webp`; // Fallback path
+        let overlayUrl = `${BASE_URL}${weatherModel.activeTimestamp}Z.webp`; 
 
-        // 2. Load data (image & interpolation)
         try {
             overlayUrl = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
         } catch (e) {
@@ -108,7 +126,6 @@ async function syncAppWithServer() {
             errorController.showError("Error fetching weather overlay image: " + errorMessage);
         }
         
-        // 3. Update store state transparently
         weatherModel.setActiveOverlayUrl(overlayUrl);
 
     } catch (e) {
@@ -119,15 +136,18 @@ async function syncAppWithServer() {
 }
 
 
-// --- 4. APP LIFECYCLE & EVENT LISTENERS (The Controllers) ---
+// --- 4. APP LIFECYCLE & EVENT LISTENERS ---
 
 /**
- * Starts the application bootstrap and polling lifecycle.
+ * Starts the application bootstrap, processes URL parameters and polling lifecycle.
  * @returns {Promise<void>}
  */
 async function startAppAndSetupPolling() {
     await loadingManager.track(async () => {
+        // Erst Basisdaten vom Server holen
         await syncAppWithServer();
+        // NEU: Direkt danach prüfen, ob wir zu einem iFrame-Spot springen müssen
+        await checkAndHandleUrlParams();
     });
 
     if (pollTimer) clearInterval(pollTimer);
@@ -146,34 +166,25 @@ document.addEventListener('visibilitychange', async () => {
     }
 });
 
-// KORRIGIERT: Der hocheffiziente, getrennte Event-Listener für den Zeitregler
 window.addEventListener('timeline-change', (e) => {
     const timelineEvent = /** @type {CustomEvent<{index:number}>} */ (e);
     const idx = timelineEvent.detail && typeof timelineEvent.detail.index === 'number' ? timelineEvent.detail.index : null;
     if (idx === null) return;
 
-    // A. SOFORTIGES UI-FEEDBACK: Index direkt im Model setzen. 
-    // Dadurch schaltet die Uhrzeit-Textanzeige in deiner View ohne jede Millisekunde Verzögerung um!
     weatherModel.setActiveTimestampIndex(idx);
 
-    // B. GESCHWINDIGKEITS-FILTER: Vorherigen 50ms-Timer für das schwere Bild abbrechen
     if (timelineDebounceTimer) {
         clearTimeout(timelineDebounceTimer);
     }
 
-    // C. TIMER NEU STARTEN: Erst wenn der Finger für 50ms verweilt oder loslässt, feuert die Bild-Pipeline
     timelineDebounceTimer = window.setTimeout(async () => {
-        // Welchen Zeitstempel wollen wir JETZT gerade laden?
         const targetTimestamp = weatherModel.activeTimestamp;
         if (!targetTimestamp) return;
 
-        // Setze den Token für diesen Ladevorgang
         lastTimelineTimestampToken = targetTimestamp;
-
         /** @type {string|null} */
-        let overlayUrl = `${BASE_URL}${targetTimestamp}Z.webp`; // Fallback Pfad
+        let overlayUrl = `${BASE_URL}${targetTimestamp}Z.webp`; 
 
-        // Bild asynchron über das Netzwerk laden
         await loadingManager.track(async () => {
             try {
                 overlayUrl = await fetchWeatherOverlayUrl(targetTimestamp);
@@ -184,21 +195,20 @@ window.addEventListener('timeline-change', (e) => {
             }
         });
 
-        // 🚨 GEGEN RACE CONDITIONS (Überholende Bilder abfangen):
-        // Hat der Benutzer den Regler inzwischen weiterbewegt, stimmt der Token nicht mehr.
-        // Das Bild ist veraltet und wir brechen ab, ohne es auf der Karte anzuzeigen.
         if (lastTimelineTimestampToken !== targetTimestamp) {
             return;
         }
 
-        // Karte sicher auf den aktuellsten Stand bringen
         weatherModel.setActiveOverlayUrl(overlayUrl); 
         
     }, SLIDER_DEBOUNCE_MS);
 });
 
-// MAP EXTENSION: Kartenzustand debounct sichern bei Bewegung
+// MAP EXTENSION: Kartenzustand sichern (nur wenn keine URL-Parameter aktiv sind)
 map.on('moveend', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('lat') && urlParams.has('lon')) return; // Verhindert Überschreiben im iFrame
+
     const center = map.getCenter();
     storage.saveMapState({
         lat: center.lat,
@@ -208,8 +218,7 @@ map.on('moveend', () => {
 });
 
 /**
- * Handles Leaflet map click events by loading the corresponding grid cluster
- * and updating the weather model for the clicked location.
+ * Handles Leaflet map click events
  * @param {{latlng:{lat:number,lng:number}}} e Leaflet event object.
  * @returns {Promise<void>}
  */
@@ -219,14 +228,11 @@ async function handleMapClick(e) {
 
     try {
         let cluster = null;
-        // 1. Request cluster asynchronously
         await loadingManager.track(async () => {
             cluster = await weatherApi.fetchCluster(e.latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
         });
 
         if (lastClusterClickToken !== currentClickToken) return;
-
-        // 2. Once everything is ready: set state in one go
         weatherModel.setPointData(e.latlng, cluster);
     } catch (error) {
         if (lastClusterClickToken === currentClickToken) {
@@ -241,16 +247,11 @@ map.on('click', handleMapClick);
 
 map.on('popupclose', function () {
     lastClusterClickToken = null;
-
-    // Direct, unambiguous cleanup of state
     weatherModel.removePointData();
 });
 
 /**
- * Handles successful browser geolocation events by loading the
- * matching cluster and updating the map view.
- * @param {{latlng:{lat:number,lng:number}}} e Leaflet locationfound event object.
- * @returns {Promise<void>}
+ * @param {{latlng:{lat:number,lng:number}}} e
  */
 async function handleLocationFound(e) {
     const currentClickToken = Date.now();
@@ -269,7 +270,6 @@ async function handleLocationFound(e) {
             errorController.showError("Error processing GPS location: " + errorMessage);
         }
     } finally {
-        // Turns off loading state in model → View reacts automatically!
         weatherModel.setIsLocating(false);
     }
 }
@@ -281,7 +281,7 @@ map.on('locationfound', handleLocationFound);
  */
 function handleLocationError(e) {
     errorController.showError("Error processing GPS location: " + e.message);
-    weatherModel.setIsLocating(false); // Turn off on error
+    weatherModel.setIsLocating(false);
 }
 
 map.on('locationerror', handleLocationError);
