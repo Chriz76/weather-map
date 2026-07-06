@@ -14,7 +14,7 @@ let windOverlayInstance = null;
 
 /**
  * Initializes the Leaflet map once and returns singleton instances.
- * @returns {{map: Object, windOverlay: Object}} Map and weather overlay references.
+ * @returns {{map: any, windOverlay: any}} Map and weather overlay references.
  */
 export function initMap() {
     if (mapInstance) return { map: mapInstance, windOverlay: windOverlayInstance };

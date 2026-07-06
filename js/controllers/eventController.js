@@ -2,6 +2,7 @@
 import { weatherModel } from '../models/weatherModel.js';
 import { storage } from '../utils/storage.js';
 import { loadingManager } from './loadingManager.js';
+import { notificationController } from './notificationController.js';
 import { syncAppWithServer, loadWeatherDataForLocation, updateOverlayForTimestamp } from './syncPipeline.js';
 
 /**
@@ -12,21 +13,26 @@ export function initEventController(map) {
     const POLL_INTERVAL_MS = 5 * 60 * 1000;
     const SLIDER_DEBOUNCE_MS = 50;
 
+    /** @type {number | null} */
     let lastClusterClickToken = null;
+    /** @type {number | null} */
     let timelineDebounceTimer = null;
+    /** @type {number | null} */
     let lastTimelineTimestampToken = null;
 
     // --- A. MAP EVENTS (KLICKS & GPS) ---
 
-    map.on('click', async (e) => {
+    /** @param {{latlng:{lat:number,lng:number}}} e */
+    async function handleMapClick(e) {
         const currentClickToken = Date.now();
         lastClusterClickToken = currentClickToken;
 
         await loadWeatherDataForLocation(e.latlng);
         if (lastClusterClickToken !== currentClickToken) return;
-    });
+    }
 
-    map.on('locationfound', async (e) => {
+    /** @param {{latlng:{lat:number,lng:number}}} e */
+    async function handleLocationFound(e) {
         const currentClickToken = Date.now();
         lastClusterClickToken = currentClickToken;
 
@@ -36,14 +42,17 @@ export function initEventController(map) {
         if (lastClusterClickToken === currentClickToken) {
             weatherModel.setIsLocating(false);
         }
-    });
+    }
 
-    map.on('locationerror', (e) => {
-        import('./errorController.js').then(({ errorController }) => {
-            errorController.showError("Error processing GPS location: " + e.message);
-        });
+    /** @param {{message:string}} e */
+    function handleLocationError(e) {
+        notificationController.showNotification("Error processing GPS location: " + e.message);
         weatherModel.setIsLocating(false);
-    });
+    }
+
+    map.on('click', handleMapClick);
+    map.on('locationfound', handleLocationFound);
+    map.on('locationerror', handleLocationError);
 
     map.on('popupclose', () => {
         lastClusterClickToken = null;
@@ -64,16 +73,19 @@ export function initEventController(map) {
 
     // --- B. UI TIMELINE EVENT (SLIDER) ---
 
-    window.addEventListener('timeline-change', (e) => {
-        const timelineEvent = /** @type {CustomEvent<{index:number}>} */ (e);
+    /** @param {Event} e */
+    function handleTimelineChange(e) {
+        const timelineEvent = /** @type {{detail:{index:number}}} */ (e);
         const idx = timelineEvent.detail && typeof timelineEvent.detail.index === 'number' ? timelineEvent.detail.index : null;
         if (idx === null) return;
 
         weatherModel.setActiveTimestampIndex(idx);
 
-        if (timelineDebounceTimer) clearTimeout(timelineDebounceTimer);
+        if (timelineDebounceTimer !== null) {
+            clearTimeout(timelineDebounceTimer);
+        }
 
-        timelineDebounceTimer = window.setTimeout(async () => {
+        timelineDebounceTimer = /** @type {number} */ (window.setTimeout(async () => {
             const targetTimestamp = weatherModel.activeTimestamp;
             if (!targetTimestamp) return;
 
@@ -82,8 +94,10 @@ export function initEventController(map) {
             await loadingManager.track(async () => {
                 await updateOverlayForTimestamp(targetTimestamp);
             });
-        }, SLIDER_DEBOUNCE_MS);
-    });
+        }, SLIDER_DEBOUNCE_MS));
+    }
+
+    window.addEventListener('timeline-change', handleTimelineChange);
 
     // --- C. APP LIFECYCLE & POLLING ---
 

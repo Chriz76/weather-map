@@ -2,7 +2,7 @@
 import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
 import { weatherModel } from '../models/weatherModel.js';
 import { weatherApi } from '../weatherApi.js';
-import { errorController } from './errorController.js';
+import { notificationController } from './notificationController.js';
 import { loadingManager } from './loadingManager.js';
 
 /** @type {string|null} */
@@ -30,13 +30,14 @@ export async function fetchWeatherOverlayUrl(timestamp) {
  */
 export async function updateOverlayForTimestamp(timestamp) {
     if (!timestamp) return;
+    /** @type {string|null} */
     let overlayUrl = `${BASE_URL}${timestamp}Z.webp`;
     try {
         overlayUrl = await fetchWeatherOverlayUrl(timestamp);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error('❌ Error fetching overlay:', errMsg);
-        errorController.showError("Error fetching weather overlay image: " + errMsg);
+        notificationController.showNotification("Error fetching weather overlay image: " + errMsg);
     }
     weatherModel.setActiveOverlayUrl(overlayUrl);
 }
@@ -56,7 +57,7 @@ export async function loadWeatherDataForLocation(latlng) {
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error('🚨 Error processing location data:', errMsg);
-        errorController.showError("Error loading location data: " + errMsg);
+        notificationController.showNotification("Error loading location data: " + errMsg);
     }
 }
 
@@ -72,7 +73,7 @@ export async function syncAppWithServer() {
 
         // API-Versionsprüfung
         if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
-            errorController.showError({
+            notificationController.showNotification({
                 message: `A new App version is available (v${indexData.api_version}). Please reload the page to use the application as usual.`,
                 isModal: true,
                 action: {
@@ -100,6 +101,6 @@ export async function syncAppWithServer() {
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error('❌ Sync error:', errMsg);
-        errorController.showError("Error during application synchronization: " + errMsg);
+        notificationController.showNotification("Error during application synchronization: " + errMsg);
     }
 }

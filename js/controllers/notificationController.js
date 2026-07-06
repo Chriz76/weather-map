@@ -5,9 +5,9 @@ import { weatherModel } from '../models/weatherModel.js';
  */
 
 /**
- * Manages transient error notification state and auto-clear behavior.
+ * Manages transient notification state and auto-clear behavior.
  */
-class ErrorController {
+class NotificationController {
     constructor(timeoutMs = 4000) {
         this.timeoutMs = timeoutMs;
         /** @type {number|null} */
@@ -21,27 +21,25 @@ class ErrorController {
         }
     }
 
-    clearError() {
+    clearNotification() {
         this.clearTimeout();
         weatherModel.setShowError(null);
     }
 
     /**
-     * Shows an error message. Normal strings auto-clear, modal/action payloads persist.
+     * Shows a notification payload. Simple strings auto-clear, modal/action payloads persist.
      * @param {string | ErrorPayload | null} payload
      * @returns {void}
      */
-    showError(payload) {
+    showNotification(payload) {
         this.clearTimeout();
         weatherModel.setShowError(payload);
 
         if (!payload) return;
 
-        // Unterscheiden: Ist es ein einfacher String oder eine komplexe Struktur?
         const isSimpleString = typeof payload === 'string';
         const isInteractive = typeof payload === 'object' && (payload.isModal || payload.action);
 
-        // Auto-Clear-Timer NUR starten, wenn es ein unaufdringlicher Text-Fehler ohne Interaktion ist
         if (isSimpleString && !isInteractive) {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
@@ -51,4 +49,4 @@ class ErrorController {
     }
 }
 
-export const errorController = new ErrorController();
+export const notificationController = new NotificationController();
