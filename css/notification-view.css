@@ -1,6 +1,6 @@
-/* views/toastView.css */
+/* views/notificationView.css */
 
-.toast-notification {
+.notification {
     position: fixed;
     /* Exakte Zentrierung in der Mitte des Viewports */
     top: 50%;
@@ -32,29 +32,29 @@
 }
 
 /* Modifikator für den sichtbaren Zustand */
-.toast-notification--visible {
+.notification--visible {
     opacity: 1;
     pointer-events: auto;
     transform: translate(-50%, -50%) scale(1); /* Zoomt sanft auf Originalgröße */
 }
 
 /* Container für Icon + Text */
-.toast-notification__content {
+.notification__content {
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
 }
 
-/* Das Icon im Toast */
-.toast-notification__icon {
+/* Das Icon in der Notification */
+.notification__icon {
     margin-right: 8px;
     font-size: 16px;
     flex-shrink: 0;
 }
 
-/* NEU: Der Interaktions-Button im Toast */
-.toast-notification__btn {
+/* NEU: Der Interaktions-Button in der Notification */
+.notification__btn {
     background-color: #ff9800; /* Auffälliges Orange für Warnungen/Aktionen */
     color: #111111;
     border: none;
@@ -67,15 +67,15 @@
     outline: none;
 }
 
-.toast-notification__btn:hover {
+.notification__btn:hover {
     background-color: #ffa726;
 }
 
-.toast-notification__btn:active {
+.notification__btn:active {
     transform: scale(0.96);
 }
 
-.toast-notification__btn:focus-visible {
+.notification__btn:focus-visible {
     box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.5);
 }
 
@@ -83,14 +83,14 @@
 /* --- MODAL BACKDROP EXTENSIONS --- */
 
 /* NEU: Das Sperr-Overlay im Hintergrund */
-.toast-backdrop {
+.notification-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.4); /* Dunkelt die Karte leicht ab */
-    z-index: 9999; /* Direkt unter dem Toast, aber über der restlichen App */
+    z-index: 9999; /* Direkt unter der Notification, aber über der restlichen App */
     
     opacity: 0;
     pointer-events: none;
@@ -98,7 +98,7 @@
 }
 
 /* Aktiv-Zustand für das Sperr-Overlay */
-.toast-backdrop--visible {
+.notification-backdrop--visible {
     opacity: 1;
     pointer-events: auto; /* Blockiert aktiv alle Klicks auf die Karte dahinter */
 }

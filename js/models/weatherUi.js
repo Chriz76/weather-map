@@ -1,6 +1,6 @@
 /**
- * @typedef {{ text: string, event: string }} ToastAction
- * @typedef {{ message: string, isModal?: boolean, action?: ToastAction }} ErrorPayload
+ * @typedef {{ text: string, event: string }} NotificationAction
+ * @typedef {{ message: string, isModal?: boolean, action?: NotificationAction }} ErrorPayload
  * @typedef {{ activeTimestampIndex: number, activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, showError: string | ErrorPayload | null }} UIState
  */
 

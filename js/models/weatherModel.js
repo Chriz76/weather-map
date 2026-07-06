@@ -21,12 +21,12 @@ import { WeatherUi } from './weatherUi.js';
  * forecast: ForecastItem[]|null
  * }} DomainState
 
-* * @typedef {{ text: string, event: string }} ToastAction
+* * @typedef {{ text: string, event: string }} NotificationAction
 
 * * @typedef {{
  * message: string,
  * isModal?: boolean,
- * action?: ToastAction
+ * action?: NotificationAction
  * }} ErrorPayload
  */
 
