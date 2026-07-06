@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "checkJs": false,
+    "module": "ES6",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "**/*"
+  ]
+}

@@ -53,6 +53,24 @@ As this is an experimental project, contributions to optimize the JSON chunking 
 * **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
 * **Author:** [Chriz76](https://github.com/Chriz76)
 
+## Testing with Jasmine
+
+A browser-based Jasmine test runner is available in `tests/index.html`.
+
+To run the tests:
+
+1. Start a local HTTP server in the project root.
+   - Example: `python -m http.server 8000`
+2. Open `http://127.0.0.1:8000/tests/index.html` in your browser.
+
+> ES modules require an HTTP or HTTPS context, so opening the HTML file directly via `file://` will not work.
+
+The current test files are:
+
+* `tests/spec/time.spec.js`
+* `tests/spec/interpolation.spec.js`
+* `tests/spec/weatherUi.spec.js`
+
 ## 📄 License & Terms of Use
 
 * **Meteorological Data Source:** Deutscher Wetterdienst (DWD) – OpenData terms apply to the underlying forecast parameters.
