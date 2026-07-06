@@ -1,4 +1,4 @@
-﻿import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE } from './config.js';
+﻿import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from './config.js';
 import { weatherModel } from './models/weatherModel.js';
 import { initMap } from './map-init.js';
 import { weatherApi } from './weatherApi.js';
@@ -101,7 +101,23 @@ async function checkAndHandleUrlParams() {
  */
 async function syncAppWithServer() {
     try {
-        const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string}} */ (await weatherApi.fetchIndex(BASE_URL));
+        // indexData Typdefinition um das optionale Feld api_version erweitert
+        const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
+            await weatherApi.fetchIndex(BASE_URL)
+        );
+
+        // API-Versionsprüfung: Abbrechen und modales Sperr-Popup erzwingen falls inkompatibel
+        if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
+            errorController.showError({
+                message: `A new App version is available (v${indexData.api_version}). Please reload the page to use the application as usual.`,
+                isModal: true,
+                action: {
+                    text: "Reload App",
+                    event: "controller:app-reload"
+                }
+            });
+            return; // Beendet den Sync, damit keine veralteten Daten weiterverarbeitet werden
+        }
 
         if (weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
             return;
@@ -137,6 +153,11 @@ async function syncAppWithServer() {
 
 
 // --- 4. APP LIFECYCLE & EVENT LISTENERS ---
+
+// Reagiert auf die Interaktion im modalen Versions-Popup
+weatherModel.addEventListener('controller:app-reload', () => {
+    window.location.reload();
+});
 
 /**
  * Starts the application bootstrap, processes URL parameters and polling lifecycle.

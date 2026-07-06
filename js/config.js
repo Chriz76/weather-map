@@ -1,5 +1,7 @@
 export const BASE_URL = "https://winddata.pages.dev/";
 
+export const EXPECTED_API_VERSION = "1.0.0"; // Deine gewünschte Version
+
 export const GRID_CELL_SIZE = 1.0;
 
 /** @type {[[number, number], [number, number]]} */

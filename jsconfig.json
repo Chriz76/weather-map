@@ -9,5 +9,8 @@
   "include": [
     "js/**/*",
     "leaflet.d.ts"
+  ],
+  "exclude": [
+    "tests"
   ]
 }
