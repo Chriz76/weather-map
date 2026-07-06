@@ -1,5 +1,5 @@
 // views/loadingSpinnerView.js
-import { weatherModel } from '../weatherModel.js';
+import { weatherModel } from '../models/weatherModel.js';
 
 /**
  * Initializes the global loading spinner view and binds it to model updates.

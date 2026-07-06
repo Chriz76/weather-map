@@ -1,5 +1,5 @@
 // utils/loadingManager.js
-import { weatherModel } from '../weatherModel.js';
+import { weatherModel } from '../models/weatherModel.js';
 
 class LoadingManager {
     constructor(delayMs = 500) {

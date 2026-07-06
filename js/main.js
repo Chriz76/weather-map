@@ -1,5 +1,5 @@
 ﻿import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE } from './config.js';
-import { weatherModel } from './weatherModel.js';
+import { weatherModel } from './models/weatherModel.js';
 import { initMap } from './map-init.js';
 import { weatherApi } from './weatherApi.js';
 import { storage } from './utils/storage.js'; // Fallback für normalen Zustand

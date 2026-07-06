@@ -1,5 +1,5 @@
 ﻿import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString } from '../utils/time.js';
-import { weatherModel } from '../weatherModel.js'; // 👈 Wichtig: Modell importieren!
+import { weatherModel } from '../models/weatherModel.js'; // 👈 Wichtig: Modell importieren!
 
 /**
  * Registers the model metadata info renderer.

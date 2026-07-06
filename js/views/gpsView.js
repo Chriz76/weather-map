@@ -1,7 +1,7 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { weatherModel } from '../weatherModel.js';
+import { weatherModel } from '../models/weatherModel.js';
 
 /**
  * Registers a GPS control button and binds locating state updates.

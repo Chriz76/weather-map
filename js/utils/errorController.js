@@ -1,4 +1,8 @@
-import { weatherModel } from '../weatherModel.js';
+import { weatherModel } from '../models/weatherModel.js';
+
+/**
+ * @typedef {import('../models/weatherModel.js').ErrorPayload} ErrorPayload
+ */
 
 /**
  * Manages transient error notification state and auto-clear behavior.
@@ -17,16 +21,28 @@ class ErrorController {
         }
     }
 
+    clearError() {
+        this.clearTimeout();
+        weatherModel.setShowError(null);
+    }
+
     /**
-     * Shows an error message and clears it again after the configured timeout.
-     * @param {string|null} message
+     * Shows an error message. Normal strings auto-clear, modal/action payloads persist.
+     * @param {string | ErrorPayload | null} payload
      * @returns {void}
      */
-    showError(message) {
+    showError(payload) {
         this.clearTimeout();
-        weatherModel.setShowError(message);
+        weatherModel.setShowError(payload);
 
-        if (message) {
+        if (!payload) return;
+
+        // Unterscheiden: Ist es ein einfacher String oder eine komplexe Struktur?
+        const isSimpleString = typeof payload === 'string';
+        const isInteractive = typeof payload === 'object' && (payload.isModal || payload.action);
+
+        // Auto-Clear-Timer NUR starten, wenn es ein unaufdringlicher Text-Fehler ohne Interaktion ist
+        if (isSimpleString && !isInteractive) {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
                 weatherModel.setShowError(null);
