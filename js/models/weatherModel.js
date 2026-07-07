@@ -66,7 +66,7 @@ class WeatherModel extends EventTarget {
     get activeOverlayUrl() { return this._ui.activeOverlayUrl; }
     get isLocating() { return this._ui.isLocating; }
     get isActiveLoading() { return this._ui.isActiveLoading; }
-    get showError() { return this._ui.showError; }
+    get notification() { return this._ui.notification; }
     
     get activeTimestamp() { 
         return this._domain.availableTimestamps[this._ui.activeTimestampIndex] || null; 
@@ -86,8 +86,8 @@ class WeatherModel extends EventTarget {
      * Setzt den Fehlerzustand (entweder Text, konfiguriertes Objekt oder null zum Schließen)
      * @param {string | ErrorPayload | null} payload
      */
-    setShowError(payload) {
-        this._ui.setShowError(payload);
+    setNotification(payload) {
+        this._ui.setNotification(payload);
     }
 
     /**

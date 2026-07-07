@@ -38,19 +38,20 @@
     transform: translate(-50%, -50%) scale(1); /* Zoomt sanft auf Originalgröße */
 }
 
-/* Container für Icon + Text */
+/* Container für Icon + Text: Icon oben, Text darunter, zentriert */
 .notification__content {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
 }
 
-/* Das Icon in der Notification */
+/* Das Icon in der Notification: zentriert oberhalb des Textes */
 .notification__icon {
-    margin-right: 8px;
-    font-size: 16px;
-    flex-shrink: 0;
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    line-height: 1;
 }
 
 /* NEU: Der Interaktions-Button in der Notification */

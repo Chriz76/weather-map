@@ -21,12 +21,10 @@ export function registerNotificationView() {
     // Klick-Event via Event Delegation
     notificationEl.addEventListener('click', (e) => {
         const target = /** @type {HTMLElement} */ (e.target);
-        if (target.classList.contains('notification-box__btn') && activeActionEvent) {
-            // 1. Custom-Event auf dem Model abfeuern
-            weatherModel.dispatchEvent(new CustomEvent(activeActionEvent));
-            
-            // 2. Notification automatisch schließen
-            weatherModel.setShowError(null);
+        if (target.classList.contains('notification__btn') && activeActionEvent) {
+            // 1. Fire a DOM-level custom event on window so controllers can respond
+            window.dispatchEvent(new CustomEvent(activeActionEvent));
+            // Note: Do NOT mutate model from the view. The controller will close the notification.
         }
     });
 
@@ -100,7 +98,7 @@ export function registerNotificationView() {
     /**
      * @param {Event} e
      */
-    const onShowErrorChanged = (e) => {
+    const onnotificationChanged = (e) => {
         const customEvent = /** @type {CustomEvent} */ (e);
         const payload = customEvent.detail;
         if (payload) {
@@ -110,5 +108,5 @@ export function registerNotificationView() {
         }
     };
 
-    weatherModel.addEventListener('model:show-error-changed', onShowErrorChanged);
+    weatherModel.addEventListener('model:show-error-changed', onnotificationChanged);
 }

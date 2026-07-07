@@ -1,14 +1,14 @@
 import { WeatherUi } from '../../js/models/weatherUi.js';
 
 describe('WeatherUi', () => {
-    it('should update showError and dispatch event', () => {
+    it('should update notification and dispatch event', () => {
         let lastEvent = null;
         const ui = new WeatherUi((eventName, detail) => {
             lastEvent = { eventName, detail };
         });
 
-        ui.setShowError('Test error');
-        expect(ui.showError).toBe('Test error');
+        ui.setNotification('Test error');
+        expect(ui.notification).toBe('Test error');
         expect(lastEvent).toEqual({ eventName: 'model:show-error-changed', detail: 'Test error' });
     });
 

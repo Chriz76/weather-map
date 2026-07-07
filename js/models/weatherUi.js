@@ -1,7 +1,7 @@
 /**
  * @typedef {{ text: string, event: string }} NotificationAction
  * @typedef {{ message: string, isModal?: boolean, action?: NotificationAction }} ErrorPayload
- * @typedef {{ activeTimestampIndex: number, activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, showError: string | ErrorPayload | null }} UIState
+ * @typedef {{ activeTimestampIndex: number, activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, notification: string | ErrorPayload | null }} UIState
  */
 
 export class WeatherUi {
@@ -15,7 +15,7 @@ export class WeatherUi {
             activeOverlayUrl: null,
             isLocating: false,
             isActiveLoading: false,
-            showError: null
+            notification: null
         };
 
         this._dispatchEvent = dispatchEvent;
@@ -41,15 +41,15 @@ export class WeatherUi {
         return this._ui.isActiveLoading;
     }
 
-    get showError() {
-        return this._ui.showError;
+    get notification() {
+        return this._ui.notification;
     }
 
     /**
      * @param {string | ErrorPayload | null} payload
      */
-    setShowError(payload) {
-        this._ui.showError = payload;
+    setNotification(payload) {
+        this._ui.notification = payload;
         this._dispatchEvent('model:show-error-changed', payload);
     }
 

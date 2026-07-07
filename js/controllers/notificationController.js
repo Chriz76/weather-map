@@ -23,7 +23,7 @@ class NotificationController {
 
     clearNotification() {
         this.clearTimeout();
-        weatherModel.setShowError(null);
+        weatherModel.setNotification(null);
     }
 
     /**
@@ -33,7 +33,7 @@ class NotificationController {
      */
     showNotification(payload) {
         this.clearTimeout();
-        weatherModel.setShowError(payload);
+        weatherModel.setNotification(payload);
 
         if (!payload) return;
 
@@ -43,7 +43,7 @@ class NotificationController {
         if (isSimpleString && !isInteractive) {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
-                weatherModel.setShowError(null);
+                weatherModel.setNotification(null);
             }, this.timeoutMs);
         }
     }

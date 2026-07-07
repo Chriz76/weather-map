@@ -20,7 +20,7 @@ describe('WeatherModel', () => {
 
     function resetModel() {
         weatherModel.removePointData();
-        weatherModel.setShowError(null);
+        weatherModel.setNotification(null);
         weatherModel.setIsActiveLoading(false);
         weatherModel.setIsLocating(false);
         weatherModel.setActiveOverlayUrl(null);

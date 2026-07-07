@@ -113,7 +113,11 @@ export function initEventController(map) {
         }
     });
 
-    weatherModel.addEventListener('controller:app-reload', () => {
+    // Listen for controller actions emitted from views (dispatched on window)
+    window.addEventListener('controller:app-reload', () => {
+        console.log("App reload requested via window event.");
+        // Close any open notification first (view should not mutate the model)
+        weatherModel.setNotification(null);
         window.location.reload();
     });
 }
