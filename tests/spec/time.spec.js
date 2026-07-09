@@ -1,8 +1,8 @@
-import { formatToLocalTimeString, determineActiveIndex } from '../../js/utils/time.js';
+import { formatModelTimestampToTime, determineActiveIndex } from '../../js/utils/time.js';
 
 describe('time utilities', () => {
     it('should format timeline keys to local time string', () => {
-        const result = formatToLocalTimeString('20260706_12');
+        const result = formatModelTimestampToTime('20260706_12');
         expect(result).toMatch(/\d{1,2}:\d{2}/);
     });
 

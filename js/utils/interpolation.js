@@ -1,4 +1,4 @@
-import { formatToLocalTimeString } from './time.js';
+import { formatModelTimestampToTime } from './time.js';
 
 /**
  * Extracts the hour string from a timeline key and converts it to local time.
@@ -6,7 +6,7 @@ import { formatToLocalTimeString } from './time.js';
  * @returns {string} Localized hour portion of the timeline key.
  */
 function getDisplayHour(tKey) {
-    return formatToLocalTimeString(tKey).split(':')[0];
+    return formatModelTimestampToTime(tKey).split(':')[0];
 }
 
 /**

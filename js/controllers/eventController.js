@@ -4,7 +4,7 @@ import { storage } from '../utils/storage.js';
 import { loadingManager } from './loadingManager.js';
 import { notificationController } from './notificationController.js';
 import { syncAppWithServer, loadWeatherDataForLocation, updateOverlayForTimestamp } from './syncPipeline.js';
-import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString, addMinutesToIso, formatToLocalDateTimeString } from '../utils/time.js';
+import { formatToDateTime, formatModelTimestampToTime, addMinutesToIso, formatModelTimestampToDateTime } from '../utils/time.js';
 
 /**
  * Aktiviert das Event-Handling für Map, UI und Lifecycle.
@@ -204,8 +204,8 @@ export function initEventController(map) {
     // --- D. MODEL INFO CLICK / SYNC FLOW ---
     
     function handleModelInfoClicked() {
-        const runStr = weatherModel.modelCurrentHour ? formatToLocalDateTimeString(weatherModel.modelCurrentHour) : '—';
-        const syncStr = weatherModel.lastIndexSync ? formatIsoOrDateToLocalDisplay(weatherModel.lastIndexSync) : '—';
+        const runStr = weatherModel.modelCurrentHour ? formatModelTimestampToDateTime(weatherModel.modelCurrentHour) : '—';
+        const syncStr = weatherModel.lastIndexSync ? formatToDateTime(weatherModel.lastIndexSync) : '—';
 
         const message = `Model run:\n${runStr}\n\nSync:\n${syncStr}`;
 

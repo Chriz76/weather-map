@@ -1,4 +1,4 @@
-﻿import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString, addMinutesToIso, formatIsoOrDateToLocalTimeDisplay } from '../utils/time.js';
+﻿import { formatToDateTime, formatModelTimestampToTime, addMinutesToIso, formatToTime } from '../utils/time.js';
 import { weatherModel } from '../models/weatherModel.js'; // 👈 Wichtig: Modell importieren!
 
 /**
@@ -44,14 +44,14 @@ export function registerModelInfoView(map) {
             let displayStr = '';
 
             if (weatherModel.modelGeneratedAt) {
-                displayStr += `Updated ${formatIsoOrDateToLocalDisplay(weatherModel.modelGeneratedAt)} `;
+                displayStr += `Updated ${formatToDateTime(weatherModel.modelGeneratedAt)} `;
             }
 
             // Also append Next = generatedAt + 65 minutes, separated by space
             if (weatherModel.modelGeneratedAt) {
                 const nextDate = addMinutesToIso(weatherModel.modelGeneratedAt, 65);
                 if (nextDate) {
-                    displayStr += ` | Next ~${formatIsoOrDateToLocalTimeDisplay(nextDate)}`;
+                    displayStr += ` | Next ~${formatToTime(nextDate)}`;
                 }
             }
 

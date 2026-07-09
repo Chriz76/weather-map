@@ -1,5 +1,5 @@
 import { weatherModel } from '../models/weatherModel.js';
-import { formatToLocalTimeAndDescription } from '../utils/time.js';
+import { formatModelTimestampToTimeAndDescription } from '../utils/time.js';
 
 // 1. Wir umgehen den UMD-Global-Fehler, indem wir L über window holen.
 // 2. Wir casten es als 'any', damit wir '.TimelineView' dynamisch hinzufügen dürfen.
@@ -62,7 +62,7 @@ export function registerTimelineView(mapInstance) {
                     
                     if (timestamp) {
                         // Nutzt die neue zentrale Formatierungs-Methode aus time.js
-                        const { time, description } = formatToLocalTimeAndDescription(timestamp);
+                        const { time, description } = formatModelTimestampToTimeAndDescription(timestamp);
                         
                         timeMain.innerText = time;
                         timeSubtext.innerText = description;
