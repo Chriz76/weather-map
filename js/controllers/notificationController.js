@@ -1,7 +1,7 @@
 import { weatherModel } from '../models/weatherModel.js';
 
 /**
- * @typedef {import('../models/weatherModel.js').ErrorPayload} ErrorPayload
+ * @typedef {import('../models/weatherModel.js').NotificationPayload} NotificationPayload
  */
 
 /**
@@ -27,24 +27,29 @@ class NotificationController {
     }
 
     /**
-     * Shows a notification payload. Simple strings auto-clear, modal/action payloads persist.
-     * @param {string | ErrorPayload | null} payload
+     * Shows a notification using the model's `NotificationPayload` shape. `timeout` controls auto-clear.
+     * @param {NotificationPayload} payload
+     * @param {number} [timeout] Auto-clear timeout in ms. Defaults to controller default. 0 = persistent
      * @returns {void}
      */
-    showNotification(payload) {
+    showNotification(payload, timeout) {
         this.clearTimeout();
+
+        if (!payload || !payload.message) {
+            weatherModel.setNotification(null);
+            return;
+        }
+
+        // Payload is already in model shape: { message, isModal?, action? }
         weatherModel.setNotification(payload);
 
-        if (!payload) return;
+        const effectiveTimeout = typeof timeout === 'number' ? timeout : this.timeoutMs;
 
-        const isSimpleString = typeof payload === 'string';
-        const isInteractive = typeof payload === 'object' && (payload.isModal || payload.action);
-
-        if (isSimpleString && !isInteractive) {
+        if (effectiveTimeout > 0) {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
                 weatherModel.setNotification(null);
-            }, this.timeoutMs);
+            }, effectiveTimeout);
         }
     }
 }

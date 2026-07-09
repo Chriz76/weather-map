@@ -9,7 +9,7 @@ describe('WeatherUi', () => {
 
         ui.setNotification('Test error');
         expect(ui.notification).toBe('Test error');
-        expect(lastEvent).toEqual({ eventName: 'model:show-error-changed', detail: 'Test error' });
+        expect(lastEvent).toEqual({ eventName: 'model:show-notification-changed', detail: 'Test error' });
     });
 
     it('should update loading, locating and overlay URL state', () => {

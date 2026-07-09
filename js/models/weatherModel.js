@@ -16,6 +16,7 @@ import { WeatherUi } from './weatherUi.js';
  * availableTimestamps: string[],
  * modelGeneratedAt: string|null,
  * modelCurrentHour: string|null,
+ * lastIndexSync: Date|null,
  * locationContext: LocationContext|null,
  * windData: WindData|null,
  * forecast: ForecastItem[]|null
@@ -27,7 +28,7 @@ import { WeatherUi } from './weatherUi.js';
  * message: string,
  * isModal?: boolean,
  * action?: NotificationAction
- * }} ErrorPayload
+ * }} NotificationPayload
  */
 
 class WeatherModel extends EventTarget {
@@ -39,6 +40,8 @@ class WeatherModel extends EventTarget {
             availableTimestamps: [],
             modelGeneratedAt: null,
             modelCurrentHour: null,
+            // ISO timestamp of the last successful index sync (e.g. '2026-07-09T12:34:56.789Z')
+            lastIndexSync: null,
             locationContext: null,
             windData: null,
             forecast: null
@@ -60,6 +63,21 @@ class WeatherModel extends EventTarget {
     
     get lastClickedLatLng() { return this._domain.locationContext?.latLng ?? null; }
     get currentClusterData() { return this._domain.locationContext?.clusterData ?? null; }
+
+    /**
+     * Date of the last time the index was successfully synced from the server (local Date object).
+     * @returns {Date|null}
+     */
+    get lastIndexSync() { return this._domain.lastIndexSync ?? null; }
+
+    /**
+     * Set the last index sync timestamp (Date). Pass `null` to clear.
+     * @param {Date|null} date
+     */
+    setLastIndexSync(date) {
+        this._domain.lastIndexSync = date;
+        this.dispatchEvent(new CustomEvent('model:last-index-sync-updated', { detail: date }));
+    }
 
     // --- UI GETTER ---
     get activeTimestampIndex() { return this._ui.activeTimestampIndex; }
@@ -84,7 +102,7 @@ class WeatherModel extends EventTarget {
 
     /**
      * Setzt den Fehlerzustand (entweder Text, konfiguriertes Objekt oder null zum Schließen)
-     * @param {string | ErrorPayload | null} payload
+     * @param {string | NotificationPayload | null} payload
      */
     setNotification(payload) {
         this._ui.setNotification(payload);

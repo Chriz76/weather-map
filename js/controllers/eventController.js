@@ -4,6 +4,7 @@ import { storage } from '../utils/storage.js';
 import { loadingManager } from './loadingManager.js';
 import { notificationController } from './notificationController.js';
 import { syncAppWithServer, loadWeatherDataForLocation, updateOverlayForTimestamp } from './syncPipeline.js';
+import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString, addMinutesToIso, formatToLocalDateTimeString } from '../utils/time.js';
 
 /**
  * Aktiviert das Event-Handling für Map, UI und Lifecycle.
@@ -15,9 +16,9 @@ export function initEventController(map) {
 
     /** @type {number | null} */
     let lastClusterClickToken = null;
-    /** @type {number | null} */
+    /** @type {ReturnType<typeof setTimeout> | null} */
     let timelineDebounceTimer = null;
-    /** @type {number | null} */
+    /** @type {string | null} */
     let lastTimelineTimestampToken = null;
 
     // --- A. MAP EVENTS (KLICKS & GPS) ---
@@ -46,7 +47,7 @@ export function initEventController(map) {
 
     /** @param {{message:string}} e */
     function handleLocationError(e) {
-        notificationController.showNotification("Error processing GPS location: " + e.message);
+        notificationController.showNotification({ message: "Error processing GPS location: " + e.message });
         weatherModel.setIsLocating(false);
     }
 
@@ -73,10 +74,9 @@ export function initEventController(map) {
 
     // --- B. UI TIMELINE EVENT (SLIDER) ---
 
-    /** @param {Event} e */
+    /** @param {Event & {detail?:{index:number}}} e */
     function handleTimelineChange(e) {
-        const timelineEvent = /** @type {{detail:{index:number}}} */ (e);
-        const idx = timelineEvent.detail && typeof timelineEvent.detail.index === 'number' ? timelineEvent.detail.index : null;
+        const idx = e && e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
         if (idx === null) return;
 
         weatherModel.setActiveTimestampIndex(idx);
@@ -85,7 +85,7 @@ export function initEventController(map) {
             clearTimeout(timelineDebounceTimer);
         }
 
-        timelineDebounceTimer = /** @type {number} */ (window.setTimeout(async () => {
+        timelineDebounceTimer = window.setTimeout(async () => {
             const targetTimestamp = weatherModel.activeTimestamp;
             if (!targetTimestamp) return;
 
@@ -94,30 +94,126 @@ export function initEventController(map) {
             await loadingManager.track(async () => {
                 await updateOverlayForTimestamp(targetTimestamp);
             });
-        }, SLIDER_DEBOUNCE_MS));
+        }, SLIDER_DEBOUNCE_MS);
     }
 
     window.addEventListener('timeline-change', handleTimelineChange);
 
     // --- C. APP LIFECYCLE & POLLING ---
 
-    const pollTimer = setInterval(async () => {
-        await syncAppWithServer();
-    }, POLL_INTERVAL_MS);
+    let isSyncing = false;
+    let isInitialized = false;
+    /** @type {ReturnType<typeof setInterval> | null} */
+    let pollTimer = null; // Hier speichern wir die Timer-Referenz
 
-    document.addEventListener('visibilitychange', async () => {
-        if (document.visibilityState === 'visible') {
+    /**
+     * Startet den Intervall-Timer für den Hintergrund-Poll frisch.
+     */
+    function startPolling() {
+        // Falls bereits ein Timer existiert, erst löschen (Sicherheitsnetz)
+        if (pollTimer !== null) {
+            clearInterval(pollTimer);
+        }
+        
+        console.log("⏰ Polling gestartet.");
+
+        pollTimer = setInterval(async () => {
+            console.log("⏰ Regulärer Hintergrund-Poll getriggert.");
+            await safeSyncApp();
+        }, POLL_INTERVAL_MS);
+    }
+
+    /**
+     * Stoppt den Intervall-Timer komplett.
+     */
+    function stopPolling() {
+        if (pollTimer !== null) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            console.log("🛑 Polling gestoppt (App im Hintergrund).");
+        }
+    }
+
+    /**
+     * Führt den App-Sync geschützt durch Flags aus.
+     */
+    async function safeSyncApp() {
+        if (isSyncing) {
+            console.log("Sync blockiert: Ein anderer Sync-Prozess läuft bereits.");
+            return;
+        }
+
+        isSyncing = true;
+        console.log("🔄 App-Sync gestartet...");
+
+        try {
             await loadingManager.track(async () => {
                 await syncAppWithServer();
             });
+            isInitialized = true; 
+        } catch (error) {
+            console.error("Fehler während des App-Syncs:", error);
+        } finally {
+            isSyncing = false;
         }
-    });
+    }
+
+    /**
+     * Handler für die Sichtbarkeits- und Pageshow-Events
+     * @param {boolean} visibilityEvent
+     */
+    async function handleAppVisibilitySync(visibilityEvent) {
+        console.log(`📄 Event: ${visibilityEvent ? 'visibilitychange' : 'pageshow'}, visibilityState: ${document.visibilityState}`);
+        if (document.visibilityState === 'visible') {
+            // 1. Wenn wir zurückkehren, starten wir das Polling SOFORT frisch
+            startPolling();
+
+            // Kaltstart-Schutz (wird vom harten Aufruf unten abgefangen)
+            if (!isInitialized) {
+                console.log("Event ignoriert: App befindet sich noch im Kaltstart-Initiallauf.");
+                return;
+            }
+            
+            // 2. Sofort Daten abgleichen bei Rückkehr
+            await safeSyncApp();
+        } else if (document.visibilityState === 'hidden') {
+            // 3. Wenn die App in den Hintergrund geht, killen wir den Timer aktiv
+            stopPolling();
+        }
+    }
+
+    console.log("🚀 Skript geladen (Kaltstart)");
+
+    // 1. ABSOLUTE GARANTIE: Startet sofort hart beim Laden des Skripts (Kaltstart)
+    safeSyncApp();
+    // Da die App jetzt sichtbar startet, werfen wir auch den ersten Timer an
+    startPolling();
+
+    // 2. EVENT-LISTENER (Steuern nun auch das Aufziehen/Abbauen des Timers)
+    document.addEventListener('visibilitychange', () => handleAppVisibilitySync(true));
+    window.addEventListener('pageshow', () =>  handleAppVisibilitySync(false));
+
 
     // Listen for controller actions emitted from views (dispatched on window)
     window.addEventListener('controller:app-reload', () => {
         console.log("App reload requested via window event.");
-        // Close any open notification first (view should not mutate the model)
         weatherModel.setNotification(null);
         window.location.reload();
     });
+
+    // --- D. MODEL INFO CLICK / SYNC FLOW ---
+    
+    function handleModelInfoClicked() {
+        const runStr = weatherModel.modelCurrentHour ? formatToLocalDateTimeString(weatherModel.modelCurrentHour) : '—';
+        const syncStr = weatherModel.lastIndexSync ? formatIsoOrDateToLocalDisplay(weatherModel.lastIndexSync) : '—';
+
+        const message = `Model run:\n${runStr}\n\nSync:\n${syncStr}`;
+
+        notificationController.showNotification({
+            message,
+            isModal: false
+        });
+    }
+
+    window.addEventListener('model-info:clicked', handleModelInfoClicked);
 }

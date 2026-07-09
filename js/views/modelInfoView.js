@@ -1,4 +1,4 @@
-﻿import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString } from '../utils/time.js';
+﻿import { formatIsoOrDateToLocalDisplay, formatToLocalTimeString, addMinutesToIso, formatIsoOrDateToLocalTimeDisplay } from '../utils/time.js';
 import { weatherModel } from '../models/weatherModel.js'; // 👈 Wichtig: Modell importieren!
 
 /**
@@ -10,23 +10,49 @@ export function registerModelInfoView(map) {
     const infoEl = /** @type {HTMLElement|null} */ (document.querySelector('.model-info'));
     if (!infoEl) return;
 
-    // Set default text if API still loading
+    // Keep the element's appearance as plain text, but make it interactive
     if (infoEl.innerText === '--' || !infoEl.innerText) {
         infoEl.innerText = 'Model run: Loading...';
     }
 
-    // 👈 CHANGED: We listen directly on weatherModel for the new event
+    // Ensure the info element can receive keyboard focus (but keep default styling)
+    if (!infoEl.hasAttribute('tabindex')) infoEl.setAttribute('tabindex', '0');
+
+    // Prevent clicks from falling through to the map and dispatch an app event
+    function dispatchModelInfoClicked() {
+        window.dispatchEvent(new CustomEvent('model-info:clicked'));
+    }
+
+    infoEl.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        dispatchModelInfoClicked();
+    });
+
+    infoEl.addEventListener('keydown', (ev) => {
+        // Activate on Enter or Space
+        if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            ev.stopPropagation();
+            dispatchModelInfoClicked();
+        }
+    });
+
+    // Update the text content when model metadata changes — keep the original look
     weatherModel.addEventListener('model:model-metadata-updated', () => {
         try {
             let displayStr = '';
 
-            // Read values directly via getters from store
             if (weatherModel.modelGeneratedAt) {
                 displayStr += `Updated ${formatIsoOrDateToLocalDisplay(weatherModel.modelGeneratedAt)} `;
             }
-            if (weatherModel.modelCurrentHour) {
-                const modelTimeStr = formatToLocalTimeString(weatherModel.modelCurrentHour);
-                displayStr += `(Model run ${modelTimeStr})`;
+
+            // Also append Next = generatedAt + 65 minutes, separated by space
+            if (weatherModel.modelGeneratedAt) {
+                const nextDate = addMinutesToIso(weatherModel.modelGeneratedAt, 65);
+                if (nextDate) {
+                    displayStr += ` | Next ~${formatIsoOrDateToLocalTimeDisplay(nextDate)}`;
+                }
             }
 
             if (displayStr) {

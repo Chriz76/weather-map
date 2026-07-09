@@ -1,0 +1,9 @@
+{
+  // Ensure JS/TS validation and enable checkJs for implicit projects
+  "javascript.validate.enable": true,
+  "typescript.validate.enable": true,
+  "javascript.implicitProjectConfig.checkJs": true,
+
+  // Enable TS server tracing to help diagnose issues (can be removed later)
+  "typescript.tsserver.trace": "messages"
+}

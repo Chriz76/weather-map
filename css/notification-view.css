@@ -54,6 +54,11 @@
     line-height: 1;
 }
 
+/* Erlaubt explizit Zeilenumbrüche im Notification-Text (zeigt `\n` als Zeilenumbruch) */
+.notification__text {
+    white-space: pre-wrap;
+}
+
 /* NEU: Der Interaktions-Button in der Notification */
 .notification__btn {
     background-color: #ff9800; /* Auffälliges Orange für Warnungen/Aktionen */

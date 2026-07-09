@@ -8,5 +8,7 @@
     padding: 2px 5px;
     background-color: rgba(255, 255, 255, 0.7);
     border-radius: 4px;
-    pointer-events: none;
+    /* Allow the element to receive pointer events so clicks can be intercepted */
+    pointer-events: auto;
+    cursor: pointer;
 }

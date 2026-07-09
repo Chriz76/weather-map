@@ -30,7 +30,7 @@ export function registerNotificationView() {
 
     /**
      * Blendet die Notification und ggf. das Modal ein
-     * @param {string | import('../models/weatherModel.js').ErrorPayload} payload
+     * @param {string | import('../models/weatherModel.js').NotificationPayload} payload
      */
     const showNotification = (payload) => {
         // Normalisieren: Falls ein einfacher String kommt, in ein passendes Objekt umwandeln
@@ -56,14 +56,19 @@ export function registerNotificationView() {
             buttonHtml = `<button class="notification__btn">${config.action.text}</button>`;
         }
 
-        // UI befüllen
+        // UI befüllen. Message als reiner Text setzen (verhindert HTML-Injection)
         notificationEl.innerHTML = `
             <div class="notification__content">
                 <span class="notification__icon">⚠️</span>
-                <span class="notification__text">${config.message}</span>
+                <span class="notification__text"></span>
             </div>
             ${buttonHtml}
         `;
+
+        const textEl = notificationEl.querySelector('.notification__text');
+        if (textEl) {
+            textEl.textContent = config.message ?? '';
+        }
 
         // Modal-Zustand steuern
         if (config.isModal) {
@@ -108,5 +113,5 @@ export function registerNotificationView() {
         }
     };
 
-    weatherModel.addEventListener('model:show-error-changed', onnotificationChanged);
+    weatherModel.addEventListener('model:show-notification-changed', onnotificationChanged);
 }
