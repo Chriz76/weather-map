@@ -59,7 +59,9 @@ export function formatModelTimestampToTime(timestampStr) {
 export function formatModelTimestampToDateTime(timestampStr) {
     try {
         const date = parseModelTimestamp(timestampStr);
-        return date.toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+        const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${datum} ${uhrzeit}`;
     } catch (error) {
         console.error("❌ Error formatting model timestamp to date-time:", error);
         return timestampStr;
@@ -80,7 +82,7 @@ export function formatModelTimestampToTimeAndDescription(timestampStr) {
         const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         
-        const diffDays = Math.round((compareDate - todayDate) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round((compareDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
 
         let description = '';
         if (diffDays === 0) description = 'Today';
@@ -103,7 +105,10 @@ export function formatModelTimestampToTimeAndDescription(timestampStr) {
 export function formatToDateTime(input) {
     try {
         const date = normalizeToDate(input);
-        return date.toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
+        const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return `${datum} ${uhrzeit}`;
     } catch (error) {
         console.error('❌ Error formatting to date-time:', error);
         return String(input);
