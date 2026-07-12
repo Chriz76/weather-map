@@ -10,6 +10,8 @@ The project uses the new **ICON-D2 RUC (Rapid Update Cycle)** model provided by 
 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries directly from the ICON-D2 RUC.
 
+[See my article on medium for some more background](https://medium.com/@christianzink/why-standard-wind-forecasts-fail-the-power-of-dwds-icon-d2-ruc-model-for-wind-sports-acf2ebd88412?sharedUserId=christianzink)
+
 > ⚠️ **Disclaimer:** This project is experimental and currently in active development.
 
 ---
@@ -48,7 +50,9 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 
 ## Development & Contribution
 
-As this is an experimental project, contributions to optimize the JSON chunking sizes, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays are welcome. 
+As this is an experimental project, contributions to optimize the JSON chunking sizes, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays are welcome.
+
+This project is a private, free, and ad-free open-source web app. It is maintained strictly for hobby purposes and pursues no commercial interests.
 
 * **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
 * **Author:** [Chriz76](https://github.com/Chriz76)
@@ -77,4 +81,18 @@ The current test files are:
 * **Software License:** Copyright © 2026 by Chriz76. All rights reserved. 
   
 This application is provided **free of charge** for personal and recreational use (e.g., wind/wing foiling planning). However, the source code, custom processing pipelines, and frontend logic remain the intellectual property of the author. You may not redistribute, modify, or commercially exploit this codebase without explicit written permission.
+
+## Privacy Policy
+
+Because your privacy matters, this web app does not collect, store, or track any of your personal data. We do not use any marketing or tracking cookies, and there is no user registration required to use this app.
+
+However, to provide this web app in a stable, secure, and fast manner, we rely on modern cloud infrastructure. Due to technical requirements, a minimal amount of data processing occurs automatically in the background:
+
+### 1. Hosting via GitHub Pages
+This web app is hosted as a static site on GitHub Pages (Service Provider: GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA; Parent Company: Microsoft Corporation). When you access this app, GitHub automatically collects standard server log files (including your IP address, browser type, and the date and time of access). This is technically necessary to deliver the page securely and to prevent cyber attacks. GitHub/Microsoft is certified under the EU-US Data Privacy Framework, ensuring a GDPR-compliant level of data protection.
+
+### 2. Security & Content Delivery Network via Cloudflare
+Additionally, we use the Content Delivery Network (CDN) provided by Cloudflare (Service Provider: Cloudflare Inc., 101 Townsend St, San Francisco, CA 94107, USA). Cloudflare acts as a security shield between our host server and your browser. During this process, your IP address is briefly processed to block malicious traffic (e.g., DDoS attacks) and to optimize page loading speeds globally. Cloudflare may set technically necessary cookies for security purposes, which do not create user profiles. Cloudflare is also certified under the EU-US Data Privacy Framework.
+
+**Legal Basis:** The use of these third-party services is based on our legitimate interest (Art. 6 Abs. 1 lit. f GDPR) to offer this hobby project in a secure, high-performing, and reliable manner on the internet.
 
