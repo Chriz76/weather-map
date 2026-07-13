@@ -1,0 +1,82 @@
+[
+  {
+    "id": "00183",
+    "name": "Arkona",
+    "lat": 54.6791,
+    "lon": 13.4344,
+    "priority": 1,
+    "metar_icao": "EDRE"
+  },
+  {
+    "id": "00619",
+    "name": "Borkum-Süderstraße",
+    "lat": 53.5788,
+    "lon": 6.6703,
+    "priority": 1,
+    "metar_icao": "EDXW"
+  },
+  {
+    "id": "00427",
+    "name": "Berlin Brandenburg",
+    "lat": 52.3807,
+    "lon": 13.5306,
+    "priority": 1,
+    "metar_icao": "EDDB"
+  },
+  {
+    "id": "00691",
+    "name": "Bremen",
+    "lat": 53.0451,
+    "lon": 8.7981,
+    "priority": 2,
+    "metar_icao": "EDDW"
+  },
+  {
+    "id": "00232",
+    "name": "Augsburg",
+    "lat": 48.4253,
+    "lon": 10.9417,
+    "priority": 2,
+    "metar_icao": "EDMA"
+  },
+  {
+    "id": "00853",
+    "name": "Chemnitz",
+    "lat": 50.7913,
+    "lon": 12.8720,
+    "priority": 2,
+    "metar_icao": null
+  },
+  {
+    "id": "00722",
+    "name": "Brocken",
+    "lat": 51.7986,
+    "lon": 10.6183,
+    "priority": 3,
+    "metar_icao": null
+  },
+  {
+    "id": "00011",
+    "name": "Donaueschingen (Landeplatz)",
+    "lat": 47.9736,
+    "lon": 8.5205,
+    "priority": 3,
+    "metar_icao": "EDTD"
+  },
+  {
+    "id": "00090",
+    "name": "Alsfeld",
+    "lat": 50.7557,
+    "lon": 9.2583,
+    "priority": 4,
+    "metar_icao": null
+  },
+  {
+    "id": "00856",
+    "name": "Chieming",
+    "lat": 47.8843,
+    "lon": 12.5404,
+    "priority": 4,
+    "metar_icao": null
+  }
+]
