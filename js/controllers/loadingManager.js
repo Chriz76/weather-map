@@ -6,20 +6,28 @@ class LoadingManager {
         this.delayMs = delayMs;
         this.timeout = null;
         this.activeTracks = 0; // Zähler, falls mal zwei User-Aktionen parallel laufen
+        this._modalActive = false;
     }
 
     /**
      * Startet den Verzögerungs-Timer für den Spinner
      */
-    start() {
+    /**
+     * Startet den Verzögerungs-Timer für den Spinner
+     * @param {{ modal?: boolean }} [options]
+     */
+    start(options = {}) {
+        const modal = !!options.modal;
         this.activeTracks++;
+        if (modal) {
+            this._modalActive = true;
+        }
         if (this.activeTracks === 1) {
             if (this.timeout !== null) {
                 clearTimeout(this.timeout);
             }
             this.timeout = setTimeout(() => {
-                // Nutzt deine Methode aus dem gezeigten Code
-                weatherModel.setIsActiveLoading(true);
+                weatherModel.setIsActiveLoading(true, this._modalActive);
             }, this.delayMs);
         }
     }
@@ -33,7 +41,8 @@ class LoadingManager {
             if (this.timeout !== null) {
                 clearTimeout(this.timeout);
             }
-            weatherModel.setIsActiveLoading(false);
+            weatherModel.setIsActiveLoading(false, false);
+            this._modalActive = false;
         }
     }
 
@@ -45,8 +54,8 @@ class LoadingManager {
     /**
      * @param {() => Promise<any>} asyncFn
      */
-    async track(asyncFn) {
-        this.start();
+    async track(asyncFn, options = {}) {
+        this.start(options);
         try {
             return await asyncFn();
          } finally {

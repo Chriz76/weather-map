@@ -110,10 +110,12 @@ class WeatherModel extends EventTarget {
 
     /**
      * @param {boolean} value
+     * @param {boolean} [isModal=false]
      */
-    setIsActiveLoading(value) {
-        this._ui.setIsActiveLoading(value);
+    setIsActiveLoading(value, isModal = false) {
+        this._ui.setIsActiveLoading(!!value, !!isModal);
     }
+    
 
     /**
      * @param {boolean} value

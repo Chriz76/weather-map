@@ -150,7 +150,7 @@ export function initEventController(map) {
             await loadingManager.track(async () => {
                 await syncAppWithServer();
             });
-            isInitialized = true; 
+            isInitialized = true;
         } catch (error) {
             console.error("Fehler während des App-Syncs:", error);
         } finally {
@@ -185,9 +185,21 @@ export function initEventController(map) {
     console.log("🚀 Skript geladen (Kaltstart)");
 
     // 1. ABSOLUTE GARANTIE: Startet sofort hart beim Laden des Skripts (Kaltstart)
-    safeSyncApp();
-    // Da die App jetzt sichtbar startet, werfen wir auch den ersten Timer an
-    startPolling();
+    (async () => {
+        try {
+            // During initial startup we treat sync as foreground so errors show retry notification
+            await loadingManager.track(async () => {
+                await syncAppWithServer(false);
+            }, { modal: true });
+            isInitialized = true;
+        } catch (e) {
+            console.error('Initial sync failed:', e);
+            // `syncAppWithServer` shows retry notification only for foreground syncs
+        } finally {
+            // Starte Polling unabhängig vom Ergebnis
+            startPolling();
+        }
+    })();
 
     // 2. EVENT-LISTENER (Steuern nun auch das Aufziehen/Abbauen des Timers)
     document.addEventListener('visibilitychange', () => handleAppVisibilitySync(true));
@@ -199,6 +211,28 @@ export function initEventController(map) {
         console.log("App reload requested via window event.");
         weatherModel.setNotification(null);
         window.location.reload();
+    });
+
+    // Manual startup retry triggered from notification action
+    window.addEventListener('controller:startup-retry', async () => {
+        if (isSyncing) {
+            console.log('Startup retry requested but sync already in progress.');
+            weatherModel.setNotification(null);
+            return;
+        }
+
+        try {
+            // Manual retry from the UI is a foreground attempt — pass false so retry modal appears on failure
+            await loadingManager.track(async () => {
+                await syncAppWithServer(false);
+            }, { modal: true });
+            // If successful, clear notifications and mark initialized
+            weatherModel.setNotification(null);
+            isInitialized = true;
+        } catch (e) {
+            console.error('Startup manual retry failed:', e);
+            // `syncAppWithServer` will show retry notification only for foreground syncs
+        }
     });
 
     // --- D. MODEL INFO CLICK / SYNC FLOW ---

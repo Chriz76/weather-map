@@ -65,15 +65,19 @@ export async function loadWeatherDataForLocation(latlng) {
  * PIPELINE STAGE C: Synchronisiert den globalen Anwendungsindex.
  * @returns {Promise<void>}
  */
-export async function syncAppWithServer() {
-    try {
+/**
+ * Synchronisiert den App-Index.
+ */
+export async function syncAppWithServer(background = true) {
+    async function doSync() {
+        // throw new Error("Sync is currently disabled for testing purposes.");
         const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
             await weatherApi.fetchIndex(BASE_URL)
         );
 
         weatherModel.setLastIndexSync(new Date());
 
-        // API-Versionsprüfung
+        // API-Versionsprüfung -> zeige Modal und biete Reload
         if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
             notificationController.showNotification({
                 message: `A new App version is available (v${indexData.api_version}).\n\nPlease reload the page to use the application as usual.`,
@@ -95,13 +99,37 @@ export async function syncAppWithServer() {
             weatherModel.setIndexMetadata(indexData);
             weatherModel.setPointData(weatherModel.lastClickedLatLng, clusterData);
         } else {
-            weatherModel.setIndexMetadata(indexData);        }
+            weatherModel.setIndexMetadata(indexData);
+        }
 
         await updateOverlayForTimestamp(weatherModel.activeTimestamp);
+    }
 
-    } catch (e) {
-        const errMsg = e instanceof Error ? e.message : String(e);
-        console.error('❌ Sync error:', errMsg);
-        notificationController.showNotification({ message: "Error during application synchronization: " + errMsg });
+    try {
+        return await doSync();
+    } catch (firstErr) {
+        console.error('❌ Sync error (first attempt):', firstErr);
+        // einmaliger sofortiger Retry
+        try {
+            console.log('🔁 Performing immediate retry for sync...');
+            return await doSync();
+        } catch (retryErr) {
+            const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+            console.error('❌ Sync error (retry failed):', errMsg);
+            // Zeige Fehler dem Benutzer als modales Notification mit Retry Aktion
+            // Only show the modal retry notification for foreground (non-background) syncs.
+            if (!background) {
+                notificationController.showNotification({
+                    message: "Error during application synchronization: " + errMsg,
+                    isModal: true,
+                    action: {
+                        text: 'Retry',
+                        event: 'controller:startup-retry'
+                    }
+                }, 0);
+            }
+            // Weiterreichen, falls Aufrufer noch etwas spezielles tun will
+            throw retryErr;
+        }
     }
 }
