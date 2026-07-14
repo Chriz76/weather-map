@@ -4,7 +4,9 @@ import { initMap } from './map-init.js';
 import { loadingManager } from './controllers/loadingManager.js';
 
 // Controller Imports
-import { initEventController } from './controllers/eventController.js';
+import { initLifecycleController } from './controllers/lifecycleController.js';
+import { initMapController } from './controllers/mapController.js';
+import { initUiController } from './controllers/uiController.js';
 import { syncAppWithServer, loadWeatherDataForLocation } from './controllers/syncPipeline.js';
 
 // Views
@@ -40,7 +42,9 @@ registerGpsView(map, () => {
 });
 
 // --- 2. CONTROLLER SYSTEM START ---
-initEventController(map);
+initLifecycleController();
+initMapController(map);
+initUiController();
 
 // --- 3. APPLICATION BOOTSTRAP ---
 async function bootstrap() {
