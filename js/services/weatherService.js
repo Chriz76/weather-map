@@ -1,4 +1,4 @@
-export const weatherApi = {
+export const weatherService = {
     /**
      * Loads the central index.json metadata file.
      * @param {string} baseUrl Base URL where weather assets are hosted.

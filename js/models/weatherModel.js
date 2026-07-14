@@ -47,8 +47,35 @@ class WeatherModel extends EventTarget {
             forecast: null
         };
 
+        /** @type {any[]} */
+        this._allStations = [];
+        /** @type {any[]} */
+        this._visibleStations = [];
+
         /** @type {import('./weatherUi.js').WeatherUi} */
         this._ui = new WeatherUi((eventName, detail) => this.dispatchEvent(new CustomEvent(eventName, { detail })));
+    }
+
+    // --- STATIONS API ---
+    get allStations() { return this._allStations; }
+    get visibleStations() { return this._visibleStations; }
+
+    /**
+     * Store the full stations list (from assets) on the model.
+     * @param {any[]} stations
+     */
+    setAllStations(stations) {
+        this._allStations = Array.isArray(stations) ? stations : [];
+        this.dispatchEvent(new CustomEvent('model:all-stations-updated', { detail: this._allStations }));
+    }
+
+    /**
+     * Set the currently visible/top stations (e.g. top3) and notify listeners.
+     * @param {any[]} stations
+     */
+    setVisibleStations(stations) {
+        this._visibleStations = Array.isArray(stations) ? stations : [];
+        this.dispatchEvent(new CustomEvent('model:visible-stations-updated', { detail: this._visibleStations }));
     }
 
     // --- DOMAIN GETTER ---

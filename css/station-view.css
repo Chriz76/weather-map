@@ -1,0 +1,32 @@
+/* Styles for station badges rendered by stationView.js */
+.station-badge { font-family: sans-serif; }
+.station-badge-inner {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    font-size: 12px;
+    color: #1f2933;
+}
+.station-wind-small {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.station-dir {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 14px;
+    height: 14px;
+    font-weight: 900;
+    line-height: 1;
+    transform: rotate(var(--dir-deg));
+    transform-origin: center center;
+    color: #0b74a8;
+}
+.station-dir[style*="opacity:0.25"] { opacity: 0.25; }
+.station-speed { color: #0b74a8; font-size: 12px; }
