@@ -78,6 +78,12 @@ export function initEventController(map) {
     function handleTimelineChange(e) {
         const idx = e && e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
         if (idx === null) return;
+        // Dismiss any persistent notifications when user interacts with the timeline
+        try {
+            notificationController.clearNotification();
+        } catch (err) {
+            // ignore
+        }
 
         weatherModel.setActiveTimestampIndex(idx);
 
@@ -209,7 +215,7 @@ export function initEventController(map) {
     // Listen for controller actions emitted from views (dispatched on window)
     window.addEventListener('controller:app-reload', () => {
         console.log("App reload requested via window event.");
-        weatherModel.setNotification(null);
+        notificationController.clearNotification();
         window.location.reload();
     });
 
@@ -217,17 +223,16 @@ export function initEventController(map) {
     window.addEventListener('controller:startup-retry', async () => {
         if (isSyncing) {
             console.log('Startup retry requested but sync already in progress.');
-            weatherModel.setNotification(null);
+            notificationController.clearNotification();
             return;
         }
 
         try {
             // Manual retry from the UI is a foreground attempt — pass false so retry modal appears on failure
             await loadingManager.track(async () => {
+                notificationController.clearNotification();
                 await syncAppWithServer(false);
             }, { modal: true });
-            // If successful, clear notifications and mark initialized
-            weatherModel.setNotification(null);
             isInitialized = true;
         } catch (e) {
             console.error('Startup manual retry failed:', e);

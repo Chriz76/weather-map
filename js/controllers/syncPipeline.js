@@ -7,6 +7,7 @@ import { loadingManager } from './loadingManager.js';
 
 /** @type {string|null} */
 let currentOverlayBlobUrl = null;
+// No local failed-timestamp cache; use weatherModel.activeTimestamp for retries
 
 /**
  * Lädt ein Bild-Blob vom Server und konvertiert es in eine lokale Objekt-URL.
@@ -34,13 +35,54 @@ export async function updateOverlayForTimestamp(timestamp) {
     let overlayUrl = `${BASE_URL}${timestamp}Z.webp`;
     try {
         overlayUrl = await fetchWeatherOverlayUrl(timestamp);
-        } catch (e) {
+    } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
-        console.error('❌ Error fetching overlay:', errMsg);
-        notificationController.showNotification({ message: "Error fetching weather overlay image: " + errMsg });
+        console.error('❌ Error fetching overlay (first attempt):', errMsg);
+
+        // Immediate, single retry
+        try {
+            console.log('🔁 Retrying overlay fetch immediately for', timestamp);
+            overlayUrl = await fetchWeatherOverlayUrl(timestamp);
+        } catch (retryErr) {
+            const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+            console.error('❌ Overlay retry failed:', retryMsg);
+            // Show a persistent, non-modal notification with a Retry button
+            notificationController.showNotification({
+                message: "Error fetching weather overlay image: " + retryMsg,
+                isModal: false,
+                action: {
+                    text: 'Retry',
+                    event: 'notification-retry-overlay'
+                }
+            }, 0);
+            // keep overlayUrl as the fallback constructed URL (or null)
+        }
     }
     weatherModel.setActiveOverlayUrl(overlayUrl);
 }
+
+// Handle retry requests from the notification Retry button
+window.addEventListener('notification-retry-overlay', async () => {
+    try {
+        await loadingManager.track(async () => {
+            const url = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
+            weatherModel.setActiveOverlayUrl(url);
+        });
+        notificationController.clearNotification();
+    } catch (e) {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        console.error('❌ Notification-triggered overlay retry failed:', errMsg);
+        // Keep the persistent notification visible; optionally update message
+        notificationController.showNotification({
+            message: "Retry failed: " + errMsg,
+            isModal: false,
+            action: {
+                text: 'Retry',
+                event: 'notification-retry-overlay'
+            }
+        }, 0);
+    }
+});
 
 /**
  * PIPELINE STAGE B: Lädt die Cluster-Wetterdaten für eine Koordinate.
