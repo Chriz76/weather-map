@@ -174,9 +174,9 @@ export function initEventController(map) {
             // 1. Wenn wir zurückkehren, starten wir das Polling SOFORT frisch
             startPolling();
 
-            // Kaltstart-Schutz (wird vom harten Aufruf unten abgefangen)
-            if (!isInitialized) {
-                console.log("Event ignoriert: App befindet sich noch im Kaltstart-Initiallauf.");
+            // Kaltstart-Schutz abgeschwächt: Falls der Kaltstart fehlschlug, lassen wir das Event durchgehen
+            if (!isInitialized && isSyncing) {
+                console.log("Event ignoriert: Ein Initialisierungs-Sync läuft bereits.");
                 return;
             }
             
@@ -210,6 +210,22 @@ export function initEventController(map) {
     // 2. EVENT-LISTENER (Steuern nun auch das Aufziehen/Abbauen des Timers)
     document.addEventListener('visibilitychange', () => handleAppVisibilitySync(true));
     window.addEventListener('pageshow', () =>  handleAppVisibilitySync(false));
+
+    // 3. ANDROID & MOBILE SPECIFIC ROBUSTNESS LISTENERS
+    
+    // Fängt aufkeimendes Netz nach dem Aufwachen ab
+    window.addEventListener('online', async () => {
+        console.log("📶 Netzverbindung wiederhergestellt. Starte Recovery-Sync...");
+        startPolling();
+        await safeSyncApp();
+    });
+
+    // Fängt WebView- & OS-Spezifische Reaktivierungen ab (z.B. Safari/Chrome/Cordova Freeze State)
+    window.addEventListener('resume', async () => {
+        console.log("📱 App-Prozess aus dem Deep-Freeze reaktiviert.");
+        startPolling();
+        await safeSyncApp();
+    });
 
 
     // Listen for controller actions emitted from views (dispatched on window)
