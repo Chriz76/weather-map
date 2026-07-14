@@ -1,7 +1,7 @@
-// utils/loadingManager.js
+// controllers/loadingSpinnerController.js
 import { weatherModel } from '../models/weatherModel.js';
 
-class LoadingManager {
+class LoadingSpinnerController {
     constructor(delayMs = 500) {
         this.delayMs = delayMs;
         this.timeout = null;
@@ -9,9 +9,6 @@ class LoadingManager {
         this._modalActive = false;
     }
 
-    /**
-     * Startet den Verzögerungs-Timer für den Spinner
-     */
     /**
      * Startet den Verzögerungs-Timer für den Spinner
      * @param {{ modal?: boolean }} [options]
@@ -47,21 +44,22 @@ class LoadingManager {
     }
 
     /**
-     * Ein "Decorator" für asynchrone Funktionen. 
+     * Ein "Decorator" für asynchrone Funktionen.
      * Hüllt jede Funktion automatisch in das Start/Stop-Szenario
      * und meldet Fehler zentral an das weatherModel.
-     */
-    /**
      * @param {() => Promise<any>} asyncFn
      */
     async track(asyncFn, options = {}) {
         this.start(options);
         try {
-            return await asyncFn();
-         } finally {
+            const result = await asyncFn();
             this.stop();
+            return result;
+        } catch (err) {
+            this.stop();
+            throw err;
         }
     }
 }
 
-export const loadingManager = new LoadingManager(1000);
+export const loadingSpinnerController = new LoadingSpinnerController(1000);

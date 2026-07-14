@@ -1,13 +1,13 @@
 ﻿// main.js
 import { weatherModel } from './models/weatherModel.js';
 import { initMap } from './map-init.js';
-import { loadingManager } from './controllers/loadingManager.js';
+import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
 // Controller Imports
 import { initLifecycleController } from './controllers/lifecycleController.js';
 import { initMapController } from './controllers/mapController.js';
 import { initUiController } from './controllers/uiController.js';
-import { syncAppWithServer, loadWeatherDataForLocation } from './controllers/syncPipeline.js';
+import { syncAppWithServerAction, loadWeatherDataForLocationAction } from './controllers/actions.js';
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
@@ -48,9 +48,9 @@ initUiController();
 
 // --- 3. APPLICATION BOOTSTRAP ---
 async function bootstrap() {
-    await loadingManager.track(async () => {
+    await loadingSpinnerController.track(async () => {
         // 1. App-Basisdaten laden & Validieren
-        await syncAppWithServer();
+        await syncAppWithServerAction();
         
         // 2. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
         const urlParams = new URLSearchParams(window.location.search);
@@ -66,7 +66,7 @@ async function bootstrap() {
                 map.setView(targetLatLng, 12);
                 
                 // Schiebt die Koordinaten direkt linear in die Pipeline
-                await loadWeatherDataForLocation(targetLatLng);
+                await loadWeatherDataForLocationAction(targetLatLng);
             }
         }
     });

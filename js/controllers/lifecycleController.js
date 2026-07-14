@@ -1,7 +1,7 @@
 // controllers/lifecycleController.js
-import { loadingManager } from './loadingManager.js';
+import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { notificationController } from './notificationController.js';
-import { syncAppWithServer } from './syncPipeline.js';
+import { syncAppWithServerAction, ApiMismatchError } from './actions.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -10,12 +10,8 @@ let isInitialized = false;
 let pollTimer = null;
 
 function startPolling() {
-    if (pollTimer !== null) {
-        clearInterval(pollTimer);
-    }
-
+    if (pollTimer !== null) clearInterval(pollTimer);
     console.log('⏰ Polling gestartet.');
-
     pollTimer = setInterval(async () => {
         console.log('⏰ Regulärer Hintergrund-Poll getriggert.');
         await safeSyncApp();
@@ -30,7 +26,7 @@ function stopPolling() {
     }
 }
 
-async function safeSyncApp() {
+async function safeSyncApp(isInitial = false) {
     if (isSyncing) {
         console.log('Sync blockiert: Ein anderer Sync-Prozess läuft bereits.');
         return;
@@ -40,29 +36,57 @@ async function safeSyncApp() {
     console.log('🔄 App-Sync gestartet...');
 
     try {
-        await loadingManager.track(async () => {
-            await syncAppWithServer();
-        });
+        await loadingSpinnerController.track(
+            () => syncAppWithServerAction(!isInitial), 
+            isInitial ? { modal: true } : undefined
+        );
         isInitialized = true;
     } catch (error) {
         console.error('Fehler während des App-Syncs:', error);
-    } finally {
-        isSyncing = false;
+        const errMsg = error instanceof Error ? error.message : String(error);
+
+        // API version mismatch -> offer reload
+        if (error instanceof ApiMismatchError) {
+            const version = error.version || '';
+            notificationController.showNotification({
+                message: `A new App version is available (v${version}).\n\nPlease reload the page to use the application as usual.`,
+                isModal: true,
+                action: { text: 'Reload App', event: 'controller:app-reload' }
+            }, 0);
+        } else if (isInitial) {
+            // Initial sync failed -> modal retry
+            notificationController.showNotification({
+                message: 'Error during application synchronization: ' + errMsg,
+                isModal: true,
+                action: { text: 'Retry', event: 'controller:startup-retry' }
+            }, 0);
+        } else {
+            // Background sync failed -> non-modal toast
+            notificationController.showNotification({
+                message: 'Background sync failed: ' + errMsg,
+                isModal: false
+            }, 5000);
+        }
     }
+    // Ensure isSyncing is reset even if `finally` is not supported by target JS
+    isSyncing = false;
 }
 
-async function handleAppVisibilitySync(visibilityEvent) {
-    console.log(`📄 Event: ${visibilityEvent ? 'visibilitychange' : 'pageshow'}, visibilityState: ${document.visibilityState}`);
-    if (document.visibilityState === 'visible') {
-        startPolling();
+// Hilfsfunktion für die Reaktivierungs-Events
+async function triggerSyncAndPoll() {
+    startPolling();
+    await safeSyncApp();
+}
 
+async function handleAppVisibilitySync() {
+    console.log(`📄 VisibilityState geändert: ${document.visibilityState}`);
+    if (document.visibilityState === 'visible') {
         if (!isInitialized && isSyncing) {
             console.log('Event ignoriert: Ein Initialisierungs-Sync läuft bereits.');
             return;
         }
-
-        await safeSyncApp();
-    } else if (document.visibilityState === 'hidden') {
+        await triggerSyncAndPoll();
+    } else {
         stopPolling();
     }
 }
@@ -70,32 +94,22 @@ async function handleAppVisibilitySync(visibilityEvent) {
 export function initLifecycleController() {
     console.log('🚀 LifecycleController geladen (Kaltstart)');
 
-    (async () => {
-        try {
-            await loadingManager.track(async () => {
-                await syncAppWithServer(false);
-            }, { modal: true });
-            isInitialized = true;
-        } catch (e) {
-            console.error('Initial sync failed:', e);
-        } finally {
-            startPolling();
-        }
-    })();
+    // 1. Initialer Sync beim Starten, danach Polling starten
+    // Use `.then` instead of `.finally` for older JS targets
+    safeSyncApp(true).then(startPolling, startPolling);
 
-    document.addEventListener('visibilitychange', () => handleAppVisibilitySync(true));
-    window.addEventListener('pageshow', () => handleAppVisibilitySync(false));
-
-    window.addEventListener('online', async () => {
+    // 2. Standard Event-Listener ohne Registrierungs-Zirkus
+    document.addEventListener('visibilitychange', handleAppVisibilitySync);
+    window.addEventListener('pageshow', handleAppVisibilitySync);
+    
+    window.addEventListener('online', () => {
         console.log('📶 Netzverbindung wiederhergestellt. Starte Recovery-Sync...');
-        startPolling();
-        await safeSyncApp();
+        triggerSyncAndPoll();
     });
 
-    window.addEventListener('resume', async () => {
+    window.addEventListener('resume', () => {
         console.log('📱 App-Prozess aus dem Deep-Freeze reaktiviert.');
-        startPolling();
-        await safeSyncApp();
+        triggerSyncAndPoll();
     });
 
     window.addEventListener('controller:app-reload', () => {
@@ -110,21 +124,7 @@ export function initLifecycleController() {
             notificationController.clearNotification();
             return;
         }
-
-        try {
-            await loadingManager.track(async () => {
-                notificationController.clearNotification();
-                await syncAppWithServer(false);
-            }, { modal: true });
-            isInitialized = true;
-        } catch (e) {
-            console.error('Startup manual retry failed:', e);
-        }
+        notificationController.clearNotification();
+        await safeSyncApp(true);
     });
-
-    return {
-        dispose() {
-            stopPolling();
-        }
-    };
 }

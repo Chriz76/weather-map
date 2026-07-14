@@ -1,20 +1,26 @@
-// controllers/syncPipeline.js
+// controllers/actions.js
 import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
 import { weatherModel } from '../models/weatherModel.js';
 import { weatherApi } from '../weatherApi.js';
-import { notificationController } from './notificationController.js';
-import { loadingManager } from './loadingManager.js';
+import { loadingSpinnerController } from './loadingSpinnerController.js';
+
+export class ApiMismatchError extends Error {
+    constructor(version) {
+        super(`API_VERSION_MISMATCH:${version}`);
+        this.name = 'ApiMismatchError';
+        this.version = version;
+    }
+}
 
 /** @type {string|null} */
 let currentOverlayBlobUrl = null;
-// No local failed-timestamp cache; use weatherModel.activeTimestamp for retries
 
 /**
  * Lädt ein Bild-Blob vom Server und konvertiert es in eine lokale Objekt-URL.
  * @param {string|null} timestamp
  * @returns {Promise<string|null>}
  */
-export async function fetchWeatherOverlayUrl(timestamp) {
+async function fetchWeatherOverlayUrl(timestamp) {
     if (!timestamp) return null;
     const imageBlob = await weatherApi.fetchWeatherImageBlob(timestamp, BASE_URL);
     if (currentOverlayBlobUrl) {
@@ -29,7 +35,7 @@ export async function fetchWeatherOverlayUrl(timestamp) {
  * @param {string|null} timestamp
  * @returns {Promise<void>}
  */
-export async function updateOverlayForTimestamp(timestamp) {
+export async function updateOverlayForTimestampAction(timestamp) {
     if (!timestamp) return;
     /** @type {string|null} */
     let overlayUrl = `${BASE_URL}${timestamp}Z.webp`;
@@ -46,71 +52,40 @@ export async function updateOverlayForTimestamp(timestamp) {
         } catch (retryErr) {
             const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
             console.error('❌ Overlay retry failed:', retryMsg);
-            // Show a persistent, non-modal notification with a Retry button
-            notificationController.showNotification({
-                message: "Error fetching weather overlay image: " + retryMsg,
-                isModal: false,
-                action: {
-                    text: 'Retry',
-                    event: 'notification-retry-overlay'
-                }
-            }, 0);
-            // keep overlayUrl as the fallback constructed URL (or null)
+            // Both attempts failed — propagate error to caller so controllers can decide how to show/handle it
+            throw new Error('OVERLAY_FETCH_FAILED: ' + retryMsg);
         }
     }
     weatherModel.setActiveOverlayUrl(overlayUrl);
 }
 
-// Handle retry requests from the notification Retry button
-window.addEventListener('notification-retry-overlay', async () => {
-    try {
-        await loadingManager.track(async () => {
-            const url = await fetchWeatherOverlayUrl(weatherModel.activeTimestamp);
-            weatherModel.setActiveOverlayUrl(url);
-        });
-        notificationController.clearNotification();
-    } catch (e) {
-        const errMsg = e instanceof Error ? e.message : String(e);
-        console.error('❌ Notification-triggered overlay retry failed:', errMsg);
-        // Keep the persistent notification visible; optionally update message
-        notificationController.showNotification({
-            message: "Retry failed: " + errMsg,
-            isModal: false,
-            action: {
-                text: 'Retry',
-                event: 'notification-retry-overlay'
-            }
-        }, 0);
-    }
-});
 
 /**
  * PIPELINE STAGE B: Lädt die Cluster-Wetterdaten für eine Koordinate.
  * @param {{lat: number, lng: number}} latlng
  * @returns {Promise<void>}
  */
-export async function loadWeatherDataForLocation(latlng) {
+export async function loadWeatherDataForLocationAction(latlng) {
     try {
         let cluster = null;
-        await loadingManager.track(async () => {
+        await loadingSpinnerController.track(async () => {
             cluster = await weatherApi.fetchCluster(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
         });
         weatherModel.setPointData(latlng, cluster);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error('🚨 Error processing location data:', errMsg);
-        notificationController.showNotification({ message: "Error loading location data: " + errMsg });
+        // Propagate error to controllers so they can decide how to present it to the user
+        throw new Error('LOAD_LOCATION_FAILED: ' + errMsg);
     }
 }
+
 
 /**
  * PIPELINE STAGE C: Synchronisiert den globalen Anwendungsindex.
  * @returns {Promise<void>}
  */
-/**
- * Synchronisiert den App-Index.
- */
-export async function syncAppWithServer(background = true) {
+export async function syncAppWithServerAction(background = true) {
     async function doSync() {
         // throw new Error("Sync is currently disabled for testing purposes.");
         const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
@@ -119,17 +94,9 @@ export async function syncAppWithServer(background = true) {
 
         weatherModel.setLastIndexSync(new Date());
 
-        // API-Versionsprüfung -> zeige Modal und biete Reload
+        // API version mismatch: propagate to controller for UI decision
         if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
-            notificationController.showNotification({
-                message: `A new App version is available (v${indexData.api_version}).\n\nPlease reload the page to use the application as usual.`,
-                isModal: true,
-                action: {
-                    text: "Reload App",
-                    event: "controller:app-reload"
-                }
-            }, 0);
-            return;
+            throw new ApiMismatchError(indexData.api_version);
         }
 
         if (weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
@@ -144,7 +111,7 @@ export async function syncAppWithServer(background = true) {
             weatherModel.setIndexMetadata(indexData);
         }
 
-        await updateOverlayForTimestamp(weatherModel.activeTimestamp);
+        await updateOverlayForTimestampAction(weatherModel.activeTimestamp);
     }
 
     try {
@@ -158,19 +125,7 @@ export async function syncAppWithServer(background = true) {
         } catch (retryErr) {
             const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
             console.error('❌ Sync error (retry failed):', errMsg);
-            // Zeige Fehler dem Benutzer als modales Notification mit Retry Aktion
-            // Only show the modal retry notification for foreground (non-background) syncs.
-            if (!background) {
-                notificationController.showNotification({
-                    message: "Error during application synchronization: " + errMsg,
-                    isModal: true,
-                    action: {
-                        text: 'Retry',
-                        event: 'controller:startup-retry'
-                    }
-                }, 0);
-            }
-            // Weiterreichen, falls Aufrufer noch etwas spezielles tun will
+            // Propagate retry error to caller; controllers decide how/if to retry
             throw retryErr;
         }
     }

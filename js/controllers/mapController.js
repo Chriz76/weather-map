@@ -2,7 +2,7 @@
 import { weatherModel } from '../models/weatherModel.js';
 import { storage } from '../utils/storage.js';
 import { notificationController } from './notificationController.js';
-import { loadWeatherDataForLocation } from './syncPipeline.js';
+import { loadWeatherDataForLocationAction } from './actions.js';
 
 export function initMapController(map) {
     /** @type {number | null} */
@@ -12,7 +12,7 @@ export function initMapController(map) {
         const currentClickToken = Date.now();
         lastClusterClickToken = currentClickToken;
 
-        await loadWeatherDataForLocation(e.latlng);
+        await loadWeatherDataForLocationAction(e.latlng);
         if (lastClusterClickToken !== currentClickToken) return;
     }
 
@@ -21,7 +21,7 @@ export function initMapController(map) {
         lastClusterClickToken = currentClickToken;
 
         map.setView(e.latlng, 14, { animate: true });
-        await loadWeatherDataForLocation(e.latlng);
+        await loadWeatherDataForLocationAction(e.latlng);
 
         if (lastClusterClickToken === currentClickToken) {
             weatherModel.setIsLocating(false);
@@ -55,14 +55,4 @@ export function initMapController(map) {
     map.on('locationerror', handleLocationError);
     map.on('popupclose', handlePopupClose);
     map.on('moveend', handleMoveEnd);
-
-    return {
-        dispose() {
-            map.off('click', handleMapClick);
-            map.off('locationfound', handleLocationFound);
-            map.off('locationerror', handleLocationError);
-            map.off('popupclose', handlePopupClose);
-            map.off('moveend', handleMoveEnd);
-        }
-    };
 }
