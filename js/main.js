@@ -50,6 +50,7 @@ initUiController();
 async function bootstrap() {
     await loadingSpinnerController.track(async () => {
         // 1. App-Basisdaten laden & Validieren
+        console.log('diagnostic: bootstrap calling syncAppWithServerAction');
         await syncAppWithServerAction();
         
         // 2. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)

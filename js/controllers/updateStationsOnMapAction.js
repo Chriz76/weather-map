@@ -2,26 +2,53 @@
 import { weatherModel } from '../models/weatherModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
 
+const windCache = {};
+let lastTopStations = [];
+
 /**
- * Aktualisiert die sichtbaren Stationsmarker basierend auf dem aktuellen Kartenausschnitt.
- * @param {L.Map} map
- * @param {Array} stationsData
- * @param {Object} windCache - ein lokaler Cache-Objekt, das mit stationId -> data befüllt wird
+ * Aktualisiert die sichtbaren Stationsmarker.
+ * Wenn `bounds` übergeben wird, filtert die Stationen danach und zeigt die Top-3 an.
+ * Wenn `bounds` fehlt, wird ein Refresh für die zuletzt angezeigten Stationen ausgeführt.
+ * Die Action verwaltet intern das Laden von `assets/stations.json` und einen lokalen Wind-Cache.
+ * @param {L.LatLngBounds|null} bounds
  */
-export async function updateStationsOnMapAction(map, stationsData, windCache) {
-    if (!stationsData || !stationsData.length) return;
+export async function updateStationsOnMapAction(bounds = null) {
+    // Acquire station list from model if available
+    let allStations = Array.isArray(weatherModel.allStations) ? weatherModel.allStations : [];
 
-    const bounds = map.getBounds();
+    // Fallback: try to load from assets if model has none (no caching of stations here)
+    if ((!allStations || allStations.length === 0) && bounds) {
+        try {
+            const resp = await fetch('/assets/stations.json');
+            allStations = await resp.json();
+            console.log('📍 Stationsdaten geladen (fallback):', allStations.length);
+        } catch (e) {
+            console.error('Fehler beim Laden der stations.json (fallback):', e);
+        }
+    }
 
-    const stationsInView = stationsData.filter(station => {
-        const latLng = L.latLng(station.lat, station.lon);
-        return bounds.contains(latLng);
-    });
+    let topStations = [];
 
-    stationsInView.sort((a, b) => a.priority - b.priority);
-    const top3Stations = stationsInView.slice(0, 3);
+    if (bounds) {
+        const stationsInView = allStations.filter(station => {
+            const latLng = L.latLng(station.lat, station.lon);
+            return bounds.contains(latLng);
+        });
 
-    const stationsWithInitialData = top3Stations.map(station => ({
+        stationsInView.sort((a, b) => a.priority - b.priority);
+        topStations = stationsInView.slice(0, 3);
+        lastTopStations = topStations;
+    } else {
+        // No bounds -> refresh previously visible stations if model has them
+        const visible = Array.isArray(weatherModel.visibleStations) ? weatherModel.visibleStations : [];
+        if (visible && visible.length) {
+            topStations = visible.slice();
+        } else {
+            topStations = lastTopStations.slice();
+        }
+    }
+
+    const stationsWithInitialData = topStations.map(station => ({
         ...station,
         windData: windCache[station.id] || null
     }));
@@ -30,7 +57,7 @@ export async function updateStationsOnMapAction(map, stationsData, windCache) {
 
     let needsModelUpdate = false;
 
-    const fetchPromises = top3Stations.map(async (station) => {
+    const fetchPromises = topStations.map(async (station) => {
         if (windCache[station.id]) return;
         try {
             const data = await fetchWindDataForStation(station.id);
@@ -38,16 +65,15 @@ export async function updateStationsOnMapAction(map, stationsData, windCache) {
                 windCache[station.id] = data;
                 needsModelUpdate = true;
             }
-        } catch (e) {
-            // Swallow individual station errors to avoid breaking the whole update
-            console.error('Error fetching wind for station', station.id, e);
+        } catch (err) {
+            console.error('Error fetching wind for station', station.id, err);
         }
     });
 
     await Promise.all(fetchPromises);
 
     if (needsModelUpdate) {
-        const stationsWithFreshData = top3Stations.map(station => ({
+        const stationsWithFreshData = topStations.map(station => ({
             ...station,
             windData: windCache[station.id] || null
         }));

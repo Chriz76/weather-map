@@ -2,6 +2,7 @@
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { notificationController } from './notificationController.js';
 import { syncAppWithServerAction, ApiMismatchError } from './actions.js';
+import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -14,7 +15,13 @@ function startPolling() {
     console.log('⏰ Polling gestartet.');
     pollTimer = setInterval(async () => {
         console.log('⏰ Regulärer Hintergrund-Poll getriggert.');
-        await safeSyncApp();
+            await safeSyncApp();
+            try {
+                // Refresh wind values for the last-visible stations (action keeps internal cache)
+                await updateStationsOnMapAction();
+            } catch (e) {
+                console.error('Error refreshing station wind values during poll:', e);
+            }
     }, POLL_INTERVAL_MS);
 }
 
@@ -27,6 +34,7 @@ function stopPolling() {
 }
 
 async function safeSyncApp(isInitial = false) {
+    console.log(`diagnostic: safeSyncApp called (isInitial=${isInitial}) - isSyncing=${isSyncing}, isInitialized=${isInitialized}`);
     if (isSyncing) {
         console.log('Sync blockiert: Ein anderer Sync-Prozess läuft bereits.');
         return;
@@ -96,6 +104,7 @@ export function initLifecycleController() {
 
     // 1. Initialer Sync beim Starten, danach Polling starten
     // Use `.then` instead of `.finally` for older JS targets
+    console.log('diagnostic: initLifecycleController calling safeSyncApp(true)');
     safeSyncApp(true).then(startPolling, startPolling);
 
     // 2. Standard Event-Listener ohne Registrierungs-Zirkus

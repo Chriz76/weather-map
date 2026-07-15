@@ -4,7 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>ICON-D2 RUC | Hourly Forecast</title>
-    
+    <script>
+      if (new URLSearchParams(window.location.search).get('debug') === 'true') {
+          // 1. Eruda Skript-Tag erstellen
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+          
+          // 2. Initialisieren, sobald das Skript geladen ist
+          script.onload = function () {
+              eruda.init({
+                  theme: 'dark',
+                  defaults: {
+                      displaySize: 50, 
+                      transparency: 90
+                  }
+              });
+              console.log('Eruda DevTools erfolgreich geladen. Viel Spaß beim Debuggen!');
+              
+              // Falls du den Puffer-Logger nutzt, hier einspielen:
+              // if (window.flushEarlyLogs) window.flushEarlyLogs();
+          };   
+
+          // 3. WICHTIG: In den <head> (document.head) einfügen, da body noch null ist!
+          document.head.appendChild(script);
+      }
+    </script>
     <!-- Suchmaschinen-Signale für den korrekten Namen & URL -->
     <link rel="canonical" href="https://wind.zink.tv/">
     <script type="application/ld+json">
@@ -43,25 +67,7 @@
     
     <div class="model-info">Model run: Loading...</div>
 <script>
-  // Prüfen, ob der Debug-Modus in der URL aktiv ist
-  if (new URLSearchParams(window.location.search).get('debug') === 'true') {
-    // 1. Eruda Skript dynamisch nachladen
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-    document.body.appendChild(script);
-    
-    // 2. Initialisieren, sobald das Skript geladen ist
-    script.onload = function () {
-      eruda.init({
-        theme: 'dark',
-        defaults: {
-          displaySize: 50, // Macht das Fenster standardmäßig auf halbe Bildschirmhöhe
-          transparency: 90
-        }
-      });
-      console.log('Eruda DevTools erfolgreich geladen. Viel Spaß beim Debuggen!');
-    };
-  } else {
+  if (new URLSearchParams(window.location.search).get('debug') !== 'true') {
     // 2. Tracking Skript dynamisch nachladen (wenn debug DEAKTIVIERT ist)
     const trackingScript = document.createElement('script');
     trackingScript.src = 'https://cloud.umami.is/script.js';
