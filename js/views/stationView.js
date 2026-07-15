@@ -15,11 +15,12 @@ export const stationView = (() => {
 
         return L.divIcon({
             className: 'station-badge',
+            // keep original iconSize but reduce inner content width and prevent hand cursor on hover
             html: `
-                <div class="station-badge-inner">
-                    <span class="station-wind-small" title="Windrichtung">
-                        <span class="station-dir" style="--dir-deg:${iconRotation ?? 0}deg; opacity:${arrowOpacity}">➤</span>
-                        <span class="station-speed">${speedValue}</span>
+                <div class="station-badge-inner" style="width:36px; cursor:default;">
+                    <span class="station-wind-small">
+                        <span class="station-dir" style="--dir-deg:${iconRotation ?? 0}deg; opacity:${arrowOpacity}; display:inline-block; pointer-events:none;">➤</span>
+                        <span class="station-speed" style="pointer-events:none;">${speedValue}</span>
                     </span>
                 </div>
             `,

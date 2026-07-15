@@ -53,6 +53,10 @@ export function initMapController(map) {
     }
 
     function handleMoveEnd() {
+
+        // --- NEU: Bei jeder Kartenbewegung (Verschieben/Zoomen) den Filter ausführen ---
+        updateStationsOnMapAction(map.getBounds());
+
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('lat') && urlParams.has('lon')) return;
 
@@ -62,9 +66,6 @@ export function initMapController(map) {
             lng: center.lng,
             zoom: map.getZoom()
         });
-
-        // --- NEU: Bei jeder Kartenbewegung (Verschieben/Zoomen) den Filter ausführen ---
-        updateStationsOnMapAction(map.getBounds());
     }
 
     map.on('click', handleMapClick);

@@ -2,9 +2,6 @@
 import { weatherModel } from '../models/weatherModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
 
-const windCache = {};
-let lastTopStations = [];
-
 /**
  * Aktualisiert die sichtbaren Stationsmarker.
  * Wenn `bounds` übergeben wird, filtert die Stationen danach und zeigt die Top-3 an.
@@ -21,6 +18,8 @@ export async function updateStationsOnMapAction(bounds = null) {
         try {
             const resp = await fetch('/assets/stations.json');
             allStations = await resp.json();
+            // Cache loaded stations on the model to avoid repeated fallback fetches
+            weatherModel.setAllStations(allStations);
             console.log('📍 Stationsdaten geladen (fallback):', allStations.length);
         } catch (e) {
             console.error('Fehler beim Laden der stations.json (fallback):', e);
@@ -35,34 +34,43 @@ export async function updateStationsOnMapAction(bounds = null) {
             return bounds.contains(latLng);
         });
 
-        stationsInView.sort((a, b) => a.priority - b.priority);
+        // Sortiere nach Priorität; bei gleicher Priorität zuerst Stationen
+        // die näher am Kartenmittelpunkt liegen.
+        const center = bounds.getCenter();
+        stationsInView.sort((a, b) => {
+            const pr = (a.priority || 0) - (b.priority || 0);
+            if (pr !== 0) return pr;
+            const da = center.distanceTo(L.latLng(a.lat, a.lon));
+            const db = center.distanceTo(L.latLng(b.lat, b.lon));
+            return da - db;
+        });
         topStations = stationsInView.slice(0, 3);
-        lastTopStations = topStations;
     } else {
         // No bounds -> refresh previously visible stations if model has them
         const visible = Array.isArray(weatherModel.visibleStations) ? weatherModel.visibleStations : [];
         if (visible && visible.length) {
             topStations = visible.slice();
         } else {
-            topStations = lastTopStations.slice();
+            topStations = [];
         }
     }
 
+    // Initially show stations without wind data; the service provides caching
     const stationsWithInitialData = topStations.map(station => ({
         ...station,
-        windData: windCache[station.id] || null
+        windData: null
     }));
 
     weatherModel.setVisibleStations(stationsWithInitialData);
 
     let needsModelUpdate = false;
 
+    const fetched = {};
     const fetchPromises = topStations.map(async (station) => {
-        if (windCache[station.id]) return;
         try {
             const data = await fetchWindDataForStation(station.id);
             if (data) {
-                windCache[station.id] = data;
+                fetched[station.id] = data;
                 needsModelUpdate = true;
             }
         } catch (err) {
@@ -75,7 +83,7 @@ export async function updateStationsOnMapAction(bounds = null) {
     if (needsModelUpdate) {
         const stationsWithFreshData = topStations.map(station => ({
             ...station,
-            windData: windCache[station.id] || null
+            windData: fetched[station.id] || null
         }));
         weatherModel.setVisibleStations(stationsWithFreshData);
     }

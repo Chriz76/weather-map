@@ -1,42 +1,65 @@
-// services/windService.js
+// services/measurementsService.js
+
+// In-memory cache and in-flight deduplication for station wind data
+const windCache = {}; // { [stationId]: { data, ts } }
+const inflight = {};  // { [stationId]: Promise }
+const DEFAULT_TTL = 4 * 60 * 1000; // 4 minutes
+
+async function fetchFromBrightSky(dwdStationId) {
+    const url = `https://api.brightsky.dev/current_weather?dwd_station_id=${dwdStationId}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`API-Fehler: ${response.status}`);
+    const data = await response.json();
+    const current = data.weather;
+    if (!current) return null;
+
+    const speedKmh = typeof current.wind_speed_10 === 'number' ? current.wind_speed_10 : null;
+    const direction = typeof current.wind_direction_10 === 'number' ? current.wind_direction_10 : null;
+    if (speedKmh === null) {
+        console.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);
+        return null;
+    }
+    const windSpeedKnots = Math.round(speedKmh * 0.539957);
+    return {
+        windSpeed: windSpeedKnots,
+        windDirection: typeof direction === 'number' ? direction : 0
+    };
+}
 
 /**
- * Holt die aktuellen Wetterdaten für eine bestimmte DWD-Stations-ID von Bright Sky.
- * @param {string} dwdStationId 
- * @returns {Promise<{windSpeed: number, windDirection: number} | null>} Windgeschwindigkeit in Knoten und Richtung in Grad
+ * Fetch wind data for a station with service-side caching.
+ * @param {string} dwdStationId
+ * @param {{forceRefresh?: boolean, ttl?: number}=} options
+ * @returns {Promise<{windSpeed:number,windDirection:number} | null>}
  */
-export async function fetchWindDataForStation(dwdStationId) {
-    // Bright Sky Endpunkt für aktuelle Stationsdaten
-    const url = `https://api.brightsky.dev/current_weather?dwd_station_id=${dwdStationId}`;
+export async function fetchWindDataForStation(dwdStationId, options = {}) {
+    const { forceRefresh = false, ttl = DEFAULT_TTL } = options;
+    const now = Date.now();
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`API-Fehler: ${response.status}`);
-        
-        const data = await response.json();
-        const current = data.weather;
+    const cached = windCache[dwdStationId];
+    if (!forceRefresh && cached && (now - cached.ts) < ttl) {
+        return cached.data;
+    }
 
-        if (!current) return null;
+    if (inflight[dwdStationId]) return inflight[dwdStationId];
 
-        // Use ONLY the 10-minute values as requested
-        const speedKmh = typeof current.wind_speed_10 === 'number' ? current.wind_speed_10 : null;
-        const direction = typeof current.wind_direction_10 === 'number' ? current.wind_direction_10 : null;
-
-        if (speedKmh === null) {
-            console.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);
-            return null;
+    inflight[dwdStationId] = (async () => {
+        try {
+            const data = await fetchFromBrightSky(dwdStationId);
+            // Cache result (even `null` to avoid hammering failing endpoints)
+            windCache[dwdStationId] = { data, ts: Date.now() };
+            return data;
+        } finally {
+            delete inflight[dwdStationId];
         }
+    })();
 
-        // Convert km/h to knots (1 km/h = 0.539957 kt)
-        const windSpeedKnots = Math.round(speedKmh * 0.539957);
-        console.debug(`BrightSky: station ${dwdStationId} -> speed_10 ${speedKmh} km/h (${windSpeedKnots} kt), dir_10 ${direction}`);
+    return inflight[dwdStationId];
+}
 
-        return {
-            windSpeed: windSpeedKnots,
-            windDirection: typeof direction === 'number' ? direction : 0
-        };
-    } catch (error) {
-        console.error(`Fehler beim Laden der Winddaten für Station ${dwdStationId}:`, error);
-        return null;
+export function clearWindCache(stationId) {
+    if (stationId) delete windCache[stationId];
+    else {
+        for (const k in windCache) delete windCache[k];
     }
 }
