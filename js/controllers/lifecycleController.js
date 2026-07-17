@@ -99,10 +99,7 @@ async function handleAppVisibilitySync() {
     }
 }
 
-export function initLifecycleController() {
-    console.log('🚀 LifecycleController geladen (Kaltstart)');
-
-    // 2. Standard Event-Listener ohne Registrierungs-Zirkus
+function registerLifecycleListeners() {
     document.addEventListener('visibilitychange', handleAppVisibilitySync);
     window.addEventListener('pageshow', handleAppVisibilitySync);
     
@@ -133,7 +130,10 @@ export function initLifecycleController() {
     });
 }
 
-export function startLifecycleController() {
-    console.log('diagnostic: startLifecycleController calling safeSyncApp(true)');
-    return safeSyncApp(true).then(startPolling, startPolling);
+export async function initLifecycleController() {
+    console.log('🚀 LifecycleController geladen (Kaltstart)');
+
+    await safeSyncApp(true);
+    registerLifecycleListeners();
+    startPolling();
 }

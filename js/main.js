@@ -4,7 +4,7 @@ import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
 // Controller Imports
-import { initLifecycleController, startLifecycleController } from './controllers/lifecycleController.js';
+import { initLifecycleController } from './controllers/lifecycleController.js';
 import { initMapController } from './controllers/mapController.js';
 import { initUiController } from './controllers/uiController.js';
 import { loadWeatherDataForLocationAction } from './controllers/actions.js';
@@ -46,9 +46,8 @@ registerGpsView(map, () => {
 async function initApp() {
     initMapController(map);
     initUiController();
-    initLifecycleController();
 
-    await startLifecycleController();
+    await initLifecycleController();
 
     await loadingSpinnerController.track(async () => {
         // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
