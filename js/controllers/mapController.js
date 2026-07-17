@@ -53,7 +53,6 @@ export function initMapController(map) {
     }
 
     function handleMoveEnd() {
-
         // --- NEU: Bei jeder Kartenbewegung (Verschieben/Zoomen) den Filter ausführen ---
         updateStationsOnMapAction(map.getBounds());
 

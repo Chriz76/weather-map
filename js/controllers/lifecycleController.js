@@ -102,11 +102,6 @@ async function handleAppVisibilitySync() {
 export function initLifecycleController() {
     console.log('🚀 LifecycleController geladen (Kaltstart)');
 
-    // 1. Initialer Sync beim Starten, danach Polling starten
-    // Use `.then` instead of `.finally` for older JS targets
-    console.log('diagnostic: initLifecycleController calling safeSyncApp(true)');
-    safeSyncApp(true).then(startPolling, startPolling);
-
     // 2. Standard Event-Listener ohne Registrierungs-Zirkus
     document.addEventListener('visibilitychange', handleAppVisibilitySync);
     window.addEventListener('pageshow', handleAppVisibilitySync);
@@ -136,4 +131,9 @@ export function initLifecycleController() {
         notificationController.clearNotification();
         await safeSyncApp(true);
     });
+}
+
+export function startLifecycleController() {
+    console.log('diagnostic: startLifecycleController calling safeSyncApp(true)');
+    return safeSyncApp(true).then(startPolling, startPolling);
 }

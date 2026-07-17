@@ -4,10 +4,10 @@ import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
 // Controller Imports
-import { initLifecycleController } from './controllers/lifecycleController.js';
+import { initLifecycleController, startLifecycleController } from './controllers/lifecycleController.js';
 import { initMapController } from './controllers/mapController.js';
 import { initUiController } from './controllers/uiController.js';
-import { syncAppWithServerAction, loadWeatherDataForLocationAction } from './controllers/actions.js';
+import { loadWeatherDataForLocationAction } from './controllers/actions.js';
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
@@ -42,18 +42,16 @@ registerGpsView(map, () => {
 });
 
 // --- 2. CONTROLLER SYSTEM START ---
-initLifecycleController();
-initMapController(map);
-initUiController();
 
-// --- 3. APPLICATION BOOTSTRAP ---
-async function bootstrap() {
+async function initApp() {
+    initMapController(map);
+    initUiController();
+    initLifecycleController();
+
+    await startLifecycleController();
+
     await loadingSpinnerController.track(async () => {
-        // 1. App-Basisdaten laden & Validieren
-        console.log('diagnostic: bootstrap calling syncAppWithServerAction');
-        await syncAppWithServerAction();
-        
-        // 2. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
+        // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
         const urlParams = new URLSearchParams(window.location.search);
         const latParam = urlParams.get('lat');
         const lonParam = urlParams.get('lon');
@@ -73,4 +71,4 @@ async function bootstrap() {
     });
 }
 
-bootstrap();
+initApp();
