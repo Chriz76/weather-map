@@ -99,9 +99,27 @@ export async function syncAppWithServerAction(background = true) {
             throw new ApiMismatchError(indexData.api_version);
         }
 
+       // Log 1: Was liefert der Server / Cache exakt zurück?
+       console.log('📊 [SYNC NETZWERK] Index erfolgreich geladen:', {
+           api_version: indexData?.api_version,
+           generated_at: indexData?.generated_at,
+           current_hour: indexData?.current_hour,
+           timestamp_count: indexData?.available_timestamps?.length
+        });
+
+       // Log 2: Wie sieht der Zustand im Speicher direkt vor dem Vergleich aus?
+       console.log('🧠 [SYNC VERGLEICH] Prüfe auf neue Daten:', {
+           modellZeitstempel: weatherModel.modelGeneratedAt,
+           serverZeitstempel: indexData?.generated_at,
+           wirdAbgebrochen: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
+        });
+
         if (weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
-            return;
+           console.log('🛑 [SYNC ABBRUCH] Sync lautlos beendet, da generierte Zeiten identisch.');
+           return;
         }
+
+        console.log('🚀 [SYNC WEITER] Daten sind neu! Fahre fort...');
 
         if (weatherModel.lastClickedLatLng) {
             let clusterData = await weatherService.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
