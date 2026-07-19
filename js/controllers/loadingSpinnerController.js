@@ -1,5 +1,5 @@
 // controllers/loadingSpinnerController.js
-import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 
 class LoadingSpinnerController {
     constructor(delayMs = 500) {
@@ -24,7 +24,7 @@ class LoadingSpinnerController {
                 clearTimeout(this.timeout);
             }
             this.timeout = setTimeout(() => {
-                weatherModel.setIsActiveLoading(true, this._modalActive);
+                weatherUi.setIsActiveLoading(true, this._modalActive);
             }, this.delayMs);
         }
     }
@@ -38,7 +38,7 @@ class LoadingSpinnerController {
             if (this.timeout !== null) {
                 clearTimeout(this.timeout);
             }
-            weatherModel.setIsActiveLoading(false, false);
+            weatherUi.setIsActiveLoading(false, false);
             this._modalActive = false;
         }
     }

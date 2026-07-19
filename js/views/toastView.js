@@ -1,4 +1,4 @@
-import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 
 export function registerToastView() {
     const toastEl = document.createElement('div');
@@ -17,8 +17,8 @@ export function registerToastView() {
     };
 
     const onToastChanged = () => {
-        renderToast(weatherModel.toast);
+        renderToast(weatherUi.toast);
     };
 
-    weatherModel.addEventListener('model:show-toast-changed', onToastChanged);
+    weatherUi.addEventListener('model:show-toast-changed', onToastChanged);
 }

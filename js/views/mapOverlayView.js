@@ -1,5 +1,6 @@
 /* global L */
 import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
 /**
@@ -27,8 +28,8 @@ export function registerMapOverlayView(map, windOverlay) {
         }
     });
 
-    weatherModel.addEventListener('model:overlay-url-updated', () => {
-        const url = weatherModel.activeOverlayUrl;
+    weatherUi.addEventListener('model:overlay-url-updated', () => {
+        const url = weatherUi.activeOverlayUrl;
         if (windOverlay && url) {
             windOverlay.setUrl(url);
         }

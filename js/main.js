@@ -1,5 +1,6 @@
 ﻿// main.js
 import { weatherModel } from './models/weatherDomainModel.js';
+import { weatherUi } from './models/weatherUiModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
@@ -36,7 +37,7 @@ registerNotificationView();
 registerToastView();
 
 registerGpsView(map, () => {
-    weatherModel.setIsLocating(true);     
+    weatherUi.setIsLocating(true);
     map.locate({ 
         setView: false, 
         enableHighAccuracy: true 
@@ -69,7 +70,7 @@ async function initApp() {
                 try {
                     await loadWeatherDataForLocationAction(targetLatLng);
                 } catch (error) {
-                    const errMsg = error instanceof Error ? error.detail ?? error.message : String(error);
+                    const errMsg = error instanceof Error ? error.message : String(error);
                     weatherModel.setPointDataLoadError(errMsg);
                 }
             }

@@ -1,7 +1,7 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 
 /**
  * Registers a GPS control button and binds locating state updates.
@@ -40,8 +40,8 @@ export function registerGpsView(map, onGpsClick) {
             });
 
             // React to state changes in model
-            weatherModel.addEventListener('model:locating-changed', () => {
-                if (weatherModel.isLocating) {
+            weatherUi.addEventListener('model:locating-changed', () => {
+                if (weatherUi.isLocating) {
                     button.classList.add('gps-view--active');
                 } else {
                     button.classList.remove('gps-view--active');

@@ -1,5 +1,6 @@
 // controllers/mapController.js
 import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 import { storage } from '../utils/storage.js';
 import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';
@@ -46,13 +47,13 @@ export function initMapController(map) {
         try {
             await triggerLoadAtLatLng(e.latlng);
         } finally {
-            weatherModel.setIsLocating(false);
+            weatherUi.setIsLocating(false);
         }
     }
 
     function handleLocationError(e) {
         toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
-        weatherModel.setIsLocating(false);
+        weatherUi.setIsLocating(false);
     }
 
     function handlePopupClose() {

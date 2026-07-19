@@ -1,6 +1,5 @@
 import { calculatewindSpeeds } from '../utils/interpolation.js';
 import { determineActiveIndex } from '../utils/time.js';
-import { WeatherUi } from './weatherUiModel.js';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng
@@ -52,8 +51,7 @@ class WeatherModel extends EventTarget {
         /** @type {any[]} */
         this._visibleStations = [];
 
-        /** @type {import('./weatherUiModel.js').WeatherUi} */
-        this._ui = new WeatherUi((eventName) => this.dispatchEvent(new CustomEvent(eventName)));
+        this._activeTimestampIndex = 0;
     }
 
     // --- STATIONS API ---
@@ -106,12 +104,7 @@ class WeatherModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:last-index-sync-updated'));
     }
 
-    // --- UI GETTER ---
-    get activeTimestampIndex() { return this._ui.activeTimestampIndex; }
-    get activeOverlayUrl() { return this._ui.activeOverlayUrl; }
-    get isLocating() { return this._ui.isLocating; }
-    get isActiveLoading() { return this._ui.isActiveLoading; }
-    get toast() { return this._ui.toast; }
+    get activeTimestampIndex() { return this._activeTimestampIndex; }
     get indexLoadError() { return this._domain.indexLoadError; }
     get overlayLoadError() { return this._domain.overlayLoadError; }
     get pointDataLoadError() { return this._domain.pointDataLoadError; }
@@ -131,7 +124,7 @@ class WeatherModel extends EventTarget {
     }
     
     get activeTimestamp() { 
-        return this._domain.availableTimestamps[this._ui.activeTimestampIndex] || null; 
+        return this._domain.availableTimestamps[this._activeTimestampIndex] || null; 
     }
 
     /**
@@ -189,40 +182,6 @@ class WeatherModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
-    /**
-     * @param {string | import('./weatherUiModel.js').ToastPayload | null} payload
-     */
-    setToast(payload) {
-        this._ui.setToast(payload);
-    }
-
-    clearToast() {
-        this._ui.setToast(null);
-    }
-
-    /**
-     * @param {boolean} value
-     * @param {boolean} [isModal=false]
-     */
-    setIsActiveLoading(value, isModal = false) {
-        this._ui.setIsActiveLoading(!!value, !!isModal);
-    }
-    
-
-    /**
-     * @param {boolean} value
-     */
-    setIsLocating(value) {
-        this._ui.setIsLocating(value);
-    }
-
-    /**
-     * @param {string|null} url
-     */
-    setActiveOverlayUrl(url) {
-        this._ui.setActiveOverlayUrl(url);
-        this.setOverlayLoadError(null);
-    }
 
     // --- DOMAIN / GEMISCHTE MUTATORS ---
 
@@ -249,7 +208,7 @@ class WeatherModel extends EventTarget {
             return;
         }   
 
-        this._ui.activeTimestampIndex = i;
+        this._activeTimestampIndex = i;
         this._recalculateInterpolation();
 
         this.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
@@ -268,7 +227,7 @@ class WeatherModel extends EventTarget {
         let activeIndex = determineActiveIndex(sortedTimestamps, this.activeTimestamp);
 
         this._domain.availableTimestamps = sortedTimestamps;
-        this._ui.activeTimestampIndex = activeIndex;
+        this._activeTimestampIndex = activeIndex;
         this._domain.modelGeneratedAt = indexData.generated_at ?? null;
         this._domain.modelCurrentHour = indexData.current_hour ?? null;
         this.setIndexLoadError(null);

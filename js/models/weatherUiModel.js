@@ -1,16 +1,17 @@
 /**
  * @typedef {{ message: string }} ToastPayload
- * @typedef {{ activeTimestampIndex: number, activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, toast: string | ToastPayload | null }} UIState
+ * @typedef {{ activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, toast: string | ToastPayload | null }} UIState
  */
 
-export class WeatherUi {
+export class WeatherUi extends EventTarget {
     /**
-     * @param {(eventName: string, detail: any) => void} dispatchEvent
+     * @param {(eventName: string, detail: any) => void} [dispatchEventCallback]
      */
-    constructor(dispatchEvent) {
+    constructor(dispatchEventCallback) {
+        super();
+
         /** @type {UIState} */
         this._ui = {
-            activeTimestampIndex: 0,
             activeOverlayUrl: null,
             isLocating: false,
             isActiveLoading: false,
@@ -18,15 +19,19 @@ export class WeatherUi {
             toast: null
         };
 
-        this._dispatchEvent = dispatchEvent;
+        this._dispatchEventCallback = typeof dispatchEventCallback === 'function' ? dispatchEventCallback : null;
     }
 
-    get activeTimestampIndex() {
-        return this._ui.activeTimestampIndex;
-    }
-
-    set activeTimestampIndex(value) {
-        this._ui.activeTimestampIndex = value;
+    /**
+     * @param {string} eventName
+     * @param {any} detail
+     */
+    _emit(eventName, detail) {
+        const event = new CustomEvent(eventName, { detail });
+        super.dispatchEvent(event);
+        if (this._dispatchEventCallback) {
+            this._dispatchEventCallback(eventName, detail);
+        }
     }
 
     get activeOverlayUrl() {
@@ -54,7 +59,7 @@ export class WeatherUi {
      */
     setToast(payload) {
         this._ui.toast = payload;
-        this._dispatchEvent('model:show-toast-changed', payload);
+        this._emit('model:show-toast-changed', payload);
     }
 
     /**
@@ -68,7 +73,7 @@ export class WeatherUi {
 
         this._ui.isActiveLoading = isLoadingBool;
         this._ui.isLoadingModal = modalBool;
-        this._dispatchEvent('model:active-loading-changed', { isLoading: isLoadingBool, modal: modalBool });
+        this._emit('model:active-loading-changed', { isLoading: isLoadingBool, modal: modalBool });
     }
 
     /**
@@ -76,7 +81,7 @@ export class WeatherUi {
      */
     setIsLocating(value) {
         this._ui.isLocating = value;
-        this._dispatchEvent('model:locating-changed', value);
+        this._emit('model:locating-changed', value);
     }
 
     /**
@@ -84,6 +89,9 @@ export class WeatherUi {
      */
     setActiveOverlayUrl(url) {
         this._ui.activeOverlayUrl = url;
-        this._dispatchEvent('model:overlay-url-updated', url);
+        this._emit('model:overlay-url-updated', url);
     }
 }
+
+export const weatherUi = new WeatherUi();
+export default weatherUi;
