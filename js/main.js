@@ -19,6 +19,7 @@ import { registerMapOverlayView } from './views/mapOverlayView.js';
 import { registerGpsView } from './views/gpsView.js';
 import { registerLoadingView } from './views/loadingSpinnerView.js';
 import { registerNotificationView } from './views/notificationView.js';
+import { registerToastView } from './views/toastView.js';
 
 // --- 1. INITIALISIERUNG ---
 const { map, windOverlay } = initMap();
@@ -32,6 +33,7 @@ registerModelInfoView(map);
 registerMapOverlayView(map, windOverlay);
 registerLoadingView();
 registerNotificationView();
+registerToastView();
 
 registerGpsView(map, () => {
     weatherModel.setIsLocating(true);     
@@ -64,7 +66,12 @@ async function initApp() {
                 map.setView(targetLatLng, 12);
                 
                 // Schiebt die Koordinaten direkt linear in die Pipeline
-                await loadWeatherDataForLocationAction(targetLatLng);
+                try {
+                    await loadWeatherDataForLocationAction(targetLatLng);
+                } catch (error) {
+                    const errMsg = error instanceof Error ? error.detail ?? error.message : String(error);
+                    weatherModel.setPointDataLoadError(errMsg);
+                }
             }
         }
     });

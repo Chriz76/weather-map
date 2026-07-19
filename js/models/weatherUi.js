@@ -1,7 +1,6 @@
 /**
- * @typedef {{ text: string, event: string }} NotificationAction
- * @typedef {{ message: string, isModal?: boolean, action?: NotificationAction }} NotificationPayload
- * @typedef {{ activeTimestampIndex: number, activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, notification: string | NotificationPayload | null }} UIState
+ * @typedef {{ message: string }} ToastPayload
+ * @typedef {{ activeTimestampIndex: number, activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, toast: string | ToastPayload | null }} UIState
  */
 
 export class WeatherUi {
@@ -16,7 +15,7 @@ export class WeatherUi {
             isLocating: false,
             isActiveLoading: false,
             isLoadingModal: false,
-            notification: null
+            toast: null
         };
 
         this._dispatchEvent = dispatchEvent;
@@ -46,16 +45,16 @@ export class WeatherUi {
         return this._ui.isLoadingModal;
     }
 
-    get notification() {
-        return this._ui.notification;
+    get toast() {
+        return this._ui.toast;
     }
 
     /**
-     * @param {string | NotificationPayload | null} payload
+     * @param {string | ToastPayload | null} payload
      */
-    setNotification(payload) {
-        this._ui.notification = payload;
-        this._dispatchEvent('model:show-notification-changed', payload);
+    setToast(payload) {
+        this._ui.toast = payload;
+        this._dispatchEvent('model:show-toast-changed', payload);
     }
 
     /**

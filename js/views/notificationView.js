@@ -24,21 +24,15 @@ export function registerNotificationView() {
         if (target.classList.contains('notification__btn') && activeActionEvent) {
             // 1. Fire a DOM-level custom event on window so controllers can respond
             window.dispatchEvent(new CustomEvent(activeActionEvent));
-            // Note: Do NOT mutate model from the view. The controller will close the notification.
+            // Note: Do NOT mutate model from the view. The controller will perform the retry.
         }
     });
 
     /**
      * Blendet die Notification und ggf. das Modal ein
-     * @param {string | import('../models/weatherModel.js').NotificationPayload} payload
+     * @param {{ message: string, isModal: boolean, action?: { event: string, text: string } }} config
      */
-    const showNotification = (payload) => {
-        // Normalisieren: Falls ein einfacher String kommt, in ein passendes Objekt umwandeln
-        const config = typeof payload === 'string' 
-            ? { message: payload, isModal: false } 
-            : payload;
-
-        // Event-Name wegsichern, falls eine Action definiert ist
+    const showNotification = (config) => {
         activeActionEvent = config.action?.event || null;
 
         // Semantische Rollen für Screenreader anpassen
@@ -70,13 +64,9 @@ export function registerNotificationView() {
             textEl.textContent = config.message ?? '';
         }
 
-        // Modal-Zustand steuern
         if (config.isModal) {
             backdropEl.classList.add('notification-backdrop--visible');
             document.body.classList.add('body--modal-open');
-            
-            // Fokus-Steuerung: Fokus auf den Button zwingen, sobald er im DOM existiert
-            // Das verhindert, dass Tastatur-User im Hintergrund weiterklicken können
             window.setTimeout(() => {
                 const btn = notificationEl.querySelector('.notification__btn');
                 if (btn) /** @type {HTMLElement} */ (btn).focus();
@@ -87,6 +77,43 @@ export function registerNotificationView() {
         }
 
         notificationEl.classList.add('notification--visible');
+    };
+
+    const showErrorNotification = () => {
+        if (weatherModel.apiMismatchError) {
+            showNotification({
+                message: weatherModel.apiMismatchError,
+                isModal: true,
+                action: { event: 'controller:app-reload', text: 'Reload App' }
+            });
+            return;
+        }
+
+        if (weatherModel.startupError) {
+            showNotification({
+                message: weatherModel.startupError,
+                isModal: true,
+                action: { event: 'controller:startup-retry', text: 'Retry' }
+            });
+            return;
+        }
+
+        const hasLoadErrors = !!(
+            weatherModel.indexLoadError ||
+            weatherModel.pointDataLoadError ||
+            weatherModel.overlayLoadError
+        );
+
+        if (!hasLoadErrors) {
+            hideNotification();
+            return;
+        }
+
+        showNotification({
+            message: 'Error loading data.',
+            isModal: false,
+            action: { event: 'notification-retry', text: 'Retry' }
+        });
     };
 
     const hideNotification = () => {
@@ -100,17 +127,16 @@ export function registerNotificationView() {
         activeActionEvent = null;
     };
 
-    /**
-     * @param {Event} e
-     */
-    const onnotificationChanged = () => {
-        const payload = weatherModel.notification;
-        if (payload) {
-            showNotification(payload);
-        } else {
-            hideNotification();
+    const render = () => {
+        if (weatherModel.hasLoadError) {
+            showErrorNotification();
+            return;
         }
+
+        hideNotification();
     };
 
-    weatherModel.addEventListener('model:show-notification-changed', onnotificationChanged);
+    const onLoadErrorChanged = () => render();
+
+    weatherModel.addEventListener('model:load-error-changed', onLoadErrorChanged);
 }

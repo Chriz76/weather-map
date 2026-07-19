@@ -1,7 +1,7 @@
 // controllers/mapController.js
 import { weatherModel } from '../models/weatherModel.js';
 import { storage } from '../utils/storage.js';
-import { notificationController } from './notificationController.js';
+import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';
 import { stationView } from '../views/stationView.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
@@ -22,7 +22,14 @@ export function initMapController(map) {
         const currentClickToken = Date.now();
         lastClusterClickToken = currentClickToken;
 
-        await loadWeatherDataForLocationAction(latlng);
+        try {
+            await loadWeatherDataForLocationAction(latlng);
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            // Direct user action: toast is sufficient, don't persist pointDataLoadError.
+            toastController.showToast({ message: 'Error loading location data: ' + errMsg }, 5000);
+        }
+
         if (lastClusterClickToken !== currentClickToken) return;
     }
 
@@ -34,16 +41,17 @@ export function initMapController(map) {
         const currentClickToken = Date.now();
         lastClusterClickToken = currentClickToken;
 
-        map.setView(e.latlng, 14, { animate: true });
-        await triggerLoadAtLatLng(e.latlng);
+        map.setView(e.latlng, 10, { animate: true });
 
-        if (lastClusterClickToken === currentClickToken) {
+        try {
+            await triggerLoadAtLatLng(e.latlng);
+        } finally {
             weatherModel.setIsLocating(false);
         }
     }
 
     function handleLocationError(e) {
-        notificationController.showNotification({ message: 'Error processing GPS location: ' + e.message });
+        toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
         weatherModel.setIsLocating(false);
     }
 

@@ -12,6 +12,30 @@ export class ApiMismatchError extends Error {
     }
 }
 
+export class IndexLoadError extends Error {
+    constructor(message) {
+        super(`INDEX_LOAD_FAILED: ${message}`);
+        this.name = 'IndexLoadError';
+        this.detail = message;
+    }
+}
+
+export class LocationLoadError extends Error {
+    constructor(message) {
+        super(`LOAD_LOCATION_FAILED: ${message}`);
+        this.name = 'LocationLoadError';
+        this.detail = message;
+    }
+}
+
+export class OverlayLoadError extends Error {
+    constructor(message) {
+        super(`OVERLAY_FETCH_FAILED: ${message}`);
+        this.name = 'OverlayLoadError';
+        this.detail = message;
+    }
+}
+
 /** @type {string|null} */
 let currentOverlayBlobUrl = null;
 
@@ -53,7 +77,7 @@ export async function updateOverlayForTimestampAction(timestamp) {
             const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
             console.error('❌ Overlay retry failed:', retryMsg);
             // Both attempts failed — propagate error to caller so controllers can decide how to show/handle it
-            throw new Error('OVERLAY_FETCH_FAILED: ' + retryMsg);
+            throw new OverlayLoadError(retryMsg);
         }
     }
     weatherModel.setActiveOverlayUrl(overlayUrl);
@@ -76,7 +100,7 @@ export async function loadWeatherDataForLocationAction(latlng) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error('🚨 Error processing location data:', errMsg);
         // Propagate error to controllers so they can decide how to present it to the user
-        throw new Error('LOAD_LOCATION_FAILED: ' + errMsg);
+        throw new LocationLoadError(errMsg);
     }
 }
 
@@ -85,12 +109,18 @@ export async function loadWeatherDataForLocationAction(latlng) {
  * PIPELINE STAGE C: Synchronisiert den globalen Anwendungsindex.
  * @returns {Promise<void>}
  */
-export async function syncAppWithServerAction(background = true) {
+export async function syncAppWithServerAction(background = true, force = false) {
     async function doSync() {
         // throw new Error("Sync is currently disabled for testing purposes.");
-        const indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
-            await weatherService.fetchIndex(BASE_URL)
-        );
+        let indexData;
+        try {
+            indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
+                await weatherService.fetchIndex(BASE_URL)
+            );
+        } catch (fetchErr) {
+            const fetchErrMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+            throw new IndexLoadError(fetchErrMsg);
+        }
 
         weatherModel.setLastIndexSync(new Date());
 
@@ -114,7 +144,7 @@ export async function syncAppWithServerAction(background = true) {
            wirdAbgebrochen: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
         });
 
-        if (weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
+        if (!force && weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
            console.log('🛑 [SYNC ABBRUCH] Sync lautlos beendet, da generierte Zeiten identisch.');
            return;
         }
@@ -122,9 +152,8 @@ export async function syncAppWithServerAction(background = true) {
         console.log('🚀 [SYNC WEITER] Daten sind neu! Fahre fort...');
 
         if (weatherModel.lastClickedLatLng) {
-            let clusterData = await weatherService.fetchCluster(weatherModel.lastClickedLatLng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
             weatherModel.setIndexMetadata(indexData);
-            weatherModel.setPointData(weatherModel.lastClickedLatLng, clusterData);
+            await loadWeatherDataForLocationAction(weatherModel.lastClickedLatLng);
         } else {
             weatherModel.setIndexMetadata(indexData);
         }

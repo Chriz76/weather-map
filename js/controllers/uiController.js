@@ -1,41 +1,26 @@
 // controllers/uiController.js
 import { loadingSpinnerController } from './loadingSpinnerController.js';
-import { notificationController } from './notificationController.js';
+import { toastController } from './toastController.js';
 import { weatherModel } from '../models/weatherModel.js';
+import { retryStartupSync } from './lifecycleController.js';
 import { updateOverlayForTimestampAction } from './actions.js';
 import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time.js';
 
 const SLIDER_DEBOUNCE_MS = 50;
 
+/** @type {number|null} */
 let timelineDebounceTimer = null;
 let lastTimelineTimestampToken = null;
 
-async function handleNotificationRetryOverlay() {
-    try {
-        notificationController.clearNotification();
-            await loadingSpinnerController.track(async () => {
-            await updateOverlayForTimestampAction(weatherModel.activeTimestamp);
-        });
-    } catch (err) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        console.error('❌ Overlay retry from notification failed:', errMsg);
-        notificationController.showNotification({
-            message: "Retry failed: " + errMsg,
-            isModal: false,
-            action: { text: 'Retry', event: 'notification-retry-overlay' }
-        }, 0);
-    }
-}
-
+/**
+ * @param {Event} e
+ */
 function handleTimelineChange(e) {
-    const idx = e && e.detail && typeof e.detail.index === 'number' ? e.detail.index : null;
+    const customEvent = /** @type {CustomEvent<{index:number}>} */ (e);
+    const idx = customEvent && customEvent.detail && typeof customEvent.detail.index === 'number'
+        ? customEvent.detail.index
+        : null;
     if (idx === null) return;
-
-    try {
-        notificationController.clearNotification();
-    } catch (err) {
-        // ignore
-    }
 
     weatherModel.setActiveTimestampIndex(idx);
 
@@ -49,9 +34,15 @@ function handleTimelineChange(e) {
 
         lastTimelineTimestampToken = targetTimestamp;
 
+        try {
             await loadingSpinnerController.track(async () => {
-            await updateOverlayForTimestampAction(targetTimestamp);
-        });
+                await updateOverlayForTimestampAction(targetTimestamp);
+            });
+        } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error('❌ Overlay fetch failed during timeline change:', errMsg);
+            weatherModel.setOverlayLoadError(errMsg);
+        }
     }, SLIDER_DEBOUNCE_MS);
 }
 
@@ -61,16 +52,19 @@ function handleModelInfoClicked() {
 
     const message = `Model run:\n${runStr}\n\nSync:\n${syncStr}`;
 
-    notificationController.showNotification({
-        message,
-        isModal: false
-    });
+    toastController.showToast({ message }, 5000);
+}
+
+function handleAppReload() {
+    console.log('App reload requested via window event.');
+    window.location.reload();
 }
 
 export function initUiController() {
     window.addEventListener('timeline-change', handleTimelineChange);
     window.addEventListener('model-info:clicked', handleModelInfoClicked);
-    window.addEventListener('notification-retry-overlay', handleNotificationRetryOverlay);
+    window.addEventListener('controller:startup-retry', retryStartupSync);
+    window.addEventListener('controller:app-reload', handleAppReload);
 
     // Note: cleanup removed as requested — listeners remain registered for app lifetime
 }

@@ -1,13 +1,15 @@
 // controllers/lifecycleController.js
 import { loadingSpinnerController } from './loadingSpinnerController.js';
-import { notificationController } from './notificationController.js';
-import { syncAppWithServerAction, ApiMismatchError } from './actions.js';
+import { toastController } from './toastController.js';
+import { weatherModel } from '../models/weatherModel.js';
+import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError } from './actions.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 let isSyncing = false;
 let isInitialized = false;
+/** @type {number|null} */
 let pollTimer = null;
 
 function startPolling() {
@@ -42,38 +44,49 @@ async function safeSyncApp(isInitial = false) {
 
     isSyncing = true;
     console.log('🔄 App-Sync gestartet...');
+ 
+    const force = !!(
+        weatherModel.indexLoadError ||
+        weatherModel.pointDataLoadError ||
+        weatherModel.overlayLoadError
+    );
+
+    weatherModel.setStartupError(null);
+    weatherModel.setIndexLoadError(null);
+    weatherModel.setPointDataLoadError(null);
+    weatherModel.setOverlayLoadError(null);
 
     try {
         await loadingSpinnerController.track(
-            () => syncAppWithServerAction(!isInitial), 
+            () => syncAppWithServerAction(!isInitial, force), 
             isInitial ? { modal: true } : undefined
         );
         isInitialized = true;
     } catch (error) {
         console.error('Fehler während des App-Syncs:', error);
         const errMsg = error instanceof Error ? error.message : String(error);
+        const isApiMismatch = error instanceof ApiMismatchError;
 
-        // API version mismatch -> offer reload
-        if (error instanceof ApiMismatchError) {
+        if (isApiMismatch) {
             const version = error.version || '';
-            notificationController.showNotification({
-                message: `A new App version is available (v${version}).\n\nPlease reload the page to use the application as usual.`,
-                isModal: true,
-                action: { text: 'Reload App', event: 'controller:app-reload' }
-            }, 0);
-        } else if (isInitial) {
-            // Initial sync failed -> modal retry
-            notificationController.showNotification({
-                message: 'Error during application synchronization: ' + errMsg,
-                isModal: true,
-                action: { text: 'Retry', event: 'controller:startup-retry' }
-            }, 0);
-        } else {
-            // Background sync failed -> non-modal toast
-            notificationController.showNotification({
-                message: 'Background sync failed: ' + errMsg,
-                isModal: false
-            }, 5000);
+            weatherModel.setApiMismatchError(`A new App version is available (v${version}).\n\nPlease reload the page to use the application as usual.`);
+        } else if (error instanceof IndexLoadError) {
+            weatherModel.setIndexLoadError(error.detail ?? errMsg);
+        } else if (error instanceof LocationLoadError) {
+            weatherModel.setPointDataLoadError(error.detail ?? errMsg);
+        } else if (error instanceof OverlayLoadError) {
+            weatherModel.setOverlayLoadError(error.detail ?? errMsg);
+        }
+
+        if (!isApiMismatch) {
+            if (isInitial) {
+                weatherModel.setStartupError('Error during application synchronization: ' + errMsg);
+            } else {
+                // Background sync failed -> non-modal toast
+                toastController.showToast({
+                    message: 'Background sync failed: ' + errMsg
+                }, 5000);
+            }
         }
     }
     // Ensure isSyncing is reset even if `finally` is not supported by target JS
@@ -113,21 +126,20 @@ function registerLifecycleListeners() {
         triggerSyncAndPoll();
     });
 
-    window.addEventListener('controller:app-reload', () => {
-        console.log('App reload requested via window event.');
-        notificationController.clearNotification();
-        window.location.reload();
-    });
-
-    window.addEventListener('controller:startup-retry', async () => {
-        if (isSyncing) {
-            console.log('Startup retry requested but sync already in progress.');
-            notificationController.clearNotification();
-            return;
+    window.addEventListener('notification-retry', async () => {
+        console.log('Retry requested.');
+        try {
+            await safeSyncApp();
+        } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            toastController.showToast({ message: 'Retry failed: ' + errMsg }, 5000);
         }
-        notificationController.clearNotification();
-        await safeSyncApp(true);
     });
+}
+
+export async function retryStartupSync() {
+    console.log('Startup retry requested.');
+    await safeSyncApp(true);
 }
 
 export async function initLifecycleController() {

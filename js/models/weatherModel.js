@@ -6,29 +6,24 @@ import { WeatherUi } from './weatherUi.js';
  * @typedef {{lat: number, lng: number}} LatLng
  * @typedef {{speed: number|null, gust: number|null, direction: number|null}} WindData
  * @typedef {{hour: string, wind: number, gust: number, direction: number|null, fullKey: string}} ForecastItem
- 
-* * @typedef {{
- * latLng: LatLng,
- * clusterData: any
+ * @typedef {{
+ *   latLng: LatLng,
+ *   clusterData: any
  * }} LocationContext
-
-* * @typedef {{
- * availableTimestamps: string[],
- * modelGeneratedAt: string|null,
- * modelCurrentHour: string|null,
- * lastIndexSync: Date|null,
- * locationContext: LocationContext|null,
- * windData: WindData|null,
- * forecast: ForecastItem[]|null
+ * @typedef {{
+ *   availableTimestamps: string[],
+ *   modelGeneratedAt: string|null,
+ *   modelCurrentHour: string|null,
+ *   lastIndexSync: Date|null,
+ *   locationContext: LocationContext|null,
+ *   windData: WindData|null,
+ *   forecast: ForecastItem[]|null,
+ *   indexLoadError: string|null,
+ *   overlayLoadError: string|null,
+ *   pointDataLoadError: string|null,
+ *   apiMismatchError: string|null,
+ *   startupError: string|null
  * }} DomainState
-
-* * @typedef {{ text: string, event: string }} NotificationAction
-
-* * @typedef {{
- * message: string,
- * isModal?: boolean,
- * action?: NotificationAction
- * }} NotificationPayload
  */
 
 class WeatherModel extends EventTarget {
@@ -44,7 +39,12 @@ class WeatherModel extends EventTarget {
             lastIndexSync: null,
             locationContext: null,
             windData: null,
-            forecast: null
+            forecast: null,
+            indexLoadError: null,
+            overlayLoadError: null,
+            pointDataLoadError: null,
+            apiMismatchError: null,
+            startupError: null
         };
 
         /** @type {any[]} */
@@ -111,7 +111,24 @@ class WeatherModel extends EventTarget {
     get activeOverlayUrl() { return this._ui.activeOverlayUrl; }
     get isLocating() { return this._ui.isLocating; }
     get isActiveLoading() { return this._ui.isActiveLoading; }
-    get notification() { return this._ui.notification; }
+    get toast() { return this._ui.toast; }
+    get indexLoadError() { return this._domain.indexLoadError; }
+    get overlayLoadError() { return this._domain.overlayLoadError; }
+    get pointDataLoadError() { return this._domain.pointDataLoadError; }
+    get apiMismatchError() { return this._domain.apiMismatchError; }
+    get startupError() { return this._domain.startupError; }
+    get hasLoadError() {
+        return !!(this._domain.apiMismatchError || this._domain.startupError || this._domain.indexLoadError || this._domain.overlayLoadError || this._domain.pointDataLoadError);
+    }
+    get loadErrorMessage() {
+        const errors = [];
+        if (this._domain.apiMismatchError) errors.push(this._domain.apiMismatchError);
+        if (this._domain.startupError) errors.push(this._domain.startupError);
+        if (this._domain.indexLoadError) errors.push(this._domain.indexLoadError);
+        if (this._domain.pointDataLoadError) errors.push(this._domain.pointDataLoadError);
+        if (this._domain.overlayLoadError) errors.push(this._domain.overlayLoadError);
+        return errors.join('\n');
+    }
     
     get activeTimestamp() { 
         return this._domain.availableTimestamps[this._ui.activeTimestampIndex] || null; 
@@ -128,11 +145,59 @@ class WeatherModel extends EventTarget {
     // --- REINE UI MUTATORS ---
 
     /**
-     * Setzt den Fehlerzustand (entweder Text, konfiguriertes Objekt oder null zum Schließen)
-     * @param {string | NotificationPayload | null} payload
+     * @param {string|null} message
      */
-    setNotification(payload) {
-        this._ui.setNotification(payload);
+    setIndexLoadError(message) {
+        this._domain.indexLoadError = message;
+        this.dispatchEvent(new CustomEvent('model:index-load-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+    }
+
+    /**
+     * @param {string|null} message
+     */
+    setOverlayLoadError(message) {
+        this._domain.overlayLoadError = message;
+        this.dispatchEvent(new CustomEvent('model:overlay-load-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+    }
+
+    /**
+     * @param {string|null} message
+     */
+    setPointDataLoadError(message) {
+        this._domain.pointDataLoadError = message;
+        this.dispatchEvent(new CustomEvent('model:point-data-load-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+    }
+
+    /**
+     * @param {string|null} message
+     */
+    setApiMismatchError(message) {
+        this._domain.apiMismatchError = message;
+        this.dispatchEvent(new CustomEvent('model:api-mismatch-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+    }
+
+    /**
+     * @param {string|null} message
+     */
+    setStartupError(message) {
+        this._domain.startupError = message;
+        this.dispatchEvent(new CustomEvent('model:startup-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+    }
+
+    /**
+     * @param {string | import('./weatherUi.js').ToastPayload | null} payload
+     */
+    setToast(payload) {
+        this._ui.setToast(payload);
+    }
+
+    clearToast() {
+        this._ui.setToast(null);
     }
 
     /**
@@ -156,6 +221,7 @@ class WeatherModel extends EventTarget {
      */
     setActiveOverlayUrl(url) {
         this._ui.setActiveOverlayUrl(url);
+        this.setOverlayLoadError(null);
     }
 
     // --- DOMAIN / GEMISCHTE MUTATORS ---
@@ -205,6 +271,7 @@ class WeatherModel extends EventTarget {
         this._ui.activeTimestampIndex = activeIndex;
         this._domain.modelGeneratedAt = indexData.generated_at ?? null;
         this._domain.modelCurrentHour = indexData.current_hour ?? null;
+        this.setIndexLoadError(null);
 
         this._recalculateInterpolation();
 
@@ -224,6 +291,7 @@ class WeatherModel extends EventTarget {
      */
     setPointData(latlng, cluster) {
         this._domain.locationContext = { latLng: latlng, clusterData: cluster };
+        this.setPointDataLoadError(null);
         this._recalculateInterpolation();
 
         this.dispatchEvent(new CustomEvent('model:location-updated'));
