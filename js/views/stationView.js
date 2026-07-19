@@ -45,9 +45,8 @@ export const stationView = (() => {
         });
     }
 
-    function handleVisibleStations(e) {
-        const stations = e?.detail || [];
-        renderStations(stations);
+    function handleVisibleStations() {
+        renderStations(weatherModel.visibleStations);
     }
 
     function init(mapInstance, options = {}) {

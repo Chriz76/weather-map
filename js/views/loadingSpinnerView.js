@@ -43,18 +43,9 @@ export function registerLoadingView() {
     // Initialen Zustand setzen (falls beim Laden direkt aktiv)
     toggleSpinner(weatherModel.isActiveLoading);
 
-    // 2. Event-Listener: Lausche auf das Modell; payload kann boolean oder { isLoading, modal }
-    weatherModel.addEventListener('model:active-loading-changed', /** @param {Event} e */ (e) => {
-        const customEvent = /** @type {CustomEvent<boolean|{isLoading:boolean, modal?:boolean}>} */ (e);
-        const detail = customEvent.detail;
-        let isLoading = false;
-        let isModal = false;
-        if (typeof detail === 'object' && detail !== null) {
-            isLoading = !!detail.isLoading;
-            isModal = !!detail.modal;
-        } else {
-            isLoading = !!detail;
-        }
+    weatherModel.addEventListener('model:active-loading-changed', () => {
+        const isLoading = weatherModel.isActiveLoading;
+        const isModal = weatherModel.isLoadingModal;
 
         toggleSpinner(isLoading);
 
@@ -65,10 +56,6 @@ export function registerLoadingView() {
             overlay.classList.add('loading-overlay--modal');
             overlay.setAttribute('role', 'dialog');
             overlay.setAttribute('aria-modal', 'true');
-
-            // Don't programmatically move keyboard focus here — focusing the overlay
-            // caused a visible browser focus ring (the square outline).
-            // Screenreaders still get semantics via role/aria-modal.
             overlay.setAttribute('aria-live', 'assertive');
         } else {
             backdropEl.classList.remove('loading-backdrop--visible');

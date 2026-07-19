@@ -103,9 +103,8 @@ export function registerNotificationView() {
     /**
      * @param {Event} e
      */
-    const onnotificationChanged = (e) => {
-        const customEvent = /** @type {CustomEvent} */ (e);
-        const payload = customEvent.detail;
+    const onnotificationChanged = () => {
+        const payload = weatherModel.notification;
         if (payload) {
             showNotification(payload);
         } else {

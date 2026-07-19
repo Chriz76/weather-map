@@ -118,13 +118,11 @@ export function registerTimelineView(mapInstance) {
                     updateTimeDisplay(weatherModel.activeTimestamp);
                 });
 
-                weatherModel.addEventListener('model:timestamp-index-updated', (e) => {
+                weatherModel.addEventListener('model:timestamp-index-updated', () => {
                     if (!slider) return;
                     // @ts-ignore
-                    const idx = e.detail && typeof e.detail === 'number' ? e.detail : weatherModel.activeTimestampIndex;
-                    // @ts-ignore
-                    slider.value = idx;
-                    updateTimeDisplay(weatherModel.getTimestamp(idx));
+                    slider.value = weatherModel.activeTimestampIndex;
+                    updateTimeDisplay(weatherModel.activeTimestamp);
                 });
 
             } catch (uiError) {

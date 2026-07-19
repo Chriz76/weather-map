@@ -40,10 +40,8 @@ export function registerGpsView(map, onGpsClick) {
             });
 
             // React to state changes in model
-            weatherModel.addEventListener('model:locating-changed', /** @param {Event} e */ (e) => {
-                const customEvent = /** @type {CustomEvent<boolean>} */ (e);
-                const isLoading = customEvent.detail;
-                if (isLoading) {
+            weatherModel.addEventListener('model:locating-changed', () => {
+                if (weatherModel.isLocating) {
                     button.classList.add('gps-view--active');
                 } else {
                     button.classList.remove('gps-view--active');

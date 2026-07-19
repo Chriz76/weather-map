@@ -82,7 +82,7 @@ describe('WeatherModel', () => {
         weatherModel.setActiveTimestampIndex(1);
 
         expect(weatherModel.activeTimestamp).toBe('20260706_15');
-        expect(events.some((e) => e.type === 'model:timestamp-index-updated' && e.detail === 1)).toBeTrue();
+        expect(events.some((e) => e.type === 'model:timestamp-index-updated')).toBeTrue();
         expect(weatherModel.forecast[0].fullKey).toBe('20260706_12');
 
         weatherModel.removeEventListener('model:timestamp-index-updated', handler);

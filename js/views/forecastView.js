@@ -142,9 +142,8 @@ export function registerForecastView(map) {
                 }
             };
 
-            weatherModel.addEventListener('model:forecast-data-updated', /** @param {Event} e */ (e) => {
-                const customEvent = /** @type {CustomEvent<any>} */ (e);
-                self.renderTable(customEvent.detail);
+            weatherModel.addEventListener('model:forecast-data-updated', () => {
+                self.renderTable(weatherModel.forecast);
             });
 
             weatherModel.addEventListener('model:timestamp-index-updated', () => {
