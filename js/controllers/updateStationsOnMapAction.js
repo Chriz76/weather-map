@@ -1,5 +1,5 @@
 // controllers/updateStationsOnMapAction.js
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
 
 /**

@@ -1,4 +1,4 @@
-import { weatherModel } from '../../js/models/weatherModel.js';
+import { weatherModel } from '../../js/models/weatherDomainModel.js';
 
 describe('WeatherModel', () => {
     const cluster = {

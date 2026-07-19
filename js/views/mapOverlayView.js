@@ -1,5 +1,5 @@
 /* global L */
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
 /**

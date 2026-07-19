@@ -1,6 +1,6 @@
 import { calculatewindSpeeds } from '../utils/interpolation.js';
 import { determineActiveIndex } from '../utils/time.js';
-import { WeatherUi } from './weatherUi.js';
+import { WeatherUi } from './weatherUiModel.js';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng
@@ -52,7 +52,7 @@ class WeatherModel extends EventTarget {
         /** @type {any[]} */
         this._visibleStations = [];
 
-        /** @type {import('./weatherUi.js').WeatherUi} */
+        /** @type {import('./weatherUiModel.js').WeatherUi} */
         this._ui = new WeatherUi((eventName) => this.dispatchEvent(new CustomEvent(eventName)));
     }
 
@@ -190,7 +190,7 @@ class WeatherModel extends EventTarget {
     }
 
     /**
-     * @param {string | import('./weatherUi.js').ToastPayload | null} payload
+     * @param {string | import('./weatherUiModel.js').ToastPayload | null} payload
      */
     setToast(payload) {
         this._ui.setToast(payload);

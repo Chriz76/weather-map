@@ -1,4 +1,4 @@
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 
 /**
  * @typedef {{ message: string }} ToastPayload

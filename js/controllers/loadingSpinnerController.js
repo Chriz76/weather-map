@@ -1,5 +1,5 @@
 // controllers/loadingSpinnerController.js
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 
 class LoadingSpinnerController {
     constructor(delayMs = 500) {

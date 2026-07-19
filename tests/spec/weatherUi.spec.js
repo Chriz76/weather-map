@@ -1,4 +1,4 @@
-import { WeatherUi } from '../../js/models/weatherUi.js';
+import { WeatherUi } from '../../js/models/weatherUiModel.js';
 
 describe('WeatherUi', () => {
     it('should update loading, locating and overlay URL state', () => {

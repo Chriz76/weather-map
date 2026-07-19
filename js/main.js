@@ -1,5 +1,5 @@
 ﻿// main.js
-import { weatherModel } from './models/weatherModel.js';
+import { weatherModel } from './models/weatherDomainModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 

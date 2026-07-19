@@ -1,4 +1,4 @@
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 import { formatModelTimestampToTimeAndDescription } from '../utils/time.js';
 
 // 1. Wir umgehen den UMD-Global-Fehler, indem wir L über window holen.

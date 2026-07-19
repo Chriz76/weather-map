@@ -1,4 +1,4 @@
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 
 export function registerToastView() {
     const toastEl = document.createElement('div');

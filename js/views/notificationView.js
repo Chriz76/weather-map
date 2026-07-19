@@ -1,5 +1,5 @@
 // views/notificationView.js
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 
 /**
  * Registers the global Notification View for error notifications and modal actions.

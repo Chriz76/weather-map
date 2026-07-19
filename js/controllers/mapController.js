@@ -1,5 +1,5 @@
 // controllers/mapController.js
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 import { storage } from '../utils/storage.js';
 import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';

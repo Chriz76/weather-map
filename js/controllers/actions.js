@@ -1,6 +1,6 @@
 // controllers/actions.js
 import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 import { weatherService } from '../services/weatherService.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 

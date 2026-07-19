@@ -1,7 +1,7 @@
 // controllers/lifecycleController.js
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError } from './actions.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 

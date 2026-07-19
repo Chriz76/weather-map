@@ -1,5 +1,5 @@
 ﻿import { formatToDateTime, formatModelTimestampToTime, addMinutesToIso, formatToTime } from '../utils/time.js';
-import { weatherModel } from '../models/weatherModel.js'; // 👈 Wichtig: Modell importieren!
+import { weatherModel } from '../models/weatherDomainModel.js'; // 👈 Wichtig: Modell importieren!
 
 /**
  * Registers the model metadata info renderer.

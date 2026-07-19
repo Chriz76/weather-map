@@ -1,7 +1,7 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { weatherModel } from '../models/weatherModel.js';
+import { weatherModel } from '../models/weatherDomainModel.js';
 
 /**
  * Registers the forecast table control and binds it to model events.
