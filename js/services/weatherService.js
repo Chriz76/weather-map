@@ -1,3 +1,5 @@
+const CACHE_BUSTER = `cb=${Date.now()}`;
+
 export const weatherService = {
     /**
      * Loads the central index.json metadata file.
@@ -5,7 +7,7 @@ export const weatherService = {
      * @returns {Promise<Object>} Parsed index payload.
      */
     async fetchIndex(baseUrl) {
-        const response = await fetch(`${baseUrl}index.json`, { cache: 'no-cache' });
+        const response = await fetch(`${baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
         if (!response.ok) throw new Error(`index.json could not be loaded (status: ${response.status})`);
         return await response.json();
     },
@@ -24,7 +26,7 @@ export const weatherService = {
 
         const col = Math.floor((clickLng - config.lonMin) / config.gridCellSize);
         const row = Math.floor((clickLat - config.latMin) / config.gridCellSize);
-        const clusterUrl = `${config.BASE_URL}grid_cluster/cluster_${col}_${row}.json`;
+        const clusterUrl = `${config.BASE_URL}grid_cluster/cluster_${col}_${row}.json?${CACHE_BUSTER}`;
 
         const response = await fetch(clusterUrl, { cache: 'no-cache' });
         if (!response.ok) throw new Error(`Cluster file could not be loaded (${response.status})`);
@@ -44,7 +46,7 @@ export const weatherService = {
      * @returns {Promise<Blob>} Downloaded image blob.
      */
     async fetchWeatherImageBlob(timestamp, baseUrl) {
-        const imageUrl = `${baseUrl}${timestamp}Z.webp`; // Use .webp for better compression
+        const imageUrl = `${baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`; // Use .webp for better compression
         const response = await fetch(imageUrl, { cache: 'no-cache' });
         if (!response.ok) throw new Error('Image could not be loaded');
         return await response.blob();
