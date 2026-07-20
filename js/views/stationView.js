@@ -10,7 +10,7 @@ export const stationView = (() => {
     function createIcon(station) {
         const hasData = station.windData && typeof station.windData.windSpeed === 'number';
         const shouldShowValues = weatherUi.showWindMeasurements && hasData;
-        const speedValue = shouldShowValues ? String(station.windData.windSpeed) : '';
+        const speedValue = shouldShowValues ? String(Math.round(station.windData.windSpeed)) : '';
         const rotation = shouldShowValues ? station.windData.windDirection : null;
         const iconRotation = rotation === null ? null : (((rotation % 360) + 360) % 360 + 90) % 360;
         const arrowOpacity = shouldShowValues ? 1 : 0.25;
@@ -44,7 +44,7 @@ export const stationView = (() => {
             const marker = L.marker([station.lat, station.lon], { icon: createIcon(station) });
             marker.on('click', () => {
                 if (typeof opts.onMarkerClick === 'function') {
-                    opts.onMarkerClick(marker.getLatLng(), station);
+                    opts.onMarkerClick(station);
                 }
             });
             layerGroup.addLayer(marker);

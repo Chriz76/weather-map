@@ -17,14 +17,21 @@ async function fetchFromBrightSky(dwdStationId) {
 
     const speedKmh = typeof current.wind_speed_10 === 'number' ? current.wind_speed_10 : null;
     const direction = typeof current.wind_direction_10 === 'number' ? current.wind_direction_10 : null;
+    const gustKmh = typeof current.wind_gust_speed_10 === 'number' ? current.wind_gust_speed_10 : null;
+    const temperature = typeof current.temperature === 'number' ? current.temperature : null;
+    const timestamp = typeof current.timestamp === 'string' ? current.timestamp : null;
+
     if (speedKmh === null) {
         logger.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);
         return null;
     }
-    const windSpeedKnots = Math.round(speedKmh * 0.539957);
+
     return {
-        windSpeed: windSpeedKnots,
-        windDirection: typeof direction === 'number' ? direction : 0
+        windSpeed: Math.round(speedKmh * 0.539957 * 10) / 10,
+        windDirection: typeof direction === 'number' ? direction : 0,
+        windGustSpeed: gustKmh === null ? null : Math.round(gustKmh * 0.539957),
+        temperature,
+        timestamp
     };
 }
 

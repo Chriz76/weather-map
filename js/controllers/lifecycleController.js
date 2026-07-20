@@ -98,6 +98,11 @@ async function safeSyncApp(isInitial = false) {
 async function triggerSyncAndPoll() {
     startPolling();
     await safeSyncApp();
+    try {
+        await updateStationsOnMapAction();
+    } catch (e) {
+        logger.error('Error refreshing station wind values during visibility resume:', e);
+    }
 }
 
 async function handleAppVisibilitySync() {

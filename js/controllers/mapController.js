@@ -2,6 +2,7 @@
 import { weatherModel } from '../models/weatherDomainModel.js';
 import { weatherUi } from '../models/weatherUiModel.js';
 import { storage } from '../utils/storage.js';
+import { formatMinutesAgo } from '../utils/time.js';
 import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';
 import { stationView } from '../views/stationView.js';
@@ -9,6 +10,23 @@ import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 
 let stationViewHandle = null;
 // stationView handles rendering; update action manages station data & cache
+
+function formatStationToast(station) {
+    const stationName = station.station_name || station.name || 'Station';
+    const windData = station.windData || {};
+    const windSpeed = typeof windData.windSpeed === 'number' ? windData.windSpeed.toFixed(1) : '--';
+    const windGust = typeof windData.windGustSpeed === 'number' ? Math.round(windData.windGustSpeed) : '--';
+    const temperature = typeof windData.temperature === 'number' ? windData.temperature.toFixed(1) : '--';
+    const age = formatMinutesAgo(windData.timestamp);
+    const lat = typeof station.lat === 'number' ? station.lat.toFixed(4) : '--';
+    const lon = typeof station.lon === 'number' ? station.lon.toFixed(4) : '--';
+
+    return `${stationName}
+${age}
+${windSpeed} kts max ${windGust} kts
+${temperature}°C
+lat ${lat}, lon ${lon}`;
+}
 
 export function initMapController(map) {
     /** @type {number | null} */
@@ -86,8 +104,8 @@ export function initMapController(map) {
 
     // Init station view (it listens to model events)
     stationViewHandle = stationView.init(map, {
-        onMarkerClick: async (latlng) => {
-            await triggerLoadAtLatLng(latlng);
+        onMarkerClick: async (station) => {
+            toastController.showToast({ message: formatStationToast(station) }, 5000);
         }
     });
 

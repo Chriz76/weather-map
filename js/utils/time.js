@@ -118,6 +118,22 @@ export function formatToDateTime(input) {
 }
 
 /**
+ * Formats an ISO string or Date to a relative age in minutes.
+ * @param {string|Date} input
+ * @returns {string}
+ */
+export function formatMinutesAgo(input) {
+    try {
+        const date = normalizeToDate(input);
+        const minutes = Math.round((Date.now() - date.getTime()) / 60000);
+        return `${minutes} minutes ago`;
+    } catch (error) {
+        logger.error('❌ Error formatting minutes ago:', error);
+        return '';
+    }
+}
+
+/**
  * Formats an ISO string or Date to local time (e.g., "14:30").
  * @param {string|Date} input
  * @returns {string}
