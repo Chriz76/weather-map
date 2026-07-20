@@ -127,7 +127,7 @@ export function registerTimelineView(mapInstance) {
 
             } catch (uiError) {
                 // @ts-ignore
-                console.error("🚨 Error building timeline UI element:", uiError.message);
+                logger.error("🚨 Error building timeline UI element:", uiError.message);
             }
 
             return container;

@@ -162,7 +162,7 @@ export function updateMapMarkerWindspeed(map, windData) {
         }
     } catch (markerError) {
         const errorMessage = markerError instanceof Error ? markerError.message : String(markerError);
-        console.error("❌ Error updating map marker windspeed:", errorMessage);
+        logger.error("❌ Error updating map marker windspeed:", errorMessage);
     }
 }
 
@@ -192,7 +192,7 @@ export function updateMapMarkerLocation(map, lat, lng) {
         }
     } catch (markerError) {
         const errorMessage = markerError instanceof Error ? markerError.message : String(markerError);
-        console.error("❌ Error moving map marker location:", errorMessage);
+        logger.error("❌ Error moving map marker location:", errorMessage);
     }
 }
 

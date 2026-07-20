@@ -62,7 +62,7 @@ export function registerModelInfoView(map) {
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            console.error('🚨 Error formatting model info:', errorMessage);
+            logger.error('🚨 Error formatting model info:', errorMessage);
             infoEl.innerText = 'Error loading model info';
         }
     });

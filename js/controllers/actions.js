@@ -4,6 +4,7 @@ import { weatherModel } from '../models/weatherDomainModel.js';
 import { weatherUi } from '../models/weatherUiModel.js';
 import { weatherService } from '../services/weatherService.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
+import { logger } from '../utils/logger.js';
 
 export class ApiMismatchError extends Error {
     constructor(version) {
@@ -68,15 +69,15 @@ export async function updateOverlayForTimestampAction(timestamp) {
         overlayUrl = await fetchWeatherOverlayUrl(timestamp);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
-        console.error('❌ Error fetching overlay (first attempt):', errMsg);
+        logger.error('❌ Error fetching overlay (first attempt):', errMsg);
 
         // Immediate, single retry
         try {
-            console.log('🔁 Retrying overlay fetch immediately for', timestamp);
+            logger.info('🔁 Retrying overlay fetch immediately for', timestamp);
             overlayUrl = await fetchWeatherOverlayUrl(timestamp);
         } catch (retryErr) {
             const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-            console.error('❌ Overlay retry failed:', retryMsg);
+            logger.error('❌ Overlay retry failed:', retryMsg);
             // Both attempts failed — propagate error to caller so controllers can decide how to show/handle it
             throw new OverlayLoadError(retryMsg);
         }
@@ -99,7 +100,7 @@ export async function loadWeatherDataForLocationAction(latlng) {
         weatherModel.setPointData(latlng, cluster);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
-        console.error('🚨 Error processing location data:', errMsg);
+        logger.error('🚨 Error processing location data:', errMsg);
         // Propagate error to controllers so they can decide how to present it to the user
         throw new LocationLoadError(errMsg);
     }
@@ -131,7 +132,7 @@ export async function syncAppWithServerAction(background = true, force = false) 
         }
 
        // Log 1: Was liefert der Server / Cache exakt zurück?
-       console.log('📊 [SYNC NETZWERK] Index erfolgreich geladen:', {
+       logger.info('📊 [SYNC NETZWERK] Index erfolgreich geladen:', {
            api_version: indexData?.api_version,
            generated_at: indexData?.generated_at,
            current_hour: indexData?.current_hour,
@@ -139,18 +140,18 @@ export async function syncAppWithServerAction(background = true, force = false) 
         });
 
        // Log 2: Wie sieht der Zustand im Speicher direkt vor dem Vergleich aus?
-       console.log('🧠 [SYNC VERGLEICH] Prüfe auf neue Daten:', {
+       logger.debug('🧠 [SYNC VERGLEICH] Prüfe auf neue Daten:', {
            modellZeitstempel: weatherModel.modelGeneratedAt,
            serverZeitstempel: indexData?.generated_at,
            wirdAbgebrochen: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
         });
 
         if (!force && weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
-           console.log('🛑 [SYNC ABBRUCH] Sync lautlos beendet, da generierte Zeiten identisch.');
+           logger.info('🛑 [SYNC ABBRUCH] Sync lautlos beendet, da generierte Zeiten identisch.');
            return;
         }
 
-        console.log('🚀 [SYNC WEITER] Daten sind neu! Fahre fort...');
+        logger.info('🚀 [SYNC WEITER] Daten sind neu! Fahre fort...');
 
         if (weatherModel.lastClickedLatLng) {
             weatherModel.setIndexMetadata(indexData);
@@ -165,14 +166,14 @@ export async function syncAppWithServerAction(background = true, force = false) 
     try {
         return await doSync();
     } catch (firstErr) {
-        console.error('❌ Sync error (first attempt):', firstErr);
+        logger.error('❌ Sync error (first attempt):', firstErr);
         // einmaliger sofortiger Retry
         try {
-            console.log('🔁 Performing immediate retry for sync...');
+            logger.info('🔁 Performing immediate retry for sync...');
             return await doSync();
         } catch (retryErr) {
             const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-            console.error('❌ Sync error (retry failed):', errMsg);
+            logger.error('❌ Sync error (retry failed):', errMsg);
             // Propagate retry error to caller; controllers decide how/if to retry
             throw retryErr;
         }

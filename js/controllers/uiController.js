@@ -5,6 +5,7 @@ import { weatherModel } from '../models/weatherDomainModel.js';
 import { retryStartupSync } from './lifecycleController.js';
 import { updateOverlayForTimestampAction } from './actions.js';
 import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time.js';
+import { logger } from '../utils/logger.js';
 
 const SLIDER_DEBOUNCE_MS = 50;
 
@@ -40,7 +41,7 @@ function handleTimelineChange(e) {
             });
         } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
-            console.error('❌ Overlay fetch failed during timeline change:', errMsg);
+            logger.error('❌ Overlay fetch failed during timeline change:', errMsg);
             weatherModel.setOverlayLoadError(errMsg);
         }
     }, SLIDER_DEBOUNCE_MS);
@@ -56,7 +57,7 @@ function handleModelInfoClicked() {
 }
 
 function handleAppReload() {
-    console.log('App reload requested via window event.');
+    logger.info('App reload requested via window event.');
     window.location.reload();
 }
 

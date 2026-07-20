@@ -24,12 +24,14 @@ function debounce(func, delayMs = 250) {
 }
 
 // Basis-Operationen (intern genutzt)
+import { logger } from './logger.js';
+
 const core = {
     /**
      * @param {string} key
      * @param {any} val
      */
-    set(key, val) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { console.error(e); } },
+    set(key, val) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { logger.error(e); } },
     /**
      * @param {string} key
      * @param {any} fallback

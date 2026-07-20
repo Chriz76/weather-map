@@ -133,7 +133,7 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
         };
 
     } catch (mathError) {
-        console.error("🚨 Mathematical interpolation error:", mathError.message);
+        logger.error("🚨 Mathematical interpolation error:", mathError.message);
         return { forecast: null, windData: null };
     }
 }

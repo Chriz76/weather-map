@@ -4,6 +4,7 @@ import { toastController } from './toastController.js';
 import { weatherModel } from '../models/weatherDomainModel.js';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError } from './actions.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
+import { logger } from '../utils/logger.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -14,15 +15,15 @@ let pollTimer = null;
 
 function startPolling() {
     if (pollTimer !== null) clearInterval(pollTimer);
-    console.log('⏰ Polling gestartet.');
+    logger.info('⏰ Polling gestartet.');
     pollTimer = setInterval(async () => {
-        console.log('⏰ Regulärer Hintergrund-Poll getriggert.');
+        logger.debug('⏰ Regulärer Hintergrund-Poll getriggert.');
             await safeSyncApp();
             try {
                 // Refresh wind values for the last-visible stations (action keeps internal cache)
                 await updateStationsOnMapAction();
             } catch (e) {
-                console.error('Error refreshing station wind values during poll:', e);
+                logger.error('Error refreshing station wind values during poll:', e);
             }
     }, POLL_INTERVAL_MS);
 }
@@ -31,19 +32,19 @@ function stopPolling() {
     if (pollTimer !== null) {
         clearInterval(pollTimer);
         pollTimer = null;
-        console.log('🛑 Polling gestoppt (App im Hintergrund).');
+        logger.info('🛑 Polling gestoppt (App im Hintergrund).');
     }
 }
 
 async function safeSyncApp(isInitial = false) {
-    console.log(`diagnostic: safeSyncApp called (isInitial=${isInitial}) - isSyncing=${isSyncing}, isInitialized=${isInitialized}`);
+    logger.debug(`diagnostic: safeSyncApp called (isInitial=${isInitial}) - isSyncing=${isSyncing}, isInitialized=${isInitialized}`);
     if (isSyncing) {
-        console.log('Sync blockiert: Ein anderer Sync-Prozess läuft bereits.');
+        logger.debug('Sync blockiert: Ein anderer Sync-Prozess läuft bereits.');
         return;
     }
 
     isSyncing = true;
-    console.log('🔄 App-Sync gestartet...');
+    logger.info('🔄 App-Sync gestartet...');
  
     const force = !!(
         weatherModel.indexLoadError ||
@@ -63,7 +64,7 @@ async function safeSyncApp(isInitial = false) {
         );
         isInitialized = true;
     } catch (error) {
-        console.error('Fehler während des App-Syncs:', error);
+        logger.error('Fehler während des App-Syncs:', error);
         const errMsg = error instanceof Error ? error.message : String(error);
         const isApiMismatch = error instanceof ApiMismatchError;
 
@@ -100,10 +101,10 @@ async function triggerSyncAndPoll() {
 }
 
 async function handleAppVisibilitySync() {
-    console.log(`📄 VisibilityState geändert: ${document.visibilityState}`);
+    logger.debug(`📄 VisibilityState geändert: ${document.visibilityState}`);
     if (document.visibilityState === 'visible') {
         if (!isInitialized && isSyncing) {
-            console.log('Event ignoriert: Ein Initialisierungs-Sync läuft bereits.');
+            logger.debug('Event ignoriert: Ein Initialisierungs-Sync läuft bereits.');
             return;
         }
         await triggerSyncAndPoll();
@@ -117,17 +118,17 @@ function registerLifecycleListeners() {
     window.addEventListener('pageshow', handleAppVisibilitySync);
     
     window.addEventListener('online', () => {
-        console.log('📶 Netzverbindung wiederhergestellt. Starte Recovery-Sync...');
+        logger.info('📶 Netzverbindung wiederhergestellt. Starte Recovery-Sync...');
         triggerSyncAndPoll();
     });
 
     window.addEventListener('resume', () => {
-        console.log('📱 App-Prozess aus dem Deep-Freeze reaktiviert.');
+        logger.info('📱 App-Prozess aus dem Deep-Freeze reaktiviert.');
         triggerSyncAndPoll();
     });
 
     window.addEventListener('notification-retry', async () => {
-        console.log('Retry requested.');
+        logger.debug('Retry requested.');
         try {
             await safeSyncApp();
         } catch (err) {
@@ -138,12 +139,12 @@ function registerLifecycleListeners() {
 }
 
 export async function retryStartupSync() {
-    console.log('Startup retry requested.');
+    logger.info('Startup retry requested.');
     await safeSyncApp(true);
 }
 
 export async function initLifecycleController() {
-    console.log('🚀 LifecycleController geladen (Kaltstart)');
+    logger.info('🚀 LifecycleController geladen (Kaltstart)');
 
     await safeSyncApp(true);
     registerLifecycleListeners();

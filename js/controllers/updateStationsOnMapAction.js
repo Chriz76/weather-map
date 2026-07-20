@@ -1,6 +1,7 @@
 // controllers/updateStationsOnMapAction.js
 import { weatherModel } from '../models/weatherDomainModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Aktualisiert die sichtbaren Stationsmarker.
@@ -20,9 +21,9 @@ export async function updateStationsOnMapAction(bounds = null) {
             allStations = await resp.json();
             // Cache loaded stations on the model to avoid repeated fallback fetches
             weatherModel.setAllStations(allStations);
-            console.log('📍 Stationsdaten geladen (fallback):', allStations.length);
+            logger.info('📍 Stationsdaten geladen (fallback):', allStations.length);
         } catch (e) {
-            console.error('Fehler beim Laden der stations.json (fallback):', e);
+            logger.error('Fehler beim Laden der stations.json (fallback):', e);
         }
     }
 
@@ -74,7 +75,7 @@ export async function updateStationsOnMapAction(bounds = null) {
                 needsModelUpdate = true;
             }
         } catch (err) {
-            console.error('Error fetching wind for station', station.id, err);
+            logger.error('Error fetching wind for station', station.id, err);
         }
     });
 

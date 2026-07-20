@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>ICON-D2 RUC | Hourly Forecast</title>
     <script>
-      if (new URLSearchParams(window.location.search).get('debug') === 'true') {
+      window.WEATHER_DEBUG = new URLSearchParams(window.location.search).get('debug') === 'true';
+
+      if (window.WEATHER_DEBUG) {
           // 1. Eruda Skript-Tag erstellen
           const script = document.createElement('script');
           script.src = 'https://cdn.jsdelivr.net/npm/eruda';
@@ -68,7 +70,7 @@
     
     <div class="model-info">Model run: Loading...</div>
 <script>
-  if (new URLSearchParams(window.location.search).get('debug') !== 'true') {
+  if (!window.WEATHER_DEBUG) {
     // 2. Tracking Skript dynamisch nachladen (wenn debug DEAKTIVIERT ist)
     const trackingScript = document.createElement('script');
     trackingScript.src = 'https://cloud.umami.is/script.js';

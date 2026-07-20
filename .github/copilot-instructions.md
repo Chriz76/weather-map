@@ -15,3 +15,5 @@
 - Use arrow functions where appropriate
 - Comments should explain *why*, not *what*
 - Require JSDoc comments for all exported functions and non-trivial internal functions in `js/`
+- Use the shared logger at `js/utils/logger.js` for runtime logging instead of direct `console.*` calls
+- Use `logger.debug(...)` for verbose diagnostics, `logger.info(...)` for normal operation messages, `logger.warn(...)` for recoverable warnings, and `logger.error(...)` for runtime failures

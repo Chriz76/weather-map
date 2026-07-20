@@ -1,5 +1,7 @@
 // services/measurementsService.js
 
+import { logger } from '../utils/logger.js';
+
 // In-memory cache and in-flight deduplication for station wind data
 const windCache = {}; // { [stationId]: { data, ts } }
 const inflight = {};  // { [stationId]: Promise }
@@ -16,7 +18,7 @@ async function fetchFromBrightSky(dwdStationId) {
     const speedKmh = typeof current.wind_speed_10 === 'number' ? current.wind_speed_10 : null;
     const direction = typeof current.wind_direction_10 === 'number' ? current.wind_direction_10 : null;
     if (speedKmh === null) {
-        console.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);
+        logger.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);
         return null;
     }
     const windSpeedKnots = Math.round(speedKmh * 0.539957);

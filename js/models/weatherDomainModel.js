@@ -1,5 +1,6 @@
 import { calculatewindSpeeds } from '../utils/interpolation.js';
 import { determineActiveIndex } from '../utils/time.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng
@@ -204,7 +205,7 @@ class WeatherModel extends EventTarget {
     setActiveTimestampIndex(i) {
         const maxIndex = this._domain.availableTimestamps.length;
         if (i < 0 || (maxIndex > 0 && i >= maxIndex)) {
-            console.warn(`Index ${i} is out of bounds!`);
+            logger.warn(`Index ${i} is out of bounds!`);
             return;
         }   
 

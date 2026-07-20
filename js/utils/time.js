@@ -41,12 +41,14 @@ function normalizeToDate(input) {
  * @param {string} timestampStr
  * @returns {string}
  */
+import { logger } from './logger.js';
+
 export function formatModelTimestampToTime(timestampStr) {
     try {
         const date = parseModelTimestamp(timestampStr);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } catch (error) {
-        console.error("❌ Error formatting model timestamp to time:", error);
+        logger.error("❌ Error formatting model timestamp to time:", error);
         return timestampStr;
     }
 }
@@ -63,7 +65,7 @@ export function formatModelTimestampToDateTime(timestampStr) {
         const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         return `${datum} ${uhrzeit}`;
     } catch (error) {
-        console.error("❌ Error formatting model timestamp to date-time:", error);
+        logger.error("❌ Error formatting model timestamp to date-time:", error);
         return timestampStr;
     }
 }
@@ -92,7 +94,7 @@ export function formatModelTimestampToTimeAndDescription(timestampStr) {
 
         return { time: timeStr, description };
     } catch (error) {
-        console.error("❌ Error formatting model timestamp to time and description:", error);
+        logger.error("❌ Error formatting model timestamp to time and description:", error);
         return { time: '--:--', description: '--' };
     }
 }
@@ -110,7 +112,7 @@ export function formatToDateTime(input) {
 
         return `${datum} ${uhrzeit}`;
     } catch (error) {
-        console.error('❌ Error formatting to date-time:', error);
+        logger.error('❌ Error formatting to date-time:', error);
         return String(input);
     }
 }
@@ -125,7 +127,7 @@ export function formatToTime(input) {
         const date = normalizeToDate(input);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } catch (error) {
-        console.error('❌ Error formatting to time:', error);
+        logger.error('❌ Error formatting to time:', error);
         return String(input);
     }
 }
@@ -175,7 +177,7 @@ export function addMinutesToIso(input, minutes) {
         d.setMinutes(d.getMinutes() + Number(minutes));
         return d;
     } catch (e) {
-        console.error('❌ Error adding minutes to ISO/date:', e);
+        logger.error('❌ Error adding minutes to ISO/date:', e);
         return null;
     }
 }
