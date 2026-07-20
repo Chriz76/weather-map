@@ -1,6 +1,6 @@
 /**
  * @typedef {{ message: string }} ToastPayload
- * @typedef {{ activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, toast: string | ToastPayload | null }} UIState
+ * @typedef {{ activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, toast: string | ToastPayload | null, showWindMeasurements: boolean }} UIState
  */
 
 export class WeatherUi extends EventTarget {
@@ -16,7 +16,8 @@ export class WeatherUi extends EventTarget {
             isLocating: false,
             isActiveLoading: false,
             isLoadingModal: false,
-            toast: null
+            toast: null,
+            showWindMeasurements: true
         };
 
         this._dispatchEventCallback = typeof dispatchEventCallback === 'function' ? dispatchEventCallback : null;
@@ -44,6 +45,10 @@ export class WeatherUi extends EventTarget {
 
     get isActiveLoading() {
         return this._ui.isActiveLoading;
+    }
+
+    get showWindMeasurements() {
+        return this._ui.showWindMeasurements;
     }
 
     get isLoadingModal() {
@@ -90,6 +95,14 @@ export class WeatherUi extends EventTarget {
     setActiveOverlayUrl(url) {
         this._ui.activeOverlayUrl = url;
         this._emit('model:overlay-url-updated', url);
+    }
+
+    /**
+     * @param {boolean} value
+     */
+    setShowWindMeasurements(value) {
+        this._ui.showWindMeasurements = !!value;
+        this._emit('model:wind-measurements-visibility-changed', this._ui.showWindMeasurements);
     }
 }
 

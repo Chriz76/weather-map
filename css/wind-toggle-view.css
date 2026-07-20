@@ -1,0 +1,33 @@
+/* ==========================================================================
+   WIND TOGGLE VIEW COMPONENT
+   ========================================================================== */
+
+.leaflet-bar a.wind-toggle-view {
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 30px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: #555 !important;
+    background-color: #fff !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+}
+
+.leaflet-bar a.wind-toggle-view:hover,
+.leaflet-bar a.wind-toggle-view:focus,
+.leaflet-bar a.wind-toggle-view:active {
+    color: #555 !important;
+    background-color: #fff !important;
+}
+
+.leaflet-bar a.wind-toggle-view svg {
+    stroke: currentColor !important;
+}

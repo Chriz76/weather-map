@@ -35,3 +35,4 @@ export function registerMapOverlayView(map, windOverlay) {
         }
     });
 }
+

@@ -1,5 +1,6 @@
 /* global L */
 const L = /** @type {any} */ (window.L);
+import { logger } from '../utils/logger.js';
 /** @type {any|null} */
 let activeSpotMarker = null;
 
@@ -69,9 +70,9 @@ function createPopupHtml(formattedValue, formattedGust, direction, coordsDisplay
                                         </div>
                                 </div>
                         </div>
-      <div class="marker-popup__coords">${coordsDisplay}</div>
-    </div>
-  `;
+            <div class="marker-popup__coords">${coordsDisplay}</div>
+        </div>
+    `;
 }
 
 /**

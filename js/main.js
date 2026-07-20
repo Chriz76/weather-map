@@ -18,6 +18,7 @@ import { registerLogoView } from './views/logoView.js';
 import { registerModelInfoView } from './views/modelInfoView.js';
 import { registerMapOverlayView } from './views/mapOverlayView.js';
 import { registerGpsView } from './views/gpsView.js';
+import { registerWindToggleView } from './views/windToggleView.js';
 import { registerLoadingView } from './views/loadingSpinnerView.js';
 import { registerNotificationView } from './views/notificationView.js';
 import { registerToastView } from './views/toastView.js';
@@ -43,6 +44,8 @@ registerGpsView(map, () => {
         enableHighAccuracy: true 
     });
 });
+
+registerWindToggleView(map);
 
 // --- 2. CONTROLLER SYSTEM START ---
 
