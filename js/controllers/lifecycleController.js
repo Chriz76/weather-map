@@ -154,4 +154,9 @@ export async function initLifecycleController() {
     await safeSyncApp(true);
     registerLifecycleListeners();
     startPolling();
+    try {
+        await updateStationsOnMapAction();
+    } catch (e) {
+        logger.error('Error refreshing station wind values during visibility resume:', e);
+    }    
 }
