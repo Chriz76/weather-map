@@ -134,6 +134,8 @@ function registerLifecycleListeners() {
     window.addEventListener('ui:notification-retry', async () => {
         logger.debug('Retry requested.');
         try {
+            await safeSyncApp();
+        } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
             toastController.showToast({ message: 'Retry failed: ' + errMsg }, 5000);
         }
