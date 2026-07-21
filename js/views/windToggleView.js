@@ -40,7 +40,7 @@ export function registerWindToggleView(map) {
                 weatherUi.setShowWindMeasurements(!weatherUi.showWindMeasurements);
             });
 
-            weatherUi.addEventListener('model:wind-measurements-visibility-changed', () => {
+            weatherUi.addEventListener('ui:wind-measurements-visibility-changed', () => {
                 const visible = weatherUi.showWindMeasurements;
                 button.innerHTML = renderIcon();
                 button.setAttribute('aria-pressed', String(visible));

@@ -1,5 +1,6 @@
 // controllers/updateStationsOnMapAction.js
 import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
 import { logger } from '../utils/logger.js';
 
@@ -11,6 +12,10 @@ import { logger } from '../utils/logger.js';
  * @param {L.LatLngBounds|null} bounds
  */
 export async function updateStationsOnMapAction(bounds = null) {
+    if (!weatherUi.showWindMeasurements) {
+        logger.debug('Station data not loaded: wind measurements are currently hidden.');
+        return;
+    }
     // Acquire station list from model if available
     let allStations = Array.isArray(weatherModel.allStations) ? weatherModel.allStations : [];
 
@@ -21,9 +26,9 @@ export async function updateStationsOnMapAction(bounds = null) {
             allStations = await resp.json();
             // Cache loaded stations on the model to avoid repeated fallback fetches
             weatherModel.setAllStations(allStations);
-            logger.info('📍 Stationsdaten geladen (fallback):', allStations.length);
+            logger.info('📍 Station data loaded (fallback):', allStations.length);
         } catch (e) {
-            logger.error('Fehler beim Laden der stations.json (fallback):', e);
+            logger.error('Error loading stations.json (fallback):', e);
         }
     }
 

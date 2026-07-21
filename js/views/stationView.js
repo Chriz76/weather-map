@@ -60,7 +60,7 @@ export const stationView = (() => {
         opts = options || {};
         layerGroup = L.layerGroup().addTo(map);
         weatherModel.addEventListener('model:visible-stations-updated', handleVisibleStations);
-        weatherUi.addEventListener('model:wind-measurements-visibility-changed', handleVisibleStations);
+        weatherUi.addEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations);
 
         // If there are already visible stations in the model, render them immediately
         if (weatherModel.visibleStations && weatherModel.visibleStations.length) {
@@ -70,7 +70,7 @@ export const stationView = (() => {
         return {
             destroy() {
                 weatherModel.removeEventListener('model:visible-stations-updated', handleVisibleStations);
-                weatherUi.removeEventListener('model:wind-measurements-visibility-changed', handleVisibleStations);
+                weatherUi.removeEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations);
                 if (layerGroup) {
                     layerGroup.clearLayers();
                     map.removeLayer(layerGroup);

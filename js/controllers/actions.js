@@ -131,27 +131,27 @@ export async function syncAppWithServerAction(background = true, force = false) 
             throw new ApiMismatchError(indexData.api_version);
         }
 
-       // Log 1: Was liefert der Server / Cache exakt zurück?
-       logger.info('📊 [SYNC NETZWERK] Index erfolgreich geladen:', {
+       // Log 1: What exactly does the server/cache return?
+       logger.info('📊 [SYNC NETWORK] Index loaded successfully:', {
            api_version: indexData?.api_version,
            generated_at: indexData?.generated_at,
            current_hour: indexData?.current_hour,
            timestamp_count: indexData?.available_timestamps?.length
         });
 
-       // Log 2: Wie sieht der Zustand im Speicher direkt vor dem Vergleich aus?
-       logger.debug('🧠 [SYNC VERGLEICH] Prüfe auf neue Daten:', {
-           modellZeitstempel: weatherModel.modelGeneratedAt,
-           serverZeitstempel: indexData?.generated_at,
-           wirdAbgebrochen: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
+       // Log 2: Inspect cache state immediately before comparison.
+       logger.debug('🧠 [SYNC CHECK] Checking for new data:', {
+           modelTimestamp: weatherModel.modelGeneratedAt,
+           serverTimestamp: indexData?.generated_at,
+           willAbort: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
         });
 
         if (!force && weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
-           logger.info('🛑 [SYNC ABBRUCH] Sync lautlos beendet, da generierte Zeiten identisch.');
+           logger.info('🛑 [SYNC ABORT] Sync silently canceled because generated times match.');
            return;
         }
 
-        logger.info('🚀 [SYNC WEITER] Daten sind neu! Fahre fort...');
+        logger.info('🚀 [SYNC CONTINUE] Data is new! Continuing...');
 
         if (weatherModel.lastClickedLatLng) {
             weatherModel.setIndexMetadata(indexData);

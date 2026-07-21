@@ -102,6 +102,12 @@ export function initMapController(map) {
     // Sicherstellen, dass auch nach reinem Zoom aktualisiert wird
     map.on('zoomend', () => updateStationsOnMapAction(map.getBounds()));
 
+    weatherUi.addEventListener('ui:wind-measurements-visibility-changed', () => {
+        if (weatherUi.showWindMeasurements) {
+            updateStationsOnMapAction(map.getBounds());
+        }
+    });
+
     // Init station view (it listens to model events)
     stationViewHandle = stationView.init(map, {
         onMarkerClick: async (station) => {

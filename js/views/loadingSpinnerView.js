@@ -43,7 +43,7 @@ export function registerLoadingView() {
     // Initialen Zustand setzen (falls beim Laden direkt aktiv)
     toggleSpinner(weatherUi.isActiveLoading);
 
-    weatherUi.addEventListener('model:active-loading-changed', () => {
+    weatherUi.addEventListener('ui:loading-changed', () => {
         const isLoading = weatherUi.isActiveLoading;
         const isModal = weatherUi.isLoadingModal;
 

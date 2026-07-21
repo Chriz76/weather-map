@@ -20,7 +20,7 @@ export function registerModelInfoView(map) {
 
     // Prevent clicks from falling through to the map and dispatch an app event
     function dispatchModelInfoClicked() {
-        window.dispatchEvent(new CustomEvent('model-info:clicked'));
+        window.dispatchEvent(new CustomEvent('ui:model-info-clicked'));
     }
 
     infoEl.addEventListener('click', (ev) => {

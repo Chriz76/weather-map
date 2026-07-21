@@ -20,5 +20,5 @@ export function registerToastView() {
         renderToast(weatherUi.toast);
     };
 
-    weatherUi.addEventListener('model:show-toast-changed', onToastChanged);
+    weatherUi.addEventListener('ui:toast-changed', onToastChanged);
 }

@@ -62,10 +62,10 @@ function handleAppReload() {
 }
 
 export function initUiController() {
-    window.addEventListener('timeline-change', handleTimelineChange);
-    window.addEventListener('model-info:clicked', handleModelInfoClicked);
-    window.addEventListener('controller:startup-retry', retryStartupSync);
-    window.addEventListener('controller:app-reload', handleAppReload);
+    window.addEventListener('ui:timeline-change', handleTimelineChange);
+    window.addEventListener('ui:model-info-clicked', handleModelInfoClicked);
+    window.addEventListener('app:startup-retry', retryStartupSync);
+    window.addEventListener('app:reload-requested', handleAppReload);
 
     // Note: cleanup removed as requested — listeners remain registered for app lifetime
 }

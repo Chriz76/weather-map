@@ -84,7 +84,7 @@ export function registerNotificationView() {
             showNotification({
                 message: weatherModel.apiMismatchError,
                 isModal: true,
-                action: { event: 'controller:app-reload', text: 'Reload App' }
+                action: { event: 'app:reload-requested', text: 'Reload App' }
             });
             return;
         }
@@ -93,7 +93,7 @@ export function registerNotificationView() {
             showNotification({
                 message: weatherModel.startupError,
                 isModal: true,
-                action: { event: 'controller:startup-retry', text: 'Retry' }
+                action: { event: 'app:startup-retry', text: 'Retry' }
             });
             return;
         }
@@ -112,7 +112,7 @@ export function registerNotificationView() {
         showNotification({
             message: 'Error loading data.',
             isModal: false,
-            action: { event: 'notification-retry', text: 'Retry' }
+            action: { event: 'ui:notification-retry', text: 'Retry' }
         });
     };
 

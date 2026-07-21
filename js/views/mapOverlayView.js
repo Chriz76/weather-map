@@ -28,7 +28,7 @@ export function registerMapOverlayView(map, windOverlay) {
         }
     });
 
-    weatherUi.addEventListener('model:overlay-url-updated', () => {
+    weatherUi.addEventListener('ui:overlay-url-updated', () => {
         const url = weatherUi.activeOverlayUrl;
         if (windOverlay && url) {
             windOverlay.setUrl(url);

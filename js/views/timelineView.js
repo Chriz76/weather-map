@@ -81,7 +81,7 @@ export function registerTimelineView(mapInstance) {
                     // Wir sagen dem Linter, dass e.target ein HTMLInputElement ist, damit 'value' erlaubt ist
                     const target = /** @type {HTMLInputElement} */ (e.target);
                     const idx = parseInt(target.value, 10);
-                    window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: idx } }));                
+                    window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: idx } }));                
                 });
 
                 btnPrev.addEventListener('click', () => {
@@ -90,7 +90,7 @@ export function registerTimelineView(mapInstance) {
                         const newIndex = activeIndex - 1;
                         // @ts-ignore
                         slider.value = newIndex;
-                        window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: newIndex } }));
+                        window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: newIndex } }));
                     }
                 });
 
@@ -103,7 +103,7 @@ export function registerTimelineView(mapInstance) {
                         const newIndex = activeIndex + 1;
                         // @ts-ignore
                         slider.value = newIndex;
-                        window.dispatchEvent(new CustomEvent('timeline-change', { detail: { index: newIndex } }));
+                        window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: newIndex } }));
                     }
                 });
 

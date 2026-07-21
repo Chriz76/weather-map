@@ -15,16 +15,11 @@ let pollTimer = null;
 
 function startPolling() {
     if (pollTimer !== null) clearInterval(pollTimer);
-    logger.info('⏰ Polling gestartet.');
+    logger.info('⏰ Polling started.');
     pollTimer = setInterval(async () => {
-        logger.debug('⏰ Regulärer Hintergrund-Poll getriggert.');
-            await safeSyncApp();
-            try {
-                // Refresh wind values for the last-visible stations (action keeps internal cache)
-                await updateStationsOnMapAction();
-            } catch (e) {
-                logger.error('Error refreshing station wind values during poll:', e);
-            }
+        logger.debug('⏰ Regular background poll triggered.');
+        await safeSyncApp();
+        await updateStationsOnMap();
     }, POLL_INTERVAL_MS);
 }
 
@@ -32,19 +27,19 @@ function stopPolling() {
     if (pollTimer !== null) {
         clearInterval(pollTimer);
         pollTimer = null;
-        logger.info('🛑 Polling gestoppt (App im Hintergrund).');
+        logger.info('🛑 Polling stopped (app hidden).');
     }
 }
 
 async function safeSyncApp(isInitial = false) {
     logger.debug(`diagnostic: safeSyncApp called (isInitial=${isInitial}) - isSyncing=${isSyncing}, isInitialized=${isInitialized}`);
     if (isSyncing) {
-        logger.debug('Sync blockiert: Ein anderer Sync-Prozess läuft bereits.');
+        logger.debug('Sync blocked: another sync process is already running.');
         return;
     }
 
     isSyncing = true;
-    logger.info('🔄 App-Sync gestartet...');
+    logger.info('🔄 App sync started...');
  
     const force = !!(
         weatherModel.indexLoadError ||
@@ -64,7 +59,7 @@ async function safeSyncApp(isInitial = false) {
         );
         isInitialized = true;
     } catch (error) {
-        logger.error('Fehler während des App-Syncs:', error);
+        logger.error('Error during app sync:', error);
         const errMsg = error instanceof Error ? error.message : String(error);
         const isApiMismatch = error instanceof ApiMismatchError;
 
@@ -98,18 +93,14 @@ async function safeSyncApp(isInitial = false) {
 async function triggerSyncAndPoll() {
     startPolling();
     await safeSyncApp();
-    try {
-        await updateStationsOnMapAction();
-    } catch (e) {
-        logger.error('Error refreshing station wind values during visibility resume:', e);
-    }
+    await updateStationsOnMap();
 }
 
 async function handleAppVisibilitySync() {
-    logger.debug(`📄 VisibilityState geändert: ${document.visibilityState}`);
+    logger.debug(`📄 VisibilityState changed: ${document.visibilityState}`);
     if (document.visibilityState === 'visible') {
         if (!isInitialized && isSyncing) {
-            logger.debug('Event ignoriert: Ein Initialisierungs-Sync läuft bereits.');
+            logger.debug('Event ignored: an initial sync is already running.');
             return;
         }
         await triggerSyncAndPoll();
@@ -118,25 +109,31 @@ async function handleAppVisibilitySync() {
     }
 }
 
+async function updateStationsOnMap() {
+    try {
+        await updateStationsOnMapAction();
+    } catch (e) {
+        logger.error('Error refreshing station wind values during visibility resume:', e);
+    } 
+}
+
 function registerLifecycleListeners() {
     document.addEventListener('visibilitychange', handleAppVisibilitySync);
     window.addEventListener('pageshow', handleAppVisibilitySync);
     
     window.addEventListener('online', () => {
-        logger.info('📶 Netzverbindung wiederhergestellt. Starte Recovery-Sync...');
+        logger.info('📶 Network connection restored. Starting recovery sync...');
         triggerSyncAndPoll();
     });
 
     window.addEventListener('resume', () => {
-        logger.info('📱 App-Prozess aus dem Deep-Freeze reaktiviert.');
+        logger.info('📱 App process resumed from deep freeze.');
         triggerSyncAndPoll();
     });
 
-    window.addEventListener('notification-retry', async () => {
+    window.addEventListener('ui:notification-retry', async () => {
         logger.debug('Retry requested.');
         try {
-            await safeSyncApp();
-        } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
             toastController.showToast({ message: 'Retry failed: ' + errMsg }, 5000);
         }
@@ -149,14 +146,12 @@ export async function retryStartupSync() {
 }
 
 export async function initLifecycleController() {
-    logger.info('🚀 LifecycleController geladen (Kaltstart)');
+    logger.info('🚀 LifecycleController loaded (cold start)');
 
     await safeSyncApp(true);
     registerLifecycleListeners();
     startPolling();
-    try {
-        await updateStationsOnMapAction();
-    } catch (e) {
-        logger.error('Error refreshing station wind values during visibility resume:', e);
-    }    
+    await updateStationsOnMap();
 }
+
+

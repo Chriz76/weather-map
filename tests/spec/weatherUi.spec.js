@@ -12,9 +12,9 @@ describe('WeatherUi', () => {
         expect(ui.isActiveLoading).toBeTrue();
         expect(ui.isLocating).toBeTrue();
         expect(ui.activeOverlayUrl).toBe('https://example.com/overlay.png');
-        expect(events.some(e => e.eventName === 'model:active-loading-changed')).toBeTrue();
-        expect(events.some(e => e.eventName === 'model:locating-changed')).toBeTrue();
-        expect(events.some(e => e.eventName === 'model:overlay-url-updated')).toBeTrue();
+        expect(events.some(e => e.eventName === 'ui:loading-changed')).toBeTrue();
+        expect(events.some(e => e.eventName === 'ui:locating-changed')).toBeTrue();
+        expect(events.some(e => e.eventName === 'ui:overlay-url-updated')).toBeTrue();
     });
 
     it('should update toast and dispatch toast event', () => {
@@ -25,6 +25,6 @@ describe('WeatherUi', () => {
 
         ui.setToast('Test toast');
         expect(ui.toast).toBe('Test toast');
-        expect(lastEvent).toEqual({ eventName: 'model:show-toast-changed', detail: 'Test toast' });
+        expect(lastEvent).toEqual({ eventName: 'ui:toast-changed', detail: 'Test toast' });
     });
 });

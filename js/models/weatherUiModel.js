@@ -28,7 +28,7 @@ export class WeatherUi extends EventTarget {
      * @param {any} detail
      */
     _emit(eventName, detail) {
-        const event = new CustomEvent(eventName, { detail });
+        const event = new CustomEvent(eventName);
         super.dispatchEvent(event);
         if (this._dispatchEventCallback) {
             this._dispatchEventCallback(eventName, detail);
@@ -64,7 +64,7 @@ export class WeatherUi extends EventTarget {
      */
     setToast(payload) {
         this._ui.toast = payload;
-        this._emit('model:show-toast-changed', payload);
+        this._emit('ui:toast-changed', payload);
     }
 
     /**
@@ -78,7 +78,7 @@ export class WeatherUi extends EventTarget {
 
         this._ui.isActiveLoading = isLoadingBool;
         this._ui.isLoadingModal = modalBool;
-        this._emit('model:active-loading-changed', { isLoading: isLoadingBool, modal: modalBool });
+        this._emit('ui:loading-changed', { isLoading: isLoadingBool, modal: modalBool });
     }
 
     /**
@@ -86,7 +86,7 @@ export class WeatherUi extends EventTarget {
      */
     setIsLocating(value) {
         this._ui.isLocating = value;
-        this._emit('model:locating-changed', value);
+        this._emit('ui:locating-changed', value);
     }
 
     /**
@@ -94,7 +94,7 @@ export class WeatherUi extends EventTarget {
      */
     setActiveOverlayUrl(url) {
         this._ui.activeOverlayUrl = url;
-        this._emit('model:overlay-url-updated', url);
+        this._emit('ui:overlay-url-updated', url);
     }
 
     /**
@@ -102,7 +102,7 @@ export class WeatherUi extends EventTarget {
      */
     setShowWindMeasurements(value) {
         this._ui.showWindMeasurements = !!value;
-        this._emit('model:wind-measurements-visibility-changed', this._ui.showWindMeasurements);
+        this._emit('ui:wind-measurements-visibility-changed', this._ui.showWindMeasurements);
     }
 }
 

@@ -143,7 +143,7 @@ class WeatherModel extends EventTarget {
      */
     setIndexLoadError(message) {
         this._domain.indexLoadError = message;
-        this.dispatchEvent(new CustomEvent('model:index-load-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:index-load-error-changed'));
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
@@ -152,7 +152,7 @@ class WeatherModel extends EventTarget {
      */
     setOverlayLoadError(message) {
         this._domain.overlayLoadError = message;
-        this.dispatchEvent(new CustomEvent('model:overlay-load-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:overlay-load-error-changed'));
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
@@ -161,7 +161,7 @@ class WeatherModel extends EventTarget {
      */
     setPointDataLoadError(message) {
         this._domain.pointDataLoadError = message;
-        this.dispatchEvent(new CustomEvent('model:point-data-load-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:point-data-load-error-changed'));
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
@@ -170,7 +170,7 @@ class WeatherModel extends EventTarget {
      */
     setApiMismatchError(message) {
         this._domain.apiMismatchError = message;
-        this.dispatchEvent(new CustomEvent('model:api-mismatch-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:api-mismatch-error-changed'));
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
@@ -179,7 +179,7 @@ class WeatherModel extends EventTarget {
      */
     setStartupError(message) {
         this._domain.startupError = message;
-        this.dispatchEvent(new CustomEvent('model:startup-error-changed', { detail: message }));
+        this.dispatchEvent(new CustomEvent('model:startup-error-changed'));
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
