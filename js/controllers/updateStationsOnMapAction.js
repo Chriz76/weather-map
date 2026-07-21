@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.js';
 
 /**
  * Aktualisiert die sichtbaren Stationsmarker.
- * Wenn `bounds` übergeben wird, filtert die Stationen danach und zeigt die Top-3 an.
+ * Wenn `bounds` übergeben wird, filtert die Stationen danach und zeigt die Top-8 an.
  * Wenn `bounds` fehlt, wird ein Refresh für die zuletzt angezeigten Stationen ausgeführt.
  * Die Action verwaltet intern das Laden von `assets/stations.json` und einen lokalen Wind-Cache.
  * @param {L.LatLngBounds|null} bounds
@@ -50,7 +50,7 @@ export async function updateStationsOnMapAction(bounds = null) {
             const db = center.distanceTo(L.latLng(b.lat, b.lon));
             return da - db;
         });
-        topStations = stationsInView.slice(0, 3);
+        topStations = stationsInView.slice(0, 8);
     } else {
         // No bounds -> refresh previously visible stations if model has them
         const visible = Array.isArray(weatherModel.visibleStations) ? weatherModel.visibleStations : [];
