@@ -32,6 +32,8 @@ export function initMapController(map) {
     /** @type {number | null} */
     let lastClusterClickToken = null;
 
+    weatherUi.setShowWindMeasurements(storage.getWindMeasurements(weatherUi.showWindMeasurements));
+
     // Initial trigger: action lädt Stationsdaten intern
     updateStationsOnMapAction(map.getBounds());
 
@@ -101,6 +103,8 @@ export function initMapController(map) {
     map.on('moveend', handleMoveEnd);
 
     weatherUi.addEventListener('ui:wind-measurements-visibility-changed', () => {
+        storage.saveWindMeasurements(weatherUi.showWindMeasurements);
+
         if (weatherUi.showWindMeasurements) {
             updateStationsOnMapAction(map.getBounds());
         }

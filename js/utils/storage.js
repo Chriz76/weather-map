@@ -1,6 +1,7 @@
 // --- Internal, fixed definition of key names (Only in this one place!) ---
 const KEYS = {
-    MAP_STATE: 'ruc_map_state'
+    MAP_STATE: 'ruc_map_state',
+    WIND_MEASUREMENTS: 'ruc_wind_measurements'
 };
 
 /**
@@ -72,5 +73,24 @@ export const storage = {
      */
     getMapState(fallback) {
         return core.get(KEYS.MAP_STATE, fallback, true);
+    },
+    /**
+     * Persists the wind measurement visibility preference.
+     * @param {boolean} value
+     * @returns {void}
+     */
+    saveWindMeasurements(value) {
+        core.set(KEYS.WIND_MEASUREMENTS, !!value);
+    },
+    /**
+     * Loads persisted wind measurement visibility or a fallback value.
+     * @param {boolean} fallback
+     * @returns {boolean}
+     */
+    getWindMeasurements(fallback = true) {
+        const value = core.get(KEYS.WIND_MEASUREMENTS, fallback, false);
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return !!fallback;
     },
 };

@@ -29,5 +29,9 @@
 }
 
 .leaflet-bar a.wind-toggle-view svg {
-    stroke: currentColor !important;
+    stroke: currentColor;
+}
+
+.leaflet-bar a.wind-toggle-view svg.wind-toggle-icon-disabled {
+    stroke: #9CA3AF !important;
 }
