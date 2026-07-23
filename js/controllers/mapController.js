@@ -99,8 +99,6 @@ export function initMapController(map) {
     map.on('locationerror', handleLocationError);
     map.on('popupclose', handlePopupClose);
     map.on('moveend', handleMoveEnd);
-    // Sicherstellen, dass auch nach reinem Zoom aktualisiert wird
-    map.on('zoomend', () => updateStationsOnMapAction(map.getBounds()));
 
     weatherUi.addEventListener('ui:wind-measurements-visibility-changed', () => {
         if (weatherUi.showWindMeasurements) {

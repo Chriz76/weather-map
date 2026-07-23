@@ -1,2826 +1,2662 @@
 [
-    {
-        "id": "00183",
-        "name": "Arkona",
-        "lat": 54.6791,
-        "lon": 13.4344,
-        "priority": 1.0,
-        "metar_icao": "EDRE"
-    },
-    {
-        "id": "00619",
-        "name": "Borkum-Süderstraße",
-        "lat": 53.5788,
-        "lon": 6.6703,
-        "priority": 1.0,
-        "metar_icao": "EDXW"
-    },
-    {
-        "id": "00427",
-        "name": "Berlin Brandenburg",
-        "lat": 52.3807,
-        "lon": 13.5306,
-        "priority": 1.0,
-        "metar_icao": "EDDB"
-    },
-    {
-        "id": "00691",
-        "name": "Bremen",
-        "lat": 53.0451,
-        "lon": 8.7981,
-        "priority": 2.0,
-        "metar_icao": "EDDW"
-    },
-    {
-        "id": "00232",
-        "name": "Augsburg",
-        "lat": 48.4253,
-        "lon": 10.9417,
-        "priority": 2.0,
-        "metar_icao": "EDMA"
-    },
-    {
-        "id": "00853",
-        "name": "Chemnitz",
-        "lat": 50.7913,
-        "lon": 12.872,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00722",
-        "name": "Brocken",
-        "lat": 51.7986,
-        "lon": 10.6183,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00011",
-        "name": "Donaueschingen (Landeplatz)",
-        "lat": 47.9736,
-        "lon": 8.5205,
-        "priority": 3.0,
-        "metar_icao": "EDTD"
-    },
-    {
-        "id": "00090",
-        "name": "Alsfeld",
-        "lat": 50.7557,
-        "lon": 9.2583,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00856",
-        "name": "Chieming",
-        "lat": 47.8843,
-        "lon": 12.5404,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00096",
-        "name": "Neuruppin-Alt Ruppin",
-        "lat": 52.9437,
-        "lon": 12.8518,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00102",
-        "name": "Leuchtturm Alte Weser",
-        "lat": 53.8633,
-        "lon": 8.1275,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00161",
-        "name": "Andernach",
-        "lat": 50.4237,
-        "lon": 7.4202,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00164",
-        "name": "Angermünde",
-        "lat": 53.0316,
-        "lon": 13.9908,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00197",
-        "name": "Arolsen-Volkhardinghausen, Bad",
-        "lat": 51.3219,
-        "lon": 9.0558,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00198",
-        "name": "Artern",
-        "lat": 51.3744,
-        "lon": 11.292,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00282",
-        "name": "Bamberg",
-        "lat": 49.8743,
-        "lon": 10.9206,
-        "priority": 3.0,
-        "metar_icao": "EDQA"
-    },
-    {
-        "id": "00298",
-        "name": "Barth",
-        "lat": 54.3405,
-        "lon": 12.7108,
-        "priority": 3.0,
-        "metar_icao": "EDBH"
-    },
-    {
-        "id": "00303",
-        "name": "Baruth",
-        "lat": 52.0613,
-        "lon": 13.4997,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00342",
-        "name": "Belm",
-        "lat": 52.317,
-        "lon": 8.1694,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00433",
-        "name": "Berlin-Tempelhof",
-        "lat": 52.4676,
-        "lon": 13.402,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00460",
-        "name": "Berus",
-        "lat": 49.2641,
-        "lon": 6.6868,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00591",
-        "name": "Boizenburg",
-        "lat": 53.3911,
-        "lon": 10.6878,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00596",
-        "name": "Boltenhagen",
-        "lat": 54.0027,
-        "lon": 11.1908,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00603",
-        "name": "Königswinter-Heiderhof",
-        "lat": 50.7293,
-        "lon": 7.204,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00642",
-        "name": "Brake",
-        "lat": 53.3518,
-        "lon": 8.4969,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00656",
-        "name": "Braunlage",
-        "lat": 51.7234,
-        "lon": 10.6021,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00662",
-        "name": "Braunschweig",
-        "lat": 52.2915,
-        "lon": 10.4464,
-        "priority": 2.0,
-        "metar_icao": "EDVE"
-    },
-    {
-        "id": "00701",
-        "name": "Bremerhaven",
-        "lat": 53.5332,
-        "lon": 8.5761,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00704",
-        "name": "Bremervörde",
-        "lat": 53.4451,
-        "lon": 9.139,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00788",
-        "name": "Büsum",
-        "lat": 54.1193,
-        "lon": 8.8584,
-        "priority": 3.0,
-        "metar_icao": "EDXB"
-    },
-    {
-        "id": "00840",
-        "name": "Carlsfeld",
-        "lat": 50.4313,
-        "lon": 12.6114,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00867",
-        "name": "Lautertal-Oberlauter",
-        "lat": 50.3066,
-        "lon": 10.9679,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00880",
-        "name": "Cottbus",
-        "lat": 51.7759,
-        "lon": 14.3168,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00891",
-        "name": "Cuxhaven",
-        "lat": 53.8712,
-        "lon": 8.7058,
-        "priority": 2.0,
-        "metar_icao": "ETMN"
-    },
-    {
-        "id": "00953",
-        "name": "Deuselbach",
-        "lat": 49.7619,
-        "lon": 7.0542,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00963",
-        "name": "Diepholz",
-        "lat": 52.5881,
-        "lon": 8.3424,
-        "priority": 3.0,
-        "metar_icao": "ETND"
-    },
-    {
-        "id": "01001",
-        "name": "Doberlug-Kirchhain",
-        "lat": 51.6451,
-        "lon": 13.5747,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01011",
-        "name": "Dörrmoschel-Felsbergerhof",
-        "lat": 49.6017,
-        "lon": 7.7413,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01013",
-        "name": "Dogern",
-        "lat": 47.6026,
-        "lon": 8.1697,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01048",
-        "name": "Dresden-Klotzsche",
-        "lat": 51.1278,
-        "lon": 13.7543,
-        "priority": 1.0,
-        "metar_icao": "EDDC"
-    },
-    {
-        "id": "01078",
-        "name": "Düsseldorf",
-        "lat": 51.296,
-        "lon": 6.7686,
-        "priority": 1.0,
-        "metar_icao": "EDDL"
-    },
-    {
-        "id": "01200",
-        "name": "Elpersbüttel",
-        "lat": 54.0691,
-        "lon": 9.0105,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01262",
-        "name": "München-Flughafen",
-        "lat": 48.3477,
-        "lon": 11.8134,
-        "priority": 1.0,
-        "metar_icao": "EDDM"
-    },
-    {
-        "id": "01270",
-        "name": "Erfurt-Weimar",
-        "lat": 50.9827,
-        "lon": 10.9613,
-        "priority": 2.0,
-        "metar_icao": "EDDE"
-    },
-    {
-        "id": "01303",
-        "name": "Essen-Bredeney",
-        "lat": 51.4041,
-        "lon": 6.9677,
-        "priority": 2.0,
-        "metar_icao": "EDFM"
-    },
-    {
-        "id": "01346",
-        "name": "Feldberg/Schwarzwald",
-        "lat": 47.8748,
-        "lon": 8.0038,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01357",
-        "name": "Fichtelberg/Oberfranken-Hüttstadl",
-        "lat": 49.9807,
-        "lon": 11.8376,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01358",
-        "name": "Fichtelberg",
-        "lat": 50.4283,
-        "lon": 12.9536,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01379",
-        "name": "Flensburg (Schäferhaus)",
-        "lat": 54.7737,
-        "lon": 9.3753,
-        "priority": 2.0,
-        "metar_icao": "EDXF"
-    },
-    {
-        "id": "01420",
-        "name": "Frankfurt/Main",
-        "lat": 50.0259,
-        "lon": 8.5213,
-        "priority": 1.0,
-        "metar_icao": "EDDF"
-    },
-    {
-        "id": "01443",
-        "name": "Freiburg",
-        "lat": 48.0232,
-        "lon": 7.8343,
-        "priority": 2.0,
-        "metar_icao": "EDTF"
-    },
-    {
-        "id": "01468",
-        "name": "Freudenstadt",
-        "lat": 48.4538,
-        "lon": 8.409,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01490",
-        "name": "Friedrichshafen",
-        "lat": 47.6454,
-        "lon": 9.4795,
-        "priority": 2.0,
-        "metar_icao": "EDNY"
-    },
-    {
-        "id": "01503",
-        "name": "Friesoythe-Altenoythe",
-        "lat": 53.0643,
-        "lon": 7.902,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01544",
-        "name": "Gardelegen",
-        "lat": 52.5129,
-        "lon": 11.3942,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01550",
-        "name": "Garmisch-Partenkirchen",
-        "lat": 47.483,
-        "lon": 11.0621,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01580",
-        "name": "Geisenheim",
-        "lat": 49.9859,
-        "lon": 7.9548000000000005,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01587",
-        "name": "Gelbelsee",
-        "lat": 48.9481,
-        "lon": 11.4289,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01605",
-        "name": "Genthin",
-        "lat": 52.3875,
-        "lon": 12.1602,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01612",
-        "name": "Gera-Leumnitz",
-        "lat": 50.8812,
-        "lon": 12.1289,
-        "priority": 3.0,
-        "metar_icao": "EDAG"
-    },
-    {
-        "id": "01639",
-        "name": "Gießen/Wettenberg",
-        "lat": 50.6017,
-        "lon": 8.6439,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01684",
-        "name": "Görlitz",
-        "lat": 51.1621,
-        "lon": 14.9506,
-        "priority": 3.0,
-        "metar_icao": "EDFG"
-    },
-    {
-        "id": "01691",
-        "name": "Göttingen",
-        "lat": 51.5002,
-        "lon": 9.9507,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01694",
-        "name": "Goldberg",
-        "lat": 53.6058,
-        "lon": 12.1034,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01757",
-        "name": "Greifswald",
-        "lat": 54.0967,
-        "lon": 13.4056,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01759",
-        "name": "Greifswalder Oie",
-        "lat": 54.2437,
-        "lon": 13.9104,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01766",
-        "name": "Münster/Osnabrück",
-        "lat": 52.1344,
-        "lon": 7.6969,
-        "priority": 1.0,
-        "metar_icao": "EDDG"
-    },
-    {
-        "id": "01803",
-        "name": "Sanitz-Groß Lüsewitz",
-        "lat": 54.0714,
-        "lon": 12.3238,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01832",
-        "name": "Großer Arber",
-        "lat": 49.1129,
-        "lon": 13.1338,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01869",
-        "name": "Grünow",
-        "lat": 53.3154,
-        "lon": 13.9339,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01886",
-        "name": "Günzburg",
-        "lat": 48.4878,
-        "lon": 10.2608,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01963",
-        "name": "Hallig Hooge",
-        "lat": 54.5742,
-        "lon": 8.5133,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01975",
-        "name": "Hamburg-Fuhlsbüttel",
-        "lat": 53.6332,
-        "lon": 9.9881,
-        "priority": 1.0,
-        "metar_icao": "EDDH"
-    },
-    {
-        "id": "01993",
-        "name": "Hameln",
-        "lat": 52.0848,
-        "lon": 9.3896,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02014",
-        "name": "Hannover",
-        "lat": 52.4644,
-        "lon": 9.6779,
-        "priority": 1.0,
-        "metar_icao": "EDDV"
-    },
-    {
-        "id": "02023",
-        "name": "Harburg",
-        "lat": 48.7918,
-        "lon": 10.7062,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02044",
-        "name": "Harzgerode",
-        "lat": 51.652,
-        "lon": 11.1366,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02115",
-        "name": "Helgoland",
-        "lat": 54.175,
-        "lon": 7.892,
-        "priority": 1.0,
-        "metar_icao": "EDXH"
-    },
-    {
-        "id": "02171",
-        "name": "Hersfeld, Bad",
-        "lat": 50.852,
-        "lon": 9.7377,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02252",
-        "name": "Bertsdorf-Hörnitz",
-        "lat": 50.8992,
-        "lon": 14.7456,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02261",
-        "name": "Hof",
-        "lat": 50.3123,
-        "lon": 11.876,
-        "priority": 2.0,
-        "metar_icao": "EDQM"
-    },
-    {
-        "id": "02290",
-        "name": "Hohenpeißenberg",
-        "lat": 47.8009,
-        "lon": 11.0108,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02349",
-        "name": "Hornisgrinde",
-        "lat": 48.6136,
-        "lon": 8.2033,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02377",
-        "name": "Kandern-Gupf",
-        "lat": 47.7001,
-        "lon": 7.5895,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02429",
-        "name": "Itzehoe",
-        "lat": 53.9897,
-        "lon": 9.5697,
-        "priority": 3.0,
-        "metar_icao": "EDHF"
-    },
-    {
-        "id": "02483",
-        "name": "Kahler Asten",
-        "lat": 51.1803,
-        "lon": 8.4891,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02485",
-        "name": "Kaisersbach-Cronhütte",
-        "lat": 48.917,
-        "lon": 9.687100000000001,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02497",
-        "name": "Kall-Sistig",
-        "lat": 50.5014,
-        "lon": 6.5264,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02559",
-        "name": "Kempten",
-        "lat": 47.7233,
-        "lon": 10.3348,
-        "priority": 2.0,
-        "metar_icao": "EDMK"
-    },
-    {
-        "id": "02564",
-        "name": "Kiel-Holtenau",
-        "lat": 54.3776,
-        "lon": 10.1424,
-        "priority": 1.0,
-        "metar_icao": "EDHK"
-    },
-    {
-        "id": "02573",
-        "name": "Waging am See-Schnöbling",
-        "lat": 47.9588,
-        "lon": 12.7717,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02597",
-        "name": "Kissingen, Bad",
-        "lat": 50.224,
-        "lon": 10.0792,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02601",
-        "name": "Kleiner Feldberg/Taunus",
-        "lat": 50.2218,
-        "lon": 8.4469,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02638",
-        "name": "Klippeneck",
-        "lat": 48.1054,
-        "lon": 8.7548,
-        "priority": 3.0,
-        "metar_icao": "EDSK"
-    },
-    {
-        "id": "02667",
-        "name": "Köln/Bonn",
-        "lat": 50.8645,
-        "lon": 7.1575,
-        "priority": 1.0,
-        "metar_icao": "EDDK"
-    },
-    {
-        "id": "02712",
-        "name": "Konstanz",
-        "lat": 47.6952,
-        "lon": 9.1307,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02794",
-        "name": "Kyritz",
-        "lat": 52.9362,
-        "lon": 12.4093,
-        "priority": 3.0,
-        "metar_icao": "EDUB"
-    },
-    {
-        "id": "02812",
-        "name": "Lahr",
-        "lat": 48.3647,
-        "lon": 7.828,
-        "priority": 2.0,
-        "metar_icao": "EDTL"
-    },
-    {
-        "id": "02856",
-        "name": "Niedergörsdorf-Langenlipsdorf",
-        "lat": 51.9173,
-        "lon": 13.0878,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02878",
-        "name": "Lauchstädt, Bad",
-        "lat": 51.3909,
-        "lon": 11.8786,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02897",
-        "name": "Lautertal-Hörgenau",
-        "lat": 50.580799999999996,
-        "lon": 9.2857,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02907",
-        "name": "Leck",
-        "lat": 54.7903,
-        "lon": 8.9514,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02925",
-        "name": "Leinefelde",
-        "lat": 51.3932,
-        "lon": 10.3123,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02928",
-        "name": "Leipzig-Holzhausen",
-        "lat": 51.3151,
-        "lon": 12.4462,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02932",
-        "name": "Leipzig/Halle",
-        "lat": 51.4347,
-        "lon": 12.2396,
-        "priority": 1.0,
-        "metar_icao": "EDDP"
-    },
-    {
-        "id": "02961",
-        "name": "Leuchtturm Kiel",
-        "lat": 54.4996,
-        "lon": 10.2737,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02985",
-        "name": "Lichtenhain-Mittelndorf",
-        "lat": 50.9383,
-        "lon": 14.2094,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03015",
-        "name": "Lindenberg",
-        "lat": 52.2085,
-        "lon": 14.118,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03028",
-        "name": "Lippspringe, Bad",
-        "lat": 51.7854,
-        "lon": 8.838799999999999,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03032",
-        "name": "List auf Sylt",
-        "lat": 55.011,
-        "lon": 8.4125,
-        "priority": 1.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03086",
-        "name": "Lübeck-Blankensee",
-        "lat": 53.8025,
-        "lon": 10.6989,
-        "priority": 1.0,
-        "metar_icao": "EDHL"
-    },
-    {
-        "id": "03093",
-        "name": "Lüchow",
-        "lat": 52.9724,
-        "lon": 11.1374,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03098",
-        "name": "Lüdenscheid",
-        "lat": 51.2452,
-        "lon": 7.6425,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03126",
-        "name": "Magdeburg",
-        "lat": 52.1029,
-        "lon": 11.582699999999999,
-        "priority": 2.0,
-        "metar_icao": "EDBM"
-    },
-    {
-        "id": "03158",
-        "name": "Manschnow",
-        "lat": 52.5468,
-        "lon": 14.5453,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03166",
-        "name": "Marienberg",
-        "lat": 50.6511,
-        "lon": 13.1469,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03167",
-        "name": "Marienberg, Bad",
-        "lat": 50.6621,
-        "lon": 7.9603,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03196",
-        "name": "Marnitz",
-        "lat": 53.3221,
-        "lon": 11.9324,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03231",
-        "name": "Meiningen",
-        "lat": 50.5611,
-        "lon": 10.3771,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03244",
-        "name": "Memmingen",
-        "lat": 47.9821,
-        "lon": 10.1384,
-        "priority": 1.0,
-        "metar_icao": "EDJA"
-    },
-    {
-        "id": "03268",
-        "name": "Meßstetten-Appental",
-        "lat": 48.1694,
-        "lon": 8.9433,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03287",
-        "name": "Michelstadt-Vielbrunn",
-        "lat": 49.7177,
-        "lon": 9.0997,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03321",
-        "name": "Mönchengladbach-Hilderath",
-        "lat": 51.1313,
-        "lon": 6.3608,
-        "priority": 2.0,
-        "metar_icao": "EDLN"
-    },
-    {
-        "id": "03362",
-        "name": "Mühlacker",
-        "lat": 48.9721,
-        "lon": 8.8735,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03366",
-        "name": "Mühldorf",
-        "lat": 48.279,
-        "lon": 12.5024,
-        "priority": 3.0,
-        "metar_icao": "EDMY"
-    },
-    {
-        "id": "03376",
-        "name": "Müncheberg",
-        "lat": 52.5176,
-        "lon": 14.1232,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03379",
-        "name": "München-Stadt",
-        "lat": 48.1632,
-        "lon": 11.5429,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03402",
-        "name": "Münsingen-Apfelstetten",
-        "lat": 48.3851,
-        "lon": 9.4837,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03513",
-        "name": "Neuhaus am Rennweg",
-        "lat": 50.5003,
-        "lon": 11.1345,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03534",
-        "name": "Neumarkt-Höhenberg",
-        "lat": 49.2713,
-        "lon": 11.4881,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03631",
-        "name": "Norderney",
-        "lat": 53.7123,
-        "lon": 7.1519,
-        "priority": 1.0,
-        "metar_icao": "EDWY"
-    },
-    {
-        "id": "03651",
-        "name": "Northeim-Stöckheim",
-        "lat": 51.7521,
-        "lon": 9.945,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03660",
-        "name": "Nürburg-Barweiler",
-        "lat": 50.3602,
-        "lon": 6.8697,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03668",
-        "name": "Nürnberg",
-        "lat": 49.503,
-        "lon": 11.0549,
-        "priority": 1.0,
-        "metar_icao": "EDDN"
-    },
-    {
-        "id": "03730",
-        "name": "Oberstdorf",
-        "lat": 47.3984,
-        "lon": 10.2759,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03761",
-        "name": "Öhringen",
-        "lat": 49.207,
-        "lon": 9.5176,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03811",
-        "name": "Oschatz",
-        "lat": 51.296,
-        "lon": 13.0928,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03821",
-        "name": "Osterfeld",
-        "lat": 51.0872,
-        "lon": 11.9293,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03897",
-        "name": "Pelzerhaken",
-        "lat": 54.0893,
-        "lon": 10.8773,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03905",
-        "name": "Perl-Sinz-Renglischberg",
-        "lat": 49.5214,
-        "lon": 6.4475999999999996,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03925",
-        "name": "Pforzheim-Ispringen",
-        "lat": 48.932900000000004,
-        "lon": 8.6973,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03946",
-        "name": "Plauen",
-        "lat": 50.4818,
-        "lon": 12.13,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03987",
-        "name": "Potsdam",
-        "lat": 52.3812,
-        "lon": 13.0622,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04024",
-        "name": "Putbus",
-        "lat": 54.3643,
-        "lon": 13.4771,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04032",
-        "name": "Quedlinburg",
-        "lat": 51.7953,
-        "lon": 11.132,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04036",
-        "name": "Querfurt-Mühle Lodersleben",
-        "lat": 51.3895,
-        "lon": 11.5412,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04039",
-        "name": "Quickborn",
-        "lat": 53.7331,
-        "lon": 9.8776,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04094",
-        "name": "Weingarten, Kr. Ravensburg",
-        "lat": 47.8062,
-        "lon": 9.6206,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04104",
-        "name": "Regensburg",
-        "lat": 49.0425,
-        "lon": 12.1019,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04177",
-        "name": "Rheinstetten",
-        "lat": 48.9726,
-        "lon": 8.3301,
-        "priority": 3.0,
-        "metar_icao": "EDTK"
-    },
-    {
-        "id": "04271",
-        "name": "Rostock-Warnemünde",
-        "lat": 54.1803,
-        "lon": 12.0808,
-        "priority": 1.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04279",
-        "name": "Roth bei Prüm",
-        "lat": 50.3046,
-        "lon": 6.3863,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04280",
-        "name": "Roth",
-        "lat": 49.2162,
-        "lon": 11.1035,
-        "priority": 3.0,
-        "metar_icao": "ETHR"
-    },
-    {
-        "id": "04336",
-        "name": "Saarbrücken-Ensheim",
-        "lat": 49.2128,
-        "lon": 7.1077,
-        "priority": 1.0,
-        "metar_icao": "EDDR"
-    },
-    {
-        "id": "04371",
-        "name": "Salzuflen, Bad",
-        "lat": 52.1042,
-        "lon": 8.7521,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04393",
-        "name": "Sankt Peter-Ording",
-        "lat": 54.3279,
-        "lon": 8.6031,
-        "priority": 2.0,
-        "metar_icao": "EDXO"
-    },
-    {
-        "id": "04464",
-        "name": "Schleiz",
-        "lat": 50.5679,
-        "lon": 11.8041,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04466",
-        "name": "Schleswig",
-        "lat": 54.5275,
-        "lon": 9.5487,
-        "priority": 2.0,
-        "metar_icao": "ETNS"
-    },
-    {
-        "id": "04501",
-        "name": "Schmücke",
-        "lat": 50.6545,
-        "lon": 10.7696,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04625",
-        "name": "Schwerin",
-        "lat": 53.6424,
-        "lon": 11.3871,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04642",
-        "name": "Seehausen",
-        "lat": 52.8911,
-        "lon": 11.7297,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04745",
-        "name": "Soltau",
-        "lat": 52.9604,
-        "lon": 9.793,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04880",
-        "name": "Stimpfach-Weipertshofen",
-        "lat": 49.0878,
-        "lon": 10.124,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04887",
-        "name": "Stötten",
-        "lat": 48.6656,
-        "lon": 9.8648,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04911",
-        "name": "Straubing",
-        "lat": 48.8275,
-        "lon": 12.5597,
-        "priority": 3.0,
-        "metar_icao": "EDMS"
-    },
-    {
-        "id": "04919",
-        "name": "Strucklahnungshörn",
-        "lat": 54.4965,
-        "lon": 8.8069,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04928",
-        "name": "Stuttgart (Schnarrenberg)",
-        "lat": 48.8281,
-        "lon": 9.2,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04931",
-        "name": "Stuttgart-Echterdingen",
-        "lat": 48.6883,
-        "lon": 9.2235,
-        "priority": 1.0,
-        "metar_icao": "EDDS"
-    },
-    {
-        "id": "04947",
-        "name": "Süpplingen",
-        "lat": 52.231700000000004,
-        "lon": 10.92,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05029",
-        "name": "Tholey",
-        "lat": 49.4737,
-        "lon": 7.0385,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05078",
-        "name": "Travemünde",
-        "lat": 53.9619,
-        "lon": 10.8892,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05100",
-        "name": "Trier-Petrisberg",
-        "lat": 49.7479,
-        "lon": 6.6583,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05109",
-        "name": "Trollenhagen",
-        "lat": 53.5998,
-        "lon": 13.3039,
-        "priority": 2.0,
-        "metar_icao": "ETNU"
-    },
-    {
-        "id": "05142",
-        "name": "Ueckermünde",
-        "lat": 53.7445,
-        "lon": 14.0698,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05158",
-        "name": "Ummendorf",
-        "lat": 52.1601,
-        "lon": 11.1759,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05319",
-        "name": "Waldsee, Bad-Reute",
-        "lat": 47.9167,
-        "lon": 9.7076,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05327",
-        "name": "Walldürn",
-        "lat": 49.5789,
-        "lon": 9.3974,
-        "priority": 4.0,
-        "metar_icao": "EDEW"
-    },
-    {
-        "id": "05347",
-        "name": "Warburg",
-        "lat": 51.5039,
-        "lon": 9.1118,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05349",
-        "name": "Waren (Müritz)",
-        "lat": 53.5196,
-        "lon": 12.6654,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05371",
-        "name": "Wasserkuppe",
-        "lat": 50.4973,
-        "lon": 9.9427,
-        "priority": 2.0,
-        "metar_icao": "EDER"
-    },
-    {
-        "id": "05397",
-        "name": "Weiden",
-        "lat": 49.6662,
-        "lon": 12.1844,
-        "priority": 3.0,
-        "metar_icao": "EDQW"
-    },
-    {
-        "id": "05404",
-        "name": "Weihenstephan-Dürnast",
-        "lat": 48.4024,
-        "lon": 11.6946,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05412",
-        "name": "Weilheim-Bierbronnen",
-        "lat": 47.6802,
-        "lon": 8.1964,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05426",
-        "name": "Weinbiet",
-        "lat": 49.3758,
-        "lon": 8.1212,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05440",
-        "name": "Weißenburg-Emetzheim",
-        "lat": 49.0115,
-        "lon": 10.9308,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05480",
-        "name": "Werl",
-        "lat": 51.5763,
-        "lon": 7.8879,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05490",
-        "name": "Wernigerode",
-        "lat": 51.8454,
-        "lon": 10.7686,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05516",
-        "name": "Fehmarn",
-        "lat": 54.5283,
-        "lon": 11.0606,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05538",
-        "name": "Wielenbach (Demollstr.)",
-        "lat": 47.8827,
-        "lon": 11.1576,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00044",
-        "name": "Großenkneten",
-        "lat": 52.9336,
-        "lon": 8.237,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00125",
-        "name": "Altenstadt",
-        "lat": 47.8342,
-        "lon": 10.8667,
-        "priority": 2.0,
-        "metar_icao": "ETHA"
-    },
-    {
-        "id": "00222",
-        "name": "Aue",
-        "lat": 50.5908,
-        "lon": 12.7139,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00257",
-        "name": "Baden-Baden-Geroldsau",
-        "lat": 48.727,
-        "lon": 8.2457,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00259",
-        "name": "Müllheim",
-        "lat": 47.8064,
-        "lon": 7.6387,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00320",
-        "name": "Heinersreuth-Vollhof",
-        "lat": 49.9666,
-        "lon": 11.5198,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00330",
-        "name": "Oberzent-Beerfelden",
-        "lat": 49.5617,
-        "lon": 8.9673,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00368",
-        "name": "Bergen",
-        "lat": 52.8152,
-        "lon": 9.9248,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00400",
-        "name": "Berlin-Buch",
-        "lat": 52.631,
-        "lon": 13.5021,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00403",
-        "name": "Berlin-Dahlem (FU)",
-        "lat": 52.4537,
-        "lon": 13.3017,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00554",
-        "name": "Bocholt-Liedern (Wasserwerk)",
-        "lat": 51.8293,
-        "lon": 6.5365,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00620",
-        "name": "Borkumriff",
-        "lat": 53.8,
-        "lon": 6.3667,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00766",
-        "name": "Büchel-Alflen",
-        "lat": 50.1745,
-        "lon": 7.0595,
-        "priority": 2.0,
-        "metar_icao": "ETSB"
-    },
-    {
-        "id": "00769",
-        "name": "Bückeburg",
-        "lat": 52.2817,
-        "lon": 9.089,
-        "priority": 2.0,
-        "metar_icao": "ETHB"
-    },
-    {
-        "id": "00785",
-        "name": "Büsum (A)",
-        "lat": 54.1327,
-        "lon": 8.8668,
-        "priority": 3.0,
-        "metar_icao": "EDXB"
-    },
-    {
-        "id": "00848",
-        "name": "Celle (Stadt)",
-        "lat": 52.6146,
-        "lon": 10.0726,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00850",
-        "name": "Celle",
-        "lat": 52.5959,
-        "lon": 10.0296,
-        "priority": 2.0,
-        "metar_icao": "ETHC"
-    },
-    {
-        "id": "00906",
-        "name": "Dahmeshöved",
-        "lat": 54.2018,
-        "lon": 11.0919,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "00954",
-        "name": "UFS Deutsche Bucht",
-        "lat": 54.1796,
-        "lon": 7.4587,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01130",
-        "name": "Eggebek",
-        "lat": 54.6282,
-        "lon": 9.3649,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01185",
-        "name": "UFS Elbe 1",
-        "lat": 54.0,
-        "lon": 8.1167,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01197",
-        "name": "Ellwangen-Rindelbach",
-        "lat": 48.9895,
-        "lon": 10.1312,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01279",
-        "name": "Möhrendorf-Kleinseebach",
-        "lat": 49.6497,
-        "lon": 11.0075,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01297",
-        "name": "Eschwege",
-        "lat": 51.2041,
-        "lon": 10.0138,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01339",
-        "name": "Faßberg",
-        "lat": 52.9157,
-        "lon": 10.1885,
-        "priority": 2.0,
-        "metar_icao": "ETHS"
-    },
-    {
-        "id": "01355",
-        "name": "FES Weser",
-        "lat": 53.9167,
-        "lon": 7.8333,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01402",
-        "name": "Forschungsplattform Nordsee",
-        "lat": 54.7026,
-        "lon": 7.1687,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01504",
-        "name": "Fritzlar/Eder",
-        "lat": 51.119,
-        "lon": 9.2799,
-        "priority": 2.0,
-        "metar_icao": "ETHF"
-    },
-    {
-        "id": "01526",
-        "name": "Fulda-Horas",
-        "lat": 50.5668,
-        "lon": 9.6532,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01572",
-        "name": "Geilenkirchen-Neutevern",
-        "lat": 50.9593,
-        "lon": 6.0392,
-        "priority": 2.0,
-        "metar_icao": "ETNG"
-    },
-    {
-        "id": "01666",
-        "name": "Glücksburg-Meierwik",
-        "lat": 54.8273,
-        "lon": 9.5058,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "01689",
-        "name": "Gößweinstein",
-        "lat": 49.7656,
-        "lon": 11.3062,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02201",
-        "name": "Hiddensee-Vitte",
-        "lat": 54.575,
-        "lon": 13.1044,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02303",
-        "name": "Hohn",
-        "lat": 54.3162,
-        "lon": 9.5385,
-        "priority": 2.0,
-        "metar_icao": "ETNH"
-    },
-    {
-        "id": "02315",
-        "name": "Holzdorf-Bernsdorf",
-        "lat": 51.7657,
-        "lon": 13.1666,
-        "priority": 2.0,
-        "metar_icao": "ETSH"
-    },
-    {
-        "id": "02331",
-        "name": "Homburg/Saar",
-        "lat": 49.3278,
-        "lon": 7.3533,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02385",
-        "name": "Idar-Oberstein",
-        "lat": 49.6927,
-        "lon": 7.3263,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02410",
-        "name": "Ingolstadt-Manching",
-        "lat": 48.7111,
-        "lon": 11.5363,
-        "priority": 2.0,
-        "metar_icao": "ETSI"
-    },
-    {
-        "id": "02437",
-        "name": "Schleswig-Jagel",
-        "lat": 54.457,
-        "lon": 9.5203,
-        "priority": 2.0,
-        "metar_icao": "ETNS"
-    },
-    {
-        "id": "02444",
-        "name": "Jena (Sternwarte)",
-        "lat": 50.9251,
-        "lon": 11.583,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02465",
-        "name": "Jork-Moorende",
-        "lat": 53.5083,
-        "lon": 9.7376,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02486",
-        "name": "Kaiserslautern",
-        "lat": 49.4262,
-        "lon": 7.7557,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02738",
-        "name": "Kreuth",
-        "lat": 47.6448,
-        "lon": 11.7438,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02773",
-        "name": "Kümmersbruck",
-        "lat": 49.4283,
-        "lon": 11.9016,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "02796",
-        "name": "Laage-Kronskamp",
-        "lat": 53.9156,
-        "lon": 12.279,
-        "priority": 2.0,
-        "metar_icao": "ETNL"
-    },
-    {
-        "id": "02886",
-        "name": "Laupheim",
-        "lat": 48.2175,
-        "lon": 9.9097,
-        "priority": 2.0,
-        "metar_icao": "ETHL"
-    },
-    {
-        "id": "02905",
-        "name": "Lechfeld",
-        "lat": 48.1849,
-        "lon": 10.8507,
-        "priority": 2.0,
-        "metar_icao": "ETSL"
-    },
-    {
-        "id": "03137",
-        "name": "Mainz-Lerchenberg (ZDF)",
-        "lat": 49.9658,
-        "lon": 8.2049,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03254",
-        "name": "Meppen",
-        "lat": 52.7155,
-        "lon": 7.3176,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03442",
-        "name": "Nauheim, Bad",
-        "lat": 50.3574,
-        "lon": 8.7506,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03484",
-        "name": "Neuburg an der Donau",
-        "lat": 48.7085,
-        "lon": 11.2147,
-        "priority": 2.0,
-        "metar_icao": "ETSN"
-    },
-    {
-        "id": "03538",
-        "name": "Neumünster-Wasbek",
-        "lat": 54.0772,
-        "lon": 9.9314,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03603",
-        "name": "Niederstetten",
-        "lat": 49.3895,
-        "lon": 9.9666,
-        "priority": 2.0,
-        "metar_icao": "ETHN"
-    },
-    {
-        "id": "03623",
-        "name": "Nörvenich-Niederbolheim",
-        "lat": 50.8294,
-        "lon": 6.6601,
-        "priority": 2.0,
-        "metar_icao": "ETNN"
-    },
-    {
-        "id": "03639",
-        "name": "Nordholz-Wanhöden",
-        "lat": 53.7647,
-        "lon": 8.6584,
-        "priority": 2.0,
-        "metar_icao": "ETMN"
-    },
-    {
-        "id": "03739",
-        "name": "Oberviechtach",
-        "lat": 49.4521,
-        "lon": 12.4365,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "03868",
-        "name": "Papenburg-Weißenburg",
-        "lat": 53.0802,
-        "lon": 7.3845,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04026",
-        "name": "Puttgarden",
-        "lat": 54.5,
-        "lon": 11.2167,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04175",
-        "name": "Rheinfelden",
-        "lat": 47.559,
-        "lon": 7.7721,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04190",
-        "name": "Riedlingen (A)",
-        "lat": 48.1672,
-        "lon": 9.4951,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04275",
-        "name": "Rotenburg (Wümme)",
-        "lat": 53.1289,
-        "lon": 9.3398,
-        "priority": 3.0,
-        "metar_icao": "EDXQ"
-    },
-    {
-        "id": "04288",
-        "name": "Rothenfelde, Bad",
-        "lat": 52.1038,
-        "lon": 8.1809,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04445",
-        "name": "Wernigerode-Schierke",
-        "lat": 51.7659,
-        "lon": 10.6533,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04480",
-        "name": "Schlüchtern-Herolz",
-        "lat": 50.3447,
-        "lon": 9.5533,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04748",
-        "name": "Sondershausen",
-        "lat": 51.3691,
-        "lon": 10.88,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "04950",
-        "name": "Suhl",
-        "lat": 50.6171,
-        "lon": 10.6587,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05009",
-        "name": "Teterow",
-        "lat": 53.761,
-        "lon": 12.5574,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05059",
-        "name": "Todtmoos",
-        "lat": 47.7279,
-        "lon": 7.9988,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05546",
-        "name": "Wiesenburg",
-        "lat": 52.1206,
-        "lon": 12.4586,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05629",
-        "name": "Wittenberg",
-        "lat": 51.8891,
-        "lon": 12.6446,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05640",
-        "name": "Wittmundhafen",
-        "lat": 53.5444,
-        "lon": 7.6625,
-        "priority": 2.0,
-        "metar_icao": "ETNT"
-    },
-    {
-        "id": "05705",
-        "name": "Würzburg",
-        "lat": 49.7704,
-        "lon": 9.9576,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05715",
-        "name": "Wunstorf",
-        "lat": 52.4626,
-        "lon": 9.4245,
-        "priority": 2.0,
-        "metar_icao": "ETNW"
-    },
-    {
-        "id": "05732",
-        "name": "Wrixum/Föhr",
-        "lat": 54.6928,
-        "lon": 8.5271,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05745",
-        "name": "Zehdenick",
-        "lat": 52.9664,
-        "lon": 13.3268,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05779",
-        "name": "Zinnwald-Georgenfeld",
-        "lat": 50.7313,
-        "lon": 13.7516,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05792",
-        "name": "Zugspitze",
-        "lat": 47.421,
-        "lon": 10.9848,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05797",
-        "name": "Lichtentanne",
-        "lat": 50.6879,
-        "lon": 12.4329,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05800",
-        "name": "Zwiesel",
-        "lat": 49.028,
-        "lon": 13.2385,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05825",
-        "name": "Nauen-Berge",
-        "lat": 52.6198,
-        "lon": 12.7867,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05839",
-        "name": "Emden",
-        "lat": 53.3881,
-        "lon": 7.2287,
-        "priority": 3.0,
-        "metar_icao": "EDWE"
-    },
-    {
-        "id": "05851",
-        "name": "Frankenberg-Geismar",
-        "lat": 51.0806,
-        "lon": 8.8769,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05856",
-        "name": "Fürstenzell",
-        "lat": 48.5451,
-        "lon": 13.3532,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05871",
-        "name": "Hahn",
-        "lat": 49.9463,
-        "lon": 7.2645,
-        "priority": 2.0,
-        "metar_icao": "EDFH"
-    },
-    {
-        "id": "05877",
-        "name": "Putlos",
-        "lat": 54.316,
-        "lon": 10.8002,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "05906",
-        "name": "Mannheim",
-        "lat": 49.5063,
-        "lon": 8.5584,
-        "priority": 2.0,
-        "metar_icao": "EDFM"
-    },
-    {
-        "id": "05930",
-        "name": "Schönhagen (Ostseebad)",
-        "lat": 54.641,
-        "lon": 10.0238,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06091",
-        "name": "Spiekeroog (SWN)",
-        "lat": 53.7674,
-        "lon": 7.6721,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06096",
-        "name": "Altmühlsee",
-        "lat": 49.1423,
-        "lon": 10.7301,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06097",
-        "name": "Darßer Ort (SWN)",
-        "lat": 54.4738,
-        "lon": 12.5014,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06099",
-        "name": "Gailingen",
-        "lat": 47.702,
-        "lon": 8.7318,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06101",
-        "name": "Bastorf-Kägsdorf (SWN)",
-        "lat": 54.1323,
-        "lon": 11.6719,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06102",
-        "name": "Lindau (SWN)",
-        "lat": 47.5396,
-        "lon": 9.6843,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06103",
-        "name": "Mittenwald/Obb.",
-        "lat": 47.4287,
-        "lon": 11.2616,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06106",
-        "name": "Rechlin",
-        "lat": 53.3311,
-        "lon": 12.7149,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06107",
-        "name": "Sipplingen (SWN)",
-        "lat": 47.8076,
-        "lon": 9.1035,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06108",
-        "name": "Ruthenstrom",
-        "lat": 53.7197,
-        "lon": 9.4192,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06159",
-        "name": "Dörpen",
-        "lat": 52.9542,
-        "lon": 7.3197,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06163",
-        "name": "Dörnick",
-        "lat": 54.1654,
-        "lon": 10.3519,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06196",
-        "name": "Selb-Spielberg",
-        "lat": 50.1587,
-        "lon": 12.0386,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06197",
-        "name": "Lügde-Paenbruch",
-        "lat": 51.8664,
-        "lon": 9.271,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06211",
-        "name": "Vogtareuth (Kläranlage)",
-        "lat": 47.955,
-        "lon": 12.1735,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06243",
-        "name": "Philippsburg KKW",
-        "lat": 49.2506,
-        "lon": 8.4422,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06244",
-        "name": "Obrigheim",
-        "lat": 49.365,
-        "lon": 9.0804,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06245",
-        "name": "Neckarwestheim KKW",
-        "lat": 49.0423,
-        "lon": 9.1733,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06246",
-        "name": "Waldshut KKW",
-        "lat": 47.6213,
-        "lon": 8.2167,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06247",
-        "name": "Dogern (Leibstadt)",
-        "lat": 47.6078,
-        "lon": 8.1813,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06253",
-        "name": "Brandenburg/Havel",
-        "lat": 52.4228,
-        "lon": 12.5667,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06292",
-        "name": "Nordseeboje 3",
-        "lat": 54.6833,
-        "lon": 6.7833,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06314",
-        "name": "Nossen",
-        "lat": 51.0507,
-        "lon": 13.3003,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "06344",
-        "name": "Runkel-Ennerich",
-        "lat": 50.394,
-        "lon": 8.1423,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07341",
-        "name": "Offenbach-Wetterpark",
-        "lat": 50.09,
-        "lon": 8.7862,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07351",
-        "name": "Feldberg/Mecklenburg",
-        "lat": 53.3176,
-        "lon": 13.4175,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07368",
-        "name": "Eisenach",
-        "lat": 51.0007,
-        "lon": 10.3621,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07369",
-        "name": "Feuchtwangen-Heilbronn",
-        "lat": 49.1623,
-        "lon": 10.3661,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07370",
-        "name": "Waldmünchen",
-        "lat": 49.391,
-        "lon": 12.6838,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07374",
-        "name": "Ahaus",
-        "lat": 52.0813,
-        "lon": 6.9409,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07389",
-        "name": "Heckelberg-Brunow",
-        "lat": 52.7461,
-        "lon": 13.8427,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07391",
-        "name": "Oberzent-Beerfelden-Vogelherd",
-        "lat": 49.5561,
-        "lon": 8.9669,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07392",
-        "name": "Aubstadt",
-        "lat": 50.3332,
-        "lon": 10.4487,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07393",
-        "name": "Hoyerswerda",
-        "lat": 51.4492,
-        "lon": 14.2533,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07394",
-        "name": "Wunsiedel-Schönbrunn",
-        "lat": 50.0315,
-        "lon": 11.9745,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07395",
-        "name": "Gottfrieding",
-        "lat": 48.6595,
-        "lon": 12.5388,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07396",
-        "name": "Hoherodskopf/Vogelsberg",
-        "lat": 50.5084,
-        "lon": 9.2246,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07403",
-        "name": "Leutkirch-Herlazhofen",
-        "lat": 47.7955,
-        "lon": 10.0325,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07410",
-        "name": "Neu-Ulrichstein",
-        "lat": 50.7513,
-        "lon": 9.0224,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07412",
-        "name": "Neuhütten/Spessart",
-        "lat": 50.0083,
-        "lon": 9.4238,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "07416",
-        "name": "Birkelbach",
-        "lat": 51.0112,
-        "lon": 8.2733,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "10510",
-        "name": "Winterbach/Remstal",
-        "lat": 48.8059,
-        "lon": 9.5046,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13674",
-        "name": "Waibstadt",
-        "lat": 49.2943,
-        "lon": 8.9053,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13676",
-        "name": "Langquaid-Oberschneidhart",
-        "lat": 48.8608,
-        "lon": 12.0323,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13693",
-        "name": "Gütersloh/Ems",
-        "lat": 51.9258,
-        "lon": 8.3111,
-        "priority": 2.0,
-        "metar_icao": "ETUO"
-    },
-    {
-        "id": "13701",
-        "name": "Eschwege-Eltmannshausen",
-        "lat": 51.1945,
-        "lon": 9.9885,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13711",
-        "name": "Krölpa-Rockendorf",
-        "lat": 50.682,
-        "lon": 11.515,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13900",
-        "name": "Soden,Bad-Salmünster (Kläranlage)",
-        "lat": 50.2688,
-        "lon": 9.358,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13901",
-        "name": "Haltern (Wasserwerk)",
-        "lat": 51.7343,
-        "lon": 7.1998,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13932",
-        "name": "Rotthalmünster (Landwirtschaftsamt",
-        "lat": 48.3617,
-        "lon": 13.1938,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13952",
-        "name": "Arnsberg-Müschede",
-        "lat": 51.4089,
-        "lon": 8.0094,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "13965",
-        "name": "Balingen-Bronnhaupten",
-        "lat": 48.2639,
-        "lon": 8.8134,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15000",
-        "name": "Aachen-Orsbach",
-        "lat": 50.7983,
-        "lon": 6.0244,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15044",
-        "name": "Neuwied-Feldkirchen-Hüllenberg",
-        "lat": 50.4517,
-        "lon": 7.4058,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15120",
-        "name": "Haaren",
-        "lat": 51.5572,
-        "lon": 8.7019,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15122",
-        "name": "Ergersheim-Neuherberg",
-        "lat": 49.52,
-        "lon": 10.2854,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15189",
-        "name": "Sukow-Levitzow",
-        "lat": 53.8281,
-        "lon": 12.5936,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15190",
-        "name": "Xanten (Wasserwerk)",
-        "lat": 51.6802,
-        "lon": 6.4349,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15194",
-        "name": "Börßum-Achim",
-        "lat": 52.0688,
-        "lon": 10.6245,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15200",
-        "name": "Wuppertal",
-        "lat": 51.2531,
-        "lon": 7.2157,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15207",
-        "name": "Schauenburg-Elgershausen",
-        "lat": 51.2835,
-        "lon": 9.359,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15214",
-        "name": "Halblech-Bayerniederhofen",
-        "lat": 47.6248,
-        "lon": 10.8075,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15444",
-        "name": "Ulm-Mähringen",
-        "lat": 48.4418,
-        "lon": 9.9216,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15520",
-        "name": "Frasdorf-Greimelberg",
-        "lat": 47.819,
-        "lon": 12.2956,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15547",
-        "name": "Heilbronn/Neckar",
-        "lat": 49.1259,
-        "lon": 9.1428,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15555",
-        "name": "Kaufbeuren-Oberbeuren",
-        "lat": 47.8761,
-        "lon": 10.5849,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15801",
-        "name": "Hinterschmiding-Sonndorf",
-        "lat": 48.8257,
-        "lon": 13.5922,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15813",
-        "name": "Lingen-Baccum",
-        "lat": 52.5126,
-        "lon": 7.4131,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15911",
-        "name": "Großpostwitz-Denkwitz",
-        "lat": 51.1347,
-        "lon": 14.4344,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15976",
-        "name": "Ober-Olm/Bellem",
-        "lat": 49.9529,
-        "lon": 8.2107,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "15978",
-        "name": "Sembach",
-        "lat": 49.5044,
-        "lon": 7.8618,
-        "priority": 2.0,
-        "metar_icao": null
-    },
-    {
-        "id": "19171",
-        "name": "Hasenkrug-Hardebek",
-        "lat": 54.0039,
-        "lon": 9.8555,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "19207",
-        "name": "Gülzow-Prüzen",
-        "lat": 53.8178,
-        "lon": 12.0645,
-        "priority": 4.0,
-        "metar_icao": null
-    },
-    {
-        "id": "19243",
-        "name": "Föhr",
-        "lat": 54.6831,
-        "lon": 8.4721,
-        "priority": 3.0,
-        "metar_icao": "EDWY"
-    },
-    {
-        "id": "19856",
-        "name": "Schönau am Königssee",
-        "lat": 47.6134,
-        "lon": 12.9819,
-        "priority": 3.0,
-        "metar_icao": null
-    },
-    {
-        "id": "19912",
-        "name": "Bichl",
-        "lat": 47.7147,
-        "lon": 11.4166,
-        "priority": 4.0,
-        "metar_icao": null
-    }
+  {
+    "id": "00183",
+    "name": "Arkona",
+    "lat": 54.6791,
+    "lon": 13.4344,
+    "priority": 1.0,
+    "metar_icao": "EDRE"
+  },
+  {
+    "id": "00619",
+    "name": "Borkum-Süderstraße",
+    "lat": 53.5788,
+    "lon": 6.6703,
+    "priority": 1.0,
+    "metar_icao": "EDRI"
+  },
+  {
+    "id": "00427",
+    "name": "Berlin Brandenburg",
+    "lat": 52.3807,
+    "lon": 13.5306,
+    "priority": 1.0,
+    "metar_icao": "EDDB"
+  },
+  {
+    "id": "00691",
+    "name": "Bremen",
+    "lat": 53.0451,
+    "lon": 8.7981,
+    "priority": 2.0,
+    "metar_icao": "EDDW"
+  },
+  {
+    "id": "00232",
+    "name": "Augsburg",
+    "lat": 48.4253,
+    "lon": 10.9417,
+    "priority": 2.0,
+    "metar_icao": "EDMA"
+  },
+  {
+    "id": "00853",
+    "name": "Chemnitz",
+    "lat": 50.7913,
+    "lon": 12.872,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00722",
+    "name": "Brocken",
+    "lat": 51.7986,
+    "lon": 10.6183,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00011",
+    "name": "Donaueschingen (Landeplatz)",
+    "lat": 47.9736,
+    "lon": 8.5205,
+    "priority": 3.0,
+    "metar_icao": "EDTD"
+  },
+  {
+    "id": "00090",
+    "name": "Alsfeld",
+    "lat": 50.7557,
+    "lon": 9.2583,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00856",
+    "name": "Chieming",
+    "lat": 47.8843,
+    "lon": 12.5404,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00096",
+    "name": "Neuruppin-Alt Ruppin",
+    "lat": 52.9437,
+    "lon": 12.8518,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00102",
+    "name": "Leuchtturm Alte Weser",
+    "lat": 53.8633,
+    "lon": 8.1275,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00161",
+    "name": "Andernach",
+    "lat": 50.4237,
+    "lon": 7.4202,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00164",
+    "name": "Angermünde",
+    "lat": 53.0316,
+    "lon": 13.9908,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00197",
+    "name": "Arolsen-Volkhardinghausen, Bad",
+    "lat": 51.3219,
+    "lon": 9.0558,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00282",
+    "name": "Bamberg",
+    "lat": 49.8743,
+    "lon": 10.9206,
+    "priority": 3.0,
+    "metar_icao": "EDQA"
+  },
+  {
+    "id": "00298",
+    "name": "Barth",
+    "lat": 54.3405,
+    "lon": 12.7108,
+    "priority": 3.0,
+    "metar_icao": "EDBH"
+  },
+  {
+    "id": "00303",
+    "name": "Baruth",
+    "lat": 52.0613,
+    "lon": 13.4997,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00342",
+    "name": "Belm",
+    "lat": 52.317,
+    "lon": 8.1694,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00460",
+    "name": "Berus",
+    "lat": 49.2641,
+    "lon": 6.6868,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00591",
+    "name": "Boizenburg",
+    "lat": 53.3911,
+    "lon": 10.6878,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00596",
+    "name": "Boltenhagen",
+    "lat": 54.0027,
+    "lon": 11.1908,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00603",
+    "name": "Königswinter-Heiderhof",
+    "lat": 50.7293,
+    "lon": 7.204,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00642",
+    "name": "Brake",
+    "lat": 53.3518,
+    "lon": 8.4969,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00656",
+    "name": "Braunlage",
+    "lat": 51.7234,
+    "lon": 10.6021,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00662",
+    "name": "Braunschweig",
+    "lat": 52.2915,
+    "lon": 10.4464,
+    "priority": 2.0,
+    "metar_icao": "EDVE"
+  },
+  {
+    "id": "00701",
+    "name": "Bremerhaven",
+    "lat": 53.5332,
+    "lon": 8.5761,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00704",
+    "name": "Bremervörde",
+    "lat": 53.4451,
+    "lon": 9.139,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00788",
+    "name": "Büsum",
+    "lat": 54.1193,
+    "lon": 8.8584,
+    "priority": 3.0,
+    "metar_icao": "EDXB"
+  },
+  {
+    "id": "00840",
+    "name": "Carlsfeld",
+    "lat": 50.4313,
+    "lon": 12.6114,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00867",
+    "name": "Lautertal-Oberlauter",
+    "lat": 50.3066,
+    "lon": 10.9679,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00880",
+    "name": "Cottbus",
+    "lat": 51.7759,
+    "lon": 14.3168,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00891",
+    "name": "Cuxhaven",
+    "lat": 53.8712,
+    "lon": 8.7058,
+    "priority": 2.0,
+    "metar_icao": "ETMN"
+  },
+  {
+    "id": "00963",
+    "name": "Diepholz",
+    "lat": 52.5881,
+    "lon": 8.3424,
+    "priority": 3.0,
+    "metar_icao": "ETND"
+  },
+  {
+    "id": "01001",
+    "name": "Doberlug-Kirchhain",
+    "lat": 51.6451,
+    "lon": 13.5747,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01011",
+    "name": "Dörrmoschel-Felsbergerhof",
+    "lat": 49.6017,
+    "lon": 7.7413,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01013",
+    "name": "Dogern",
+    "lat": 47.6026,
+    "lon": 8.1697,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01048",
+    "name": "Dresden-Klotzsche",
+    "lat": 51.1278,
+    "lon": 13.7543,
+    "priority": 1.0,
+    "metar_icao": "EDDC"
+  },
+  {
+    "id": "01078",
+    "name": "Düsseldorf",
+    "lat": 51.296,
+    "lon": 6.7686,
+    "priority": 1.0,
+    "metar_icao": "EDDL"
+  },
+  {
+    "id": "01200",
+    "name": "Elpersbüttel",
+    "lat": 54.0691,
+    "lon": 9.0105,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01262",
+    "name": "München-Flughafen",
+    "lat": 48.3477,
+    "lon": 11.8134,
+    "priority": 1.0,
+    "metar_icao": "EDDM"
+  },
+  {
+    "id": "01270",
+    "name": "Erfurt-Weimar",
+    "lat": 50.9827,
+    "lon": 10.9613,
+    "priority": 2.0,
+    "metar_icao": "EDDE"
+  },
+  {
+    "id": "01303",
+    "name": "Essen-Bredeney",
+    "lat": 51.4041,
+    "lon": 6.9677,
+    "priority": 2.0,
+    "metar_icao": "EDLE"
+  },
+  {
+    "id": "01346",
+    "name": "Feldberg/Schwarzwald",
+    "lat": 47.8748,
+    "lon": 8.0038,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01357",
+    "name": "Fichtelberg/Oberfranken-Hüttstadl",
+    "lat": 49.9807,
+    "lon": 11.8376,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01358",
+    "name": "Fichtelberg",
+    "lat": 50.4283,
+    "lon": 12.9536,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01379",
+    "name": "Flensburg (Schäferhaus)",
+    "lat": 54.7737,
+    "lon": 9.3753,
+    "priority": 2.0,
+    "metar_icao": "EDXF"
+  },
+  {
+    "id": "01420",
+    "name": "Frankfurt/Main",
+    "lat": 50.0259,
+    "lon": 8.5213,
+    "priority": 1.0,
+    "metar_icao": "EDDF"
+  },
+  {
+    "id": "01443",
+    "name": "Freiburg",
+    "lat": 48.0232,
+    "lon": 7.8343,
+    "priority": 2.0,
+    "metar_icao": "EDTF"
+  },
+  {
+    "id": "01468",
+    "name": "Freudenstadt",
+    "lat": 48.4538,
+    "lon": 8.409,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01490",
+    "name": "Friedrichshafen",
+    "lat": 47.6454,
+    "lon": 9.4795,
+    "priority": 2.0,
+    "metar_icao": "EDNY"
+  },
+  {
+    "id": "01503",
+    "name": "Friesoythe-Altenoythe",
+    "lat": 53.0643,
+    "lon": 7.902,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01544",
+    "name": "Gardelegen",
+    "lat": 52.5129,
+    "lon": 11.3942,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01550",
+    "name": "Garmisch-Partenkirchen",
+    "lat": 47.483,
+    "lon": 11.0621,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01580",
+    "name": "Geisenheim",
+    "lat": 49.9859,
+    "lon": 7.9548000000000005,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01587",
+    "name": "Gelbelsee",
+    "lat": 48.9481,
+    "lon": 11.4289,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01605",
+    "name": "Genthin",
+    "lat": 52.3875,
+    "lon": 12.1602,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01612",
+    "name": "Gera-Leumnitz",
+    "lat": 50.8812,
+    "lon": 12.1289,
+    "priority": 3.0,
+    "metar_icao": "EDAG"
+  },
+  {
+    "id": "01639",
+    "name": "Gießen/Wettenberg",
+    "lat": 50.6017,
+    "lon": 8.6439,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01684",
+    "name": "Görlitz",
+    "lat": 51.1621,
+    "lon": 14.9506,
+    "priority": 3.0,
+    "metar_icao": "EDBG"
+  },
+  {
+    "id": "01691",
+    "name": "Göttingen",
+    "lat": 51.5002,
+    "lon": 9.9507,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01694",
+    "name": "Goldberg",
+    "lat": 53.6058,
+    "lon": 12.1034,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01757",
+    "name": "Greifswald",
+    "lat": 54.0967,
+    "lon": 13.4056,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01759",
+    "name": "Greifswalder Oie",
+    "lat": 54.2437,
+    "lon": 13.9104,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01766",
+    "name": "Münster/Osnabrück",
+    "lat": 52.1344,
+    "lon": 7.6969,
+    "priority": 1.0,
+    "metar_icao": "EDDG"
+  },
+  {
+    "id": "01803",
+    "name": "Sanitz-Groß Lüsewitz",
+    "lat": 54.0714,
+    "lon": 12.3238,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01832",
+    "name": "Großer Arber",
+    "lat": 49.1129,
+    "lon": 13.1338,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01869",
+    "name": "Grünow",
+    "lat": 53.3154,
+    "lon": 13.9339,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01886",
+    "name": "Günzburg",
+    "lat": 48.4878,
+    "lon": 10.2608,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01963",
+    "name": "Hallig Hooge",
+    "lat": 54.5742,
+    "lon": 8.5133,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01975",
+    "name": "Hamburg-Fuhlsbüttel",
+    "lat": 53.6332,
+    "lon": 9.9881,
+    "priority": 1.0,
+    "metar_icao": "EDDH"
+  },
+  {
+    "id": "01993",
+    "name": "Hameln",
+    "lat": 52.0848,
+    "lon": 9.3896,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02014",
+    "name": "Hannover",
+    "lat": 52.4644,
+    "lon": 9.6779,
+    "priority": 1.0,
+    "metar_icao": "EDDV"
+  },
+  {
+    "id": "02023",
+    "name": "Harburg",
+    "lat": 48.7918,
+    "lon": 10.7062,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02044",
+    "name": "Harzgerode",
+    "lat": 51.652,
+    "lon": 11.1366,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02115",
+    "name": "Helgoland",
+    "lat": 54.175,
+    "lon": 7.892,
+    "priority": 1.0,
+    "metar_icao": "EDXH"
+  },
+  {
+    "id": "02171",
+    "name": "Hersfeld, Bad",
+    "lat": 50.852,
+    "lon": 9.7377,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02252",
+    "name": "Bertsdorf-Hörnitz",
+    "lat": 50.8992,
+    "lon": 14.7456,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02261",
+    "name": "Hof",
+    "lat": 50.3123,
+    "lon": 11.876,
+    "priority": 2.0,
+    "metar_icao": "EDQM"
+  },
+  {
+    "id": "02290",
+    "name": "Hohenpeißenberg",
+    "lat": 47.8009,
+    "lon": 11.0108,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02349",
+    "name": "Hornisgrinde",
+    "lat": 48.6136,
+    "lon": 8.2033,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02377",
+    "name": "Kandern-Gupf",
+    "lat": 47.7001,
+    "lon": 7.5895,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02429",
+    "name": "Itzehoe",
+    "lat": 53.9897,
+    "lon": 9.5697,
+    "priority": 3.0,
+    "metar_icao": "EDHF"
+  },
+  {
+    "id": "02483",
+    "name": "Kahler Asten",
+    "lat": 51.1803,
+    "lon": 8.4891,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02485",
+    "name": "Kaisersbach-Cronhütte",
+    "lat": 48.917,
+    "lon": 9.687100000000001,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02497",
+    "name": "Kall-Sistig",
+    "lat": 50.5014,
+    "lon": 6.5264,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02559",
+    "name": "Kempten",
+    "lat": 47.7233,
+    "lon": 10.3348,
+    "priority": 2.0,
+    "metar_icao": "EDMK"
+  },
+  {
+    "id": "02564",
+    "name": "Kiel-Holtenau",
+    "lat": 54.3776,
+    "lon": 10.1424,
+    "priority": 1.0,
+    "metar_icao": "EDHK"
+  },
+  {
+    "id": "02573",
+    "name": "Waging am See-Schnöbling",
+    "lat": 47.9588,
+    "lon": 12.7717,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02597",
+    "name": "Kissingen, Bad",
+    "lat": 50.224,
+    "lon": 10.0792,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02601",
+    "name": "Kleiner Feldberg/Taunus",
+    "lat": 50.2218,
+    "lon": 8.4469,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02638",
+    "name": "Klippeneck",
+    "lat": 48.1054,
+    "lon": 8.7548,
+    "priority": 3.0,
+    "metar_icao": "EDSK"
+  },
+  {
+    "id": "02667",
+    "name": "Köln/Bonn",
+    "lat": 50.8645,
+    "lon": 7.1575,
+    "priority": 1.0,
+    "metar_icao": "EDDK"
+  },
+  {
+    "id": "02712",
+    "name": "Konstanz",
+    "lat": 47.6952,
+    "lon": 9.1307,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02794",
+    "name": "Kyritz",
+    "lat": 52.9362,
+    "lon": 12.4093,
+    "priority": 3.0,
+    "metar_icao": "EDUB"
+  },
+  {
+    "id": "02812",
+    "name": "Lahr",
+    "lat": 48.3647,
+    "lon": 7.828,
+    "priority": 2.0,
+    "metar_icao": "EDTL"
+  },
+  {
+    "id": "02856",
+    "name": "Niedergörsdorf-Langenlipsdorf",
+    "lat": 51.9173,
+    "lon": 13.0878,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02878",
+    "name": "Lauchstädt, Bad",
+    "lat": 51.3909,
+    "lon": 11.8786,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02897",
+    "name": "Lautertal-Hörgenau",
+    "lat": 50.580799999999996,
+    "lon": 9.2857,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02907",
+    "name": "Leck",
+    "lat": 54.7903,
+    "lon": 8.9514,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02925",
+    "name": "Leinefelde",
+    "lat": 51.3932,
+    "lon": 10.3123,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02928",
+    "name": "Leipzig-Holzhausen",
+    "lat": 51.3151,
+    "lon": 12.4462,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02932",
+    "name": "Leipzig/Halle",
+    "lat": 51.4347,
+    "lon": 12.2396,
+    "priority": 1.0,
+    "metar_icao": "EDDP"
+  },
+  {
+    "id": "02961",
+    "name": "Leuchtturm Kiel",
+    "lat": 54.4996,
+    "lon": 10.2737,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02985",
+    "name": "Lichtenhain-Mittelndorf",
+    "lat": 50.9383,
+    "lon": 14.2094,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03015",
+    "name": "Lindenberg",
+    "lat": 52.2085,
+    "lon": 14.118,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03028",
+    "name": "Lippspringe, Bad",
+    "lat": 51.7854,
+    "lon": 8.838799999999999,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03032",
+    "name": "List auf Sylt",
+    "lat": 55.011,
+    "lon": 8.4125,
+    "priority": 1.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03086",
+    "name": "Lübeck-Blankensee",
+    "lat": 53.8025,
+    "lon": 10.6989,
+    "priority": 1.0,
+    "metar_icao": "EDHL"
+  },
+  {
+    "id": "03093",
+    "name": "Lüchow",
+    "lat": 52.9724,
+    "lon": 11.1374,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03098",
+    "name": "Lüdenscheid",
+    "lat": 51.2452,
+    "lon": 7.6425,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03126",
+    "name": "Magdeburg",
+    "lat": 52.1029,
+    "lon": 11.582699999999999,
+    "priority": 2.0,
+    "metar_icao": "EDBM"
+  },
+  {
+    "id": "03158",
+    "name": "Manschnow",
+    "lat": 52.5468,
+    "lon": 14.5453,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03166",
+    "name": "Marienberg",
+    "lat": 50.6511,
+    "lon": 13.1469,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03167",
+    "name": "Marienberg, Bad",
+    "lat": 50.6621,
+    "lon": 7.9603,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03196",
+    "name": "Marnitz",
+    "lat": 53.3221,
+    "lon": 11.9324,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03231",
+    "name": "Meiningen",
+    "lat": 50.5611,
+    "lon": 10.3771,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03244",
+    "name": "Memmingen",
+    "lat": 47.9821,
+    "lon": 10.1384,
+    "priority": 1.0,
+    "metar_icao": "EDJA"
+  },
+  {
+    "id": "03268",
+    "name": "Meßstetten-Appental",
+    "lat": 48.1694,
+    "lon": 8.9433,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03287",
+    "name": "Michelstadt-Vielbrunn",
+    "lat": 49.7177,
+    "lon": 9.0997,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03321",
+    "name": "Mönchengladbach-Hilderath",
+    "lat": 51.1313,
+    "lon": 6.3608,
+    "priority": 2.0,
+    "metar_icao": "EDLN"
+  },
+  {
+    "id": "03362",
+    "name": "Mühlacker",
+    "lat": 48.9721,
+    "lon": 8.8735,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03376",
+    "name": "Müncheberg",
+    "lat": 52.5176,
+    "lon": 14.1232,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03379",
+    "name": "München-Stadt",
+    "lat": 48.1632,
+    "lon": 11.5429,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03402",
+    "name": "Münsingen-Apfelstetten",
+    "lat": 48.3851,
+    "lon": 9.4837,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03513",
+    "name": "Neuhaus am Rennweg",
+    "lat": 50.5003,
+    "lon": 11.1345,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03534",
+    "name": "Neumarkt-Höhenberg",
+    "lat": 49.2713,
+    "lon": 11.4881,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03631",
+    "name": "Norderney",
+    "lat": 53.7123,
+    "lon": 7.1519,
+    "priority": 1.0,
+    "metar_icao": "EDWY"
+  },
+  {
+    "id": "03651",
+    "name": "Northeim-Stöckheim",
+    "lat": 51.7521,
+    "lon": 9.945,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03660",
+    "name": "Nürburg-Barweiler",
+    "lat": 50.3602,
+    "lon": 6.8697,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03668",
+    "name": "Nürnberg",
+    "lat": 49.503,
+    "lon": 11.0549,
+    "priority": 1.0,
+    "metar_icao": "EDDN"
+  },
+  {
+    "id": "03730",
+    "name": "Oberstdorf",
+    "lat": 47.3984,
+    "lon": 10.2759,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03761",
+    "name": "Öhringen",
+    "lat": 49.207,
+    "lon": 9.5176,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03811",
+    "name": "Oschatz",
+    "lat": 51.296,
+    "lon": 13.0928,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03821",
+    "name": "Osterfeld",
+    "lat": 51.0872,
+    "lon": 11.9293,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03897",
+    "name": "Pelzerhaken",
+    "lat": 54.0893,
+    "lon": 10.8773,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03905",
+    "name": "Perl-Sinz-Renglischberg",
+    "lat": 49.5214,
+    "lon": 6.4475999999999996,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03925",
+    "name": "Pforzheim-Ispringen",
+    "lat": 48.932900000000004,
+    "lon": 8.6973,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03946",
+    "name": "Plauen",
+    "lat": 50.4818,
+    "lon": 12.13,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03987",
+    "name": "Potsdam",
+    "lat": 52.3812,
+    "lon": 13.0622,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04024",
+    "name": "Putbus",
+    "lat": 54.3643,
+    "lon": 13.4771,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04032",
+    "name": "Quedlinburg",
+    "lat": 51.7953,
+    "lon": 11.132,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04036",
+    "name": "Querfurt-Mühle Lodersleben",
+    "lat": 51.3895,
+    "lon": 11.5412,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04039",
+    "name": "Quickborn",
+    "lat": 53.7331,
+    "lon": 9.8776,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04094",
+    "name": "Weingarten, Kr. Ravensburg",
+    "lat": 47.8062,
+    "lon": 9.6206,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04104",
+    "name": "Regensburg",
+    "lat": 49.0425,
+    "lon": 12.1019,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04177",
+    "name": "Rheinstetten",
+    "lat": 48.9726,
+    "lon": 8.3301,
+    "priority": 3.0,
+    "metar_icao": "EDTK"
+  },
+  {
+    "id": "04271",
+    "name": "Rostock-Warnemünde",
+    "lat": 54.1803,
+    "lon": 12.0808,
+    "priority": 1.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04279",
+    "name": "Roth bei Prüm",
+    "lat": 50.3046,
+    "lon": 6.3863,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04280",
+    "name": "Roth",
+    "lat": 49.2162,
+    "lon": 11.1035,
+    "priority": 3.0,
+    "metar_icao": "ETHR"
+  },
+  {
+    "id": "04336",
+    "name": "Saarbrücken-Ensheim",
+    "lat": 49.2128,
+    "lon": 7.1077,
+    "priority": 1.0,
+    "metar_icao": "EDDR"
+  },
+  {
+    "id": "04371",
+    "name": "Salzuflen, Bad",
+    "lat": 52.1042,
+    "lon": 8.7521,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04393",
+    "name": "Sankt Peter-Ording",
+    "lat": 54.3279,
+    "lon": 8.6031,
+    "priority": 2.0,
+    "metar_icao": "EDXO"
+  },
+  {
+    "id": "04464",
+    "name": "Schleiz",
+    "lat": 50.5679,
+    "lon": 11.8041,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04466",
+    "name": "Schleswig",
+    "lat": 54.5275,
+    "lon": 9.5487,
+    "priority": 2.0,
+    "metar_icao": "ETNS"
+  },
+  {
+    "id": "04501",
+    "name": "Schmücke",
+    "lat": 50.6545,
+    "lon": 10.7696,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04625",
+    "name": "Schwerin",
+    "lat": 53.6424,
+    "lon": 11.3871,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04642",
+    "name": "Seehausen",
+    "lat": 52.8911,
+    "lon": 11.7297,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04745",
+    "name": "Soltau",
+    "lat": 52.9604,
+    "lon": 9.793,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04880",
+    "name": "Stimpfach-Weipertshofen",
+    "lat": 49.0878,
+    "lon": 10.124,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04887",
+    "name": "Stötten",
+    "lat": 48.6656,
+    "lon": 9.8648,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04911",
+    "name": "Straubing",
+    "lat": 48.8275,
+    "lon": 12.5597,
+    "priority": 3.0,
+    "metar_icao": "EDMS"
+  },
+  {
+    "id": "04919",
+    "name": "Strucklahnungshörn",
+    "lat": 54.4965,
+    "lon": 8.8069,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04928",
+    "name": "Stuttgart (Schnarrenberg)",
+    "lat": 48.8281,
+    "lon": 9.2,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04931",
+    "name": "Stuttgart-Echterdingen",
+    "lat": 48.6883,
+    "lon": 9.2235,
+    "priority": 1.0,
+    "metar_icao": "EDDS"
+  },
+  {
+    "id": "04947",
+    "name": "Süpplingen",
+    "lat": 52.231700000000004,
+    "lon": 10.92,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05029",
+    "name": "Tholey",
+    "lat": 49.4737,
+    "lon": 7.0385,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05078",
+    "name": "Travemünde",
+    "lat": 53.9619,
+    "lon": 10.8892,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05100",
+    "name": "Trier-Petrisberg",
+    "lat": 49.7479,
+    "lon": 6.6583,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05109",
+    "name": "Trollenhagen",
+    "lat": 53.5998,
+    "lon": 13.3039,
+    "priority": 2.0,
+    "metar_icao": "ETNU"
+  },
+  {
+    "id": "05142",
+    "name": "Ueckermünde",
+    "lat": 53.7445,
+    "lon": 14.0698,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05158",
+    "name": "Ummendorf",
+    "lat": 52.1601,
+    "lon": 11.1759,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05319",
+    "name": "Waldsee, Bad-Reute",
+    "lat": 47.9167,
+    "lon": 9.7076,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05327",
+    "name": "Walldürn",
+    "lat": 49.5789,
+    "lon": 9.3974,
+    "priority": 4.0,
+    "metar_icao": "EDEW"
+  },
+  {
+    "id": "05347",
+    "name": "Warburg",
+    "lat": 51.5039,
+    "lon": 9.1118,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05349",
+    "name": "Waren (Müritz)",
+    "lat": 53.5196,
+    "lon": 12.6654,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05371",
+    "name": "Wasserkuppe",
+    "lat": 50.4973,
+    "lon": 9.9427,
+    "priority": 2.0,
+    "metar_icao": "EDER"
+  },
+  {
+    "id": "05397",
+    "name": "Weiden",
+    "lat": 49.6662,
+    "lon": 12.1844,
+    "priority": 3.0,
+    "metar_icao": "EDQW"
+  },
+  {
+    "id": "05404",
+    "name": "Weihenstephan-Dürnast",
+    "lat": 48.4024,
+    "lon": 11.6946,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05412",
+    "name": "Weilheim-Bierbronnen",
+    "lat": 47.6802,
+    "lon": 8.1964,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05426",
+    "name": "Weinbiet",
+    "lat": 49.3758,
+    "lon": 8.1212,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05440",
+    "name": "Weißenburg-Emetzheim",
+    "lat": 49.0115,
+    "lon": 10.9308,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05480",
+    "name": "Werl",
+    "lat": 51.5763,
+    "lon": 7.8879,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05490",
+    "name": "Wernigerode",
+    "lat": 51.8454,
+    "lon": 10.7686,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05516",
+    "name": "Fehmarn",
+    "lat": 54.5283,
+    "lon": 11.0606,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05538",
+    "name": "Wielenbach (Demollstr.)",
+    "lat": 47.8827,
+    "lon": 11.1576,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00044",
+    "name": "Großenkneten",
+    "lat": 52.9336,
+    "lon": 8.237,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00125",
+    "name": "Altenstadt",
+    "lat": 47.8342,
+    "lon": 10.8667,
+    "priority": 2.0,
+    "metar_icao": "ETHA"
+  },
+  {
+    "id": "00222",
+    "name": "Aue",
+    "lat": 50.5908,
+    "lon": 12.7139,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00257",
+    "name": "Baden-Baden-Geroldsau",
+    "lat": 48.727,
+    "lon": 8.2457,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00259",
+    "name": "Müllheim",
+    "lat": 47.8064,
+    "lon": 7.6387,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00320",
+    "name": "Heinersreuth-Vollhof",
+    "lat": 49.9666,
+    "lon": 11.5198,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00330",
+    "name": "Oberzent-Beerfelden",
+    "lat": 49.5617,
+    "lon": 8.9673,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00368",
+    "name": "Bergen",
+    "lat": 52.8152,
+    "lon": 9.9248,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00400",
+    "name": "Berlin-Buch",
+    "lat": 52.631,
+    "lon": 13.5021,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00403",
+    "name": "Berlin-Dahlem (FU)",
+    "lat": 52.4537,
+    "lon": 13.3017,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00554",
+    "name": "Bocholt-Liedern (Wasserwerk)",
+    "lat": 51.8293,
+    "lon": 6.5365,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00766",
+    "name": "Büchel-Alflen",
+    "lat": 50.1745,
+    "lon": 7.0595,
+    "priority": 2.0,
+    "metar_icao": "ETSB"
+  },
+  {
+    "id": "00769",
+    "name": "Bückeburg",
+    "lat": 52.2817,
+    "lon": 9.089,
+    "priority": 2.0,
+    "metar_icao": "ETHB"
+  },
+  {
+    "id": "00848",
+    "name": "Celle (Stadt)",
+    "lat": 52.6146,
+    "lon": 10.0726,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00850",
+    "name": "Celle",
+    "lat": 52.5959,
+    "lon": 10.0296,
+    "priority": 2.0,
+    "metar_icao": "ETHC"
+  },
+  {
+    "id": "01197",
+    "name": "Ellwangen-Rindelbach",
+    "lat": 48.9895,
+    "lon": 10.1312,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01279",
+    "name": "Möhrendorf-Kleinseebach",
+    "lat": 49.6497,
+    "lon": 11.0075,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01297",
+    "name": "Eschwege",
+    "lat": 51.2041,
+    "lon": 10.0138,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01339",
+    "name": "Faßberg",
+    "lat": 52.9157,
+    "lon": 10.1885,
+    "priority": 2.0,
+    "metar_icao": "ETHS"
+  },
+  {
+    "id": "01504",
+    "name": "Fritzlar/Eder",
+    "lat": 51.119,
+    "lon": 9.2799,
+    "priority": 2.0,
+    "metar_icao": "ETHF"
+  },
+  {
+    "id": "01526",
+    "name": "Fulda-Horas",
+    "lat": 50.5668,
+    "lon": 9.6532,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01572",
+    "name": "Geilenkirchen-Neutevern",
+    "lat": 50.9593,
+    "lon": 6.0392,
+    "priority": 2.0,
+    "metar_icao": "ETNG"
+  },
+  {
+    "id": "01666",
+    "name": "Glücksburg-Meierwik",
+    "lat": 54.8273,
+    "lon": 9.5058,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "01689",
+    "name": "Gößweinstein",
+    "lat": 49.7656,
+    "lon": 11.3062,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02201",
+    "name": "Hiddensee-Vitte",
+    "lat": 54.575,
+    "lon": 13.1044,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02303",
+    "name": "Hohn",
+    "lat": 54.3162,
+    "lon": 9.5385,
+    "priority": 2.0,
+    "metar_icao": "ETNH"
+  },
+  {
+    "id": "02315",
+    "name": "Holzdorf-Bernsdorf",
+    "lat": 51.7657,
+    "lon": 13.1666,
+    "priority": 2.0,
+    "metar_icao": "ETSH"
+  },
+  {
+    "id": "02331",
+    "name": "Homburg/Saar",
+    "lat": 49.3278,
+    "lon": 7.3533,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02385",
+    "name": "Idar-Oberstein",
+    "lat": 49.6927,
+    "lon": 7.3263,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02410",
+    "name": "Ingolstadt-Manching",
+    "lat": 48.7111,
+    "lon": 11.5363,
+    "priority": 2.0,
+    "metar_icao": "ETSI"
+  },
+  {
+    "id": "02437",
+    "name": "Schleswig-Jagel",
+    "lat": 54.457,
+    "lon": 9.5203,
+    "priority": 2.0,
+    "metar_icao": "ETNS"
+  },
+  {
+    "id": "02444",
+    "name": "Jena (Sternwarte)",
+    "lat": 50.9251,
+    "lon": 11.583,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02465",
+    "name": "Jork-Moorende",
+    "lat": 53.5083,
+    "lon": 9.7376,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02486",
+    "name": "Kaiserslautern",
+    "lat": 49.4262,
+    "lon": 7.7557,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02773",
+    "name": "Kümmersbruck",
+    "lat": 49.4283,
+    "lon": 11.9016,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "02796",
+    "name": "Laage-Kronskamp",
+    "lat": 53.9156,
+    "lon": 12.279,
+    "priority": 2.0,
+    "metar_icao": "ETNL"
+  },
+  {
+    "id": "02886",
+    "name": "Laupheim",
+    "lat": 48.2175,
+    "lon": 9.9097,
+    "priority": 2.0,
+    "metar_icao": "ETHL"
+  },
+  {
+    "id": "02905",
+    "name": "Lechfeld",
+    "lat": 48.1849,
+    "lon": 10.8507,
+    "priority": 2.0,
+    "metar_icao": "ETSL"
+  },
+  {
+    "id": "03137",
+    "name": "Mainz-Lerchenberg (ZDF)",
+    "lat": 49.9658,
+    "lon": 8.2049,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03254",
+    "name": "Meppen",
+    "lat": 52.7155,
+    "lon": 7.3176,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03442",
+    "name": "Nauheim, Bad",
+    "lat": 50.3574,
+    "lon": 8.7506,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "03484",
+    "name": "Neuburg an der Donau",
+    "lat": 48.7085,
+    "lon": 11.2147,
+    "priority": 2.0,
+    "metar_icao": "ETSN"
+  },
+  {
+    "id": "03603",
+    "name": "Niederstetten",
+    "lat": 49.3895,
+    "lon": 9.9666,
+    "priority": 2.0,
+    "metar_icao": "ETHN"
+  },
+  {
+    "id": "03623",
+    "name": "Nörvenich-Niederbolheim",
+    "lat": 50.8294,
+    "lon": 6.6601,
+    "priority": 2.0,
+    "metar_icao": "ETNN"
+  },
+  {
+    "id": "03639",
+    "name": "Nordholz-Wanhöden",
+    "lat": 53.7647,
+    "lon": 8.6584,
+    "priority": 2.0,
+    "metar_icao": "ETMN"
+  },
+  {
+    "id": "03739",
+    "name": "Oberviechtach",
+    "lat": 49.4521,
+    "lon": 12.4365,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04175",
+    "name": "Rheinfelden",
+    "lat": 47.559,
+    "lon": 7.7721,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04275",
+    "name": "Rotenburg (Wümme)",
+    "lat": 53.1289,
+    "lon": 9.3398,
+    "priority": 3.0,
+    "metar_icao": "EDXQ"
+  },
+  {
+    "id": "04288",
+    "name": "Rothenfelde, Bad",
+    "lat": 52.1038,
+    "lon": 8.1809,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04445",
+    "name": "Wernigerode-Schierke",
+    "lat": 51.7659,
+    "lon": 10.6533,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04480",
+    "name": "Schlüchtern-Herolz",
+    "lat": 50.3447,
+    "lon": 9.5533,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "04748",
+    "name": "Sondershausen",
+    "lat": 51.3691,
+    "lon": 10.88,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05009",
+    "name": "Teterow",
+    "lat": 53.761,
+    "lon": 12.5574,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05059",
+    "name": "Todtmoos",
+    "lat": 47.7279,
+    "lon": 7.9988,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05546",
+    "name": "Wiesenburg",
+    "lat": 52.1206,
+    "lon": 12.4586,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05629",
+    "name": "Wittenberg",
+    "lat": 51.8891,
+    "lon": 12.6446,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05640",
+    "name": "Wittmundhafen",
+    "lat": 53.5444,
+    "lon": 7.6625,
+    "priority": 2.0,
+    "metar_icao": "ETNT"
+  },
+  {
+    "id": "05705",
+    "name": "Würzburg",
+    "lat": 49.7704,
+    "lon": 9.9576,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05715",
+    "name": "Wunstorf",
+    "lat": 52.4626,
+    "lon": 9.4245,
+    "priority": 2.0,
+    "metar_icao": "ETNW"
+  },
+  {
+    "id": "05732",
+    "name": "Wrixum/Föhr",
+    "lat": 54.6928,
+    "lon": 8.5271,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05745",
+    "name": "Zehdenick",
+    "lat": 52.9664,
+    "lon": 13.3268,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05779",
+    "name": "Zinnwald-Georgenfeld",
+    "lat": 50.7313,
+    "lon": 13.7516,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05792",
+    "name": "Zugspitze",
+    "lat": 47.421,
+    "lon": 10.9848,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05797",
+    "name": "Lichtentanne",
+    "lat": 50.6879,
+    "lon": 12.4329,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05800",
+    "name": "Zwiesel",
+    "lat": 49.028,
+    "lon": 13.2385,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05825",
+    "name": "Nauen-Berge",
+    "lat": 52.6198,
+    "lon": 12.7867,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05839",
+    "name": "Emden",
+    "lat": 53.3881,
+    "lon": 7.2287,
+    "priority": 3.0,
+    "metar_icao": "EDWE"
+  },
+  {
+    "id": "05851",
+    "name": "Frankenberg-Geismar",
+    "lat": 51.0806,
+    "lon": 8.8769,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05856",
+    "name": "Fürstenzell",
+    "lat": 48.5451,
+    "lon": 13.3532,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05871",
+    "name": "Hahn",
+    "lat": 49.9463,
+    "lon": 7.2645,
+    "priority": 2.0,
+    "metar_icao": "EDFH"
+  },
+  {
+    "id": "05877",
+    "name": "Putlos",
+    "lat": 54.316,
+    "lon": 10.8002,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "05906",
+    "name": "Mannheim",
+    "lat": 49.5063,
+    "lon": 8.5584,
+    "priority": 2.0,
+    "metar_icao": "EDFM"
+  },
+  {
+    "id": "05930",
+    "name": "Schönhagen (Ostseebad)",
+    "lat": 54.641,
+    "lon": 10.0238,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06091",
+    "name": "Spiekeroog (SWN)",
+    "lat": 53.7674,
+    "lon": 7.6721,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06096",
+    "name": "Altmühlsee",
+    "lat": 49.1423,
+    "lon": 10.7301,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06097",
+    "name": "Darßer Ort (SWN)",
+    "lat": 54.4738,
+    "lon": 12.5014,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06099",
+    "name": "Gailingen",
+    "lat": 47.702,
+    "lon": 8.7318,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06101",
+    "name": "Bastorf-Kägsdorf (SWN)",
+    "lat": 54.1323,
+    "lon": 11.6719,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06102",
+    "name": "Lindau (SWN)",
+    "lat": 47.5396,
+    "lon": 9.6843,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06103",
+    "name": "Mittenwald/Obb.",
+    "lat": 47.4287,
+    "lon": 11.2616,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06106",
+    "name": "Rechlin",
+    "lat": 53.3311,
+    "lon": 12.7149,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06107",
+    "name": "Sipplingen (SWN)",
+    "lat": 47.8076,
+    "lon": 9.1035,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06108",
+    "name": "Ruthenstrom",
+    "lat": 53.7197,
+    "lon": 9.4192,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06159",
+    "name": "Dörpen",
+    "lat": 52.9542,
+    "lon": 7.3197,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06163",
+    "name": "Dörnick",
+    "lat": 54.1654,
+    "lon": 10.3519,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06197",
+    "name": "Lügde-Paenbruch",
+    "lat": 51.8664,
+    "lon": 9.271,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06211",
+    "name": "Vogtareuth (Kläranlage)",
+    "lat": 47.955,
+    "lon": 12.1735,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06253",
+    "name": "Brandenburg/Havel",
+    "lat": 52.4228,
+    "lon": 12.5667,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06314",
+    "name": "Nossen",
+    "lat": 51.0507,
+    "lon": 13.3003,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "06344",
+    "name": "Runkel-Ennerich",
+    "lat": 50.394,
+    "lon": 8.1423,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07341",
+    "name": "Offenbach-Wetterpark",
+    "lat": 50.09,
+    "lon": 8.7862,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07351",
+    "name": "Feldberg/Mecklenburg",
+    "lat": 53.3176,
+    "lon": 13.4175,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07368",
+    "name": "Eisenach",
+    "lat": 51.0007,
+    "lon": 10.3621,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07369",
+    "name": "Feuchtwangen-Heilbronn",
+    "lat": 49.1623,
+    "lon": 10.3661,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07370",
+    "name": "Waldmünchen",
+    "lat": 49.391,
+    "lon": 12.6838,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07374",
+    "name": "Ahaus",
+    "lat": 52.0813,
+    "lon": 6.9409,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07389",
+    "name": "Heckelberg-Brunow",
+    "lat": 52.7461,
+    "lon": 13.8427,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07391",
+    "name": "Oberzent-Beerfelden-Vogelherd",
+    "lat": 49.5561,
+    "lon": 8.9669,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07392",
+    "name": "Aubstadt",
+    "lat": 50.3332,
+    "lon": 10.4487,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07393",
+    "name": "Hoyerswerda",
+    "lat": 51.4492,
+    "lon": 14.2533,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07394",
+    "name": "Wunsiedel-Schönbrunn",
+    "lat": 50.0315,
+    "lon": 11.9745,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07395",
+    "name": "Gottfrieding",
+    "lat": 48.6595,
+    "lon": 12.5388,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07396",
+    "name": "Hoherodskopf/Vogelsberg",
+    "lat": 50.5084,
+    "lon": 9.2246,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07403",
+    "name": "Leutkirch-Herlazhofen",
+    "lat": 47.7955,
+    "lon": 10.0325,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07410",
+    "name": "Neu-Ulrichstein",
+    "lat": 50.7513,
+    "lon": 9.0224,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07412",
+    "name": "Neuhütten/Spessart",
+    "lat": 50.0083,
+    "lon": 9.4238,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "07416",
+    "name": "Birkelbach",
+    "lat": 51.0112,
+    "lon": 8.2733,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "10510",
+    "name": "Winterbach/Remstal",
+    "lat": 48.8059,
+    "lon": 9.5046,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13674",
+    "name": "Waibstadt",
+    "lat": 49.2943,
+    "lon": 8.9053,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13676",
+    "name": "Langquaid-Oberschneidhart",
+    "lat": 48.8608,
+    "lon": 12.0323,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13693",
+    "name": "Gütersloh/Ems",
+    "lat": 51.9258,
+    "lon": 8.3111,
+    "priority": 2.0,
+    "metar_icao": "ETUO"
+  },
+  {
+    "id": "13701",
+    "name": "Eschwege-Eltmannshausen",
+    "lat": 51.1945,
+    "lon": 9.9885,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13711",
+    "name": "Krölpa-Rockendorf",
+    "lat": 50.682,
+    "lon": 11.515,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13900",
+    "name": "Soden,Bad-Salmünster (Kläranlage)",
+    "lat": 50.2688,
+    "lon": 9.358,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13901",
+    "name": "Haltern (Wasserwerk)",
+    "lat": 51.7343,
+    "lon": 7.1998,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13932",
+    "name": "Rotthalmünster (Landwirtschaftsamt",
+    "lat": 48.3617,
+    "lon": 13.1938,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13952",
+    "name": "Arnsberg-Müschede",
+    "lat": 51.4089,
+    "lon": 8.0094,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "13965",
+    "name": "Balingen-Bronnhaupten",
+    "lat": 48.2639,
+    "lon": 8.8134,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15000",
+    "name": "Aachen-Orsbach",
+    "lat": 50.7983,
+    "lon": 6.0244,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15044",
+    "name": "Neuwied-Feldkirchen-Hüllenberg",
+    "lat": 50.4517,
+    "lon": 7.4058,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15120",
+    "name": "Haaren",
+    "lat": 51.5572,
+    "lon": 8.7019,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15122",
+    "name": "Ergersheim-Neuherberg",
+    "lat": 49.52,
+    "lon": 10.2854,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15189",
+    "name": "Sukow-Levitzow",
+    "lat": 53.8281,
+    "lon": 12.5936,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15190",
+    "name": "Xanten (Wasserwerk)",
+    "lat": 51.6802,
+    "lon": 6.4349,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15194",
+    "name": "Börßum-Achim",
+    "lat": 52.0688,
+    "lon": 10.6245,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15200",
+    "name": "Wuppertal",
+    "lat": 51.2531,
+    "lon": 7.2157,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15207",
+    "name": "Schauenburg-Elgershausen",
+    "lat": 51.2835,
+    "lon": 9.359,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15214",
+    "name": "Halblech-Bayerniederhofen",
+    "lat": 47.6248,
+    "lon": 10.8075,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15444",
+    "name": "Ulm-Mähringen",
+    "lat": 48.4418,
+    "lon": 9.9216,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15520",
+    "name": "Frasdorf-Greimelberg",
+    "lat": 47.819,
+    "lon": 12.2956,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15547",
+    "name": "Heilbronn/Neckar",
+    "lat": 49.1259,
+    "lon": 9.1428,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "00259",
+    "station_name": "Karlsruhe/Baden-Baden",
+    "state": "BW",
+    "lat": 48.7794,
+    "lon": 8.0805,
+    "altitude": 124,
+    "metar_icao": "EDSB"
+  },
+  {
+    "id": "03857",
+    "station_name": "Paderborn/Lippstadt",
+    "state": "NW",
+    "lat": 51.6141,
+    "lon": 8.6162,
+    "altitude": 213,
+    "metar_icao": "EDLP"
+  },
+  {
+    "id": "02629",
+    "station_name": "Weeze/Niederrhein",
+    "state": "NW",
+    "lat": 51.6024,
+    "lon": 6.1422,
+    "altitude": 32,
+    "metar_icao": "EDLV"
+  },
+  {
+    "id": "00259",
+    "name": "Müllheim",
+    "lat": 47.8086,
+    "lon": 7.6311,
+    "altitude": 273,
+    "metar_icao": null,
+    "priority": 3.0
+  },
+  {
+    "id": "15555",
+    "name": "Kaufbeuren-Oberbeuren",
+    "lat": 47.8761,
+    "lon": 10.5849,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15801",
+    "name": "Hinterschmiding-Sonndorf",
+    "lat": 48.8257,
+    "lon": 13.5922,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15813",
+    "name": "Lingen-Baccum",
+    "lat": 52.5126,
+    "lon": 7.4131,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15911",
+    "name": "Großpostwitz-Denkwitz",
+    "lat": 51.1347,
+    "lon": 14.4344,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15976",
+    "name": "Ober-Olm/Bellem",
+    "lat": 49.9529,
+    "lon": 8.2107,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "15978",
+    "name": "Sembach",
+    "lat": 49.5044,
+    "lon": 7.8618,
+    "priority": 2.0,
+    "metar_icao": null
+  },
+  {
+    "id": "19171",
+    "name": "Hasenkrug-Hardebek",
+    "lat": 54.0039,
+    "lon": 9.8555,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "19207",
+    "name": "Gülzow-Prüzen",
+    "lat": 53.8178,
+    "lon": 12.0645,
+    "priority": 4.0,
+    "metar_icao": null
+  },
+  {
+    "id": "19243",
+    "name": "Föhr",
+    "lat": 54.6831,
+    "lon": 8.4721,
+    "priority": 3.0,
+    "metar_icao": "EDWG"
+  },
+  {
+    "id": "19856",
+    "name": "Schönau am Königssee",
+    "lat": 47.6134,
+    "lon": 12.9819,
+    "priority": 3.0,
+    "metar_icao": null
+  },
+  {
+    "id": "19912",
+    "name": "Bichl",
+    "lat": 47.7147,
+    "lon": 11.4166,
+    "priority": 4.0,
+    "metar_icao": null
+  }
 ]

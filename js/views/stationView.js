@@ -6,6 +6,7 @@ export const stationView = (() => {
     let map = null;
     let layerGroup = null;
     let opts = {};
+    const stationMarkerMap = new Map();
 
     function createIcon(station) {
         const hasData = station.windData && typeof station.windData.windSpeed === 'number';
@@ -34,20 +35,44 @@ export const stationView = (() => {
     function renderStations(stations = []) {
         if (!map) return;
         if (!layerGroup) layerGroup = L.layerGroup().addTo(map);
-        layerGroup.clearLayers();
 
         if (!weatherUi.showWindMeasurements) {
+            stationMarkerMap.forEach((marker) => {
+                layerGroup.removeLayer(marker);
+            });
+            stationMarkerMap.clear();
             return;
         }
 
+        const nextStationKeys = new Set();
+
         stations.forEach(station => {
-            const marker = L.marker([station.lat, station.lon], { icon: createIcon(station) });
+            const stationKey = station.id ?? station.station_id ?? `${station.lat}-${station.lon}`;
+            nextStationKeys.add(stationKey);
+
+            const existingMarker = stationMarkerMap.get(stationKey);
+            const marker = existingMarker || L.marker([station.lat, station.lon], { icon: createIcon(station) });
+
+            marker.setIcon(createIcon(station));
+            marker.setLatLng([station.lat, station.lon]);
+            marker.off('click');
             marker.on('click', () => {
                 if (typeof opts.onMarkerClick === 'function') {
                     opts.onMarkerClick(station);
                 }
             });
-            layerGroup.addLayer(marker);
+
+            if (!existingMarker) {
+                stationMarkerMap.set(stationKey, marker);
+                layerGroup.addLayer(marker);
+            }
+        });
+
+        stationMarkerMap.forEach((marker, stationKey) => {
+            if (!nextStationKeys.has(stationKey)) {
+                layerGroup.removeLayer(marker);
+                stationMarkerMap.delete(stationKey);
+            }
         });
     }
 
@@ -66,18 +91,6 @@ export const stationView = (() => {
         if (weatherModel.visibleStations && weatherModel.visibleStations.length) {
             renderStations(weatherModel.visibleStations);
         }
-
-        return {
-            destroy() {
-                weatherModel.removeEventListener('model:visible-stations-updated', handleVisibleStations);
-                weatherUi.removeEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations);
-                if (layerGroup) {
-                    layerGroup.clearLayers();
-                    map.removeLayer(layerGroup);
-                    layerGroup = null;
-                }
-            }
-        };
     }
 
     return { init };

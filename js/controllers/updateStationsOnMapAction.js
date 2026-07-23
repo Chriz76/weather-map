@@ -34,22 +34,36 @@ export async function updateStationsOnMapAction(bounds = null) {
 
     let topStations = [];
 
-    if (bounds) {
+    if (bounds && typeof bounds.contains === 'function' && typeof bounds.getCenter === 'function') {
         const stationsInView = allStations.filter(station => {
-            const latLng = L.latLng(station.lat, station.lon);
-            return bounds.contains(latLng);
+            const lat = Number(station?.lat);
+            const lon = Number(station?.lon);
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                return false;
+            }
+
+            try {
+                return bounds.contains(L.latLng(lat, lon));
+            } catch (error) {
+                logger.warn('Skipping station with invalid map bounds payload:', station?.id, error);
+                return false;
+            }
         });
 
         // Sortiere nach Priorität; bei gleicher Priorität zuerst Stationen
         // die näher am Kartenmittelpunkt liegen.
         const center = bounds.getCenter();
-        stationsInView.sort((a, b) => {
-            const pr = (a.priority || 0) - (b.priority || 0);
-            if (pr !== 0) return pr;
-            const da = center.distanceTo(L.latLng(a.lat, a.lon));
-            const db = center.distanceTo(L.latLng(b.lat, b.lon));
-            return da - db;
-        });
+        if (center && typeof center.distanceTo === 'function') {
+            stationsInView.sort((a, b) => {
+                const pr = (a.priority || 0) - (b.priority || 0);
+                if (pr !== 0) return pr;
+
+                const da = center.distanceTo(L.latLng(Number(a.lat), Number(a.lon)));
+                const db = center.distanceTo(L.latLng(Number(b.lat), Number(b.lon)));
+                return da - db;
+            });
+        }
         topStations = stationsInView.slice(0, 8);
     } else {
         // No bounds -> refresh previously visible stations if model has them
@@ -61,23 +75,12 @@ export async function updateStationsOnMapAction(bounds = null) {
         }
     }
 
-    // Initially show stations without wind data; the service provides caching
-    const stationsWithInitialData = topStations.map(station => ({
-        ...station,
-        windData: null
-    }));
-
-    weatherModel.setVisibleStations(stationsWithInitialData);
-
-    let needsModelUpdate = false;
-
     const fetched = {};
     const fetchPromises = topStations.map(async (station) => {
         try {
             const data = await fetchWindDataForStation(station.id);
             if (data) {
                 fetched[station.id] = data;
-                needsModelUpdate = true;
             }
         } catch (err) {
             logger.error('Error fetching wind for station', station.id, err);
@@ -86,11 +89,10 @@ export async function updateStationsOnMapAction(bounds = null) {
 
     await Promise.all(fetchPromises);
 
-    if (needsModelUpdate) {
-        const stationsWithFreshData = topStations.map(station => ({
-            ...station,
-            windData: fetched[station.id] || null
-        }));
-        weatherModel.setVisibleStations(stationsWithFreshData);
-    }
+    const stationsWithFinalData = topStations.map(station => ({
+        ...station,
+        windData: fetched[station.id] || null
+    }));
+
+    weatherModel.setVisibleStations(stationsWithFinalData);
 }
