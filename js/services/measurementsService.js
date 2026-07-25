@@ -2,14 +2,16 @@
 
 import { logger } from '../utils/logger.js';
 
+const CACHE_BUSTER = `cb=${Date.now()}`;
+
 // In-memory cache and in-flight deduplication for station wind data
 const windCache = {}; // { [stationId]: { data, ts } }
 const inflight = {};  // { [stationId]: Promise }
 const DEFAULT_TTL = 4 * 60 * 1000; // 4 minutes
 
 async function fetchFromBrightSky(dwdStationId) {
-    const url = `https://api.brightsky.dev/current_weather?dwd_station_id=${dwdStationId}`;
-    const response = await fetch(url);
+    const url = `https://api.brightsky.dev/current_weather?dwd_station_id=${dwdStationId}&${CACHE_BUSTER}`;
+    const response = await fetch(url, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`API-Fehler: ${response.status}`);
     const data = await response.json();
     const current = data.weather;
