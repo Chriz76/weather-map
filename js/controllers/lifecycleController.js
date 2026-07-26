@@ -3,7 +3,7 @@ import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
 import { weatherModel } from '../models/weatherDomainModel.js';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError } from './actions.js';
-import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
+import { updateStationsOnMapAction, updateSpecialDataOnMapAction } from './updateStationsOnMapAction.js';
 import { logger } from '../utils/logger.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
@@ -13,13 +13,13 @@ let isInitialized = false;
 /** @type {number|null} */
 let pollTimer = null;
 
-function startPolling() {
+function startPolling(map) {
     if (pollTimer !== null) clearInterval(pollTimer);
     logger.info('⏰ Polling started.');
     pollTimer = setInterval(async () => {
         logger.debug('⏰ Regular background poll triggered.');
         await safeSyncApp();
-        await updateStationsOnMap();
+        await updateStationsOnMap(map);
     }, POLL_INTERVAL_MS);
 }
 
@@ -90,36 +90,42 @@ async function safeSyncApp(isInitial = false) {
 }
 
 // Hilfsfunktion für die Reaktivierungs-Events
-async function triggerSyncAndPoll() {
-    startPolling();
+async function triggerSyncAndPoll(map) {
+    startPolling(map);
     await safeSyncApp();
-    await updateStationsOnMap();
+    await updateStationsOnMap(map);
 }
 
-async function handleAppVisibilitySync() {
+async function handleAppVisibilitySync(map) {
     logger.debug(`📄 VisibilityState changed: ${document.visibilityState}`);
     if (document.visibilityState === 'visible') {
         if (!isInitialized && isSyncing) {
             logger.debug('Event ignored: an initial sync is already running.');
             return;
         }
-        await triggerSyncAndPoll();
+        await triggerSyncAndPoll(map);
     } else {
         stopPolling();
     }
 }
 
-async function updateStationsOnMap() {
+async function updateStationsOnMap(map) {
     try {
         await updateStationsOnMapAction();
     } catch (e) {
         logger.error('Error refreshing station wind values during visibility resume:', e);
-    } 
+    }
+
+    try {
+        await updateSpecialDataOnMapAction(map);
+    } catch (e) {
+        logger.error('Error refreshing special data badge during visibility resume:', e);
+    }
 }
 
-function registerLifecycleListeners() {
-    document.addEventListener('visibilitychange', handleAppVisibilitySync);
-    window.addEventListener('pageshow', handleAppVisibilitySync);
+function registerLifecycleListeners(map) {
+    document.addEventListener('visibilitychange', () => handleAppVisibilitySync(map));
+    window.addEventListener('pageshow', () => handleAppVisibilitySync(map));
     
     window.addEventListener('online', () => {
         logger.info('📶 Network connection restored. Starting recovery sync...');
@@ -147,13 +153,13 @@ export async function retryStartupSync() {
     await safeSyncApp(true);
 }
 
-export async function initLifecycleController() {
+export async function initLifecycleController(map) {
     logger.info('🚀 LifecycleController loaded (cold start)');
 
     await safeSyncApp(true);
-    registerLifecycleListeners();
-    startPolling();
-    await updateStationsOnMap();
+    registerLifecycleListeners(map);
+    startPolling(map);
+    await updateStationsOnMap(map);
 }
 
 

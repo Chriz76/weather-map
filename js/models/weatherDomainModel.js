@@ -22,7 +22,8 @@ import { logger } from '../utils/logger.js';
  *   overlayLoadError: string|null,
  *   pointDataLoadError: string|null,
  *   apiMismatchError: string|null,
- *   startupError: string|null
+ *   startupError: string|null,
+ *   specialDataSummary: string|null
  * }} DomainState
  */
 
@@ -44,7 +45,8 @@ class WeatherModel extends EventTarget {
             overlayLoadError: null,
             pointDataLoadError: null,
             apiMismatchError: null,
-            startupError: null
+            startupError: null,
+            specialDataSummary: null
         };
 
         /** @type {any[]} */
@@ -111,6 +113,7 @@ class WeatherModel extends EventTarget {
     get pointDataLoadError() { return this._domain.pointDataLoadError; }
     get apiMismatchError() { return this._domain.apiMismatchError; }
     get startupError() { return this._domain.startupError; }
+    get specialDataSummary() { return this._domain.specialDataSummary; }
     get hasLoadError() {
         return !!(this._domain.apiMismatchError || this._domain.startupError || this._domain.indexLoadError || this._domain.overlayLoadError || this._domain.pointDataLoadError);
     }
@@ -183,6 +186,13 @@ class WeatherModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
+    /**
+     * @param {string|null} summary
+     */
+    setSpecialDataSummary(summary) {
+        this._domain.specialDataSummary = summary ?? null;
+        this.dispatchEvent(new CustomEvent('model:special-data-updated'));
+    }
 
     // --- DOMAIN / GEMISCHTE MUTATORS ---
 

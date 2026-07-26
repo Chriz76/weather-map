@@ -22,6 +22,7 @@ import { registerWindToggleView } from './views/windToggleView.js';
 import { registerLoadingView } from './views/loadingSpinnerView.js';
 import { registerNotificationView } from './views/notificationView.js';
 import { registerToastView } from './views/toastView.js';
+import { specialDataView } from './views/specialDataView.js';
 
 // --- 1. INITIALISIERUNG ---
 const { map, windOverlay } = initMap();
@@ -46,6 +47,7 @@ registerGpsView(map, () => {
 });
 
 registerWindToggleView(map);
+specialDataView.init(map);
 
 // --- 2. CONTROLLER SYSTEM START ---
 
@@ -53,7 +55,7 @@ async function initApp() {
     initMapController(map);
     initUiController();
 
-    await initLifecycleController();
+    await initLifecycleController(map);
 
     await loadingSpinnerController.track(async () => {
         // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)

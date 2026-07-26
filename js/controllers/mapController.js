@@ -6,7 +6,7 @@ import { formatMinutesAgo } from '../utils/time.js';
 import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';
 import { stationView } from '../views/stationView.js';
-import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
+import { updateStationsOnMapAction, updateSpecialDataOnMapAction } from './updateStationsOnMapAction.js';
 
 let stationViewHandle = null;
 // stationView handles rendering; update action manages station data & cache
@@ -36,6 +36,7 @@ export function initMapController(map) {
 
     // Initial trigger: action lädt Stationsdaten intern
     updateStationsOnMapAction(map.getBounds());
+    updateSpecialDataOnMapAction(map);
 
     // Move update logic to action: see controllers/updateStationsOnMapAction.js
 
@@ -84,6 +85,7 @@ export function initMapController(map) {
     function handleMoveEnd() {
         // --- NEU: Bei jeder Kartenbewegung (Verschieben/Zoomen) den Filter ausführen ---
         updateStationsOnMapAction(map.getBounds());
+        updateSpecialDataOnMapAction(map);
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('lat') && urlParams.has('lon')) return;
