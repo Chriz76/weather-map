@@ -1,9 +1,9 @@
-import { WeatherUi } from '../../js/models/weatherUiModel.js';
+import { UiModel } from '../../js/models/uiModel.js';
 
-describe('WeatherUi', () => {
+describe('UiModel', () => {
     it('should update loading, locating and overlay URL state', () => {
         let events = [];
-        const ui = new WeatherUi((eventName, detail) => events.push({ eventName, detail }));
+        const ui = new UiModel((eventName, detail) => events.push({ eventName, detail }));
 
         ui.setIsActiveLoading(true);
         ui.setIsLocating(true);
@@ -19,7 +19,7 @@ describe('WeatherUi', () => {
 
     it('should update toast and dispatch toast event', () => {
         let lastEvent = null;
-        const ui = new WeatherUi((eventName, detail) => {
+        const ui = new UiModel((eventName, detail) => {
             lastEvent = { eventName, detail };
         });
 

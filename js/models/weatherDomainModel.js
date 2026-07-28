@@ -27,7 +27,7 @@ import { logger } from '../utils/logger.js';
  * }} DomainState
  */
 
-class WeatherModel extends EventTarget {
+export class WeatherModel extends EventTarget {
     constructor() {
         super();
         
@@ -45,39 +45,15 @@ class WeatherModel extends EventTarget {
             overlayLoadError: null,
             pointDataLoadError: null,
             apiMismatchError: null,
-            startupError: null,
-            specialDataSummary: null
+            startupError: null
         };
 
-        /** @type {any[]} */
-        this._allStations = [];
-        /** @type {any[]} */
-        this._visibleStations = [];
+        // station-related state moved to appModel
 
         this._activeTimestampIndex = 0;
     }
 
-    // --- STATIONS API ---
-    get allStations() { return this._allStations; }
-    get visibleStations() { return this._visibleStations; }
-
-    /**
-     * Store the full stations list (from assets) on the model.
-     * @param {any[]} stations
-     */
-    setAllStations(stations) {
-        this._allStations = Array.isArray(stations) ? stations : [];
-        this.dispatchEvent(new CustomEvent('model:all-stations-updated'));
-    }
-
-    /**
-     * Set the currently visible/top stations (e.g. top3) and notify listeners.
-     * @param {any[]} stations
-     */
-    setVisibleStations(stations) {
-        this._visibleStations = Array.isArray(stations) ? stations : [];
-        this.dispatchEvent(new CustomEvent('model:visible-stations-updated'));
-    }
+    // station state moved to appModel
 
     // --- DOMAIN GETTER ---
     get availableTimestamps() { return this._domain.availableTimestamps; }
@@ -113,7 +89,7 @@ class WeatherModel extends EventTarget {
     get pointDataLoadError() { return this._domain.pointDataLoadError; }
     get apiMismatchError() { return this._domain.apiMismatchError; }
     get startupError() { return this._domain.startupError; }
-    get specialDataSummary() { return this._domain.specialDataSummary; }
+    // specialDataSummary moved to appModel
     get hasLoadError() {
         return !!(this._domain.apiMismatchError || this._domain.startupError || this._domain.indexLoadError || this._domain.overlayLoadError || this._domain.pointDataLoadError);
     }
@@ -186,13 +162,7 @@ class WeatherModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
-    /**
-     * @param {string|null} summary
-     */
-    setSpecialDataSummary(summary) {
-        this._domain.specialDataSummary = summary ?? null;
-        this.dispatchEvent(new CustomEvent('model:special-data-updated'));
-    }
+    // setSpecialDataSummary moved to appModel
 
     // --- DOMAIN / GEMISCHTE MUTATORS ---
 

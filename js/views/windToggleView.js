@@ -1,5 +1,5 @@
 /* global L */
-import { weatherUi } from '../models/weatherUiModel.js';
+import { uiModel } from '../models/uiModel.js';
 
 const WIND_ICON_ON = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -14,7 +14,7 @@ const WIND_ICON_OFF = `
 </svg>`;
 
 function renderIcon() {
-    return weatherUi.showWindMeasurements ? WIND_ICON_ON : WIND_ICON_OFF;
+    return uiModel.showWindMeasurements ? WIND_ICON_ON : WIND_ICON_OFF;
 }
 
 export function registerWindToggleView(map) {
@@ -31,16 +31,16 @@ export function registerWindToggleView(map) {
             button.title = 'Toggle wind measurements';
             button.setAttribute('aria-label', 'Toggle wind measurements');
             button.style.cursor = 'pointer';
-            button.setAttribute('aria-pressed', String(weatherUi.showWindMeasurements));
+            button.setAttribute('aria-pressed', String(uiModel.showWindMeasurements));
 
             L.DomEvent.on(button, 'click', /** @param {Event} e */ (e) => {
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
-                weatherUi.setShowWindMeasurements(!weatherUi.showWindMeasurements);
+                uiModel.setShowWindMeasurements(!uiModel.showWindMeasurements);
             });
 
-            weatherUi.addEventListener('ui:wind-measurements-visibility-changed', () => {
-                const visible = weatherUi.showWindMeasurements;
+            uiModel.addEventListener('ui:wind-measurements-visibility-changed', () => {
+                const visible = uiModel.showWindMeasurements;
                 button.innerHTML = renderIcon();
                 button.setAttribute('aria-pressed', String(visible));
             });

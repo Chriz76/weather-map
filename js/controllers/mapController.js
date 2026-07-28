@@ -1,6 +1,6 @@
 // controllers/mapController.js
 import { weatherModel } from '../models/weatherDomainModel.js';
-import { weatherUi } from '../models/weatherUiModel.js';
+import { uiModel } from '../models/uiModel.js';
 import { storage } from '../utils/storage.js';
 import { formatMinutesAgo } from '../utils/time.js';
 import { formatStationToast } from '../utils/stationToastFormatter.js';
@@ -20,7 +20,7 @@ export async function initMapController(map) {
     /** @type {number | null} */
     let lastClusterClickToken = null;
 
-    weatherUi.setShowWindMeasurements(storage.getWindMeasurements(weatherUi.showWindMeasurements));
+    uiModel.setShowWindMeasurements(storage.getWindMeasurements(uiModel.showWindMeasurements));
 
     // Initial trigger: action lädt Stationsdaten intern
     try {
@@ -65,13 +65,13 @@ export async function initMapController(map) {
         try {
             await triggerLoadAtLatLng(e.latlng);
         } finally {
-            weatherUi.setIsLocating(false);
+            uiModel.setIsLocating(false);
         }
     }
 
     function handleLocationError(e) {
         toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
-        weatherUi.setIsLocating(false);
+        uiModel.setIsLocating(false);
     }
 
     function handlePopupClose() {
@@ -110,10 +110,10 @@ export async function initMapController(map) {
     map.on('popupclose', handlePopupClose);
     map.on('moveend', handleMoveEnd);
 
-    weatherUi.addEventListener('ui:wind-measurements-visibility-changed', async () => {
-        storage.saveWindMeasurements(weatherUi.showWindMeasurements);
+    uiModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
+        storage.saveWindMeasurements(uiModel.showWindMeasurements);
 
-        if (weatherUi.showWindMeasurements) {
+        if (uiModel.showWindMeasurements) {
             try {
                 await updateStationsOnMapAction(map.getBounds());
             } catch (e) {

@@ -1,4 +1,4 @@
-import { weatherUi } from '../models/weatherUiModel.js';
+import { uiModel } from '../models/uiModel.js';
 
 /**
  * @typedef {{ message: string }} ToastPayload
@@ -20,7 +20,7 @@ class ToastController {
 
     clearToast() {
         this.clearTimeout();
-        weatherUi.setToast(null);
+        uiModel.setToast(null);
     }
 
     /**
@@ -37,17 +37,17 @@ class ToastController {
             : payload;
 
         if (!toastPayload || !toastPayload.message) {
-            weatherUi.setToast(null);
+            uiModel.setToast(null);
             return;
         }
 
-        weatherUi.setToast(toastPayload);
+        uiModel.setToast(toastPayload);
 
         const effectiveTimeout = typeof timeout === 'number' ? timeout : this.defaultTimeoutMs;
         if (effectiveTimeout > 0) {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
-                weatherUi.setToast(null);
+                uiModel.setToast(null);
             }, effectiveTimeout);
         }
     }

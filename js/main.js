@@ -1,6 +1,6 @@
 ﻿// main.js
 import { weatherModel } from './models/weatherDomainModel.js';
-import { weatherUi } from './models/weatherUiModel.js';
+import { uiModel } from './models/uiModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
@@ -39,7 +39,7 @@ registerNotificationView();
 registerToastView();
 
 registerGpsView(map, () => {
-    weatherUi.setIsLocating(true);
+    uiModel.setIsLocating(true);
     map.locate({ 
         setView: false, 
         enableHighAccuracy: true 

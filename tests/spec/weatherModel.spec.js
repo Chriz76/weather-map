@@ -1,5 +1,5 @@
 import { weatherModel } from '../../js/models/weatherDomainModel.js';
-import { weatherUi } from '../../js/models/weatherUiModel.js';
+import { uiModel } from '../../js/models/uiModel.js';
 
 describe('WeatherModel', () => {
     const cluster = {
@@ -21,9 +21,9 @@ describe('WeatherModel', () => {
 
     function resetModel() {
         weatherModel.removePointData();
-        weatherUi.setIsActiveLoading(false);
-        weatherUi.setIsLocating(false);
-        weatherUi.setActiveOverlayUrl(null);
+        uiModel.setIsActiveLoading(false);
+        uiModel.setIsLocating(false);
+        uiModel.setActiveOverlayUrl(null);
         weatherModel.setIndexMetadata({ available_timestamps: [], generated_at: null, current_hour: null });
     }
 

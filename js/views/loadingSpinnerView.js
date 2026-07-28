@@ -1,5 +1,5 @@
 // views/loadingSpinnerView.js
-import { weatherUi } from '../models/weatherUiModel.js';
+import { uiModel } from '../models/uiModel.js';
 
 /**
  * Initializes the global loading spinner view and binds it to model updates.
@@ -41,11 +41,11 @@ export function registerLoadingView() {
     };
 
     // Initialen Zustand setzen (falls beim Laden direkt aktiv)
-    toggleSpinner(weatherUi.isActiveLoading);
+    toggleSpinner(uiModel.isActiveLoading);
 
-    weatherUi.addEventListener('ui:loading-changed', () => {
-        const isLoading = weatherUi.isActiveLoading;
-        const isModal = weatherUi.isLoadingModal;
+    uiModel.addEventListener('ui:loading-changed', () => {
+        const isLoading = uiModel.isActiveLoading;
+        const isModal = uiModel.isLoadingModal;
 
         toggleSpinner(isLoading);
 

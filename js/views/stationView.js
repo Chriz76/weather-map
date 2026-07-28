@@ -1,6 +1,6 @@
 // views/stationView.js
-import { weatherModel } from '../models/weatherDomainModel.js';
-import { weatherUi } from '../models/weatherUiModel.js';
+import { appModel } from '../models/appModel.js';
+import { uiModel } from '../models/uiModel.js';
 
 export const stationView = (() => {
     let map = null;
@@ -10,7 +10,7 @@ export const stationView = (() => {
 
     function createIcon(station) {
         const hasData = station.windData && typeof station.windData.windSpeed === 'number';
-        const shouldShowValues = weatherUi.showWindMeasurements && hasData;
+        const shouldShowValues = uiModel.showWindMeasurements && hasData;
         const speedValue = shouldShowValues ? String(Math.round(station.windData.windSpeed)) : '';
         const rotation = shouldShowValues ? station.windData.windDirection : null;
         const iconRotation = rotation === null ? null : (((rotation % 360) + 360) % 360 + 90) % 360;
@@ -36,7 +36,7 @@ export const stationView = (() => {
         if (!map) return;
         if (!layerGroup) layerGroup = L.layerGroup().addTo(map);
 
-        if (!weatherUi.showWindMeasurements) {
+        if (!uiModel.showWindMeasurements) {
             stationMarkerMap.forEach((marker) => {
                 layerGroup.removeLayer(marker);
             });
@@ -77,19 +77,19 @@ export const stationView = (() => {
     }
 
     function handleVisibleStations() {
-        renderStations(weatherModel.visibleStations);
+        renderStations(appModel.visibleStations);
     }
 
     function init(mapInstance, options = {}) {
         map = mapInstance;
         opts = options || {};
         layerGroup = L.layerGroup().addTo(map);
-        weatherModel.addEventListener('model:visible-stations-updated', handleVisibleStations);
-        weatherUi.addEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations);
+        appModel.addEventListener('model:visible-stations-updated', handleVisibleStations);
+        uiModel.addEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations);
 
         // If there are already visible stations in the model, render them immediately
-        if (weatherModel.visibleStations && weatherModel.visibleStations.length) {
-            renderStations(weatherModel.visibleStations);
+        if (appModel.visibleStations && appModel.visibleStations.length) {
+            renderStations(appModel.visibleStations);
         }
     }
 

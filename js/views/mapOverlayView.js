@@ -1,6 +1,6 @@
 /* global L */
 import { weatherModel } from '../models/weatherDomainModel.js';
-import { weatherUi } from '../models/weatherUiModel.js';
+import { uiModel } from '../models/uiModel.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
 /**
@@ -28,8 +28,8 @@ export function registerMapOverlayView(map, windOverlay) {
         }
     });
 
-    weatherUi.addEventListener('ui:overlay-url-updated', () => {
-        const url = weatherUi.activeOverlayUrl;
+    uiModel.addEventListener('ui:overlay-url-updated', () => {
+        const url = uiModel.activeOverlayUrl;
         if (windOverlay && url) {
             windOverlay.setUrl(url);
         }
