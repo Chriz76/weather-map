@@ -52,7 +52,7 @@ specialDataView.init(map);
 // --- 2. CONTROLLER SYSTEM START ---
 
 async function initApp() {
-    initMapController(map);
+    await initMapController(map);
     initUiController();
 
     await initLifecycleController(map);

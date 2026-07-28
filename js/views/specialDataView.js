@@ -69,14 +69,10 @@ export const specialDataView = (() => {
         }
     }
 
-    function handleSpecialDataUpdated() {
-        renderBadge();
-    }
-
     function init(mapInstance) {
         map = mapInstance;
         layerGroup = L.layerGroup().addTo(map);
-        weatherModel.addEventListener('model:special-data-updated', handleSpecialDataUpdated);
+        weatherModel.addEventListener('model:special-data-updated', renderBadge);
         weatherUi.addEventListener('ui:wind-measurements-visibility-changed', renderBadge);
         map.on('move zoom moveend', renderBadge);
         renderBadge();

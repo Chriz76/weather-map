@@ -3,7 +3,8 @@ import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
 import { weatherModel } from '../models/weatherDomainModel.js';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError } from './actions.js';
-import { updateStationsOnMapAction, updateSpecialDataOnMapAction } from './updateStationsOnMapAction.js';
+import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
+import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction.js';
 import { logger } from '../utils/logger.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
