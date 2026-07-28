@@ -3,6 +3,7 @@
 const L = window.L;
 
 import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherUi } from '../models/weatherUiModel.js';
 
 const TARGET_LAT = 47.6506;
 const TARGET_LNG = 11.3365;
@@ -28,7 +29,7 @@ export const specialDataView = (() => {
     }
 
     function shouldShowBadge() {
-        if (!map || !weatherModel.specialDataSummary) return false;
+        if (!map || !weatherUi.showWindMeasurements || !weatherModel.specialDataSummary) return false;
         if (map.getZoom() < MIN_ZOOM) return false;
 
         const bounds = map.getBounds();
@@ -76,6 +77,7 @@ export const specialDataView = (() => {
         map = mapInstance;
         layerGroup = L.layerGroup().addTo(map);
         weatherModel.addEventListener('model:special-data-updated', handleSpecialDataUpdated);
+        weatherUi.addEventListener('ui:wind-measurements-visibility-changed', renderBadge);
         map.on('move zoom moveend', renderBadge);
         renderBadge();
         return { refresh: renderBadge };

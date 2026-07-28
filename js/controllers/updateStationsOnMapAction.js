@@ -37,7 +37,6 @@ function shouldShowSpecialData(map) {
 
 export async function updateSpecialDataOnMapAction(map = null) {
     if (!shouldShowSpecialData(map)) {
-        weatherModel.setSpecialDataSummary(null);
         return;
     }
 
