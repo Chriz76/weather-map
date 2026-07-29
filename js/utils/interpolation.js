@@ -96,13 +96,7 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
             return (angle + 360) % 360;
         };
 
-        // 2. Interpolation für den AKTUELLEN Zeitschritt (Map-Marker)
-        const currentTimeline = cluster.timeline[currentTimeKey] || { speeds: [], dirs: [], gusts: [] };
-        const interpolatedSpeed = calcScalar(currentTimeline.speeds);
-        const interpolatedGust = calcScalar(currentTimeline.gusts || []);
-        const interpolatedDirection = calcDirection(currentTimeline.dirs);
-
-        // 3. Interpolation über die GESAMTE Timeline (Forecast-Tabelle)
+        // Interpolation über die GESAMTE Timeline (Forecast-Tabelle)
         const len = timelineKeys.length;
         let dynamicForecastArray = new Array(len); // Array-Größe im Vorfeld fixieren
 
@@ -123,13 +117,16 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
             };
         }
 
+        // Bestimme `windData` aus der bereits berechneten Forecast-Tabelle
+        const currentEntry = dynamicForecastArray.find(e => e.fullKey === currentTimeKey) || dynamicForecastArray[0] || null;
+
         return {
             forecast: dynamicForecastArray,
-            windData: {
-                speed: Math.round(interpolatedSpeed * 10) / 10,
-                gust: Math.round(interpolatedGust * 10) / 10,
-                direction: interpolatedDirection === null ? null : Math.round(interpolatedDirection * 10) / 10
-            }
+            windData: currentEntry ? {
+                speed: currentEntry.wind,
+                gust: currentEntry.gust,
+                direction: currentEntry.direction === null ? null : currentEntry.direction
+            } : null
         };
 
     } catch (mathError) {
