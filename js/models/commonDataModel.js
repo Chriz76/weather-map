@@ -1,7 +1,7 @@
 /**
  * App-wide shared model for stations and special-data badge.
  */
-export class AppModel extends EventTarget {
+export class CommonDataModel extends EventTarget {
     constructor(dispatchEventCallback) {
         super();
 
@@ -41,5 +41,5 @@ export class AppModel extends EventTarget {
     }
 }
 
-export const appModel = new AppModel();
-export default appModel;
+export const commonDataModel = new CommonDataModel();
+export default commonDataModel;

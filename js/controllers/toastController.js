@@ -1,4 +1,4 @@
-import { uiModel } from '../models/uiModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 
 /**
  * @typedef {{ message: string }} ToastPayload
@@ -20,7 +20,7 @@ class ToastController {
 
     clearToast() {
         this.clearTimeout();
-        uiModel.setToast(null);
+        uiStateModel.setToast(null);
     }
 
     /**
@@ -37,17 +37,17 @@ class ToastController {
             : payload;
 
         if (!toastPayload || !toastPayload.message) {
-            uiModel.setToast(null);
+            uiStateModel.setToast(null);
             return;
         }
 
-        uiModel.setToast(toastPayload);
+        uiStateModel.setToast(toastPayload);
 
         const effectiveTimeout = typeof timeout === 'number' ? timeout : this.defaultTimeoutMs;
         if (effectiveTimeout > 0) {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
-                uiModel.setToast(null);
+                uiStateModel.setToast(null);
             }, effectiveTimeout);
         }
     }

@@ -1,6 +1,6 @@
 // controllers/updateStationsOnMapAction.js
-import { appModel } from '../models/appModel.js';
-import { uiModel } from '../models/uiModel.js';
+import { commonDataModel } from '../models/commonDataModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
 import { logger } from '../utils/logger.js';
 
@@ -12,20 +12,20 @@ import { logger } from '../utils/logger.js';
  * @param {L.LatLngBounds|null} bounds
  */
 export async function updateStationsOnMapAction(bounds = null) {
-    if (!uiModel.showWindMeasurements) {
+    if (!uiStateModel.showWindMeasurements) {
         logger.debug('Station data not loaded: wind measurements are currently hidden.');
         return;
     }
-    // Acquire station list from appModel if available
-    let allStations = Array.isArray(appModel.allStations) ? appModel.allStations : [];
+    // Acquire station list from commonDataModel if available
+    let allStations = Array.isArray(commonDataModel.allStations) ? commonDataModel.allStations : [];
 
     // Fallback: try to load from assets if model has none (no caching of stations here)
     if ((!allStations || allStations.length === 0) && bounds) {
         try {
             const resp = await fetch('/assets/stations.json');
             allStations = await resp.json();
-            // Cache loaded stations on the appModel to avoid repeated fallback fetches
-            appModel.setAllStations(allStations);
+            // Cache loaded stations on the commonDataModel to avoid repeated fallback fetches
+            commonDataModel.setAllStations(allStations);
             logger.info('📍 Station data loaded (fallback):', allStations.length);
         } catch (e) {
             logger.error('Error loading stations.json (fallback):', e);
@@ -67,7 +67,7 @@ export async function updateStationsOnMapAction(bounds = null) {
         topStations = stationsInView.slice(0, 8);
     } else {
         // No bounds -> refresh previously visible stations if model has them
-        const visible = Array.isArray(appModel.visibleStations) ? appModel.visibleStations : [];
+        const visible = Array.isArray(commonDataModel.visibleStations) ? commonDataModel.visibleStations : [];
         if (visible && visible.length) {
             topStations = visible.slice();
         } else {
@@ -94,5 +94,5 @@ export async function updateStationsOnMapAction(bounds = null) {
         windData: fetched[station.id] || null
     }));
 
-    appModel.setVisibleStations(stationsWithFinalData);
+    commonDataModel.setVisibleStations(stationsWithFinalData);
 }

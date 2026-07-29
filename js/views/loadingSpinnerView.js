@@ -1,5 +1,5 @@
 // views/loadingSpinnerView.js
-import { uiModel } from '../models/uiModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 
 /**
  * Initializes the global loading spinner view and binds it to model updates.
@@ -41,11 +41,11 @@ export function registerLoadingView() {
     };
 
     // Initialen Zustand setzen (falls beim Laden direkt aktiv)
-    toggleSpinner(uiModel.isActiveLoading);
+    toggleSpinner(uiStateModel.isActiveLoading);
 
-    uiModel.addEventListener('ui:loading-changed', () => {
-        const isLoading = uiModel.isActiveLoading;
-        const isModal = uiModel.isLoadingModal;
+    uiStateModel.addEventListener('ui:loading-changed', () => {
+        const isLoading = uiStateModel.isActiveLoading;
+        const isModal = uiStateModel.isLoadingModal;
 
         toggleSpinner(isLoading);
 

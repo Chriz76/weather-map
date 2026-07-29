@@ -1,4 +1,4 @@
-import { uiModel } from '../models/uiModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 
 export function registerToastView() {
     const toastEl = document.createElement('div');
@@ -17,8 +17,8 @@ export function registerToastView() {
     };
 
     const onToastChanged = () => {
-        renderToast(uiModel.toast);
+        renderToast(uiStateModel.toast);
     };
 
-    uiModel.addEventListener('ui:toast-changed', onToastChanged);
+    uiStateModel.addEventListener('ui:toast-changed', onToastChanged);
 }

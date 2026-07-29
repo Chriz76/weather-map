@@ -1,5 +1,5 @@
-import { weatherModel } from '../../js/models/weatherDomainModel.js';
-import { uiModel } from '../../js/models/uiModel.js';
+import { weatherProviderModel } from '../../js/models/weatherProviderModel.js/index.js';
+import { uiStateModel } from '../../js/models/uiStateModel.js';
 
 describe('special data view', () => {
     let specialDataView;
@@ -61,13 +61,13 @@ describe('special data view', () => {
         window.L.layerGroup.calls.reset();
         window.L.marker.calls.reset();
         map = createMap(true);
-        weatherModel.setSpecialDataSummary('4/10/12%');
-        uiModel.setShowWindMeasurements(true);
+        weatherProviderModel.setSpecialDataSummary('4/10/12%');
+        uiStateModel.setShowWindMeasurements(true);
     });
 
     afterAll(() => {
-        weatherModel.setSpecialDataSummary(null);
-        uiModel.setShowWindMeasurements(true);
+        weatherProviderModel.setSpecialDataSummary(null);
+        uiStateModel.setShowWindMeasurements(true);
         window.L = originalL;
     });
 
@@ -76,15 +76,15 @@ describe('special data view', () => {
 
         expect(window.L.marker).toHaveBeenCalledTimes(1);
 
-        uiModel.setShowWindMeasurements(false);
+        uiStateModel.setShowWindMeasurements(false);
 
         expect(layerGroup.removeLayer).toHaveBeenCalledWith(marker);
-        expect(weatherModel.specialDataSummary).toBe('4/10/12%');
+        expect(weatherProviderModel.specialDataSummary).toBe('4/10/12%');
 
         map.getBounds.and.returnValue({
             contains: jasmine.createSpy('contains').and.returnValue(false)
         });
-        uiModel.setShowWindMeasurements(true);
+        uiStateModel.setShowWindMeasurements(true);
         specialDataView.refresh();
 
         expect(window.L.marker).toHaveBeenCalledTimes(1);

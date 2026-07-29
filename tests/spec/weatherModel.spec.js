@@ -1,7 +1,7 @@
-import { weatherModel } from '../../js/models/weatherDomainModel.js';
-import { uiModel } from '../../js/models/uiModel.js';
+import { weatherProviderModel } from '../../js/models/weatherProviderModel.js/index.js';
+import { uiStateModel } from '../../js/models/uiStateModel.js';
 
-describe('WeatherModel', () => {
+describe('WeatherProviderModel', () => {
     const cluster = {
         lats: [50.0, 50.1, 49.9],
         lons: [8.0, 8.0, 8.0],
@@ -20,11 +20,11 @@ describe('WeatherModel', () => {
     };
 
     function resetModel() {
-        weatherModel.removePointData();
-        uiModel.setIsActiveLoading(false);
-        uiModel.setIsLocating(false);
-        uiModel.setActiveOverlayUrl(null);
-        weatherModel.setIndexMetadata({ available_timestamps: [], generated_at: null, current_hour: null });
+        weatherProviderModel.removePointData();
+        uiStateModel.setIsActiveLoading(false);
+        uiStateModel.setIsLocating(false);
+        uiStateModel.setActiveOverlayUrl(null);
+        weatherProviderModel.setIndexMetadata({ available_timestamps: [], generated_at: null, current_hour: null });
     }
 
     beforeEach(() => {
@@ -36,10 +36,10 @@ describe('WeatherModel', () => {
     });
 
     it('should initialize with empty state', () => {
-        expect(weatherModel.availableTimestamps).toEqual([]);
-        expect(weatherModel.activeTimestamp).toBeNull();
-        expect(weatherModel.forecast).toBeNull();
-        expect(weatherModel.windData).toBeNull();
+        expect(weatherProviderModel.availableTimestamps).toEqual([]);
+        expect(weatherProviderModel.activeTimestamp).toBeNull();
+        expect(weatherProviderModel.forecast).toBeNull();
+        expect(weatherProviderModel.windData).toBeNull();
     });
 
     it('should set index metadata and choose active timestamp', () => {
@@ -49,24 +49,24 @@ describe('WeatherModel', () => {
             current_hour: '12'
         };
 
-        weatherModel.setIndexMetadata(metadata);
+        weatherProviderModel.setIndexMetadata(metadata);
 
-        expect(weatherModel.availableTimestamps).toEqual(['20990706_12', '20990706_15']);
-        expect(weatherModel.activeTimestamp).toBe('20990706_12');
-        expect(weatherModel.modelGeneratedAt).toBe('2099-07-06T12:00:00Z');
-        expect(weatherModel.modelCurrentHour).toBe('12');
+        expect(weatherProviderModel.availableTimestamps).toEqual(['20990706_12', '20990706_15']);
+        expect(weatherProviderModel.activeTimestamp).toBe('20990706_12');
+        expect(weatherProviderModel.modelGeneratedAt).toBe('2099-07-06T12:00:00Z');
+        expect(weatherProviderModel.modelCurrentHour).toBe('12');
     });
 
     it('should update point data and recalculate forecast', () => {
-        weatherModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
 
-        weatherModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
 
-        expect(weatherModel.lastClickedLatLng).toEqual({ lat: 50.0, lng: 8.0 });
-        expect(weatherModel.currentClusterData).toBe(cluster);
-        expect(weatherModel.windData).not.toBeNull();
-        expect(weatherModel.forecast).not.toBeNull();
-        expect(weatherModel.forecast.length).toBe(2);
+        expect(weatherProviderModel.lastClickedLatLng).toEqual({ lat: 50.0, lng: 8.0 });
+        expect(weatherProviderModel.currentClusterData).toBe(cluster);
+        expect(weatherProviderModel.windData).not.toBeNull();
+        expect(weatherProviderModel.forecast).not.toBeNull();
+        expect(weatherProviderModel.forecast.length).toBe(2);
     });
 
     it('should change active timestamp index and dispatch timestamp event', () => {
@@ -75,28 +75,28 @@ describe('WeatherModel', () => {
             events.push({ type: event.type, detail: event.detail });
         };
 
-        weatherModel.addEventListener('model:timestamp-index-updated', handler);
-        weatherModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
-        weatherModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
+        weatherProviderModel.addEventListener('model:timestamp-index-updated', handler);
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
 
-        weatherModel.setActiveTimestampIndex(1);
+        weatherProviderModel.setActiveTimestampIndex(1);
 
-        expect(weatherModel.activeTimestamp).toBe('20260706_15');
+        expect(weatherProviderModel.activeTimestamp).toBe('20260706_15');
         expect(events.some((e) => e.type === 'model:timestamp-index-updated')).toBeTrue();
-        expect(weatherModel.forecast[0].fullKey).toBe('20260706_12');
+        expect(weatherProviderModel.forecast[0].fullKey).toBe('20260706_12');
 
-        weatherModel.removeEventListener('model:timestamp-index-updated', handler);
+        weatherProviderModel.removeEventListener('model:timestamp-index-updated', handler);
     });
 
     it('should remove point data and clear forecast and wind data', () => {
-        weatherModel.setIndexMetadata({ available_timestamps: ['20260706_12'], generated_at: null, current_hour: null });
-        weatherModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12'], generated_at: null, current_hour: null });
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
 
-        weatherModel.removePointData();
+        weatherProviderModel.removePointData();
 
-        expect(weatherModel.lastClickedLatLng).toBeNull();
-        expect(weatherModel.currentClusterData).toBeNull();
-        expect(weatherModel.forecast).toBeNull();
-        expect(weatherModel.windData).toBeNull();
+        expect(weatherProviderModel.lastClickedLatLng).toBeNull();
+        expect(weatherProviderModel.currentClusterData).toBeNull();
+        expect(weatherProviderModel.forecast).toBeNull();
+        expect(weatherProviderModel.windData).toBeNull();
     });
 });

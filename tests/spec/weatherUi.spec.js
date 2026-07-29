@@ -1,9 +1,9 @@
-import { UiModel } from '../../js/models/uiModel.js';
+import { UiStateModel } from '../../js/models/uiStateModel.js';
 
-describe('UiModel', () => {
+describe('UiStateModel', () => {
     it('should update loading, locating and overlay URL state', () => {
         let events = [];
-        const ui = new UiModel((eventName, detail) => events.push({ eventName, detail }));
+        const ui = new UiStateModel((eventName, detail) => events.push({ eventName, detail }));
 
         ui.setIsActiveLoading(true);
         ui.setIsLocating(true);
@@ -19,7 +19,7 @@ describe('UiModel', () => {
 
     it('should update toast and dispatch toast event', () => {
         let lastEvent = null;
-        const ui = new UiModel((eventName, detail) => {
+        const ui = new UiStateModel((eventName, detail) => {
             lastEvent = { eventName, detail };
         });
 

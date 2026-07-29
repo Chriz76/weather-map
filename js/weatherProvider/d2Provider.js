@@ -1,6 +1,6 @@
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
-export const weatherService = {
+export const d2Provider = {
     /**
      * Loads the central index.json metadata file.
      * @param {string} baseUrl Base URL where weather assets are hosted.
@@ -52,3 +52,5 @@ export const weatherService = {
         return await response.blob();
     }
 };
+
+export default d2Provider;

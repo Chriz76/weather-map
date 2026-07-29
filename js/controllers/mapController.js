@@ -1,6 +1,6 @@
 // controllers/mapController.js
-import { weatherModel } from '../models/weatherDomainModel.js';
-import { uiModel } from '../models/uiModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 import { storage } from '../utils/storage.js';
 import { formatMinutesAgo } from '../utils/time.js';
 import { formatStationToast } from '../utils/stationToastFormatter.js';
@@ -20,7 +20,7 @@ export async function initMapController(map) {
     /** @type {number | null} */
     let lastClusterClickToken = null;
 
-    uiModel.setShowWindMeasurements(storage.getWindMeasurements(uiModel.showWindMeasurements));
+    uiStateModel.setShowWindMeasurements(storage.getWindMeasurements(uiStateModel.showWindMeasurements));
 
     // Initial trigger: action lädt Stationsdaten intern
     try {
@@ -65,18 +65,18 @@ export async function initMapController(map) {
         try {
             await triggerLoadAtLatLng(e.latlng);
         } finally {
-            uiModel.setIsLocating(false);
+            uiStateModel.setIsLocating(false);
         }
     }
 
     function handleLocationError(e) {
         toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
-        uiModel.setIsLocating(false);
+        uiStateModel.setIsLocating(false);
     }
 
     function handlePopupClose() {
         lastClusterClickToken = null;
-        weatherModel.removePointData();
+        weatherProviderModel.removePointData();
     }
 
     async function handleMoveEnd() {
@@ -110,10 +110,10 @@ export async function initMapController(map) {
     map.on('popupclose', handlePopupClose);
     map.on('moveend', handleMoveEnd);
 
-    uiModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
-        storage.saveWindMeasurements(uiModel.showWindMeasurements);
+    uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
+        storage.saveWindMeasurements(uiStateModel.showWindMeasurements);
 
-        if (uiModel.showWindMeasurements) {
+        if (uiStateModel.showWindMeasurements) {
             try {
                 await updateStationsOnMapAction(map.getBounds());
             } catch (e) {

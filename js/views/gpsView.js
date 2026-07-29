@@ -1,7 +1,7 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { uiModel } from '../models/uiModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 
 /**
  * Registers a GPS control button and binds locating state updates.
@@ -40,8 +40,8 @@ export function registerGpsView(map, onGpsClick) {
             });
 
             // React to state changes in model
-            uiModel.addEventListener('ui:locating-changed', () => {
-                if (uiModel.isLocating) {
+            uiStateModel.addEventListener('ui:locating-changed', () => {
+                if (uiStateModel.isLocating) {
                     button.classList.add('gps-view--active');
                 } else {
                     button.classList.remove('gps-view--active');

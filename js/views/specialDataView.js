@@ -2,8 +2,8 @@
 /** @type {any} */
 const L = window.L;
 
-import { appModel } from '../models/appModel.js';
-import { uiModel } from '../models/uiModel.js';
+import { commonDataModel } from '../models/commonDataModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 
 const TARGET_LAT = 47.6506;
 const TARGET_LNG = 11.3365;
@@ -29,7 +29,7 @@ export const specialDataView = (() => {
     }
 
     function shouldShowBadge() {
-        if (!map || !uiModel.showWindMeasurements || !appModel.specialDataSummary) return false;
+        if (!map || !uiStateModel.showWindMeasurements || !commonDataModel.specialDataSummary) return false;
         if (map.getZoom() < MIN_ZOOM) return false;
 
         const bounds = map.getBounds();
@@ -51,14 +51,14 @@ export const specialDataView = (() => {
         }
 
         if (!marker) {
-            marker = L.marker([TARGET_LAT, TARGET_LNG], { icon: createIcon(appModel.specialDataSummary) });
+            marker = L.marker([TARGET_LAT, TARGET_LNG], { icon: createIcon(commonDataModel.specialDataSummary) });
             marker.on('click', () => {
                 window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer');
             });
             layerGroup.addLayer(marker);
         }
 
-        marker.setIcon(createIcon(appModel.specialDataSummary));
+        marker.setIcon(createIcon(commonDataModel.specialDataSummary));
         marker.setLatLng([TARGET_LAT, TARGET_LNG]);
     }
 
@@ -72,8 +72,8 @@ export const specialDataView = (() => {
     function init(mapInstance) {
         map = mapInstance;
         layerGroup = L.layerGroup().addTo(map);
-        appModel.addEventListener('model:special-data-updated', renderBadge);
-        uiModel.addEventListener('ui:wind-measurements-visibility-changed', renderBadge);
+        commonDataModel.addEventListener('model:special-data-updated', renderBadge);
+        uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', renderBadge);
         map.on('move zoom moveend', renderBadge);
         renderBadge();
         return { refresh: renderBadge };

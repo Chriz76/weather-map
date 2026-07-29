@@ -1,5 +1,5 @@
 // controllers/loadingSpinnerController.js
-import { uiModel } from '../models/uiModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 
 class LoadingSpinnerController {
     constructor(delayMs = 500) {
@@ -24,7 +24,7 @@ class LoadingSpinnerController {
                 clearTimeout(this.timeout);
             }
             this.timeout = setTimeout(() => {
-                uiModel.setIsActiveLoading(true, this._modalActive);
+                uiStateModel.setIsActiveLoading(true, this._modalActive);
             }, this.delayMs);
         }
     }
@@ -38,7 +38,7 @@ class LoadingSpinnerController {
             if (this.timeout !== null) {
                 clearTimeout(this.timeout);
             }
-            uiModel.setIsActiveLoading(false, false);
+            uiStateModel.setIsActiveLoading(false, false);
             this._modalActive = false;
         }
     }
@@ -46,7 +46,7 @@ class LoadingSpinnerController {
     /**
      * Ein "Decorator" für asynchrone Funktionen.
      * Hüllt jede Funktion automatisch in das Start/Stop-Szenario
-     * und meldet Fehler zentral an das weatherModel.
+     * und meldet Fehler zentral an das weatherProviderModel.
      * @param {() => Promise<any>} asyncFn
      */
     async track(asyncFn, options = {}) {

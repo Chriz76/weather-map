@@ -1,16 +1,16 @@
 import { logger } from '../utils/logger.js';
-import { WeatherModel } from '../models/weatherDomainModel.js';
+import { WeatherProviderModel } from '../models/weatherProviderModel.js';
 
-export const aromeModel = {
-    // Eager singleton WeatherModel instance for this adapter
-    domainModel: new WeatherModel(),
+export const aromeProvider = {
+    // Eager singleton WeatherProviderModel instance for this adapter
+    domainModel: new WeatherProviderModel(),
     async init(config) {
         this.config = config;
-        logger.info('aromeModel initialized');
+        logger.info('aromeProvider initialized');
     },
     async fetchIndex() {
         // Arome may not provide the same index format; implement when endpoint is available.
-        throw new Error('fetchIndex not implemented for aromeModel');
+        throw new Error('fetchIndex not implemented for aromeProvider');
     },
     async fetchOverlay() {
         // Arome likely does not provide comparable overlay images.
@@ -22,8 +22,8 @@ export const aromeModel = {
     },
     async fetchPointForecast(latlng) {
         // Implement Arome point forecast fetching here using provider API
-        throw new Error('fetchPointForecast not implemented for aromeModel');
+        throw new Error('fetchPointForecast not implemented for aromeProvider');
     }
 };
 
-export default aromeModel;
+export default aromeProvider;

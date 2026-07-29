@@ -1,8 +1,8 @@
 // controllers/actions.js
 import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
-import { weatherModel } from '../models/weatherDomainModel.js';
-import { uiModel } from '../models/uiModel.js';
-import { weatherService } from '../services/weatherService.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
+import { providerManager } from '../weatherProvider/providerManager.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { logger } from '../utils/logger.js';
 
@@ -48,7 +48,7 @@ let currentOverlayBlobUrl = null;
  */
 async function fetchWeatherOverlayUrl(timestamp) {
     if (!timestamp) return null;
-    const imageBlob = await weatherService.fetchWeatherImageBlob(timestamp, BASE_URL);
+    const imageBlob = await providerManager.fetchWeatherImageBlob(timestamp, BASE_URL);
     if (currentOverlayBlobUrl) {
         URL.revokeObjectURL(currentOverlayBlobUrl);
     }
@@ -82,7 +82,7 @@ export async function updateOverlayForTimestampAction(timestamp) {
             throw new OverlayLoadError(retryMsg);
         }
     }
-    uiModel.setActiveOverlayUrl(overlayUrl);
+    uiStateModel.setActiveOverlayUrl(overlayUrl);
 }
 
 
@@ -95,9 +95,9 @@ export async function loadWeatherDataForLocationAction(latlng) {
     try {
         let cluster = null;
         await loadingSpinnerController.track(async () => {
-            cluster = await weatherService.fetchCluster(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
+            cluster = await providerManager.fetchCluster(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
         });
-        weatherModel.setPointData(latlng, cluster);
+        weatherProviderModel.setPointData(latlng, cluster);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         logger.error('🚨 Error processing location data:', errMsg);
@@ -117,14 +117,14 @@ export async function syncAppWithServerAction(background = true, force = false) 
         let indexData;
         try {
             indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
-                await weatherService.fetchIndex(BASE_URL)
+                await providerManager.fetchIndex(BASE_URL)
             );
         } catch (fetchErr) {
             const fetchErrMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
             throw new IndexLoadError(fetchErrMsg);
         }
 
-        weatherModel.setLastIndexSync(new Date());
+        weatherProviderModel.setLastIndexSync(new Date());
 
         // API version mismatch: propagate to controller for UI decision
         if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
@@ -141,26 +141,26 @@ export async function syncAppWithServerAction(background = true, force = false) 
 
        // Log 2: Inspect cache state immediately before comparison.
        logger.debug('🧠 [SYNC CHECK] Checking for new data:', {
-           modelTimestamp: weatherModel.modelGeneratedAt,
+           modelTimestamp: weatherProviderModel.modelGeneratedAt,
            serverTimestamp: indexData?.generated_at,
-           willAbort: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
+           willAbort: (weatherProviderModel.modelGeneratedAt === indexData?.generated_at && !!weatherProviderModel.modelGeneratedAt)
         });
 
-        if (!force && weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
+        if (!force && weatherProviderModel.modelGeneratedAt === indexData.generated_at && weatherProviderModel.modelGeneratedAt) {
            logger.info('🛑 [SYNC ABORT] Sync silently canceled because generated times match.');
            return;
         }
 
         logger.info('🚀 [SYNC CONTINUE] Data is new! Continuing...');
 
-        if (weatherModel.lastClickedLatLng) {
-            weatherModel.setIndexMetadata(indexData);
-            await loadWeatherDataForLocationAction(weatherModel.lastClickedLatLng);
+        if (weatherProviderModel.lastClickedLatLng) {
+            weatherProviderModel.setIndexMetadata(indexData);
+            await loadWeatherDataForLocationAction(weatherProviderModel.lastClickedLatLng);
         } else {
-            weatherModel.setIndexMetadata(indexData);
+            weatherProviderModel.setIndexMetadata(indexData);
         }
 
-        await updateOverlayForTimestampAction(weatherModel.activeTimestamp);
+        await updateOverlayForTimestampAction(weatherProviderModel.activeTimestamp);
     }
 
     try {
