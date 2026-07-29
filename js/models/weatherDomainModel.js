@@ -1,6 +1,7 @@
 import { calculatewindSpeeds } from '../utils/interpolation.js';
 import { determineActiveIndex } from '../utils/time.js';
 import { logger } from '../utils/logger.js';
+import eventProxy from '../weatherModels/eventProxy.js';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng
@@ -27,9 +28,8 @@ import { logger } from '../utils/logger.js';
  * }} DomainState
  */
 
-export class WeatherModel extends EventTarget {
+export class WeatherModel {
     constructor() {
-        super();
         
         /** @type {DomainState} */
         this._domain = {
@@ -45,7 +45,8 @@ export class WeatherModel extends EventTarget {
             overlayLoadError: null,
             pointDataLoadError: null,
             apiMismatchError: null,
-            startupError: null
+            startupError: null,
+            specialDataSummary: null
         };
 
         // station-related state moved to appModel
@@ -80,7 +81,7 @@ export class WeatherModel extends EventTarget {
      */
     setLastIndexSync(date) {
         this._domain.lastIndexSync = date;
-        this.dispatchEvent(new CustomEvent('model:last-index-sync-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:last-index-sync-updated'));
     }
 
     get activeTimestampIndex() { return this._activeTimestampIndex; }
@@ -122,8 +123,8 @@ export class WeatherModel extends EventTarget {
      */
     setIndexLoadError(message) {
         this._domain.indexLoadError = message;
-        this.dispatchEvent(new CustomEvent('model:index-load-error-changed'));
-        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:index-load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
     /**
@@ -131,8 +132,8 @@ export class WeatherModel extends EventTarget {
      */
     setOverlayLoadError(message) {
         this._domain.overlayLoadError = message;
-        this.dispatchEvent(new CustomEvent('model:overlay-load-error-changed'));
-        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:overlay-load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
     /**
@@ -140,8 +141,8 @@ export class WeatherModel extends EventTarget {
      */
     setPointDataLoadError(message) {
         this._domain.pointDataLoadError = message;
-        this.dispatchEvent(new CustomEvent('model:point-data-load-error-changed'));
-        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:point-data-load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
     /**
@@ -149,8 +150,8 @@ export class WeatherModel extends EventTarget {
      */
     setApiMismatchError(message) {
         this._domain.apiMismatchError = message;
-        this.dispatchEvent(new CustomEvent('model:api-mismatch-error-changed'));
-        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:api-mismatch-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
     /**
@@ -158,8 +159,8 @@ export class WeatherModel extends EventTarget {
      */
     setStartupError(message) {
         this._domain.startupError = message;
-        this.dispatchEvent(new CustomEvent('model:startup-error-changed'));
-        this.dispatchEvent(new CustomEvent('model:load-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:startup-error-changed'));
+        eventProxy.dispatchEvent(new CustomEvent('model:load-error-changed'));
     }
 
     // setSpecialDataSummary moved to appModel
@@ -192,11 +193,11 @@ export class WeatherModel extends EventTarget {
         this._activeTimestampIndex = i;
         this._recalculateInterpolation();
 
-        this.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
         
         if (this._domain.locationContext) {
-            this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
-            this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
+            eventProxy.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
+            eventProxy.dispatchEvent(new CustomEvent('model:windspeed-updated'));
         }
     }
 
@@ -215,13 +216,13 @@ export class WeatherModel extends EventTarget {
 
         this._recalculateInterpolation();
 
-        this.dispatchEvent(new CustomEvent('model:timestamps-updated'));
-        this.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
-        this.dispatchEvent(new CustomEvent('model:model-metadata-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:timestamps-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:model-metadata-updated'));
 
         if (this._domain.locationContext) {
-            this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
-            this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
+            eventProxy.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
+            eventProxy.dispatchEvent(new CustomEvent('model:windspeed-updated'));
         }
     }
 
@@ -234,9 +235,9 @@ export class WeatherModel extends EventTarget {
         this.setPointDataLoadError(null);
         this._recalculateInterpolation();
 
-        this.dispatchEvent(new CustomEvent('model:location-updated'));
-        this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
-        this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:location-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:windspeed-updated'));
     }
 
     removePointData() {
@@ -244,9 +245,9 @@ export class WeatherModel extends EventTarget {
         this._domain.forecast = null;
         this._domain.windData = null;
 
-        this.dispatchEvent(new CustomEvent('model:location-updated'));
-        this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
-        this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:location-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
+        eventProxy.dispatchEvent(new CustomEvent('model:windspeed-updated'));
     }
 }
 
