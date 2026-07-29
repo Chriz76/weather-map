@@ -1,4 +1,7 @@
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
+import eventProxy from '../weatherModels/eventProxy.js';
+import { logger } from '../utils/logger.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 import { formatModelTimestampToTimeAndDescription } from '../utils/time.js';
 
 // 1. Wir umgehen den UMD-Global-Fehler, indem wir L über window holen.
@@ -21,7 +24,7 @@ export function registerTimelineView(mapInstance) {
             L.DomEvent.disableScrollPropagation(container);
 
             try {
-                const totalTimestamps = weatherModel.availableTimestamps.length;
+                const totalTimestamps = getModel().availableTimestamps.length;
 
                 // 3. HTML structure with main time and subtext elements
                 container.innerHTML = `
@@ -34,7 +37,7 @@ export function registerTimelineView(mapInstance) {
                    class="timeline-view__slider" 
                    min="0" 
                    max="${Math.max(0, totalTimestamps - 1)}" 
-                   value="${weatherModel.activeTimestampIndex}">
+                   value="${getModel().activeTimestampIndex}">
           </div>
           <div class="timeline-view__navigation">
             <button class="timeline-view__nav-btn timeline-view__nav-btn--prev">&#10094;</button>
@@ -73,7 +76,7 @@ export function registerTimelineView(mapInstance) {
                 };
 
                 // Set initial display on load directly
-                updateTimeDisplay(weatherModel.activeTimestamp);
+                updateTimeDisplay(getModel().activeTimestamp);
 
                 // --- Event listeners for user actions ---
 
@@ -85,7 +88,7 @@ export function registerTimelineView(mapInstance) {
                 });
 
                 btnPrev.addEventListener('click', () => {
-                    const activeIndex = weatherModel.activeTimestampIndex;
+                    const activeIndex = getModel().activeTimestampIndex;
                     if (activeIndex > 0) {
                         const newIndex = activeIndex - 1;
                         // @ts-ignore
@@ -95,10 +98,10 @@ export function registerTimelineView(mapInstance) {
                 });
 
                 btnNext.addEventListener('click', () => {
-                    const activeIndex = weatherModel.activeTimestampIndex;
+                    const activeIndex = model.activeTimestampIndex;
 
                     /** @type {any[]} */                    
-                    const timestamps = weatherModel.availableTimestamps;
+                    const timestamps = getModel().availableTimestamps;
                     if (activeIndex < timestamps.length - 1) {
                         const newIndex = activeIndex + 1;
                         // @ts-ignore
@@ -109,20 +112,20 @@ export function registerTimelineView(mapInstance) {
 
                 // --- Event listeners for state changes directly from model ---
 
-                weatherModel.addEventListener('model:timestamps-updated', () => {
+                eventProxy.addEventListener('model:timestamps-updated', () => {
                     if (!slider) return;
                     // @ts-ignore
-                    slider.max = Math.max(0, weatherModel.availableTimestamps.length - 1);
+                    slider.max = Math.max(0, getModel().availableTimestamps.length - 1);
                     // @ts-ignore
-                    slider.value = weatherModel.activeTimestampIndex;
-                    updateTimeDisplay(weatherModel.activeTimestamp);
+                    slider.value = getModel().activeTimestampIndex;
+                    updateTimeDisplay(getModel().activeTimestamp);
                 });
 
-                weatherModel.addEventListener('model:timestamp-index-updated', () => {
+                eventProxy.addEventListener('model:timestamp-index-updated', () => {
                     if (!slider) return;
                     // @ts-ignore
-                    slider.value = weatherModel.activeTimestampIndex;
-                    updateTimeDisplay(weatherModel.activeTimestamp);
+                    slider.value = getModel().activeTimestampIndex;
+                    updateTimeDisplay(getModel().activeTimestamp);
                 });
 
             } catch (uiError) {

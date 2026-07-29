@@ -1,5 +1,6 @@
 // controllers/mapController.js
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 import { uiModel } from '../models/uiModel.js';
 import { storage } from '../utils/storage.js';
 import { formatMinutesAgo } from '../utils/time.js';
@@ -76,7 +77,7 @@ export async function initMapController(map) {
 
     function handlePopupClose() {
         lastClusterClickToken = null;
-        weatherModel.removePointData();
+        getModel().removePointData();
     }
 
     async function handleMoveEnd() {

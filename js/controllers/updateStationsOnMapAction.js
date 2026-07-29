@@ -67,7 +67,7 @@ export async function updateStationsOnMapAction(bounds = null) {
         topStations = stationsInView.slice(0, 8);
     } else {
         // No bounds -> refresh previously visible stations if model has them
-        const visible = Array.isArray(appModel.visibleStations) ? appModel.visibleStations : [];
+            const visible = Array.isArray(appModel.visibleStations) ? appModel.visibleStations : [];
         if (visible && visible.length) {
             topStations = visible.slice();
         } else {
@@ -94,5 +94,5 @@ export async function updateStationsOnMapAction(bounds = null) {
         windData: fetched[station.id] || null
     }));
 
-    appModel.setVisibleStations(stationsWithFinalData);
+        appModel.setVisibleStations(stationsWithFinalData);
 }

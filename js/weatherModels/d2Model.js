@@ -6,10 +6,7 @@ import { WeatherModel } from '../models/weatherDomainModel.js';
 export const d2Model = {
     // Eager singleton WeatherModel instance for this adapter
     domainModel: new WeatherModel(),
-    async init(config) {
-        this.config = config;
-        logger.info('d2Model initialized');
-    },
+    // Note: init removed; adapter is static and lightweight
     async fetchIndex(baseUrl) {
         return weatherService.fetchIndex(baseUrl || this.config?.BASE_URL);
     },

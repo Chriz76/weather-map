@@ -1,5 +1,7 @@
 /* global L */
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
+import eventProxy from '../weatherModels/eventProxy.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 import { uiModel } from '../models/uiModel.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
@@ -11,16 +13,16 @@ import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from '
  */
 export function registerMapOverlayView(map, windOverlay) {
 
-    weatherModel.addEventListener('model:windspeed-updated', () => {
-        if (weatherModel.windData) {
-            updateMapMarkerWindspeed(map, weatherModel.windData);
+    eventProxy.addEventListener('model:windspeed-updated', () => {
+        if (getModel().windData) {
+            updateMapMarkerWindspeed(map, getModel().windData);
         } else {
             clearMarker(map);
         }
     });
 
-    weatherModel.addEventListener('model:location-updated', () => {
-        const latLng = weatherModel.lastClickedLatLng;
+    eventProxy.addEventListener('model:location-updated', () => {
+        const latLng = getModel().lastClickedLatLng;
         if (latLng) {
             updateMapMarkerLocation(map, latLng.lat, latLng.lng);
         } else {

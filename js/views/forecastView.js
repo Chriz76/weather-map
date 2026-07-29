@@ -1,7 +1,9 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
+import eventProxy from '../weatherModels/eventProxy.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 
 /**
  * Registers the forecast table control and binds it to model events.
@@ -115,8 +117,8 @@ export function registerForecastView(map) {
                 setTimeout(() => { self.scrollActiveForecastHourToCenter(); }, 50);
             };
 
-            self.highlightActiveForecastHour = function () {
-                const currentKey = weatherModel.activeTimestamp;
+                self.highlightActiveForecastHour = function () {
+                const currentKey = getModel().activeTimestamp;
                 if (!currentKey) return;
 
                 const activeElements = /** @type {NodeListOf<HTMLElement>} */ (
@@ -142,11 +144,11 @@ export function registerForecastView(map) {
                 }
             };
 
-            weatherModel.addEventListener('model:forecast-data-updated', () => {
-                self.renderTable(weatherModel.forecast);
+            eventProxy.addEventListener('model:forecast-data-updated', () => {
+                self.renderTable(getModel().forecast);
             });
 
-            weatherModel.addEventListener('model:timestamp-index-updated', () => {
+            eventProxy.addEventListener('model:timestamp-index-updated', () => {
                 if (container.classList.contains('forecast-view--has-data')) {
                     self.highlightActiveForecastHour();
                     self.scrollActiveForecastHourToCenter();

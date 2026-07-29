@@ -1,5 +1,6 @@
 ﻿// main.js
-import { weatherModel } from './models/weatherDomainModel.js';
+import modelManager from './weatherModels/modelManager.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 import { uiModel } from './models/uiModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
@@ -76,7 +77,7 @@ async function initApp() {
                     await loadWeatherDataForLocationAction(targetLatLng);
                 } catch (error) {
                     const errMsg = error instanceof Error ? error.message : String(error);
-                    weatherModel.setPointDataLoadError(errMsg);
+                    getModel().setPointDataLoadError(errMsg);
                 }
             }
         }

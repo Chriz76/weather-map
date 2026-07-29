@@ -1,11 +1,23 @@
-import { MODELS, getDefaultModelId } from '../config.js';
+import { MODELS, DEFAULT_MODEL_ID } from '../config.js';
 import { d2Model } from './d2Model.js';
 import { aromeModel } from './aromeModel.js';
 import { logger } from '../utils/logger.js';
 import { WeatherModel } from '../models/weatherDomainModel.js';
 
 const adapters = { d2: d2Model, arome: aromeModel };
-let activeModelId = getDefaultModelId();
+let activeModelId = DEFAULT_MODEL_ID;
+
+// Static initialization: set active adapter and ensure it exposes a domainModel and config.
+try {
+    const activeAdapter = adapters[activeModelId];
+    if (!activeAdapter) throw new Error('No adapter for default model id: ' + activeModelId);
+    // attach declarative config for adapter consumers
+    activeAdapter.config = MODELS[activeModelId];
+    if (!activeAdapter.domainModel) activeAdapter.domainModel = new WeatherModel();
+    logger.info('modelManager: statically initialized active model', activeModelId);
+} catch (e) {
+    logger.warn('modelManager static init failed', e);
+}
 
 const _modelChangeListeners = new Set();
 
@@ -13,12 +25,11 @@ export const modelManager = {
     getActiveModelId() { return activeModelId; },
     getActiveModelConfig() { return MODELS[activeModelId]; },
 
-    async setActiveModel(id) {
+    setActiveModel(id) {
         if (!adapters[id]) throw new Error('Unknown model id: ' + id);
         activeModelId = id;
-        // ensure adapter initialized
-        await adapters[id].init(MODELS[id]);
-        // attach a singleton domainModel to the adapter if not present
+        // attach declarative config and ensure domainModel
+        adapters[id].config = MODELS[id];
         if (!adapters[id].domainModel) adapters[id].domainModel = new WeatherModel();
         logger.info('Active model set to', id);
         // notify listeners

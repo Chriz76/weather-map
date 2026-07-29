@@ -4,10 +4,7 @@ import { WeatherModel } from '../models/weatherDomainModel.js';
 export const aromeModel = {
     // Eager singleton WeatherModel instance for this adapter
     domainModel: new WeatherModel(),
-    async init(config) {
-        this.config = config;
-        logger.info('aromeModel initialized');
-    },
+    // Note: init removed; adapter is static and lightweight
     async fetchIndex() {
         // Arome may not provide the same index format; implement when endpoint is available.
         throw new Error('fetchIndex not implemented for aromeModel');

@@ -1,8 +1,9 @@
 // controllers/lifecycleController.js
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError } from './actions.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction.js';
 import { logger } from '../utils/logger.js';
@@ -43,15 +44,15 @@ async function safeSyncApp(isInitial = false) {
     logger.info('🔄 App sync started...');
  
     const force = !!(
-        weatherModel.indexLoadError ||
-        weatherModel.pointDataLoadError ||
-        weatherModel.overlayLoadError
+        getModel().indexLoadError ||
+        getModel().pointDataLoadError ||
+        getModel().overlayLoadError
     );
 
-    weatherModel.setStartupError(null);
-    weatherModel.setIndexLoadError(null);
-    weatherModel.setPointDataLoadError(null);
-    weatherModel.setOverlayLoadError(null);
+    getModel().setStartupError(null);
+    getModel().setIndexLoadError(null);
+    getModel().setPointDataLoadError(null);
+    getModel().setOverlayLoadError(null);
 
     try {
         await loadingSpinnerController.track(
@@ -66,18 +67,18 @@ async function safeSyncApp(isInitial = false) {
 
         if (isApiMismatch) {
             const version = error.version || '';
-            weatherModel.setApiMismatchError(`A new App version is available (v${version}).\n\nPlease reload the page to use the application as usual.`);
+            getModel().setApiMismatchError(`A new App version is available (v${version}).\n\nPlease reload the page to use the application as usual.`);
         } else if (error instanceof IndexLoadError) {
-            weatherModel.setIndexLoadError(error.detail ?? errMsg);
+            getModel().setIndexLoadError(error.detail ?? errMsg);
         } else if (error instanceof LocationLoadError) {
-            weatherModel.setPointDataLoadError(error.detail ?? errMsg);
+            getModel().setPointDataLoadError(error.detail ?? errMsg);
         } else if (error instanceof OverlayLoadError) {
-            weatherModel.setOverlayLoadError(error.detail ?? errMsg);
+            getModel().setOverlayLoadError(error.detail ?? errMsg);
         }
 
         if (!isApiMismatch) {
             if (isInitial) {
-                weatherModel.setStartupError('Error during application synchronization: ' + errMsg);
+                getModel().setStartupError('Error during application synchronization: ' + errMsg);
             } else {
                 // Background sync failed -> non-modal toast
                 toastController.showToast({

@@ -1,10 +1,11 @@
 // controllers/actions.js
 import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
 import { uiModel } from '../models/uiModel.js';
 import { weatherService } from '../services/weatherService.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { logger } from '../utils/logger.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 
 export class ApiMismatchError extends Error {
     constructor(version) {
@@ -97,7 +98,7 @@ export async function loadWeatherDataForLocationAction(latlng) {
         await loadingSpinnerController.track(async () => {
             cluster = await weatherService.fetchCluster(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
         });
-        weatherModel.setPointData(latlng, cluster);
+        getModel().setPointData(latlng, cluster);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         logger.error('🚨 Error processing location data:', errMsg);
@@ -124,7 +125,7 @@ export async function syncAppWithServerAction(background = true, force = false) 
             throw new IndexLoadError(fetchErrMsg);
         }
 
-        weatherModel.setLastIndexSync(new Date());
+        getModel().setLastIndexSync(new Date());
 
         // API version mismatch: propagate to controller for UI decision
         if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
@@ -141,26 +142,26 @@ export async function syncAppWithServerAction(background = true, force = false) 
 
        // Log 2: Inspect cache state immediately before comparison.
        logger.debug('🧠 [SYNC CHECK] Checking for new data:', {
-           modelTimestamp: weatherModel.modelGeneratedAt,
+           modelTimestamp: getModel().modelGeneratedAt,
            serverTimestamp: indexData?.generated_at,
-           willAbort: (weatherModel.modelGeneratedAt === indexData?.generated_at && !!weatherModel.modelGeneratedAt)
+           willAbort: (getModel().modelGeneratedAt === indexData?.generated_at && !!getModel().modelGeneratedAt)
         });
 
-        if (!force && weatherModel.modelGeneratedAt === indexData.generated_at && weatherModel.modelGeneratedAt) {
+        if (!force && getModel().modelGeneratedAt === indexData.generated_at && getModel().modelGeneratedAt) {
            logger.info('🛑 [SYNC ABORT] Sync silently canceled because generated times match.');
            return;
         }
 
         logger.info('🚀 [SYNC CONTINUE] Data is new! Continuing...');
 
-        if (weatherModel.lastClickedLatLng) {
-            weatherModel.setIndexMetadata(indexData);
-            await loadWeatherDataForLocationAction(weatherModel.lastClickedLatLng);
+        if (getModel().lastClickedLatLng) {
+            getModel().setIndexMetadata(indexData);
+            await loadWeatherDataForLocationAction(getModel().lastClickedLatLng);
         } else {
-            weatherModel.setIndexMetadata(indexData);
+            getModel().setIndexMetadata(indexData);
         }
 
-        await updateOverlayForTimestampAction(weatherModel.activeTimestamp);
+        await updateOverlayForTimestampAction(getModel().activeTimestamp);
     }
 
     try {

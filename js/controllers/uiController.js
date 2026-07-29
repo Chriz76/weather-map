@@ -1,7 +1,8 @@
 // controllers/uiController.js
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
-import { weatherModel } from '../models/weatherDomainModel.js';
+import modelManager from '../weatherModels/modelManager.js';
+const getModel = () => modelManager.getActiveModel().domainModel;
 import { retryStartupSync } from './lifecycleController.js';
 import { updateOverlayForTimestampAction } from './actions.js';
 import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time.js';
@@ -23,14 +24,14 @@ function handleTimelineChange(e) {
         : null;
     if (idx === null) return;
 
-    weatherModel.setActiveTimestampIndex(idx);
+    getModel().setActiveTimestampIndex(idx);
 
     if (timelineDebounceTimer !== null) {
         clearTimeout(timelineDebounceTimer);
     }
 
     timelineDebounceTimer = window.setTimeout(async () => {
-        const targetTimestamp = weatherModel.activeTimestamp;
+        const targetTimestamp = getModel().activeTimestamp;
         if (!targetTimestamp) return;
 
         lastTimelineTimestampToken = targetTimestamp;
@@ -39,17 +40,17 @@ function handleTimelineChange(e) {
             await loadingSpinnerController.track(async () => {
                 await updateOverlayForTimestampAction(targetTimestamp);
             });
-        } catch (err) {
+            } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
             logger.error('❌ Overlay fetch failed during timeline change:', errMsg);
-            weatherModel.setOverlayLoadError(errMsg);
+            getModel().setOverlayLoadError(errMsg);
         }
     }, SLIDER_DEBOUNCE_MS);
 }
 
 function handleModelInfoClicked() {
-    const runStr = weatherModel.modelCurrentHour ? formatModelTimestampToDateTime(weatherModel.modelCurrentHour) : '—';
-    const syncStr = weatherModel.lastIndexSync ? formatToDateTime(weatherModel.lastIndexSync) : '—';
+    const runStr = getModel().modelCurrentHour ? formatModelTimestampToDateTime(getModel().modelCurrentHour) : '—';
+    const syncStr = getModel().lastIndexSync ? formatToDateTime(getModel().lastIndexSync) : '—';
 
     const message = `Model run:\n${runStr}\n\nSync:\n${syncStr}`;
 
