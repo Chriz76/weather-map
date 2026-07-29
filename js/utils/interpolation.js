@@ -15,12 +15,12 @@ function getDisplayHour(tKey) {
  * @param {{lat:number,lng:number}} latlng Clicked map coordinates.
  * @param {{lats:number[],lons:number[],timeline:Object<string,{speeds:Array<number|undefined>,dirs:Array<number|null|undefined>,gusts:Array<number|undefined>}>}} cluster Cluster payload with grid point coordinates and timeline arrays.
  * @param {string|null} activeTimestamp Selected timestamp key or null to use the first available timestamp.
- * @returns {{forecast:Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}>|null,windData:{speed:number|null,gust:number|null,direction:number|null}|null}} Interpolation result.
+ * @returns {Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}>|null} Forecast array or null on error.
  */
 export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
     try {
         if (!latlng || !cluster || !cluster.timeline) {
-            return { forecast: null, windData: null };
+            return null;
         }
 
         const clickLat = latlng.lat;
@@ -30,7 +30,7 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
         const currentTimeKey = activeTimestamp || timelineKeys[0];
 
         const totalPoints = cluster.lats.length;
-        if (totalPoints < 3) return { forecast: null, windData: null };
+        if (totalPoints < 3) return null;
 
         // 1. Die 3 kleinsten quadrierten Distanzen in EINEM Durchlauf finden (Kein Array, kein Sortieren!)
         let idx1 = -1, idx2 = -1, idx3 = -1;
@@ -120,17 +120,10 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
         // Bestimme `windData` aus der bereits berechneten Forecast-Tabelle
         const currentEntry = dynamicForecastArray.find(e => e.fullKey === currentTimeKey) || dynamicForecastArray[0] || null;
 
-        return {
-            forecast: dynamicForecastArray,
-            windData: currentEntry ? {
-                speed: currentEntry.wind,
-                gust: currentEntry.gust,
-                direction: currentEntry.direction === null ? null : currentEntry.direction
-            } : null
-        };
+        return dynamicForecastArray;
 
     } catch (mathError) {
         logger.error("🚨 Mathematical interpolation error:", mathError.message);
-        return { forecast: null, windData: null };
+        return null;
     }
 }

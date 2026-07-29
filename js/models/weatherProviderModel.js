@@ -1,4 +1,3 @@
-import { calculatewindSpeeds } from '../utils/interpolation.js';
 import { determineActiveIndex } from '../utils/time.js';
 import { logger } from '../utils/logger.js';
 
@@ -7,8 +6,7 @@ import { logger } from '../utils/logger.js';
  * @typedef {{speed: number|null, gust: number|null, direction: number|null}} WindData
  * @typedef {{hour: string, wind: number, gust: number, direction: number|null, fullKey: string}} ForecastItem
  * @typedef {{
- *   latLng: LatLng,
- *   clusterData: any
+ *   latLng: LatLng
  * }} LocationContext
  * @typedef {{
  *   availableTimestamps: string[],
@@ -87,7 +85,6 @@ export class WeatherProviderModel extends EventTarget {
     get forecast() { return this._getActiveModel().forecast; }
     
     get lastClickedLatLng() { return this._getActiveModel().locationContext?.latLng ?? null; }
-    get currentClusterData() { return this._getActiveModel().locationContext?.clusterData ?? null; }
 
     /**
      * Date of the last time the index was successfully synced from the server (local Date object).
@@ -191,13 +188,16 @@ export class WeatherProviderModel extends EventTarget {
      * Interner Helper, um redundanten Interpolations-Code zu vermeiden
      * @private
      */
-    _recalculateInterpolation() {
-        if (this._getActiveModel().locationContext && this.activeTimestamp) {
-            const { latLng, clusterData } = this._getActiveModel().locationContext;
-            const interpolation = calculatewindSpeeds(latLng, clusterData, this.activeTimestamp);
-            this._getActiveModel().forecast = interpolation.forecast;
-            this._getActiveModel().windData = interpolation.windData;
+    _setWindDataForActiveTimestamp() {
+        // Now only derive windData from an existing forecast for the active timestamp.
+        const model = this._getActiveModel();
+        if (!model.forecast || !this.activeTimestamp) {
+            model.windData = null;
+            return;
         }
+
+        const entry = model.forecast.find(e => e.fullKey === this.activeTimestamp) || model.forecast[0];
+        model.windData = entry ? { speed: entry.wind, gust: entry.gust, direction: entry.direction } : null;
     }
 
     /**
@@ -211,7 +211,7 @@ export class WeatherProviderModel extends EventTarget {
         }   
 
         this._getActiveModel().activeTimestampIndex = i;
-        this._recalculateInterpolation();
+        this._setWindDataForActiveTimestamp();
 
         this.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
         
@@ -234,7 +234,7 @@ export class WeatherProviderModel extends EventTarget {
         this._getActiveModel().modelCurrentHour = indexData.current_hour ?? null;
         this.setIndexLoadError(null);
 
-        this._recalculateInterpolation();
+        this._setWindDataForActiveTimestamp();
 
         this.dispatchEvent(new CustomEvent('model:timestamps-updated'));
         this.dispatchEvent(new CustomEvent('model:timestamp-index-updated'));
@@ -250,10 +250,16 @@ export class WeatherProviderModel extends EventTarget {
      * @param {LatLng} latlng
      * @param {any} cluster
      */
-    setPointData(latlng, cluster) {
-        this._getActiveModel().locationContext = { latLng: latlng, clusterData: cluster };
+    setPointData(latlng, forecast) {
+        // Store only the click location; do not persist cluster in the model.
+        this._getActiveModel().locationContext = { latLng: latlng };
         this.setPointDataLoadError(null);
-        this._recalculateInterpolation();
+
+        // Accept forecast computed by the caller and store it in the model.
+        this._getActiveModel().forecast = Array.isArray(forecast) ? forecast : null;
+
+        // Now derive windData only from the stored forecast.
+        this._setWindDataForActiveTimestamp();
 
         this.dispatchEvent(new CustomEvent('model:location-updated'));
         this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
