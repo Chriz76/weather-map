@@ -14,10 +14,9 @@ function getDisplayHour(tKey) {
  * a forecast array for every timestamp in the cluster payload.
  * @param {{lat:number,lng:number}} latlng Clicked map coordinates.
  * @param {{lats:number[],lons:number[],timeline:Object<string,{speeds:Array<number|undefined>,dirs:Array<number|null|undefined>,gusts:Array<number|undefined>}>}} cluster Cluster payload with grid point coordinates and timeline arrays.
- * @param {string|null} activeTimestamp Selected timestamp key or null to use the first available timestamp.
  * @returns {Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}>|null} Forecast array or null on error.
  */
-export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
+export function calculatewindSpeeds(latlng, cluster) {
     try {
         if (!latlng || !cluster || !cluster.timeline) {
             return null;
@@ -27,7 +26,6 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
         const clickLng = latlng.lng;
 
         const timelineKeys = Object.keys(cluster.timeline).sort();
-        const currentTimeKey = activeTimestamp || timelineKeys[0];
 
         const totalPoints = cluster.lats.length;
         if (totalPoints < 3) return null;
@@ -116,9 +114,6 @@ export function calculatewindSpeeds(latlng, cluster, activeTimestamp) {
                 fullKey: tKey
             };
         }
-
-        // Bestimme `windData` aus der bereits berechneten Forecast-Tabelle
-        const currentEntry = dynamicForecastArray.find(e => e.fullKey === currentTimeKey) || dynamicForecastArray[0] || null;
 
         return dynamicForecastArray;
 

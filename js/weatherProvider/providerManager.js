@@ -21,7 +21,31 @@ export const providerManager = {
     async fetchCluster(latlng, config) {
         const activeId = weatherProviderModel.getActiveProviderId();
         const fetcher = providers[activeId];
-        return await fetcher.fetchCluster(latlng, config);
+        // Backwards-compatible: if provider implements fetchForecast only, try fetchCluster first
+        if (typeof fetcher.fetchCluster === 'function') {
+            return await fetcher.fetchCluster(latlng, config);
+        }
+        return null;
+    },
+
+    /**
+     * Fetch a fully computed forecast for a point (provider-specific implementation).
+     * @param {{lat:number,lng:number}|null} latlng
+     * @param {{BASE_URL:string,lonMin:number,latMin:number,gridCellSize:number,activeTimestamp?:string}|null} config
+     * @returns {Promise<Array|null>} Forecast array or null
+     */
+    async fetchForecast(latlng, config) {
+        const activeId = weatherProviderModel.getActiveProviderId();
+        const fetcher = providers[activeId];
+        if (typeof fetcher.fetchForecast === 'function') {
+            return await fetcher.fetchForecast(latlng, config);
+        }
+        // Fallback: if provider only exposes fetchCluster, fetch cluster and return null (caller can compute)
+        if (typeof fetcher.fetchCluster === 'function') {
+            const cluster = await fetcher.fetchCluster(latlng, config);
+            return cluster;
+        }
+        return null;
     },
 
     /**

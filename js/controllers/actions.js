@@ -1,7 +1,6 @@
 // controllers/actions.js
 import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
-import { calculatewindSpeeds } from '../utils/interpolation.js';
 import { uiStateModel } from '../models/uiStateModel.js';
 import { providerManager } from '../weatherProvider/providerManager.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
@@ -94,14 +93,12 @@ export async function updateOverlayForTimestampAction(timestamp) {
  */
 export async function loadWeatherDataForLocationAction(latlng) {
     try {
-        let cluster = null;
+        let forecast = null;
         await loadingSpinnerController.track(async () => {
-            cluster = await providerManager.fetchCluster(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE });
+            forecast = await providerManager.fetchForecast(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE, activeTimestamp: weatherProviderModel.activeTimestamp });
         });
 
-        // Compute forecast from cluster here and pass only the forecast to the model
-        const forecast = cluster ? calculatewindSpeeds(latlng, cluster, weatherProviderModel.activeTimestamp) : null;
-        weatherProviderModel.setPointData(latlng, forecast);
+        weatherProviderModel.setPointData(latlng, Array.isArray(forecast) ? forecast : null);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         logger.error('🚨 Error processing location data:', errMsg);

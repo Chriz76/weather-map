@@ -1,3 +1,5 @@
+import { calculatewindSpeeds } from '../utils/interpolation.js';
+
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
 export const d2Provider = {
@@ -13,19 +15,16 @@ export const d2Provider = {
     },
 
     /**
-     * Resolves the matching grid-cluster file for a given map click location.
-     * @param {{lat:number,lng:number}|null} latlng Geographic position.
-     * @param {{BASE_URL:string,lonMin:number,latMin:number,gridCellSize:number}|null} config Runtime map config.
-     * @returns {Promise<Object|null>} Cluster data or null when input is incomplete.
+     * Fetches the cluster and returns a computed forecast array for the given point.
+     * @param {{lat:number,lng:number}|null} latlng
+     * @param {{BASE_URL:string,lonMin:number,latMin:number,gridCellSize:number,activeTimestamp?:string}|null} config
+     * @returns {Promise<Array|null>} Forecast array or null
      */
-    async fetchCluster(latlng, config) {
+    async fetchForecast(latlng, config) {
         if (!latlng || !config) return null;
 
-        const clickLat = latlng.lat;
-        const clickLng = latlng.lng;
-
-        const col = Math.floor((clickLng - config.lonMin) / config.gridCellSize);
-        const row = Math.floor((clickLat - config.latMin) / config.gridCellSize);
+        const col = Math.floor((latlng.lng - config.lonMin) / config.gridCellSize);
+        const row = Math.floor((latlng.lat - config.latMin) / config.gridCellSize);
         const clusterUrl = `${config.BASE_URL}grid_cluster/cluster_${col}_${row}.json?${CACHE_BUSTER}`;
 
         const response = await fetch(clusterUrl, { cache: 'no-cache' });
@@ -36,7 +35,8 @@ export const d2Provider = {
             throw new Error('Cluster data structure is invalid.');
         }
 
-        return cluster;
+        // Use interpolation helper to compute the forecast array
+        return calculatewindSpeeds(latlng, cluster);
     },
 
     /**
