@@ -1,7 +1,9 @@
 import { logger } from '../utils/logger.js';
 import { WeatherProviderModel } from '../models/weatherProviderModel.js';
-
+import { AROME } from './providerIds.js';
+export const ID = AROME;
 export const aromeProvider = {
+    id: ID,
     // Eager singleton WeatherProviderModel instance for this adapter
     domainModel: new WeatherProviderModel(),
     async init(config) {
@@ -25,5 +27,4 @@ export const aromeProvider = {
         throw new Error('fetchPointForecast not implemented for aromeProvider');
     }
 };
-
 export default aromeProvider;

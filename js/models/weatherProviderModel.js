@@ -1,5 +1,6 @@
 import { determineActiveIndex } from '../utils/time.js';
 import { logger } from '../utils/logger.js';
+import { D2 } from '../weatherProvider/providerIds.js';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng
@@ -32,7 +33,7 @@ export class WeatherProviderModel extends EventTarget {
  
         // --- BOOTSTRAPPING DER PROVIDER-MODELS ---
         this.providerModels = {
-            'icon-d2': {
+            [D2]: {
                 availableTimestamps: [],
                 modelGeneratedAt: null,
                 modelCurrentHour: null,
@@ -50,7 +51,7 @@ export class WeatherProviderModel extends EventTarget {
             }
         };
 
-        this.activeProviderId = 'icon-d2';       
+        this.activeProviderId = D2;       
     }
 
     // --- STATE-MANAGEMENT ---

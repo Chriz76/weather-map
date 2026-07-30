@@ -1,31 +1,17 @@
 import { d2Provider } from './d2Provider.js';
 import { aromeProvider } from './aromeProvider.js';
+import { D2, AROME } from './providerIds.js';
 import { logger } from '../utils/logger.js';
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { providers as providerConfig } from '../config.js';
 
-const providers = { 'icon-d2': d2Provider, 'arome': aromeProvider };
+const providers = { [D2]: d2Provider, [AROME]: aromeProvider };
 
 export const providerManager = {
-    async fetchIndex(baseUrl) {
+    async fetchIndex() {
         const activeId = weatherProviderModel.getActiveProviderId();
         const fetcher = providers[activeId];
-        return await fetcher.fetchIndex(baseUrl);
-    },
-
-    /**
-     * Resolves the matching grid-cluster file for a given map click location.
-     * @param {{lat:number,lng:number}|null} latlng Geographic position.
-     * @param {{BASE_URL:string,lonMin:number,latMin:number,gridCellSize:number}|null} config Runtime map config.
-     * @returns {Promise<Object|null>} Cluster data or null when input is incomplete.
-     */
-    async fetchCluster(latlng, config) {
-        const activeId = weatherProviderModel.getActiveProviderId();
-        const fetcher = providers[activeId];
-        // Backwards-compatible: if provider implements fetchForecast only, try fetchCluster first
-        if (typeof fetcher.fetchCluster === 'function') {
-            return await fetcher.fetchCluster(latlng, config);
-        }
-        return null;
+        return await fetcher.fetchIndex(providerConfig[activeId]);
     },
 
     /**
@@ -34,18 +20,10 @@ export const providerManager = {
      * @param {{BASE_URL:string,lonMin:number,latMin:number,gridCellSize:number,activeTimestamp?:string}|null} config
      * @returns {Promise<Array|null>} Forecast array or null
      */
-    async fetchForecast(latlng, config) {
+    async fetchForecast(latlng) {
         const activeId = weatherProviderModel.getActiveProviderId();
         const fetcher = providers[activeId];
-        if (typeof fetcher.fetchForecast === 'function') {
-            return await fetcher.fetchForecast(latlng, config);
-        }
-        // Fallback: if provider only exposes fetchCluster, fetch cluster and return null (caller can compute)
-        if (typeof fetcher.fetchCluster === 'function') {
-            const cluster = await fetcher.fetchCluster(latlng, config);
-            return cluster;
-        }
-        return null;
+        return await fetcher.fetchForecast(latlng, providerConfig[activeId]);
     },
 
     /**
@@ -54,10 +32,10 @@ export const providerManager = {
      * @param {string} baseUrl Base URL where weather assets are hosted.
      * @returns {Promise<Blob>} Downloaded image blob.
      */
-    async fetchWeatherImageBlob(timestamp, baseUrl) {
+    async fetchWeatherImageBlob(timestamp) {
         const activeId = weatherProviderModel.getActiveProviderId();
         const fetcher = providers[activeId];
-        return await fetcher.fetchWeatherImageBlob(timestamp, baseUrl);
+        return await fetcher.fetchWeatherImageBlob(timestamp, providerConfig[activeId]);
     }
 };
 

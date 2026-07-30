@@ -1,5 +1,5 @@
 // controllers/actions.js
-import { BASE_URL, lonMin, latMin, GRID_CELL_SIZE, EXPECTED_API_VERSION } from '../config.js';
+import { EXPECTED_API_VERSION } from '../config.js';
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
 import { providerManager } from '../weatherProvider/providerManager.js';
@@ -48,7 +48,7 @@ let currentOverlayBlobUrl = null;
  */
 async function fetchWeatherOverlayUrl(timestamp) {
     if (!timestamp) return null;
-    const imageBlob = await providerManager.fetchWeatherImageBlob(timestamp, BASE_URL);
+    const imageBlob = await providerManager.fetchWeatherImageBlob(timestamp);
     if (currentOverlayBlobUrl) {
         URL.revokeObjectURL(currentOverlayBlobUrl);
     }
@@ -64,9 +64,9 @@ async function fetchWeatherOverlayUrl(timestamp) {
 export async function updateOverlayForTimestampAction(timestamp) {
     if (!timestamp) return;
     /** @type {string|null} */
-    let overlayUrl = `${BASE_URL}${timestamp}Z.webp`;
     try {
-        overlayUrl = await fetchWeatherOverlayUrl(timestamp);
+        let overlayUrl = await fetchWeatherOverlayUrl(timestamp);
+        uiStateModel.setActiveOverlayUrl(overlayUrl);
     } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         logger.error('❌ Error fetching overlay (first attempt):', errMsg);
@@ -74,7 +74,8 @@ export async function updateOverlayForTimestampAction(timestamp) {
         // Immediate, single retry
         try {
             logger.info('🔁 Retrying overlay fetch immediately for', timestamp);
-            overlayUrl = await fetchWeatherOverlayUrl(timestamp);
+            let overlayUrl = await fetchWeatherOverlayUrl(timestamp);
+            uiStateModel.setActiveOverlayUrl(overlayUrl);
         } catch (retryErr) {
             const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
             logger.error('❌ Overlay retry failed:', retryMsg);
@@ -82,7 +83,7 @@ export async function updateOverlayForTimestampAction(timestamp) {
             throw new OverlayLoadError(retryMsg);
         }
     }
-    uiStateModel.setActiveOverlayUrl(overlayUrl);
+    
 }
 
 
@@ -95,7 +96,7 @@ export async function loadWeatherDataForLocationAction(latlng) {
     try {
         let forecast = null;
         await loadingSpinnerController.track(async () => {
-            forecast = await providerManager.fetchForecast(latlng, { BASE_URL, lonMin, latMin, gridCellSize: GRID_CELL_SIZE, activeTimestamp: weatherProviderModel.activeTimestamp });
+            forecast = await providerManager.fetchForecast(latlng);
         });
 
         weatherProviderModel.setPointData(latlng, Array.isArray(forecast) ? forecast : null);
@@ -118,7 +119,7 @@ export async function syncAppWithServerAction(background = true, force = false) 
         let indexData;
         try {
             indexData = /** @type {{available_timestamps?: string[], generated_at?: string, current_hour?: string, api_version?: string}} */ (
-                await providerManager.fetchIndex(BASE_URL)
+                await providerManager.fetchIndex()
             );
         } catch (fetchErr) {
             const fetchErrMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
