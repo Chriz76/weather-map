@@ -1,5 +1,6 @@
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { formatModelTimestampToTimeAndDescription } from '../utils/time.js';
+import { logger } from '../utils/logger.js';
 
 // 1. Wir umgehen den UMD-Global-Fehler, indem wir L über window holen.
 // 2. Wir casten es als 'any', damit wir '.TimelineView' dynamisch hinzufügen dürfen.

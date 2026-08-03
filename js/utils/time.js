@@ -13,9 +13,25 @@ function parseModelTimestamp(timestampStr) {
     const year = parseInt(timestampStr.substring(0, 4), 10);
     const month = parseInt(timestampStr.substring(4, 6), 10) - 1;
     const day = parseInt(timestampStr.substring(6, 8), 10);
-    const hour = parseInt(timestampStr.substring(9, 11), 10);
-    
-    const date = new Date(Date.UTC(year, month, day, hour, 0, 0));
+
+    const parts = (timestampStr.split('_')[1] || '');
+    let hour = 0;
+    let minute = 0;
+
+    if (parts.length === 2) {
+        // Format like "HH"
+        hour = parseInt(parts, 10);
+    } else if (parts.length === 4) {
+        // Format like "HHMM"
+        hour = parseInt(parts.substring(0, 2), 10);
+        minute = parseInt(parts.substring(2, 4), 10);
+    } else {
+        // Fallback: try to parse first two as hour and next two as minutes if present
+        hour = parseInt(parts.substring(0, 2) || '0', 10);
+        minute = parseInt(parts.substring(2, 4) || '0', 10);
+    }
+
+    const date = new Date(Date.UTC(year, month, day, hour, minute, 0));
     if (Number.isNaN(date.getTime())) throw new Error("Invalid model timestamp format");
     return date;
 }

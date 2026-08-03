@@ -18,8 +18,12 @@ export const providers = {
         ]
     },
     [AROME]: {
-        baseUrl: BASE_URL,
-        gridCellSize: 1.0
+        baseUrl: "/assets/arome/",
+        gridCellSize: 1.0,
+        imageBounds: [
+            [37.5, -12.0],
+            [55.4, 16.0]
+        ]    
     }
 };
 

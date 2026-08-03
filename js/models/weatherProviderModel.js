@@ -1,6 +1,6 @@
 import { determineActiveIndex } from '../utils/time.js';
 import { logger } from '../utils/logger.js';
-import { D2 } from '../weatherProvider/providerIds.js';
+import { D2, AROME } from '../weatherProvider/providerIds.js';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng
@@ -48,10 +48,27 @@ export class WeatherProviderModel extends EventTarget {
                 apiMismatchError: null,
                 startupError: null,
                 activeTimestampIndex: 0
+            },
+            [AROME]: {
+                availableTimestamps: [],
+                modelGeneratedAt: null,
+                modelCurrentHour: null,
+                // ISO timestamp of the last successful index sync (e.g. '2026-07-09T12:34:56.789Z')
+                lastIndexSync: null,
+                locationContext: null,
+                windData: null,
+                forecast: null,
+                indexLoadError: null,
+                overlayLoadError: null,
+                pointDataLoadError: null,
+                apiMismatchError: null,
+                startupError: null,
+                activeTimestampIndex: 0
             }
+
         };
 
-        this.activeProviderId = D2;       
+        this.activeProviderId = AROME; // Default provider    
     }
 
     // --- STATE-MANAGEMENT ---
