@@ -2,6 +2,7 @@
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 import { retryStartupSync } from './lifecycleController.js';
 import { updateOverlayForTimestampAction } from './actions.js';
 import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time.js';
@@ -64,6 +65,18 @@ function handleAppReload() {
 export function initUiController() {
     window.addEventListener('ui:timeline-change', handleTimelineChange);
     window.addEventListener('ui:model-info-clicked', handleModelInfoClicked);
+    // Wind toggle events from the view are handled here (MVC): controller updates model
+    window.addEventListener('ui:wind-toggle-clicked', /** @param {CustomEvent<{show:boolean}>} e */ (e) => {
+        const show = e && e.detail && typeof e.detail.show === 'boolean' ? e.detail.show : null;
+        if (show === null) return;
+        uiStateModel.setShowWindMeasurements(show);
+    });
+    // Provider change requests from logo view: forward to action layer
+    window.addEventListener('ui:logo-provider-clicked', /** @param {CustomEvent<{providerId:string}>} e */ (e) => {
+        const providerId = e && e.detail && typeof e.detail.providerId === 'string' ? e.detail.providerId : null;
+        if (!providerId) return;
+        weatherProviderModel.setActiveProvider(providerId);
+    });
     window.addEventListener('app:startup-retry', retryStartupSync);
     window.addEventListener('app:reload-requested', handleAppReload);
 

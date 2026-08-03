@@ -36,7 +36,10 @@ export function registerWindToggleView(map) {
             L.DomEvent.on(button, 'click', /** @param {Event} e */ (e) => {
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
-                uiStateModel.setShowWindMeasurements(!uiStateModel.showWindMeasurements);
+                // Dispatch a UI event instead of mutating the model directly.
+                // The uiController will listen and update the model (MVC pattern).
+                const requested = !uiStateModel.showWindMeasurements;
+                window.dispatchEvent(new CustomEvent('ui:wind-toggle-clicked', { detail: { show: requested } }));
             });
 
             uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', () => {
