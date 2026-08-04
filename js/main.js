@@ -1,5 +1,6 @@
 ﻿// main.js
 import { weatherProviderModel } from './models/weatherProviderModel.js';
+import { storage } from './utils/storage.js';
 import { uiStateModel } from './models/uiStateModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
@@ -25,6 +26,11 @@ import { registerToastView } from './views/toastView.js';
 import { specialDataView } from './views/specialDataView.js';
 
 // --- 1. INITIALISIERUNG ---
+// Restore previously selected provider (before map init so imageBounds are correct)
+const storedProvider = storage.getActiveProvider(weatherProviderModel.getActiveProviderId());
+if (storedProvider && storedProvider !== weatherProviderModel.getActiveProviderId()) {
+    weatherProviderModel.setActiveProvider(storedProvider);
+}
 const { map, windOverlay } = initMap();
 
 // Views registrieren

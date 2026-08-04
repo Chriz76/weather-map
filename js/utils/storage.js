@@ -3,6 +3,8 @@ const KEYS = {
     MAP_STATE: 'ruc_map_state',
     WIND_MEASUREMENTS: 'ruc_wind_measurements'
 };
+// add active provider key
+KEYS.ACTIVE_PROVIDER = 'ruc_active_provider';
 
 /**
  * Returns a debounced wrapper around a function.
@@ -93,4 +95,20 @@ export const storage = {
         if (value === 'false') return false;
         return !!fallback;
     },
+    /**
+     * Persist the currently active provider id.
+     * @param {string|null} providerId
+     */
+    saveActiveProvider(providerId) {
+        core.set(KEYS.ACTIVE_PROVIDER, providerId === null ? '' : String(providerId));
+    },
+    /**
+     * Load persisted active provider id or fallback.
+     * @param {string} fallback
+     * @returns {string}
+     */
+    getActiveProvider(fallback) {
+        const val = core.get(KEYS.ACTIVE_PROVIDER, '', false);
+        return val && typeof val === 'string' && val.length > 0 ? val : fallback;
+    }
 };

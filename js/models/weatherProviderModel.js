@@ -68,7 +68,7 @@ export class WeatherProviderModel extends EventTarget {
 
         };
 
-        this.activeProviderId = AROME; // Default provider    
+        this.activeProviderId = AROME; // Default provider
     }
 
     // --- STATE-MANAGEMENT ---
@@ -80,7 +80,6 @@ export class WeatherProviderModel extends EventTarget {
         if (this.activeProviderId === id || !this.providerModels[id]) return;
 
         this.activeProviderId = id;
-        
         // Informiert alle Views über den Provider-Wechsel
         this.dispatchEvent(new CustomEvent('model:provider-changed', { 
         detail: { providerId: id } 

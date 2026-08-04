@@ -71,11 +71,12 @@ export function initUiController() {
         if (show === null) return;
         uiStateModel.setShowWindMeasurements(show);
     });
-    // Provider change requests from logo view: forward to action layer
+    // Provider change requests from logo view: forward to lifecycle controller
     window.addEventListener('ui:logo-provider-clicked', /** @param {CustomEvent<{providerId:string}>} e */ (e) => {
         const providerId = e && e.detail && typeof e.detail.providerId === 'string' ? e.detail.providerId : null;
         if (!providerId) return;
-        weatherProviderModel.setActiveProvider(providerId);
+        // Let lifecycleController orchestrate sync/refresh for the new provider
+        window.dispatchEvent(new CustomEvent('app:provider-switch-request', { detail: { providerId } }));
     });
     window.addEventListener('app:startup-retry', retryStartupSync);
     window.addEventListener('app:reload-requested', handleAppReload);

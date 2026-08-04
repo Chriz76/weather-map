@@ -1,6 +1,7 @@
 /* global L */
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
+import { providers } from '../config.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
 /**
@@ -32,6 +33,18 @@ export function registerMapOverlayView(map, windOverlay) {
         const url = uiStateModel.activeOverlayUrl;
         if (windOverlay && url) {
             windOverlay.setUrl(url);
+        }
+    });
+
+    // Update image bounds when the active provider changes so overlays match provider extents
+    weatherProviderModel.addEventListener('model:provider-changed', () => {
+        const newBounds = (/** @type {any} */ (providers))[weatherProviderModel.getActiveProviderId()]?.imageBounds ?? null;
+        if (windOverlay && newBounds) {
+            try {
+                windOverlay.setBounds(newBounds);
+            } catch (e) {
+                // ignore failures — prefer setBounds; recreate overlay if you observe rendering issues
+            }
         }
     });
 }
