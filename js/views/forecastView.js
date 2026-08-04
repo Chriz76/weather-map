@@ -90,16 +90,18 @@ export function registerForecastView(map) {
                 let directionHtml = '';
 
                 forecast.forEach(item => {
-                    const colorClass = getColorClass(item.wind);
-                    const formattedValue = item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1);
-                    
+                    // Use 0 as fallback for color calculations, but display '--' when value is missing
+                    const colorClass = getColorClass(item.wind ?? 0);
+                    const formattedValue = (item.wind == null) ? '--' : (item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1));
+
                     // Böen analog zu Wind verarbeiten (Farbklasse & Rundung)
-                    const gustColorClass = getColorClass(item.gust || 0);
-                    const formattedGust = item.gust >= 10 ? Math.round(item.gust) : (item.gust ?? 0).toFixed(1);
+                    const gustColorClass = getColorClass(item.gust ?? 0);
+                    const formattedGust = (item.gust == null) ? '--' : (item.gust >= 10 ? Math.round(item.gust) : item.gust.toFixed(1));
                     
                     const directionIcon = renderDirectionIcon(item.direction);
 
-                    headerHtml += `<th class="forecast-view__cell-header" data-time="${item.fullKey}">${item.hour}h</th>`;
+                    const displayHour = (typeof item.hour === 'string' && item.hour.indexOf(':') !== -1) ? item.hour : `${item.hour}h`;
+                    headerHtml += `<th class="forecast-view__cell-header" data-time="${item.fullKey}">${displayHour}</th>`;
                     valuesHtml += `<td class="forecast-view__cell-value ${colorClass}" data-time="${item.fullKey}">${formattedValue}</td>`;
                     // 🌟 KORREKTUR: Klassenstruktur exakt an das neue CSS angepasst für perfekte Symmetrie und Zentrierung
                     gustsHtml += `<td class="forecast-view__cell-value forecast-view__cell-gust ${gustColorClass}" data-time="${item.fullKey}">${formattedGust}</td>`;
