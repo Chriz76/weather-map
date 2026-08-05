@@ -45,7 +45,6 @@ export async function initMapController(map) {
             await loadWeatherDataForLocationAction(latlng);
         } catch (error) {
             const errMsg = error instanceof Error ? error.message : String(error);
-            // Direct user action: toast is sufficient, don't persist pointDataLoadError.
             toastController.showToast({ message: 'Error loading location data: ' + errMsg }, 5000);
         }
 

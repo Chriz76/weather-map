@@ -69,6 +69,8 @@ export class WeatherProviderModel extends EventTarget {
         };
 
         this.activeProviderId = AROME; // Default provider
+        // provider-independent last clicked location (kept in the model)
+        this._globalLastClickedLatLng = null;
     }
 
     // --- STATE-MANAGEMENT ---
@@ -80,6 +82,7 @@ export class WeatherProviderModel extends EventTarget {
         if (this.activeProviderId === id || !this.providerModels[id]) return;
 
         this.activeProviderId = id;
+        this.removePointData(false); // Clear provider-specific point data, but keep global last clicked location
         // Informiert alle Views über den Provider-Wechsel
         this.dispatchEvent(new CustomEvent('model:provider-changed', { 
         detail: { providerId: id } 
@@ -101,7 +104,7 @@ export class WeatherProviderModel extends EventTarget {
     get windGust() { return this._getActiveModel().windData?.gust ?? null; }
     get forecast() { return this._getActiveModel().forecast; }
     
-    get lastClickedLatLng() { return this._getActiveModel().locationContext?.latLng ?? null; }
+    get lastClickedLatLng() { return this._globalLastClickedLatLng ?? null; }
 
     /**
      * Date of the last time the index was successfully synced from the server (local Date object).
@@ -270,6 +273,7 @@ export class WeatherProviderModel extends EventTarget {
     setPointData(latlng, forecast) {
         // Store only the click location; do not persist cluster in the model.
         this._getActiveModel().locationContext = { latLng: latlng };
+        this._globalLastClickedLatLng = latlng;
         this.setPointDataLoadError(null);
 
         // Accept forecast computed by the caller and store it in the model.
@@ -283,7 +287,10 @@ export class WeatherProviderModel extends EventTarget {
         this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
     }
 
-    removePointData() {
+    removePointData(resetGlobalLastClickedLatLng = true) {
+        if (resetGlobalLastClickedLatLng) {
+            this._globalLastClickedLatLng = null;
+        }
         this._getActiveModel().locationContext = null;
         this._getActiveModel().forecast = null;
         this._getActiveModel().windData = null;

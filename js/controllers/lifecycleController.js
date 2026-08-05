@@ -2,7 +2,7 @@
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
-import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError, updateOverlayForTimestampAction } from './actions.js';
+import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError, updateOverlayForTimestampAction, loadWeatherDataForLocationAction } from './actions.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction.js';
 import { logger } from '../utils/logger.js';
@@ -154,6 +154,7 @@ function registerLifecycleListeners() {
         weatherProviderModel.setActiveProvider(providerId);
         // Persist user's choice (controller layer handles I/O)
         try { storage.saveActiveProvider(providerId); } catch (e) { logger.debug('Failed to persist active provider', e); }
+
         triggerSyncAndPoll(true);
     });
 
