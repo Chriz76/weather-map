@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Documentation & Info | ICON-D2 RUC Weather Map
+title: Documentation & Info | ICON-D2 RUC & Arome PI Weather Map
 description: Background information, API details, and features of the interactive weather map by Chriz76.
 ---
 
