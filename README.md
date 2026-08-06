@@ -23,14 +23,14 @@ Most mainstream consumer weather applications render global or regional models w
 
 | Parameter | ICON-D2 RUC | Standard Global Models (e.g., GFS) |
 | :--- | :--- | :--- |
-| **Horizontal Resolution** | **2.1 km** grid | 13 km – 27 km grid |
+| **Horizontal Resolution** | **2.2 km** grid | 13 km – 27 km grid |
 | **Update Cycle** | **Hourly (Every 60 minutes)** | Every 6 hours |
 | **Data Assimilation** | **Rapid Update Cycle (RUC)** (Continuous assimilation of local radar & station observations) | Intermittent batch assimilation |
 | **Forecast Range** | 0 to 14 hours | Multi-day extended range |
 
 ### Application for Foiling:
 
-Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.1 km resolution of the ICON-D2 RUC model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
+Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.2 km resolution of the ICON-D2 RUC model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
 
 AROME PI 2.5 km adds another high-resolution option for nearby regions via Open-Meteo and Météo-France model data.
 
