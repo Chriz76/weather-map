@@ -35,7 +35,7 @@ function stopPolling() {
     }
 }
 
-async function safeSyncApp(isInitial = false, forceArg = false) {
+async function safeSyncApp(isInitial = false, forceArg = false, prevActiveTimestamp = null) {
     logger.debug(`diagnostic: safeSyncApp called (isInitial=${isInitial}) - isSyncing=${isSyncing}, isInitialized=${isInitialized}`);
     if (isSyncing) {
         logger.debug('Sync blocked: another sync process is already running.');
@@ -59,7 +59,7 @@ async function safeSyncApp(isInitial = false, forceArg = false) {
 
     try {
         await loadingSpinnerController.track(
-            () => syncAppWithServerAction(!isInitial, force),
+            () => syncAppWithServerAction(!isInitial, force, prevActiveTimestamp),
             isInitial ? { modal: true } : undefined
         );
         isInitialized = true;
@@ -95,9 +95,9 @@ async function safeSyncApp(isInitial = false, forceArg = false) {
 }
 
 // Hilfsfunktion für die Reaktivierungs-Events
-async function triggerSyncAndPoll(force = false) {
+async function triggerSyncAndPoll(force = false, prevActiveTimestamp = null) {
     startPolling();
-    await safeSyncApp(false, force);
+    await safeSyncApp(false, force, prevActiveTimestamp);
     await updateStationsOnMap();
 }
 
@@ -150,12 +150,28 @@ function registerLifecycleListeners() {
         // No-op if already active
         if (weatherProviderModel.getActiveProviderId() === providerId) return;
 
+        // Capture currently selected timestamp (provider-agnostic reference)
+        const prevTimestamp = weatherProviderModel.activeTimestamp;
+
         // Update model immediately so views (logo toggle) reflect choice
         weatherProviderModel.setActiveProvider(providerId);
         // Persist user's choice (controller layer handles I/O)
         try { storage.saveActiveProvider(providerId); } catch (e) { logger.debug('Failed to persist active provider', e); }
 
-        triggerSyncAndPoll(true);
+        // Trigger sync and prefer the previously selected timestamp when computing the new active index
+        await triggerSyncAndPoll(true, prevTimestamp);
+
+        // Debug info: log prev vs new active timestamp and selected index
+        try {
+            logger.debug('Provider switch debug:', {
+                prevTimestamp,
+                newActiveTimestamp: weatherProviderModel.activeTimestamp,
+                activeIndex: weatherProviderModel.activeTimestampIndex,
+                availableCount: weatherProviderModel.availableTimestamps.length
+            });
+        } catch (e) {
+            /* ignore */
+        }
     });
 
     window.addEventListener('ui:notification-retry', async () => {

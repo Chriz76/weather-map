@@ -1,5 +1,3 @@
-const BASE_URL = "https://winddata.pages.dev/";
-
 export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
 
 import { D2, AROME } from './weatherProvider/providerIds.js';
@@ -10,7 +8,7 @@ import { D2, AROME } from './weatherProvider/providerIds.js';
  */
 export const providers = {
     [D2]: {
-        baseUrl: BASE_URL,
+        baseUrl: "https://winddata.pages.dev/",
         gridCellSize: 1.0,
         imageBounds : [
             [43.0440, -4.1616],
@@ -18,7 +16,7 @@ export const providers = {
         ]
     },
     [AROME]: {
-        baseUrl: "/assets/arome/",
+        baseUrl: "https://chriz76.github.io/weather-data/",
         gridCellSize: 1.0,
         imageBounds: [
             [37.5, -12.0],

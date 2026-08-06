@@ -9,7 +9,7 @@
  * @param {string} timestampStr
  * @returns {Date}
  */
-function parseModelTimestamp(timestampStr) {
+export function parseModelTimestamp(timestampStr) {
     const year = parseInt(timestampStr.substring(0, 4), 10);
     const month = parseInt(timestampStr.substring(4, 6), 10) - 1;
     const day = parseInt(timestampStr.substring(6, 8), 10);
@@ -178,18 +178,43 @@ export function formatToTime(input) {
 export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
     if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
+    // If a previous timestamp is provided, prefer an exact match or the temporally closest entry.
     if (prevActiveTimestamp) {
         const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
         if (exactMatchIndex !== -1) return exactMatchIndex;
+
+        try {
+            const prevDate = parseModelTimestamp(prevActiveTimestamp);
+            let bestIdx = 0;
+            let bestDiff = Infinity;
+
+            for (let i = 0; i < sortedTimestamps.length; i++) {
+                try {
+                    const d = parseModelTimestamp(sortedTimestamps[i]);
+                    const diff = Math.abs(d.getTime() - prevDate.getTime());
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        bestIdx = i;
+                    }
+                } catch {
+                    continue;
+                }
+            }
+
+            return bestIdx;
+        } catch {
+            // If parsing fails, fall back to the time-based heuristic below.
+        }
     }
 
+    // Default behaviour: first timestamp >= now, otherwise last available
     const now = new Date();
     for (let idx = 0; idx < sortedTimestamps.length; idx++) {
         try {
             const tDate = parseModelTimestamp(sortedTimestamps[idx]);
             if (tDate >= now) return idx;
         } catch {
-            continue; // Falls ein fehlerhafter Timestamp in der Liste ist, überspringen
+            continue; // Skip malformed entries
         }
     }
 

@@ -113,7 +113,7 @@ export async function loadWeatherDataForLocationAction(latlng) {
  * PIPELINE STAGE C: Synchronisiert den globalen Anwendungsindex.
  * @returns {Promise<void>}
  */
-export async function syncAppWithServerAction(background = true, force = false) {
+export async function syncAppWithServerAction(background = true, force = false, prevActiveTimestamp = null) {
     async function doSync() {
         // throw new Error("Sync is currently disabled for testing purposes.");
         let indexData;
@@ -156,10 +156,10 @@ export async function syncAppWithServerAction(background = true, force = false) 
         logger.info('🚀 [SYNC CONTINUE] Data is new! Continuing...');
 
         if (weatherProviderModel.lastClickedLatLng) {
-            weatherProviderModel.setIndexMetadata(indexData);
+            weatherProviderModel.setIndexMetadata(indexData, prevActiveTimestamp);
             await loadWeatherDataForLocationAction(weatherProviderModel.lastClickedLatLng);
         } else {
-            weatherProviderModel.setIndexMetadata(indexData);
+            weatherProviderModel.setIndexMetadata(indexData, prevActiveTimestamp);
         }
 
         await updateOverlayForTimestampAction(weatherProviderModel.activeTimestamp);

@@ -244,9 +244,11 @@ export class WeatherProviderModel extends EventTarget {
     /**
      * @param {{available_timestamps?: string[], generated_at?: string, current_hour?: string}} indexData
      */
-    setIndexMetadata(indexData) {
+    setIndexMetadata(indexData, prevActiveTimestamp = null) {
         const sortedTimestamps = (indexData.available_timestamps || []).sort();
-        let activeIndex = determineActiveIndex(sortedTimestamps, this._getActiveModel().activeTimestamp);
+        // Prefer explicit prevActiveTimestamp (caller-provided), otherwise use provider-local activeTimestamp
+        const reference = prevActiveTimestamp || this.activeTimestamp;
+        const activeIndex = determineActiveIndex(sortedTimestamps, reference);
 
         this._getActiveModel().availableTimestamps = sortedTimestamps;
         this._getActiveModel().activeTimestampIndex = activeIndex;
