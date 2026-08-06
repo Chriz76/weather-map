@@ -1,4 +1,4 @@
-import { weatherProviderModel } from '../../js/models/weatherProviderModel.js/index.js';
+import { weatherProviderModel } from '../../js/models/weatherProviderModel.js';
 import { uiStateModel } from '../../js/models/uiStateModel.js';
 
 describe('WeatherProviderModel', () => {
