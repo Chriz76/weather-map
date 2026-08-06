@@ -46,6 +46,22 @@ export function registerForecastView(map) {
                 </div>
             `;
 
+            // Klick auf Forecast-Spalte -> Timeline springen
+            container.addEventListener('click', (ev) => {
+                // Verhindere, dass der Klick an die Leaflet-Karte weitergereicht wird
+                L.DomEvent.stop(ev);
+
+                const target = /** @type {HTMLElement} */ (ev.target);
+                const cell = target.closest('[data-time]') || null;
+                if (!cell) return;
+                const timeKey = cell.getAttribute('data-time');
+                if (!timeKey) return;
+                const idx = weatherProviderModel.availableTimestamps.indexOf(timeKey);
+                if (idx >= 0) {
+                    window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: idx } }));
+                }
+            });
+
             // Pure render function for table
             /**
              * @param {{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}[]|null} forecast
