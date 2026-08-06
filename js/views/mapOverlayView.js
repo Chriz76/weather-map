@@ -13,7 +13,7 @@ import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from '
 export function registerMapOverlayView(map, windOverlay) {
 
     weatherProviderModel.addEventListener('model:windspeed-updated', () => {
-        if (weatherProviderModel.windData) {
+        if (weatherProviderModel.lastClickedLatLng) {
             updateMapMarkerWindspeed(map, weatherProviderModel.windData);
         } else {
             clearMarker(map);
@@ -38,7 +38,7 @@ export function registerMapOverlayView(map, windOverlay) {
 
     // Update image bounds when the active provider changes so overlays match provider extents
     weatherProviderModel.addEventListener('model:provider-changed', () => {
-        const newBounds = (/** @type {any} */ (providers))[weatherProviderModel.getActiveProviderId()]?.imageBounds ?? null;
+        const newBounds = providers[weatherProviderModel.getActiveProviderId()]?.imageBounds ?? null;
         if (windOverlay && newBounds) {
             try {
                 windOverlay.setBounds(newBounds);
