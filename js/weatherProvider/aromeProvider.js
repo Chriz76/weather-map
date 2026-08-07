@@ -56,15 +56,40 @@ export const aromeProvider = {
             return `${YYYY}${MM}${DD}_${hh}${mm}`;
         };
 
+        // Determine the last index that contains any non-null value across all relevant series
+        let lastIdx = -1;
+        for (let i = times.length - 1; i >= 0; i--) {
+            const anyValue =
+                (speed15[i] != null) ||
+                (speedHd[i] != null) ||
+                (gust15[i] != null) ||
+                (gustHd[i] != null) ||
+                (dir15[i] != null) ||
+                (dirHd[i] != null);
+            if (anyValue) { lastIdx = i; break; }
+        }
+
+        // If there's no useful data at all, return null to indicate absence
+        if (lastIdx === -1) return null;
+
+        const sliceTo = (arr) => (Array.isArray(arr) ? arr.slice(0, lastIdx + 1) : []);
+        const timesTrim = sliceTo(times);
+        const speed15Trim = sliceTo(speed15);
+        const dir15Trim = sliceTo(dir15);
+        const gust15Trim = sliceTo(gust15);
+        const speedHdTrim = sliceTo(speedHd);
+        const dirHdTrim = sliceTo(dirHd);
+        const gustHdTrim = sliceTo(gustHd);
+
         const result = [];
-        for (let i = 0; i < times.length; i++) {
-            const t = times[i];
-            const s15 = speed15[i];
-            const sHd = speedHd[i];
-            const g15 = gust15[i];
-            const gHd = gustHd[i];
-            const d15 = dir15[i];
-            const dHd = dirHd[i];
+        for (let i = 0; i < timesTrim.length; i++) {
+            const t = timesTrim[i];
+            const s15 = speed15Trim[i];
+            const sHd = speedHdTrim[i];
+            const g15 = gust15Trim[i];
+            const gHd = gustHdTrim[i];
+            const d15 = dir15Trim[i];
+            const dHd = dirHdTrim[i];
 
             const speed = (s15 != null) ? s15 : (sHd != null ? sHd : null);
             const gust = (g15 != null) ? g15 : (gHd != null ? gHd : null);
