@@ -2,7 +2,7 @@
 import { weatherProviderModel } from './models/weatherProviderModel.js';
 import { storage } from './utils/storage.js';
 import { uiStateModel } from './models/uiStateModel.js';
-import { initMap } from './map-init.js';
+import { initMap } from './map-init.ts';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
 // Controller Imports

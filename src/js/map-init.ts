@@ -1,6 +1,6 @@
 /* global L */
 // --- src/map-init.js ---
-import { providers } from './config.js';
+import { providers } from './config.ts';
 import { weatherProviderModel } from './models/weatherProviderModel.js';
 import { storage } from './utils/storage.js';
 import { D2 } from './weatherProvider/providerIds.js';
