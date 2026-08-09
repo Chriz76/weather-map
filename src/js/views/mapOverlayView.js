@@ -1,7 +1,7 @@
 /* global L */
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
-import { providers } from '../config.js';
+import { providers } from '../config.ts';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
 /**
