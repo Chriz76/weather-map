@@ -1,5 +1,4 @@
 ﻿// main.js
-import 'leaflet/dist/leaflet.css';
 import { weatherProviderModel } from './models/weatherProviderModel.js';
 import { storage } from './utils/storage.js';
 import { uiStateModel } from './models/uiStateModel.js';
