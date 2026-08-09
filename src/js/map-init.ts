@@ -29,7 +29,17 @@ export function initMap() {
         zoom: 8 
     });
 
-    // 2. Initialize map with determined values
+    // 2. Ensure the map container exists and has height. If height is 0 (CSS not yet applied), apply a temporary fallback.
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) {
+        throw new Error('Map container element with id "map" not found.');
+    }
+    // If the container currently has no height, apply a temporary inline height so Leaflet can initialize.
+    if (mapContainer.offsetHeight === 0) {
+        // Temporary fallback to make the map visible during dev until CSS/layout is settled.
+        mapContainer.style.height = '500px';
+    }
+
     mapInstance = L.map('map', {
         closePopupOnClick: false,
         zoomControl: false
