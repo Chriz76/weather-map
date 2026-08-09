@@ -1,5 +1,5 @@
 // controllers/actions.js
-import { EXPECTED_API_VERSION } from '../config.ts';
+import { EXPECTED_API_VERSION } from '../config.js';
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
 import { providerManager } from '../weatherProvider/providerManager.js';
