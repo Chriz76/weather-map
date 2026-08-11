@@ -1,15 +1,6 @@
+import { logger } from './logger';
 
-/**
-// ==========================================
-// I. INTERNE HELPER (Parser)
-// ==========================================
-
-/**
- * Parses a custom model timestamp key ("YYYYMMDD_HH") into a UTC Date object.
- * @param {string} timestampStr
- * @returns {Date}
- */
-export function parseModelTimestamp(timestampStr) {
+export function parseModelTimestamp(timestampStr: string): Date {
     const year = parseInt(timestampStr.substring(0, 4), 10);
     const month = parseInt(timestampStr.substring(4, 6), 10) - 1;
     const day = parseInt(timestampStr.substring(6, 8), 10);
@@ -19,79 +10,49 @@ export function parseModelTimestamp(timestampStr) {
     let minute = 0;
 
     if (parts.length === 2) {
-        // Format like "HH"
         hour = parseInt(parts, 10);
     } else if (parts.length === 4) {
-        // Format like "HHMM"
         hour = parseInt(parts.substring(0, 2), 10);
         minute = parseInt(parts.substring(2, 4), 10);
     } else {
-        // Fallback: try to parse first two as hour and next two as minutes if present
         hour = parseInt(parts.substring(0, 2) || '0', 10);
         minute = parseInt(parts.substring(2, 4) || '0', 10);
     }
 
     const date = new Date(Date.UTC(year, month, day, hour, minute, 0));
-    if (Number.isNaN(date.getTime())) throw new Error("Invalid model timestamp format");
+    if (Number.isNaN(date.getTime())) throw new Error('Invalid model timestamp format');
     return date;
 }
 
-/**
- * Normalizes an ISO string or Date instance into a valid Date object.
- * @param {string|Date} input
- * @returns {Date}
- */
-function normalizeToDate(input) {
+function normalizeToDate(input: string | Date): Date {
     const date = (input instanceof Date) ? input : new Date(input);
-    if (Number.isNaN(date.getTime())) throw new Error("Invalid date input");
+    if (Number.isNaN(date.getTime())) throw new Error('Invalid date input');
     return date;
 }
 
-
-// ==========================================
-// II. PUBLIC FORMATTERS (Einheitlich benannt)
-// ==========================================
-
-/**
- * Formats a model timestamp ("YYYYMMDD_HH") to local time (e.g., "14:30").
- * @param {string} timestampStr
- * @returns {string}
- */
-import { logger } from './logger.js';
-
-export function formatModelTimestampToTime(timestampStr) {
+export function formatModelTimestampToTime(timestampStr: string): string {
     try {
         const date = parseModelTimestamp(timestampStr);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (error) {
-        logger.error("❌ Error formatting model timestamp to time:", error);
+    } catch (error: any) {
+        logger.error('❌ Error formatting model timestamp to time:', error);
         return timestampStr;
     }
 }
 
-/**
- * Formats a model timestamp ("YYYYMMDD_HH") to local date and time (e.g., "24.12., 14:30").
- * @param {string} timestampStr
- * @returns {string}
- */
-export function formatModelTimestampToDateTime(timestampStr) {
+export function formatModelTimestampToDateTime(timestampStr: string): string {
     try {
         const date = parseModelTimestamp(timestampStr);
         const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
         const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         return `${datum} ${uhrzeit}`;
-    } catch (error) {
-        logger.error("❌ Error formatting model timestamp to date-time:", error);
+    } catch (error: any) {
+        logger.error('❌ Error formatting model timestamp to date-time:', error);
         return timestampStr;
     }
 }
 
-/**
- * Formats a model timestamp ("YYYYMMDD_HH") to local time and a relative day description (e.g., "Today", "Tomorrow").
- * @param {string} timestampStr
- * @returns {{time: string, description: string}}
- */
-export function formatModelTimestampToTimeAndDescription(timestampStr) {
+export function formatModelTimestampToTimeAndDescription(timestampStr: string): { time: string; description: string } {
     try {
         const date = parseModelTimestamp(timestampStr);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -109,76 +70,49 @@ export function formatModelTimestampToTimeAndDescription(timestampStr) {
         else description = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
         return { time: timeStr, description };
-    } catch (error) {
-        logger.error("❌ Error formatting model timestamp to time and description:", error);
+    } catch (error: any) {
+        logger.error('❌ Error formatting model timestamp to time and description:', error);
         return { time: '--:--', description: '--' };
     }
 }
 
-/**
- * Formats an ISO string or Date to local date and time (e.g., "24.12., 14:30").
- * @param {string|Date} input
- * @returns {string}
- */
-export function formatToDateTime(input) {
+export function formatToDateTime(input: string | Date): string {
     try {
         const date = normalizeToDate(input);
         const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
         const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         return `${datum} ${uhrzeit}`;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('❌ Error formatting to date-time:', error);
         return String(input);
     }
 }
 
-/**
- * Formats an ISO string or Date to a relative age in minutes.
- * @param {string|Date} input
- * @returns {string}
- */
-export function formatMinutesAgo(input) {
+export function formatMinutesAgo(input: string | Date): string {
     try {
         const date = normalizeToDate(input);
         const minutes = Math.round((Date.now() - date.getTime()) / 60000);
         return `${minutes} minutes ago`;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('❌ Error formatting minutes ago:', error);
         return '';
     }
 }
 
-/**
- * Formats an ISO string or Date to local time (e.g., "14:30").
- * @param {string|Date} input
- * @returns {string}
- */
-export function formatToTime(input) {
+export function formatToTime(input: string | Date): string {
     try {
         const date = normalizeToDate(input);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (error) {
+    } catch (error: any) {
         logger.error('❌ Error formatting to time:', error);
         return String(input);
     }
 }
 
-
-// ==========================================
-// III. BUSINESS LOGIC
-// ==========================================
-
-/**
- * Determines the active timeline index based on current time or historical state.
- * @param {string[]} sortedTimestamps
- * @param {string|null} prevActiveTimestamp
- * @returns {number}
- */
-export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
+export function determineActiveIndex(sortedTimestamps: string[], prevActiveTimestamp: string | null): number {
     if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
-    // If a previous timestamp is provided, prefer an exact match or the temporally closest entry.
     if (prevActiveTimestamp) {
         const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
         if (exactMatchIndex !== -1) return exactMatchIndex;
@@ -203,37 +137,30 @@ export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
 
             return bestIdx;
         } catch {
-            // If parsing fails, fall back to the time-based heuristic below.
+            // fallback
         }
     }
 
-    // Default behaviour: first timestamp >= now, otherwise last available
     const now = new Date();
     for (let idx = 0; idx < sortedTimestamps.length; idx++) {
         try {
             const tDate = parseModelTimestamp(sortedTimestamps[idx]);
             if (tDate >= now) return idx;
         } catch {
-            continue; // Skip malformed entries
+            continue;
         }
     }
 
     return sortedTimestamps.length - 1;
 }
 
-/**
- * Adds minutes to an ISO date string or Date and returns a Date.
- * @param {string|Date} input ISO date string or Date instance.
- * @param {number} minutes Minutes to add.
- * @returns {Date|null}
- */
-export function addMinutesToIso(input, minutes) {
+export function addMinutesToIso(input: string | Date, minutes: number): Date | null {
     try {
         const d = (input instanceof Date) ? new Date(input.getTime()) : new Date(input);
         if (Number.isNaN(d.getTime())) return null;
         d.setMinutes(d.getMinutes() + Number(minutes));
         return d;
-    } catch (e) {
+    } catch (e: any) {
         logger.error('❌ Error adding minutes to ISO/date:', e);
         return null;
     }

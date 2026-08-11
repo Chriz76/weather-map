@@ -1,6 +1,6 @@
 // services/measurementsService.js
 
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 const CACHE_BUSTER = `cb=${Date.now()}`;
 

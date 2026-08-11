@@ -1,15 +1,15 @@
 // controllers/mapController.js
 import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
-import { storage } from '../utils/storage.js';
-import { formatMinutesAgo } from '../utils/time.js';
-import { formatStationToast } from '../utils/stationToastFormatter.js';
+import { storage } from '../utils/storage';
+import { formatMinutesAgo } from '../utils/time';
+import { formatStationToast } from '../utils/stationToastFormatter';
 import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';
 import { stationView } from '../views/stationView.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction.js';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 let stationViewHandle = null;
 // stationView handles rendering; update action manages station data & cache

@@ -1,4 +1,4 @@
-import { calculatewindSpeeds } from '../utils/interpolation.js';
+import { calculatewindSpeeds } from '../utils/interpolation';
 import { D2 } from './providerIds.js';
 
 export const ID = D2;

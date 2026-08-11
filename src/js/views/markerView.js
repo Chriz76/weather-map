@@ -1,6 +1,6 @@
 /* global L */
 const L = /** @type {any} */ (window.L);
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 /** @type {any|null} */
 let activeSpotMarker = null;
 

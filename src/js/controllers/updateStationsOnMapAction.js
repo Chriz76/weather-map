@@ -2,7 +2,7 @@
 import { commonDataModel } from '../models/commonDataModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
 import { fetchWindDataForStation } from '../services/measurementsService.js';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 /**
  * Aktualisiert die sichtbaren Stationsmarker.

@@ -1,4 +1,4 @@
-import { formatModelTimestampToTime } from '../utils/time.js';
+import { formatModelTimestampToTime } from '../utils/time';
 import { AROME } from './providerIds.js';
 
 export const ID = AROME;

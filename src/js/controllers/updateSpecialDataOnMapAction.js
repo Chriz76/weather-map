@@ -1,6 +1,6 @@
 import { commonDataModel } from '../models/commonDataModel.js';
 import { fetchSpecialData, selectForecastEntries, buildSpecialDataSummary } from '../services/specialDataService.js';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 const SPECIAL_DATA_TARGET_LAT = 47.6506;
 const SPECIAL_DATA_TARGET_LNG = 11.3365;

@@ -1,6 +1,6 @@
-import { formatMinutesAgo } from './time.js';
+import { formatMinutesAgo } from './time';
 
-export function formatStationToast(station) {
+export function formatStationToast(station: any): string {
     const stationName = station.station_name || station.name || 'Station';
     const windData = station.windData || {};
     const windSpeed = typeof windData.windSpeed === 'number' ? windData.windSpeed.toFixed(1) : '--';

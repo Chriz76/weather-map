@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 const SPECIAL_DATA_URL = 'https://christian-fey.github.io/Koechelt_der_Kochel/forecast.json';
 const CACHE_TTL_MS = 60 * 60 * 1000;

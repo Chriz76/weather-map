@@ -4,7 +4,7 @@ import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
 import { providerManager } from '../weatherProvider/providerManager.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 export class ApiMismatchError extends Error {
     constructor(version) {

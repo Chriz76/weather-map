@@ -1,5 +1,5 @@
-import { determineActiveIndex } from '../utils/time.js';
-import { logger } from '../utils/logger.js';
+import { determineActiveIndex } from '../utils/time';
+import { logger } from '../utils/logger';
 import { D2, AROME } from '../weatherProvider/providerIds.js';
 
 /**

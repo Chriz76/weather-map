@@ -5,8 +5,8 @@ import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError, updateOverlayForTimestampAction, loadWeatherDataForLocationAction } from './actions.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction.js';
-import { logger } from '../utils/logger.js';
-import { storage } from '../utils/storage.js';
+import { logger } from '../utils/logger';
+import { storage } from '../utils/storage';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 

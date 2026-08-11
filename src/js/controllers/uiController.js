@@ -5,8 +5,8 @@ import { weatherProviderModel } from '../models/weatherProviderModel.js';
 import { uiStateModel } from '../models/uiStateModel.js';
 import { retryStartupSync } from './lifecycleController.js';
 import { updateOverlayForTimestampAction } from './actions.js';
-import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time.js';
-import { logger } from '../utils/logger.js';
+import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time';
+import { logger } from '../utils/logger';
 
 const SLIDER_DEBOUNCE_MS = 50;
 

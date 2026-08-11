@@ -1,4 +1,4 @@
-﻿import { formatToDateTime, formatModelTimestampToTime, addMinutesToIso, formatToTime } from '../utils/time.js';
+﻿import { formatToDateTime, formatModelTimestampToTime, addMinutesToIso, formatToTime } from '../utils/time';
 import { weatherProviderModel } from '../models/weatherProviderModel.js'; // 👈 Wichtig: Modell importieren!
 
 /**
