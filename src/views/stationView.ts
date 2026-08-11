@@ -1,6 +1,6 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
-import type { Station } from '../../types';
+import type { Station } from '../types';
 
 export const stationView = (() => {
   let map: any = null;

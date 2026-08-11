@@ -1,7 +1,7 @@
-export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
-
-import { D2, AROME } from './weatherProvider/providerIds';
+import { D2, AROME } from './weatherProvider/providerIds.ts';
 import type * as Leaflet from 'leaflet';
+
+export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
 
 export type ProviderConfig = {
   baseUrl: string;
@@ -31,4 +31,3 @@ export const providers: Record<string, ProviderConfig> = {
     ]
   }
 };
-

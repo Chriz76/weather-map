@@ -64,4 +64,3 @@ class LoadingSpinnerController {
 }
 
 export const loadingSpinnerController = new LoadingSpinnerController(1000);
-

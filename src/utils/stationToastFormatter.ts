@@ -1,5 +1,5 @@
 import { formatMinutesAgo } from './time';
-import { Station } from '../../types';
+import type { Station } from '../types';
 
 export function formatStationToast(station: Station): string {
     const stationName = station.station_name || station.name || 'Station';

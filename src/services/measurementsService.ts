@@ -1,5 +1,5 @@
 import { logger } from '../utils/logger';
-import type { WindData } from '../../types';
+import type { WindData } from '../types';
 
 const CACHE_BUSTER = `cb=${Date.now()}`;
 const DEFAULT_TTL = 4 * 60 * 1000; // 4 minutes

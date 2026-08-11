@@ -1,6 +1,6 @@
 import { calculatewindSpeeds } from '../utils/interpolation';
 import { D2 } from './providerIds';
-import type { LatLng, Cluster, ForecastItem } from '../../types';
+import type { LatLng, Cluster, ForecastItem } from '../types';
 
 export const ID = D2;
 

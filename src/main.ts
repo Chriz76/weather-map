@@ -1,4 +1,4 @@
-﻿// main.js
+// main.js
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
 import { uiStateModel } from './models/uiStateModel';

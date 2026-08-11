@@ -1,6 +1,6 @@
 import { formatModelTimestampToTime } from '../utils/time';
 import { AROME } from './providerIds';
-import type { LatLng, ForecastItem } from '../../types';
+import type { LatLng, ForecastItem } from '../types';
 
 export const ID = AROME;
 

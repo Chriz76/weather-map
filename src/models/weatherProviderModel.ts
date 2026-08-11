@@ -1,7 +1,7 @@
 import { determineActiveIndex } from '../utils/time';
 import { logger } from '../utils/logger';
 import { D2, AROME } from '../weatherProvider/providerIds';
-import type { LatLng, ForecastItem } from '../../types';
+import type { LatLng, ForecastItem } from '../types';
 
 type ProviderState = {
   availableTimestamps: string[];

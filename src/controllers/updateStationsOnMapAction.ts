@@ -2,7 +2,7 @@ import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
-import type { Station } from '../../types';
+import type { Station } from '../types';
 
 export async function updateStationsOnMapAction(bounds: any = null): Promise<void> {
   if (!uiStateModel.showWindMeasurements) {

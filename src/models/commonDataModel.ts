@@ -1,4 +1,4 @@
-import type { Station } from '../../types';
+import type { Station } from '../types';
 
 export class CommonDataModel extends EventTarget {
     private _allStations: Station[] = [];
