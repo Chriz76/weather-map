@@ -1,19 +1,21 @@
-// controllers/loadingSpinnerController.js
+// controllers/loadingSpinnerController.ts
 import { uiStateModel } from '../models/uiStateModel';
 
 class LoadingSpinnerController {
+    private delayMs: number;
+    private timeout: ReturnType<typeof setTimeout> | null = null;
+    private activeTracks: number = 0; // Zähler, falls mal zwei User-Aktionen parallel laufen
+    private _modalActive: boolean = false;
+
     constructor(delayMs = 500) {
         this.delayMs = delayMs;
-        this.timeout = null;
-        this.activeTracks = 0; // Zähler, falls mal zwei User-Aktionen parallel laufen
-        this._modalActive = false;
     }
 
     /**
      * Startet den Verzögerungs-Timer für den Spinner
      * @param {{ modal?: boolean }} [options]
      */
-    start(options = {}) {
+    start(options: { modal?: boolean } = {}): void {
         const modal = !!options.modal;
         this.activeTracks++;
         if (modal) {
@@ -21,7 +23,7 @@ class LoadingSpinnerController {
         }
         if (this.activeTracks === 1) {
             if (this.timeout !== null) {
-                clearTimeout(this.timeout);
+                clearTimeout(this.timeout as unknown as number);
             }
             this.timeout = setTimeout(() => {
                 uiStateModel.setIsActiveLoading(true, this._modalActive);
@@ -32,11 +34,11 @@ class LoadingSpinnerController {
     /**
      * Stoppt den Spinner sofort
      */
-    stop() {
+    stop(): void {
         this.activeTracks = Math.max(0, this.activeTracks - 1);
         if (this.activeTracks === 0) {
             if (this.timeout !== null) {
-                clearTimeout(this.timeout);
+                clearTimeout(this.timeout as unknown as number);
             }
             uiStateModel.setIsActiveLoading(false, false);
             this._modalActive = false;
@@ -47,9 +49,8 @@ class LoadingSpinnerController {
      * Ein "Decorator" für asynchrone Funktionen.
      * Hüllt jede Funktion automatisch in das Start/Stop-Szenario
      * und meldet Fehler zentral an das weatherProviderModel.
-     * @param {() => Promise<any>} asyncFn
      */
-    async track(asyncFn, options = {}) {
+    async track<T>(asyncFn: () => Promise<T>, options: { modal?: boolean } = {}): Promise<T> {
         this.start(options);
         try {
             const result = await asyncFn();
@@ -63,3 +64,4 @@ class LoadingSpinnerController {
 }
 
 export const loadingSpinnerController = new LoadingSpinnerController(1000);
+
