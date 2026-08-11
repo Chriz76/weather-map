@@ -29,5 +29,8 @@
     "@types/leaflet": "^1.9.22",
     "typescript": "^7.0.2",
     "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
   }
 }

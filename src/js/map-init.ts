@@ -4,11 +4,8 @@ import { providers } from './config.ts';
 import { weatherProviderModel } from './models/weatherProviderModel.js';
 import { storage } from './utils/storage.js';
 import { D2 } from './weatherProvider/providerIds.js';
-
 import type * as Leaflet from 'leaflet';
-
-// Use the global L from the browser (populated by CDN), but type it using the leaflet types
-const L = (window as any).L as typeof import('leaflet');
+import * as L from 'leaflet';
 
 // Internal module variables (typed)
 let mapInstance: Leaflet.Map | null = null;

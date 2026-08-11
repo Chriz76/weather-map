@@ -1,16 +1,25 @@
 export {};
 
+import * as L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
 declare global {
   interface Window {
-    // Leaflet attaches a global `L` namespace when loaded from CDN.
-    // Use the library's types when available but allow `L` to be undefined at runtime.
     L?: typeof import('leaflet');
   }
 }
 
+// Ensure bundled marker icons are available after build (Vite/Rollup handle assets)
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: (markerIcon2x as unknown) as string,
+  iconUrl: (markerIcon as unknown) as string,
+  shadowUrl: (markerShadow as unknown) as string
+});
+
+// Expose the imported Leaflet instance as a global `L` only if not already present.
 if (typeof window !== 'undefined') {
-  // If Leaflet wasn't loaded (e.g., during certain test environments), ensure L exists as a safe any.
-  if (typeof window.L === 'undefined') {
-    (window as any).L = {} as any;
-  }
+  (window as any).L = (window as any).L ?? L;
 }
