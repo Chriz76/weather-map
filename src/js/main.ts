@@ -6,10 +6,10 @@ import { initMap } from './map-init.ts';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
 // Controller Imports
-import { initLifecycleController } from './controllers/lifecycleController.js';
-import { initMapController } from './controllers/mapController.js';
-import { initUiController } from './controllers/uiController.js';
-import { loadWeatherDataForLocationAction } from './controllers/actions.js';
+import { initLifecycleController } from './controllers/lifecycleController';
+import { initMapController } from './controllers/mapController';
+import { initUiController } from './controllers/uiController';
+import { loadWeatherDataForLocationAction } from './controllers/actions';
 
 // Views
 import { registerTimelineView } from './views/timelineView.js';
