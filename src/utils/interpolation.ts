@@ -103,8 +103,9 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
 
         return dynamicForecastArray;
 
-    } catch (mathError: any) {
-        logger.error('🚨 Mathematical interpolation error:', mathError.message);
+    } catch (mathError: unknown) {
+        const msg = mathError instanceof Error ? mathError.message : String(mathError);
+        logger.error('🚨 Mathematical interpolation error:', msg);
         return null;
     }
 }

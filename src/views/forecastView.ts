@@ -1,5 +1,7 @@
 const L = (window as any).L;
 import { weatherProviderModel } from '../models/weatherProviderModel';
+import type { Map as LeafletMap } from 'leaflet';
+import type { ForecastItem } from '../types';
 
 function renderDirectionIcon(direction: number | null) {
   if (direction === null || Number.isNaN(direction)) return '<span class="forecast-view__dir-icon forecast-view__dir-icon--unknown">?</span>';
@@ -8,11 +10,16 @@ function renderDirectionIcon(direction: number | null) {
   return `<span class="forecast-view__dir-icon" style="--dir-deg:${iconRotation}deg">➤</span>`;
 }
 
-export function registerForecastView(map: any): void {
+export function registerForecastView(map: LeafletMap): void {
   L.Control.ForecastView = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
-      const self: any = this;
+      type ForecastControl = {
+        renderTable?: (forecast: ForecastItem[] | null) => void;
+        highlightActiveForecastHour?: () => void;
+        scrollActiveForecastHourToCenter?: () => void;
+      };
+      const self = this as unknown as ForecastControl;
       const container = L.DomUtil.create('div', 'forecast-view');
       L.DomEvent.disableClickPropagation(container);
 
@@ -38,7 +45,7 @@ export function registerForecastView(map: any): void {
         if (idx >= 0) window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: idx } }));
       });
 
-      self.renderTable = function (forecast: any[] | null) {
+      self.renderTable = function (forecast: ForecastItem[] | null) {
         if (!forecast) {
           container.classList.remove('forecast-view--has-data');
           return;
@@ -72,7 +79,7 @@ export function registerForecastView(map: any): void {
         let gustsHtml = '';
         let directionHtml = '';
 
-        forecast.forEach((item: any) => {
+        forecast.forEach((item: ForecastItem) => {
           const colorClass = getColorClass(item.wind ?? 0);
           const formattedValue = (item.wind == null) ? '--' : (item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1));
           const gustColorClass = getColorClass(item.gust ?? 0);
@@ -90,19 +97,19 @@ export function registerForecastView(map: any): void {
         gustsRow.innerHTML = gustsHtml;
         directionRow.innerHTML = directionHtml;
 
-        self.highlightActiveForecastHour();
-        setTimeout(() => { self.scrollActiveForecastHourToCenter(); }, 50);
+        self.highlightActiveForecastHour!();
+        setTimeout(() => { self.scrollActiveForecastHourToCenter!(); }, 50);
       };
 
       self.highlightActiveForecastHour = function () {
         const currentKey = weatherProviderModel.activeTimestamp;
         if (!currentKey) return;
 
-        const activeElements = container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction');
-        activeElements.forEach((el: any) => el.classList.remove('forecast-view__cell--active'));
+        const activeElements = container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction') as NodeListOf<Element>;
+        activeElements.forEach((el) => el.classList.remove('forecast-view__cell--active'));
 
-        const highlightedElements = container.querySelectorAll(`[data-time="${currentKey}"]`);
-        highlightedElements.forEach((el: any) => el.classList.add('forecast-view__cell--active'));
+        const highlightedElements = container.querySelectorAll(`[data-time="${currentKey}"]`) as NodeListOf<Element>;
+        highlightedElements.forEach((el) => el.classList.add('forecast-view__cell--active'));
       };
 
       self.scrollActiveForecastHourToCenter = function () {
@@ -113,11 +120,11 @@ export function registerForecastView(map: any): void {
         }
       };
 
-      weatherProviderModel.addEventListener('model:forecast-data-updated', () => { (self as any).renderTable(weatherProviderModel.forecast as any); });
+      weatherProviderModel.addEventListener('model:forecast-data-updated', () => { self.renderTable?.(weatherProviderModel.forecast as ForecastItem[] | null); });
       weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
         if (container.classList.contains('forecast-view--has-data')) {
-          (self as any).highlightActiveForecastHour();
-          (self as any).scrollActiveForecastHourToCenter();
+          self.highlightActiveForecastHour?.();
+          self.scrollActiveForecastHourToCenter?.();
         }
       });
 
@@ -125,6 +132,6 @@ export function registerForecastView(map: any): void {
     }
   });
 
-  L.control.forecastView = function (options: any) { return new L.Control.ForecastView(options); };
+  L.control.forecastView = function (options?: unknown) { return new (L.Control as any).ForecastView(options); };
   (map as any).forecastViewControl = L.control.forecastView().addTo(map);
 }

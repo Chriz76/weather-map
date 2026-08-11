@@ -34,9 +34,24 @@ export interface Station {
   lat?: number;
   lon?: number;
   windData?: WindData | null;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface MapState { lat: number; lng: number; zoom: number }
 
 export type ProviderId = string;
+
+export interface IndexData {
+  api_version?: string;
+  available_timestamps?: string[];
+  generated_at?: string | null;
+  current_hour?: string | null;
+  [key: string]: unknown;
+}
+
+export interface Provider {
+  id: ProviderId;
+  fetchIndex(config: Record<string, unknown>): Promise<IndexData>;
+  fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null>;
+  fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob>;
+}

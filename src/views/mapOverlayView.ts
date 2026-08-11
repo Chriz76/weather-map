@@ -2,11 +2,18 @@ import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
 import { providers } from '../config';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView';
+import type { Map as LeafletMap, LatLngBoundsExpression } from 'leaflet';
+import type { WindData } from '../types';
 
-export function registerMapOverlayView(map: any, windOverlay: any): void {
+type WindOverlayLike = {
+  setUrl?: (url: string) => void;
+  setBounds?: (...args: unknown[]) => void;
+};
+
+export function registerMapOverlayView(map: LeafletMap, windOverlay: unknown | null): void {
   weatherProviderModel.addEventListener('model:windspeed-updated', () => {
     if (weatherProviderModel.lastClickedLatLng) {
-      updateMapMarkerWindspeed(map, weatherProviderModel.windData as any);
+      updateMapMarkerWindspeed(map, weatherProviderModel.windData as WindData | null);
     } else {
       clearMarker(map);
     }
@@ -23,16 +30,17 @@ export function registerMapOverlayView(map: any, windOverlay: any): void {
 
   uiStateModel.addEventListener('ui:overlay-url-updated', () => {
     const url = uiStateModel.activeOverlayUrl;
-    if (windOverlay && url) {
-      windOverlay.setUrl(url);
+    if (windOverlay && url && typeof (windOverlay as any).setUrl === 'function') {
+      (windOverlay as any).setUrl(url);
     }
   });
 
   weatherProviderModel.addEventListener('model:provider-changed', () => {
-    const newBounds = (providers as any)[weatherProviderModel.getActiveProviderId()]?.imageBounds ?? null;
-    if (windOverlay && newBounds) {
+    const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
+    const newBounds = providerCfg ? providerCfg.imageBounds : null;
+    if (windOverlay && newBounds && typeof (windOverlay as any).setBounds === 'function') {
       try {
-        windOverlay.setBounds(newBounds);
+        (windOverlay as any).setBounds(newBounds as LatLngBoundsExpression);
       } catch (e) {
         // ignore
       }

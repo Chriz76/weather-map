@@ -10,9 +10,9 @@ export class UiStateModel extends EventTarget {
         toast: string | ToastPayload | null;
         showWindMeasurements: boolean;
     };
-    private _dispatchEventCallback: ((eventName: string, detail: any) => void) | null = null;
+    private _dispatchEventCallback: ((eventName: string, detail: unknown) => void) | null = null;
 
-    constructor(dispatchEventCallback?: (eventName: string, detail: any) => void) {
+    constructor(dispatchEventCallback?: (eventName: string, detail: unknown) => void) {
         super();
         this._ui = {
             activeOverlayUrl: null,
@@ -25,7 +25,7 @@ export class UiStateModel extends EventTarget {
         this._dispatchEventCallback = typeof dispatchEventCallback === 'function' ? dispatchEventCallback : null;
     }
 
-    private _emit(eventName: string, detail?: any) {
+    private _emit(eventName: string, detail?: unknown) {
         const event = new CustomEvent(eventName);
         super.dispatchEvent(event);
         if (this._dispatchEventCallback) this._dispatchEventCallback(eventName, detail);

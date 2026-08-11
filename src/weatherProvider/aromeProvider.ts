@@ -9,13 +9,13 @@ const CACHE_BUSTER = `cb=${Date.now()}`;
 export const aromeProvider = {
   id: ID,
 
-  async fetchIndex(config: any): Promise<any> {
+  async fetchIndex(config: Record<string, any>): Promise<import('../types').IndexData> {
     const response = await fetch(`${config.baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`index.json could not be loaded (status: ${response.status})`);
     return await response.json();
   },
 
-  async fetchForecast(latlng: LatLng | null, config: any | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null, config: Record<string, any> | null): Promise<ForecastItem[] | null> {
     if (!latlng) return null;
 
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&models=meteofrance_arome_france_15min,meteofrance_arome_france_hd_15min&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_hours=1&forecast_hours=12&temporal_resolution=native&${CACHE_BUSTER}`;
@@ -61,7 +61,7 @@ export const aromeProvider = {
 
     if (lastIdx === -1) return null;
 
-    const sliceTo = (arr: any) => (Array.isArray(arr) ? arr.slice(0, lastIdx + 1) : []);
+    const sliceTo = (arr: unknown) => (Array.isArray(arr) ? (arr as any[]).slice(0, lastIdx + 1) : []);
     const timesTrim = sliceTo(times);
     const speed15Trim = sliceTo(speed15);
     const dir15Trim = sliceTo(dir15);
@@ -87,8 +87,8 @@ export const aromeProvider = {
       const fullKey = unixToModelKey(t);
       result.push({
         hour: formatModelTimestampToTime(fullKey),
-        wind: speed == null ? null as any : Math.round(speed * 10) / 10,
-        gust: gust == null ? null as any : Math.round(gust * 10) / 10,
+        wind: speed == null ? null as number | null : Math.round(speed * 10) / 10,
+        gust: gust == null ? null as number | null : Math.round(gust * 10) / 10,
         direction: direction == null ? null : Math.round(direction * 10) / 10,
         fullKey
       } as unknown as ForecastItem);
@@ -97,7 +97,7 @@ export const aromeProvider = {
     return result;
   },
 
-  async fetchWeatherImageBlob(timestamp: string, config: any): Promise<Blob> {
+  async fetchWeatherImageBlob(timestamp: string, config: Record<string, any>): Promise<Blob> {
     const imageUrl = `${config.baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`;
     const response = await fetch(imageUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Image could not be loaded');

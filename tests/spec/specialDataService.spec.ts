@@ -1,4 +1,4 @@
-import { buildSpecialDataSummary, selectForecastEntries } from '../../js/services/specialDataService.js';
+import { buildSpecialDataSummary, selectForecastEntries } from '../../src/services/specialDataService';
 
 describe('special data service', () => {
     it('should build a summary from today, tomorrow and the day after', () => {

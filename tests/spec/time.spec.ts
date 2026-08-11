@@ -1,4 +1,4 @@
-import { formatModelTimestampToTime, determineActiveIndex } from '../../js/utils/time.js';
+import { formatModelTimestampToTime, determineActiveIndex } from '../../src/utils/time';
 
 describe('time utilities', () => {
     it('should format timeline keys to local time string', () => {

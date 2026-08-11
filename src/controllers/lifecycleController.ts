@@ -6,13 +6,14 @@ import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
 import { logger } from '../utils/logger';
 import { storage } from '../utils/storage';
+import type { Map as LeafletMap } from 'leaflet';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 let isSyncing = false;
 let isInitialized = false;
 let pollTimer: number | null = null;
-let appMap: any = null;
+let appMap: LeafletMap | null = null;
 
 function startPolling() {
   if (pollTimer !== null) clearInterval(pollTimer as any);
@@ -60,7 +61,7 @@ async function safeSyncApp(isInitial = false, forceArg = false, prevActiveTimest
       isInitial ? { modal: true } : undefined
     );
     isInitialized = true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error during app sync:', error);
     const errMsg = error instanceof Error ? error.message : String(error);
     const isApiMismatch = error instanceof ApiMismatchError;
@@ -112,13 +113,13 @@ async function handleAppVisibilitySync() {
 async function updateStationsOnMap() {
   try {
     await updateStationsOnMapAction();
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error('Error refreshing station wind values during visibility resume:', e);
   }
 
   try {
     await updateSpecialDataOnMapAction(appMap);
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error('Error refreshing special data badge during visibility resume:', e);
   }
 }
@@ -137,8 +138,9 @@ function registerLifecycleListeners() {
     triggerSyncAndPoll();
   });
 
-  window.addEventListener('app:provider-switch-request', async (ev: any) => {
-    const providerId = ev && ev.detail && typeof ev.detail.providerId === 'string' ? ev.detail.providerId : null;
+  window.addEventListener('app:provider-switch-request', async (ev: Event) => {
+    const custom = ev as CustomEvent<{ providerId?: string }>;
+    const providerId = custom && custom.detail && typeof custom.detail.providerId === 'string' ? custom.detail.providerId : null;
     if (!providerId) return;
 
     if (weatherProviderModel.getActiveProviderId() === providerId) return;
@@ -162,11 +164,11 @@ function registerLifecycleListeners() {
     }
   });
 
-  window.addEventListener('ui:notification-retry', async () => {
+    window.addEventListener('ui:notification-retry', async () => {
     logger.debug('Retry requested.');
     try {
       await safeSyncApp();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       toastController.showToast({ message: 'Retry failed: ' + errMsg }, 5000);
     }
@@ -178,7 +180,7 @@ export async function retryStartupSync(): Promise<void> {
   await safeSyncApp(true);
 }
 
-export async function initLifecycleController(map: any): Promise<void> {
+export async function initLifecycleController(map: LeafletMap): Promise<void> {
   logger.info('🚀 LifecycleController loaded (cold start)');
   appMap = map;
   await safeSyncApp(true);

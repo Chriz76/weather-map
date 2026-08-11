@@ -1,6 +1,7 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { fetchSpecialData, selectForecastEntries, buildSpecialDataSummary } from '../services/specialDataService';
 import { logger } from '../utils/logger';
+import type { Map as LeafletMap } from 'leaflet';
 
 const SPECIAL_DATA_TARGET_LAT = 47.6506;
 const SPECIAL_DATA_TARGET_LNG = 11.3365;
@@ -15,7 +16,7 @@ function getReferenceDay(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function shouldShowSpecialData(map: any): boolean {
+function shouldShowSpecialData(map: LeafletMap | null): boolean {
   if (!map || typeof map.getZoom !== 'function' || typeof map.getBounds !== 'function') return false;
   if (map.getZoom() < SPECIAL_DATA_MIN_ZOOM) return false;
   const bounds = map.getBounds();
@@ -27,7 +28,7 @@ function shouldShowSpecialData(map: any): boolean {
   }
 }
 
-export async function updateSpecialDataOnMapAction(map: any = null): Promise<void> {
+export async function updateSpecialDataOnMapAction(map: LeafletMap | null = null): Promise<void> {
   if (!shouldShowSpecialData(map)) return;
 
   try {
@@ -35,7 +36,7 @@ export async function updateSpecialDataOnMapAction(map: any = null): Promise<voi
     const selection = selectForecastEntries(entries, getReferenceDay());
     const summary = buildSpecialDataSummary(selection);
     commonDataModel.setSpecialDataSummary(summary);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error refreshing special data badge:', error);
     commonDataModel.setSpecialDataSummary(null);
   }

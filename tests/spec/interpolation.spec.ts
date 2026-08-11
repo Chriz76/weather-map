@@ -1,4 +1,4 @@
-import { calculatewindSpeeds } from '../../js/utils/interpolation.js';
+import { calculatewindSpeeds } from '../../src/utils/interpolation';
 
 describe('interpolation utilities', () => {
     it('should return null forecast for invalid cluster payload', () => {

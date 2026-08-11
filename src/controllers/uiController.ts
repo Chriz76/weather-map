@@ -22,7 +22,7 @@ function handleTimelineChange(e: Event) {
   weatherProviderModel.setActiveTimestampIndex(idx);
 
   if (timelineDebounceTimer !== null) {
-    clearTimeout(timelineDebounceTimer as any);
+    clearTimeout(timelineDebounceTimer);
   }
 
   timelineDebounceTimer = window.setTimeout(async () => {
@@ -35,7 +35,7 @@ function handleTimelineChange(e: Event) {
       await loadingSpinnerController.track(async () => {
         await updateOverlayForTimestampAction(targetTimestamp);
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       logger.error('❌ Overlay fetch failed during timeline change:', errMsg);
       weatherProviderModel.setOverlayLoadError(errMsg);
@@ -61,14 +61,16 @@ export function initUiController(): void {
   window.addEventListener('ui:timeline-change', handleTimelineChange as EventListener);
   window.addEventListener('ui:model-info-clicked', handleModelInfoClicked as EventListener);
 
-  window.addEventListener('ui:wind-toggle-clicked', (e: any) => {
-    const show = e && e.detail && typeof e.detail.show === 'boolean' ? e.detail.show : null;
+  window.addEventListener('ui:wind-toggle-clicked', (e: Event) => {
+    const ev = e as CustomEvent<{ show: boolean }>;
+    const show = ev && ev.detail && typeof ev.detail.show === 'boolean' ? ev.detail.show : null;
     if (show === null) return;
     uiStateModel.setShowWindMeasurements(show);
   });
 
-  window.addEventListener('ui:logo-provider-clicked', (e: any) => {
-    const providerId = e && e.detail && typeof e.detail.providerId === 'string' ? e.detail.providerId : null;
+  window.addEventListener('ui:logo-provider-clicked', (e: Event) => {
+    const ev = e as CustomEvent<{ providerId: string }>;
+    const providerId = ev && ev.detail && typeof ev.detail.providerId === 'string' ? ev.detail.providerId : null;
     if (!providerId) return;
     window.dispatchEvent(new CustomEvent('app:provider-switch-request', { detail: { providerId } }));
   });

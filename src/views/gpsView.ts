@@ -1,8 +1,9 @@
 import { uiStateModel } from '../models/uiStateModel';
+import type { Map as LeafletMap } from 'leaflet';
 
 const L = (window as any).L;
 
-export function registerGpsView(map: any, onGpsClick: () => void): void {
+export function registerGpsView(map: LeafletMap, onGpsClick: () => void): void {
   const GpsControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function () {
@@ -22,8 +23,8 @@ export function registerGpsView(map: any, onGpsClick: () => void): void {
       button.style.cursor = 'pointer';
 
       L.DomEvent.on(button, 'click', (e: Event) => {
-        L.DomEvent.stopPropagation(e as any);
-        L.DomEvent.preventDefault(e as any);
+        L.DomEvent.stopPropagation(e as Event);
+        L.DomEvent.preventDefault(e as Event);
         if (onGpsClick) onGpsClick();
       });
 

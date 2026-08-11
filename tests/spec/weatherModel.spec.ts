@@ -1,5 +1,6 @@
-import { weatherProviderModel } from '../../js/models/weatherProviderModel.js/index.js';
-import { uiStateModel } from '../../js/models/uiStateModel.js';
+import { weatherProviderModel } from '../../src/models/weatherProviderModel';
+import { uiStateModel } from '../../src/models/uiStateModel';
+import { uiStateModel } from '../../src/models/uiStateModel';
 
 describe('WeatherProviderModel', () => {
     const cluster = {

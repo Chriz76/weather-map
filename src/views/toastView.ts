@@ -4,19 +4,25 @@ export function registerToastView(): void {
   const toastEl = document.createElement('div');
   toastEl.className = 'toast';
   document.body.appendChild(toastEl);
-
-  const renderToast = (payload: any) => {
-    if (!payload || !payload.message) {
+  const renderToast = (payload: unknown) => {
+    if (!payload || typeof payload !== 'object') {
       toastEl.classList.remove('toast--visible');
       toastEl.textContent = '';
       return;
     }
 
-    toastEl.textContent = payload.message;
+    const p = payload as { message?: string };
+    if (!p.message) {
+      toastEl.classList.remove('toast--visible');
+      toastEl.textContent = '';
+      return;
+    }
+
+    toastEl.textContent = p.message;
     toastEl.classList.add('toast--visible');
   };
 
-  const onToastChanged = () => renderToast(uiStateModel.toast as any);
+  const onToastChanged = () => renderToast(uiStateModel.toast);
 
   uiStateModel.addEventListener('ui:toast-changed', onToastChanged as EventListener);
 }

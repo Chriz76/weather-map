@@ -1,9 +1,11 @@
 import { logger } from '../utils/logger';
+import type { WindData } from '../types';
+import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
 
 const L = (window as any).L;
-let activeSpotMarker: any = null;
+let activeSpotMarker: Marker | null = null;
 
-function normalizeWindData(windData: any) {
+function normalizeWindData(windData: WindData | number | null | undefined) {
   if (typeof windData === 'number') {
     return {
       speed: Number.isFinite(windData) ? windData : null,
@@ -11,15 +13,14 @@ function normalizeWindData(windData: any) {
       gust: null
     };
   }
-
   if (!windData || typeof windData !== 'object') {
     return { speed: null, direction: null, gust: null };
   }
 
   return {
-    speed: Number.isFinite(windData.speed) ? windData.speed : null,
-    direction: windData.direction !== null && Number.isFinite(windData.direction) ? ((windData.direction % 360) + 360) % 360 : null,
-    gust: windData.gust !== null && Number.isFinite(windData.gust) ? windData.gust : null
+    speed: Number.isFinite((windData as WindData).speed as number) ? (windData as WindData).speed as number : null,
+    direction: (windData as WindData).direction !== null && Number.isFinite((windData as WindData).direction as number) ? (((windData as WindData).direction as number % 360) + 360) % 360 : null,
+    gust: (windData as WindData).gust !== null && Number.isFinite((windData as WindData).gust as number) ? (windData as WindData).gust as number : null
   };
 }
 
@@ -53,8 +54,8 @@ function createPopupHtml(formattedValue: string, formattedGust: string, directio
     `;
 }
 
-function createMarker(map: any, lat: number, lng: number, popupContent: string) {
-  activeSpotMarker = L.circleMarker([lat, lng], {
+function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: string) {
+  activeSpotMarker = L.circleMarker([lat, lng] as LatLngExpression, {
     radius: 6,
     color: '#ffffff',
     fillColor: '#0077a4',
@@ -63,12 +64,14 @@ function createMarker(map: any, lat: number, lng: number, popupContent: string) 
   }).addTo(map);
 
   // Ensure popup is kept in view and avoid UI controls overlapping it.
-  activeSpotMarker.bindPopup(popupContent, {
-    offset: [0, -10],
-    keepInView: true,
-    // give extra padding so popups near the bottom/right don't overlap controls
-    autoPanPadding: [50, 120]
-  }).openPopup();
+  if (activeSpotMarker) {
+    activeSpotMarker.bindPopup(popupContent, {
+      offset: [0, -10],
+      keepInView: true,
+      // give extra padding so popups near the bottom/right don't overlap controls
+      autoPanPadding: [50, 120]
+    }).openPopup();
+  }
 }
 
 function getExistingCoordsDisplay() {
@@ -84,7 +87,14 @@ function getExistingWindDisplay() {
   if (!popup) return { speedDisplay: '?', gustDisplay: '?', direction: null };
 
   const container = document.createElement('div');
-  container.innerHTML = popup.getContent();
+  const content = popup.getContent();
+  if (typeof content === 'string') {
+    container.innerHTML = content;
+  } else if (content instanceof HTMLElement) {
+    container.appendChild(content.cloneNode(true));
+  } else {
+    container.innerHTML = String(content ?? '');
+  }
 
   const valueEl = container.querySelector('.marker-popup__value');
   const popupEl = container.querySelector('.marker-popup');
@@ -107,7 +117,7 @@ function getExistingWindDisplay() {
   };
 }
 
-export function updateMapMarkerWindspeed(map: any, windData: any) {
+export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | number | null | undefined) {
   try {
     const normalized = normalizeWindData(windData);
     const formattedValue = (normalized.speed === null || isNaN(normalized.speed as any)) ? '?' : (normalized.speed as number).toFixed(1);
@@ -126,7 +136,7 @@ export function updateMapMarkerWindspeed(map: any, windData: any) {
   }
 }
 
-export function updateMapMarkerLocation(map: any, lat: number, lng: number) {
+export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: number) {
   try {
     const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     const existingWind = getExistingWindDisplay();
@@ -149,9 +159,9 @@ export function updateMapMarkerLocation(map: any, lat: number, lng: number) {
   }
 }
 
-export function clearMarker(map: any) {
+export function clearMarker(map: LeafletMap) {
   if (activeSpotMarker) {
-    map.removeLayer(activeSpotMarker);
+    map.removeLayer(activeSpotMarker as any);
     activeSpotMarker = null;
   }
 }

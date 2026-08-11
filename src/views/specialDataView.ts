@@ -1,5 +1,6 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
+import type { Map as LeafletMap, LayerGroup, Marker, LatLngExpression, DivIcon } from 'leaflet';
 
 const L = (window as any).L;
 const TARGET_LAT = 47.6506;
@@ -8,11 +9,11 @@ const MIN_ZOOM = 7;
 const EXTERNAL_URL = 'https://christian-fey.github.io/Koechelt_der_Kochel/';
 
 export const specialDataView = (() => {
-  let map: any = null;
-  let layerGroup: any = null;
-  let marker: any = null;
+  let map: LeafletMap | null = null;
+  let layerGroup: LayerGroup | null = null;
+  let marker: Marker | null = null;
 
-  function createIcon(summary: string | null) {
+  function createIcon(summary: string | null): DivIcon {
     return L.divIcon({
       className: 'special-data-badge',
       html: `
@@ -45,28 +46,30 @@ export const specialDataView = (() => {
       return;
     }
 
-    if (!layerGroup) layerGroup = (window as any).L.layerGroup().addTo(map);
+    if (!layerGroup && map) layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
 
-    if (!marker) {
-      marker = (window as any).L.marker([TARGET_LAT, TARGET_LNG], { icon: createIcon(commonDataModel.specialDataSummary as any) });
+    if (!marker && map) {
+      marker = (window as any).L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(commonDataModel.specialDataSummary as any) }) as Marker;
       marker.on('click', () => window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer'));
-      layerGroup.addLayer(marker);
+      if (layerGroup) layerGroup.addLayer(marker);
     }
 
-    marker.setIcon(createIcon(commonDataModel.specialDataSummary as any));
-    marker.setLatLng([TARGET_LAT, TARGET_LNG]);
+    if (marker) {
+      marker.setIcon(createIcon(commonDataModel.specialDataSummary as any));
+      marker.setLatLng([TARGET_LAT, TARGET_LNG] as LatLngExpression);
+    }
   }
 
   function clearBadge() {
-    if (marker) {
-      if (layerGroup) layerGroup.removeLayer(marker);
+    if (marker && layerGroup) {
+      layerGroup.removeLayer(marker);
       marker = null;
     }
   }
 
-  function init(mapInstance: any) {
+  function init(mapInstance: LeafletMap) {
     map = mapInstance;
-    layerGroup = (window as any).L.layerGroup().addTo(map);
+    layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
     commonDataModel.addEventListener('model:special-data-updated', renderBadge as EventListener);
     uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', renderBadge as EventListener);
     map.on('move zoom moveend', renderBadge as any);

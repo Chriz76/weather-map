@@ -174,7 +174,7 @@ export class WeatherProviderModel extends EventTarget {
     }
   }
 
-  setIndexMetadata(indexData: any, prevActiveTimestamp: string | null = null) {
+  setIndexMetadata(indexData: import('../types').IndexData, prevActiveTimestamp: string | null = null) {
     const sortedTimestamps = (indexData.available_timestamps || []).sort();
     const reference = prevActiveTimestamp || this.activeTimestamp;
     const activeIndex = determineActiveIndex(sortedTimestamps, reference);
@@ -197,7 +197,7 @@ export class WeatherProviderModel extends EventTarget {
     }
   }
 
-  setPointData(latlng: LatLng, forecast: any) {
+  setPointData(latlng: LatLng, forecast: import('../types').ForecastItem[] | null) {
     this._getActiveModel().locationContext = { latLng: latlng };
     this._globalLastClickedLatLng = latlng;
     this.setPointDataLoadError(null);

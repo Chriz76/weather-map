@@ -1,14 +1,15 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import type { Station } from '../types';
+import type { Map as LeafletMap, LayerGroup, Marker, DivIcon, LatLngExpression } from 'leaflet';
 
 export const stationView = (() => {
-  let map: any = null;
-  let layerGroup: any = null;
-  let opts: any = {};
-  const stationMarkerMap = new Map<string, any>();
+  let map: LeafletMap | null = null;
+  let layerGroup: LayerGroup | null = null;
+  let opts: { onMarkerClick?: (station: Station) => void } = {};
+  const stationMarkerMap = new Map<string, Marker>();
 
-  function createIcon(station: Station) {
+  function createIcon(station: Station): DivIcon {
     const hasData = station.windData && typeof (station.windData as any).windSpeed === 'number';
     const shouldShowValues = uiStateModel.showWindMeasurements && hasData;
     const speedValue = shouldShowValues ? String(Math.round((station.windData as any).windSpeed)) : '';
@@ -37,7 +38,7 @@ export const stationView = (() => {
 
     if (!uiStateModel.showWindMeasurements) {
       stationMarkerMap.forEach((marker) => {
-        layerGroup.removeLayer(marker);
+        if (layerGroup) layerGroup.removeLayer(marker);
       });
       stationMarkerMap.clear();
       return;
@@ -48,12 +49,14 @@ export const stationView = (() => {
     stations.forEach((station) => {
       const stationKey = (station as any).id ?? (station as any).station_id ?? `${station.lat}-${station.lon}`;
       nextStationKeys.add(stationKey);
+      const lat = Number(station.lat ?? 0);
+      const lon = Number(station.lon ?? 0);
 
-      const existingMarker = stationMarkerMap.get(stationKey);
-      const marker = existingMarker || (window as any).L.marker([station.lat, station.lon], { icon: createIcon(station) });
+      const existingMarker = stationMarkerMap.get(stationKey) as Marker | undefined;
+      const marker = existingMarker || (window as any).L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station) }) as Marker;
 
       marker.setIcon(createIcon(station));
-      marker.setLatLng([station.lat, station.lon]);
+      marker.setLatLng([lat, lon] as LatLngExpression);
       marker.off('click');
       marker.on('click', () => {
         if (typeof opts.onMarkerClick === 'function') {
@@ -63,13 +66,13 @@ export const stationView = (() => {
 
       if (!existingMarker) {
         stationMarkerMap.set(stationKey, marker);
-        layerGroup.addLayer(marker);
+        if (layerGroup) layerGroup.addLayer(marker);
       }
     });
 
     stationMarkerMap.forEach((marker, stationKey) => {
       if (!nextStationKeys.has(stationKey)) {
-        layerGroup.removeLayer(marker);
+        if (layerGroup) layerGroup.removeLayer(marker);
         stationMarkerMap.delete(stationKey);
       }
     });
@@ -79,10 +82,10 @@ export const stationView = (() => {
     renderStations(commonDataModel.visibleStations as Station[]);
   }
 
-  function init(mapInstance: any, options: any = {}) {
+  function init(mapInstance: LeafletMap, options: { onMarkerClick?: (station: Station) => void } = {}) {
     map = mapInstance;
     opts = options || {};
-    layerGroup = (window as any).L.layerGroup().addTo(map);
+    layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
     commonDataModel.addEventListener('model:visible-stations-updated', handleVisibleStations as EventListener);
     uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations as EventListener);
 

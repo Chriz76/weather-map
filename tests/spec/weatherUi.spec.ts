@@ -1,4 +1,4 @@
-import { UiStateModel } from '../../js/models/uiStateModel.js';
+import { UiStateModel } from '../../src/models/uiStateModel';
 
 describe('UiStateModel', () => {
     it('should update loading, locating and overlay URL state', () => {

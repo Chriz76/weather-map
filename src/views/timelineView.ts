@@ -1,10 +1,11 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { formatModelTimestampToTimeAndDescription } from '../utils/time';
 import { logger } from '../utils/logger';
+import type { Map as LeafletMap } from 'leaflet';
 
 const L = (window as any).L;
 
-export function registerTimelineView(mapInstance: any): void {
+export function registerTimelineView(mapInstance: LeafletMap): void {
   L.Control.TimelineView = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
@@ -63,7 +64,7 @@ export function registerTimelineView(mapInstance: any): void {
           const activeIndex = weatherProviderModel.activeTimestampIndex;
           if (activeIndex > 0) {
             const newIndex = activeIndex - 1;
-            (slider as any).value = newIndex;
+            slider.value = String(newIndex);
             window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: newIndex } }));
           }
         });
@@ -73,19 +74,19 @@ export function registerTimelineView(mapInstance: any): void {
           const timestamps = weatherProviderModel.availableTimestamps as string[];
           if (activeIndex < timestamps.length - 1) {
             const newIndex = activeIndex + 1;
-            (slider as any).value = newIndex;
+            slider.value = String(newIndex);
             window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: newIndex } }));
           }
         });
 
         weatherProviderModel.addEventListener('model:timestamps-updated', () => {
-          (slider as any).max = Math.max(0, weatherProviderModel.availableTimestamps.length - 1);
-          (slider as any).value = weatherProviderModel.activeTimestampIndex;
+          slider.max = String(Math.max(0, weatherProviderModel.availableTimestamps.length - 1));
+          slider.value = String(weatherProviderModel.activeTimestampIndex);
           updateTimeDisplay(weatherProviderModel.activeTimestamp);
         });
 
         weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
-          (slider as any).value = weatherProviderModel.activeTimestampIndex;
+          slider.value = String(weatherProviderModel.activeTimestampIndex);
           updateTimeDisplay(weatherProviderModel.activeTimestamp);
         });
 

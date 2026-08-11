@@ -9,13 +9,13 @@ const CACHE_BUSTER = `cb=${Date.now()}`;
 export const d2Provider = {
   id: ID,
 
-  async fetchIndex(config: any): Promise<any> {
+  async fetchIndex(config: Record<string, any>): Promise<import('../types').IndexData> {
     const response = await fetch(`${config.baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`index.json could not be loaded (status: ${response.status})`);
     return await response.json();
   },
 
-  async fetchForecast(latlng: LatLng | null, config: any | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null, config: Record<string, any> | null): Promise<ForecastItem[] | null> {
     if (!latlng || !config) return null;
 
     const latMin = config.imageBounds[0][0];
@@ -36,7 +36,7 @@ export const d2Provider = {
     return calculatewindSpeeds(latlng, cluster) as unknown as ForecastItem[] | null;
   },
 
-  async fetchWeatherImageBlob(timestamp: string, config: any): Promise<Blob> {
+  async fetchWeatherImageBlob(timestamp: string, config: Record<string, any>): Promise<Blob> {
     const imageUrl = `${config.baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`;
     const response = await fetch(imageUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Image could not be loaded');

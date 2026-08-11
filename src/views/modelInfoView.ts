@@ -2,7 +2,9 @@ import { formatToDateTime, addMinutesToIso, formatToTime } from '../utils/time';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { logger } from '../utils/logger';
 
-export function registerModelInfoView(map: any): void {
+import type { Map as LeafletMap } from 'leaflet';
+
+export function registerModelInfoView(map: LeafletMap): void {
   const infoEl = document.querySelector('.model-info') as HTMLElement | null;
   if (!infoEl) return;
 
@@ -28,7 +30,7 @@ export function registerModelInfoView(map: any): void {
       }
 
       infoEl.innerText = displayStr.trim() || 'Model data active';
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error('🚨 Error formatting model info:', errorMessage);
       infoEl.innerText = 'Error loading model info';

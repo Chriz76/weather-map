@@ -1,5 +1,6 @@
-import { weatherProviderModel } from '../../js/models/weatherProviderModel.js/index.js';
-import { uiStateModel } from '../../js/models/uiStateModel.js';
+import { weatherProviderModel } from '../../src/models/weatherProviderModel';
+import { uiStateModel } from '../../src/models/uiStateModel';
+import { uiStateModel } from '../../src/models/uiStateModel';
 
 describe('special data view', () => {
     let specialDataView;
@@ -48,7 +49,7 @@ describe('special data view', () => {
     beforeAll(async () => {
         originalL = window.L;
         window.L = createLeafletMock();
-        ({ specialDataView } = await import('../../js/views/specialDataView.js?spec=' + Date.now()));
+        ({ specialDataView } = await import('../../src/views/specialDataView?spec=' + Date.now()));
     });
 
     beforeEach(() => {

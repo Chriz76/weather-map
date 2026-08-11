@@ -3,8 +3,9 @@ import { uiStateModel } from '../models/uiStateModel';
 import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
 import type { Station } from '../types';
+import type { LatLngBounds } from 'leaflet';
 
-export async function updateStationsOnMapAction(bounds: any = null): Promise<void> {
+export async function updateStationsOnMapAction(bounds: LatLngBounds | null = null): Promise<void> {
   if (!uiStateModel.showWindMeasurements) {
     logger.debug('Station data not loaded: wind measurements are currently hidden.');
     return;
@@ -65,22 +66,26 @@ export async function updateStationsOnMapAction(bounds: any = null): Promise<voi
     }
   }
 
-  const fetched: Record<string, any> = {};
+  const fetched: Record<string, import('../types').WindData | null> = {};
   const fetchPromises = topStations.map(async (station) => {
     try {
-      const data = await fetchWindDataForStation((station as any).id);
-      if (data) fetched[(station as any).id] = data;
-    } catch (err) {
+      const stationId = (station as any).id ?? (station as any).station_id;
+      const data = await fetchWindDataForStation(stationId);
+      if (data && stationId) fetched[stationId] = data;
+    } catch (err: unknown) {
       logger.error('Error fetching wind for station', (station as any).id, err);
     }
   });
 
   await Promise.all(fetchPromises);
 
-  const stationsWithFinalData = topStations.map((station) => ({
-    ...station,
-    windData: fetched[(station as any).id] || null
-  }));
+  const stationsWithFinalData = topStations.map((station) => {
+    const stationId = (station as any).id ?? (station as any).station_id;
+    return {
+      ...station,
+      windData: stationId ? (fetched[stationId] || null) : null
+    };
+  });
 
   commonDataModel.setVisibleStations(stationsWithFinalData);
 }

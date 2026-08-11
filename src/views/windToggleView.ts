@@ -16,7 +16,9 @@ function renderIcon() {
   return uiStateModel.showWindMeasurements ? WIND_ICON_ON : WIND_ICON_OFF;
 }
 
-export function registerWindToggleView(map: any): void {
+import type { Map as LeafletMap } from 'leaflet';
+
+export function registerWindToggleView(map: LeafletMap): void {
   const WindToggleControl = (window as any).L.Control.extend({
     options: { position: 'topright' },
     onAdd: function () {
@@ -30,8 +32,8 @@ export function registerWindToggleView(map: any): void {
       button.setAttribute('aria-pressed', String(uiStateModel.showWindMeasurements));
 
       (window as any).L.DomEvent.on(button, 'click', (e: Event) => {
-        (window as any).L.DomEvent.stopPropagation(e as any);
-        (window as any).L.DomEvent.preventDefault(e as any);
+        (window as any).L.DomEvent.stopPropagation(e as Event);
+        (window as any).L.DomEvent.preventDefault(e as Event);
         const requested = !uiStateModel.showWindMeasurements;
         window.dispatchEvent(new CustomEvent('ui:wind-toggle-clicked', { detail: { show: requested } }));
       });

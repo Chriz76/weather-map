@@ -31,7 +31,7 @@ async function fetchFromBrightSky(dwdStationId: string): Promise<WindData | null
   const directionVal = typeof direction === 'number' ? direction : 0;
   const gust = gustKmh === null ? null : Math.round(gustKmh * 0.539957);
 
-  const result: any = {
+  const result: Record<string, unknown> = {
     // canonical (new) shape
     speed,
     direction: directionVal,
@@ -44,7 +44,7 @@ async function fetchFromBrightSky(dwdStationId: string): Promise<WindData | null
     windGustSpeed: gust,
   };
 
-  return result as WindData;
+  return result as unknown as WindData;
 }
 
 export async function fetchWindDataForStation(

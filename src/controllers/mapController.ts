@@ -9,33 +9,42 @@ import { stationView } from '../views/stationView';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
 import { logger } from '../utils/logger';
+import type { Map as LeafletMap, LatLngExpression, LeafletMouseEvent, LocationEvent, ErrorEvent } from 'leaflet';
+import type { Station } from '../types';
 
-let stationViewHandle: any = null;
+let stationViewHandle: ReturnType<typeof stationView.init> | null = null;
 
-export async function initMapController(map: any): Promise<void> {
+export async function initMapController(map: LeafletMap): Promise<void> {
   let lastClusterClickToken: number | null = null;
 
   uiStateModel.setShowWindMeasurements(storage.getWindMeasurements(uiStateModel.showWindMeasurements));
 
   try {
     await updateStationsOnMapAction(map.getBounds());
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error('Error during initial stations update:', e);
   }
 
   try {
     await updateSpecialDataOnMapAction(map);
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error('Error during initial special data update:', e);
   }
 
-  async function triggerLoadAtLatLng(latlng: any) {
+  async function triggerLoadAtLatLng(latlng: LatLngExpression) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
 
+    const toLatLngObj = (v: LatLngExpression): { lat: number; lng: number } => {
+      if (Array.isArray(v)) return { lat: Number(v[0]), lng: Number(v[1]) };
+      const obj = v as { lat?: number; lng?: number } | null;
+      if (obj && typeof obj.lat === 'number' && typeof obj.lng === 'number') return { lat: obj.lat, lng: obj.lng };
+      return { lat: 0, lng: 0 };
+    };
+
     try {
-      await loadWeatherDataForLocationAction(latlng);
-    } catch (error: any) {
+      await loadWeatherDataForLocationAction(toLatLngObj(latlng));
+    } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
       toastController.showToast({ message: 'Error loading location data: ' + errMsg }, 5000);
     }
@@ -43,11 +52,11 @@ export async function initMapController(map: any): Promise<void> {
     if (lastClusterClickToken !== currentClickToken) return;
   }
 
-  async function handleMapClick(e: any) {
+  async function handleMapClick(e: LeafletMouseEvent) {
     await triggerLoadAtLatLng(e.latlng);
   }
 
-  async function handleLocationFound(e: any) {
+  async function handleLocationFound(e: LocationEvent) {
     const currentClickToken = Date.now();
     lastClusterClickToken = currentClickToken;
 
@@ -60,8 +69,9 @@ export async function initMapController(map: any): Promise<void> {
     }
   }
 
-  function handleLocationError(e: any) {
-    toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
+  function handleLocationError(e: ErrorEvent) {
+    const message = (e && (e as any).message) ? (e as any).message : String(e);
+    toastController.showToast({ message: 'Error processing GPS location: ' + message }, 5000);
     uiStateModel.setIsLocating(false);
   }
 
@@ -73,13 +83,13 @@ export async function initMapController(map: any): Promise<void> {
   async function handleMoveEnd() {
     try {
       await updateStationsOnMapAction(map.getBounds());
-    } catch (e: any) {
+    } catch (e: unknown) {
       logger.error('Error updating stations on moveend:', e);
     }
 
     try {
       await updateSpecialDataOnMapAction(map);
-    } catch (e: any) {
+    } catch (e: unknown) {
       logger.error('Error updating special data on moveend:', e);
     }
 
@@ -106,20 +116,20 @@ export async function initMapController(map: any): Promise<void> {
     if (uiStateModel.showWindMeasurements) {
       try {
         await updateStationsOnMapAction(map.getBounds());
-      } catch (e: any) {
+      } catch (e: unknown) {
         logger.error('Error updating stations after visibility change:', e);
       }
 
       try {
         await updateSpecialDataOnMapAction(map);
-      } catch (e: any) {
+      } catch (e: unknown) {
         logger.error('Error updating special data after visibility change:', e);
       }
     }
   });
 
   stationViewHandle = stationView.init(map, {
-    onMarkerClick: async (station: any) => {
+    onMarkerClick: async (station: Station) => {
       toastController.showToast({ message: formatStationToast(station) }, 5000);
     },
   });

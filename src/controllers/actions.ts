@@ -4,6 +4,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { providerManager } from '../weatherProvider/providerManager';
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { logger } from '../utils/logger';
+import type { IndexData, LatLng, ForecastItem } from '../types';
 
 export class ApiMismatchError extends Error {
   version: string | undefined;
@@ -59,15 +60,15 @@ export async function updateOverlayForTimestampAction(timestamp: string | null):
   try {
     const overlayUrl = await fetchWeatherOverlayUrl(timestamp);
     uiStateModel.setActiveOverlayUrl(overlayUrl);
-  } catch (e: any) {
-    const errMsg = e instanceof Error ? e.message : String(e);
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : String(e);
     logger.error('❌ Error fetching overlay (first attempt):', errMsg);
 
     try {
       logger.info('🔁 Retrying overlay fetch immediately for', timestamp);
       const overlayUrl = await fetchWeatherOverlayUrl(timestamp);
       uiStateModel.setActiveOverlayUrl(overlayUrl);
-    } catch (retryErr: any) {
+    } catch (retryErr: unknown) {
       const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
       logger.error('❌ Overlay retry failed:', retryMsg);
       throw new OverlayLoadError(retryMsg);
@@ -75,15 +76,15 @@ export async function updateOverlayForTimestampAction(timestamp: string | null):
   }
 }
 
-export async function loadWeatherDataForLocationAction(latlng: { lat: number; lng: number }): Promise<void> {
+export async function loadWeatherDataForLocationAction(latlng: LatLng): Promise<void> {
   try {
-    let forecast: any = null;
+    let forecast: ForecastItem[] | null = null;
     await loadingSpinnerController.track(async () => {
       forecast = await providerManager.fetchForecast(latlng);
     });
 
     weatherProviderModel.setPointData(latlng, Array.isArray(forecast) ? forecast : null);
-  } catch (e: any) {
+  } catch (e: unknown) {
     const errMsg = e instanceof Error ? e.message : String(e);
     logger.error('🚨 Error processing location data:', errMsg);
     throw new LocationLoadError(errMsg);
@@ -92,10 +93,10 @@ export async function loadWeatherDataForLocationAction(latlng: { lat: number; ln
 
 export async function syncAppWithServerAction(background = true, force = false, prevActiveTimestamp: string | null = null): Promise<void> {
   async function doSync() {
-    let indexData: any;
+    let indexData: IndexData;
     try {
       indexData = await providerManager.fetchIndex();
-    } catch (fetchErr: any) {
+    } catch (fetchErr: unknown) {
       const fetchErrMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
       throw new IndexLoadError(fetchErrMsg);
     }
@@ -138,12 +139,12 @@ export async function syncAppWithServerAction(background = true, force = false, 
 
   try {
     return await doSync();
-  } catch (firstErr: any) {
+  } catch (firstErr: unknown) {
     logger.error('❌ Sync error (first attempt):', firstErr);
     try {
       logger.info('🔁 Performing immediate retry for sync...');
       return await doSync();
-    } catch (retryErr: any) {
+    } catch (retryErr: unknown) {
       const errMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
       logger.error('❌ Sync error (retry failed):', errMsg);
       throw retryErr;
