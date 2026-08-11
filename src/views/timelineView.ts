@@ -3,10 +3,10 @@ import { formatModelTimestampToTimeAndDescription } from '../utils/time';
 import { logger } from '../utils/logger';
 import type { Map as LeafletMap } from 'leaflet';
 
-const L = (window as any).L;
+const L = window.L as typeof import('leaflet');
 
 export function registerTimelineView(mapInstance: LeafletMap): void {
-  L.Control.TimelineView = L.Control.extend({
+  (L.Control as unknown as Record<string, unknown>)['TimelineView'] = (L.Control as unknown as { extend: Function }).extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
       const container = L.DomUtil.create('div', 'timeline-view');
@@ -90,14 +90,15 @@ export function registerTimelineView(mapInstance: LeafletMap): void {
           updateTimeDisplay(weatherProviderModel.activeTimestamp);
         });
 
-      } catch (uiError: any) {
-        logger.error('🚨 Error building timeline UI element:', uiError?.message ?? uiError);
+      } catch (uiError: unknown) {
+        const msg = uiError instanceof Error ? uiError.message : String(uiError);
+        logger.error('🚨 Error building timeline UI element:', msg);
       }
 
       return container;
     }
   });
 
-  L.control.timelineView = function (options: any) { return new L.Control.TimelineView(options); };
-  (mapInstance as any).timelineViewControl = L.control.timelineView().addTo(mapInstance);
+  const createTimelineControl = (options?: unknown) => new (((L.Control as unknown as Record<string, unknown>)['TimelineView']) as unknown as new (o?: unknown) => unknown)(options);
+  (mapInstance as unknown as Record<string, unknown>)['timelineViewControl'] = (createTimelineControl() as unknown as { addTo: (m: import('leaflet').Map) => unknown }).addTo(mapInstance);
 }

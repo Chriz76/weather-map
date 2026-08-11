@@ -2,8 +2,9 @@ import { logger } from '../utils/logger';
 import type { WindData } from '../types';
 import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
 
-const L = (window as any).L;
-let activeSpotMarker: Marker | null = null;
+const L = window.L as typeof import('leaflet');
+import type { CircleMarker } from 'leaflet';
+let activeSpotMarker: CircleMarker | Marker | null = null;
 
 function normalizeWindData(windData: WindData | number | null | undefined) {
   if (typeof windData === 'number') {
@@ -120,8 +121,8 @@ function getExistingWindDisplay() {
 export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | number | null | undefined) {
   try {
     const normalized = normalizeWindData(windData);
-    const formattedValue = (normalized.speed === null || isNaN(normalized.speed as any)) ? '?' : (normalized.speed as number).toFixed(1);
-    const formattedGust = (normalized.gust === null || isNaN(normalized.gust as any)) ? '?' : (normalized.gust as number).toFixed(0);
+    const formattedValue = (normalized.speed === null || Number.isNaN(normalized.speed as number)) ? '?' : (normalized.speed as number).toFixed(1);
+    const formattedGust = (normalized.gust === null || Number.isNaN(normalized.gust as number)) ? '?' : (normalized.gust as number).toFixed(0);
     const coordsDisplay = getExistingCoordsDisplay();
     const popupContent = createPopupHtml(formattedValue, formattedGust, normalized.direction, coordsDisplay);
 
@@ -130,7 +131,7 @@ export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | n
     } else {
       activeSpotMarker.setPopupContent(popupContent);
     }
-  } catch (markerError: any) {
+  } catch (markerError: unknown) {
     const errorMessage = markerError instanceof Error ? markerError.message : String(markerError);
     logger.error('❌ Error updating map marker windspeed:', errorMessage);
   }
@@ -153,7 +154,7 @@ export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: numbe
         popup.setLatLng([lat, lng]);
       }
     }
-  } catch (markerError: any) {
+  } catch (markerError: unknown) {
     const errorMessage = markerError instanceof Error ? markerError.message : String(markerError);
     logger.error('❌ Error moving map marker location:', errorMessage);
   }
@@ -161,7 +162,7 @@ export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: numbe
 
 export function clearMarker(map: LeafletMap) {
   if (activeSpotMarker) {
-    map.removeLayer(activeSpotMarker as any);
+    map.removeLayer(activeSpotMarker as unknown as import('leaflet').Layer);
     activeSpotMarker = null;
   }
 }

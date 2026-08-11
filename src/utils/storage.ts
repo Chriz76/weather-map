@@ -6,7 +6,7 @@ const KEYS = {
     ACTIVE_PROVIDER: 'ruc_active_provider'
 } as const;
 
-function debounce<T extends (...args: any[]) => void>(func: T, delayMs = 250) {
+function debounce<T extends (...args: unknown[]) => void>(func: T, delayMs = 250) {
     let timeoutId: number | null = null;
     return (...args: Parameters<T>) => {
         if (timeoutId !== null) {
@@ -26,7 +26,7 @@ function setStorageValue(key: string, val: unknown) {
     core.set(key, val);
 }
 
-const setDebounced = debounce(setStorageValue, 300);
+const setDebounced = debounce((...args: unknown[]) => setStorageValue(String(args[0]), args[1]), 300);
 
 export const storage = {
     saveMapState(state: { lat: number; lng: number; zoom: number }) {

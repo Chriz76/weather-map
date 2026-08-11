@@ -1,17 +1,20 @@
 /**
  * Minimal special data service used by tests and controllers.
  */
-export function selectForecastEntries(entries: any[] | null, startDayIso: string): any[] {
+export function selectForecastEntries(entries: unknown[] | null, startDayIso: string): unknown[] {
   if (!Array.isArray(entries)) return [];
-  const idx = entries.findIndex((e: any) => e && e.day === startDayIso);
+  const idx = entries.findIndex((e: unknown) => {
+    return !!e && (e as Record<string, unknown>)['day'] === startDayIso;
+  });
   const start = idx === -1 ? 0 : idx;
   return entries.slice(start, start + 3);
 }
 
-export function buildSpecialDataSummary(entries: any[]): string {
+export function buildSpecialDataSummary(entries: unknown[]): string {
   if (!Array.isArray(entries) || entries.length === 0) return '';
   const vals = entries.map(e => {
-    const v = typeof e.foehn_probability_pct === 'number' ? Math.round(e.foehn_probability_pct) : 0;
+    const raw = (e as Record<string, unknown>)['foehn_probability_pct'];
+    const v = typeof raw === 'number' ? Math.round(raw) : 0;
     return String(v);
   });
   return vals.join('/') + '%';

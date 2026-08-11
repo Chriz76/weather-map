@@ -1,10 +1,10 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { D2, AROME } from '../weatherProvider/providerIds';
+const L = window.L as typeof import('leaflet');
+import type { Map as LeafletMap } from 'leaflet';
 
-const L = (window as any).L;
-
-export function registerLogoView(map: any): void {
-  L.Control.LogoView = L.Control.extend({
+export function registerLogoView(map: LeafletMap): void {
+  (L.Control as unknown as { LogoView?: unknown }).LogoView = (L.Control as unknown as { extend: Function }).extend({
     options: { position: 'topleft' },
     onAdd: function () {
       const container = L.DomUtil.create('div', 'logo-view');
@@ -38,9 +38,10 @@ export function registerLogoView(map: any): void {
         });
       }
 
-      L.DomEvent.on(toggle, 'click', (ev: Event) => {
-        L.DomEvent.stopPropagation(ev as any);
-        L.DomEvent.preventDefault(ev as any);
+      if (toggle) {
+        L.DomEvent.on(toggle, 'click', (ev: Event) => {
+          L.DomEvent.stopPropagation(ev);
+          L.DomEvent.preventDefault(ev);
         const target = ev.target as HTMLElement;
         const btn = target.closest('.logo-view__toggle-btn') as HTMLElement | null;
         if (!btn) return;
@@ -48,7 +49,8 @@ export function registerLogoView(map: any): void {
         if (!selected) return;
 
         window.dispatchEvent(new CustomEvent('ui:logo-provider-clicked', { detail: { providerId: selected } }));
-      });
+        });
+      }
 
       weatherProviderModel.addEventListener('model:provider-changed', updateActiveState as EventListener);
 
@@ -58,6 +60,6 @@ export function registerLogoView(map: any): void {
     }
   });
 
-  L.control.logoView = function (options: any) { return new L.Control.LogoView(options); };
-  (map as any).logoViewControl = L.control.logoView().addTo(map);
+  const createLogoControl = (options?: unknown) => new ((L.Control as unknown as { LogoView: new (o?: unknown) => unknown }).LogoView)(options);
+  (map as unknown as Record<string, unknown>)['logoViewControl'] = (createLogoControl() as unknown as { addTo: (m: LeafletMap) => unknown }).addTo(map);
 }

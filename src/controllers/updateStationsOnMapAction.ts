@@ -19,7 +19,7 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
       allStations = await resp.json();
       commonDataModel.setAllStations(allStations);
       logger.info('📍 Station data loaded (fallback):', allStations.length);
-    } catch (e: any) {
+    } catch (e: unknown) {
       logger.error('Error loading stations.json (fallback):', e);
     }
   }
@@ -37,9 +37,9 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
 
       try {
         // Use Leaflet global L in runtime
-        return (bounds as any).contains((window as any).L.latLng(lat, lon));
+        return bounds.contains(window.L!.latLng(lat, lon));
       } catch (error) {
-        logger.warn('Skipping station with invalid map bounds payload:', station?.id, error);
+        logger.warn('Skipping station with invalid map bounds payload:', (station as unknown as Record<string, unknown>)['id'], error);
         return false;
       }
     });
@@ -47,11 +47,13 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
     const center = bounds.getCenter();
     if (center && typeof center.distanceTo === 'function') {
       stationsInView.sort((a, b) => {
-        const pr = (a.priority || 0) - (b.priority || 0);
+        const apr = Number((a as Record<string, unknown>)['priority'] ?? 0);
+        const bpr = Number((b as Record<string, unknown>)['priority'] ?? 0);
+        const pr = apr - bpr;
         if (pr !== 0) return pr;
 
-        const da = center.distanceTo((window as any).L.latLng(Number(a.lat), Number(a.lon)));
-        const db = center.distanceTo((window as any).L.latLng(Number(b.lat), Number(b.lon)));
+        const da = center.distanceTo(window.L!.latLng(Number(a.lat), Number(a.lon)));
+        const db = center.distanceTo(window.L!.latLng(Number(b.lat), Number(b.lon)));
         return da - db;
       });
     }
@@ -66,16 +68,19 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
     }
   }
 
-  const fetched: Record<string, import('../types').WindData | null> = {};
-  const fetchPromises = topStations.map(async (station) => {
-    try {
-      const stationId = (station as any).id ?? (station as any).station_id;
-      const data = await fetchWindDataForStation(stationId);
-      if (data && stationId) fetched[stationId] = data;
-    } catch (err: unknown) {
-      logger.error('Error fetching wind for station', (station as any).id, err);
-    }
-  });
+    const fetched: Record<string, import('../types').WindData | null> = {};
+    const fetchPromises = topStations.map(async (station) => {
+      try {
+        const stationIdRaw = (station as unknown as Record<string, unknown>)['id'] ?? (station as unknown as Record<string, unknown>)['station_id'];
+        const stationId = stationIdRaw ? String(stationIdRaw) : undefined;
+        if (stationId) {
+          const data = await fetchWindDataForStation(stationId);
+          if (data && stationId) fetched[stationId] = data;
+        }
+      } catch (err: unknown) {
+        logger.error('Error fetching wind for station', (station as unknown as Record<string, unknown>)['id'], err);
+      }
+    });
 
   await Promise.all(fetchPromises);
 

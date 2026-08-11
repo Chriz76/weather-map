@@ -34,8 +34,8 @@ export function formatModelTimestampToTime(timestampStr: string): string {
     try {
         const date = parseModelTimestamp(timestampStr);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (error: any) {
-        logger.error('❌ Error formatting model timestamp to time:', error);
+    } catch (error: unknown) {
+            logger.error('❌ Error formatting model timestamp to time:', error);
         return timestampStr;
     }
 }
@@ -46,8 +46,8 @@ export function formatModelTimestampToDateTime(timestampStr: string): string {
         const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
         const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         return `${datum} ${uhrzeit}`;
-    } catch (error: any) {
-        logger.error('❌ Error formatting model timestamp to date-time:', error);
+    } catch (error: unknown) {
+            logger.error('❌ Error formatting model timestamp to date-time:', error);
         return timestampStr;
     }
 }
@@ -70,8 +70,8 @@ export function formatModelTimestampToTimeAndDescription(timestampStr: string): 
         else description = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
         return { time: timeStr, description };
-    } catch (error: any) {
-        logger.error('❌ Error formatting model timestamp to time and description:', error);
+    } catch (error: unknown) {
+            logger.error('❌ Error formatting model timestamp to time and description:', error);
         return { time: '--:--', description: '--' };
     }
 }
@@ -83,8 +83,8 @@ export function formatToDateTime(input: string | Date): string {
         const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         return `${datum} ${uhrzeit}`;
-    } catch (error: any) {
-        logger.error('❌ Error formatting to date-time:', error);
+    } catch (error: unknown) {
+            logger.error('❌ Error formatting to date-time:', error);
         return String(input);
     }
 }
@@ -94,8 +94,8 @@ export function formatMinutesAgo(input: string | Date): string {
         const date = normalizeToDate(input);
         const minutes = Math.round((Date.now() - date.getTime()) / 60000);
         return `${minutes} minutes ago`;
-    } catch (error: any) {
-        logger.error('❌ Error formatting minutes ago:', error);
+    } catch (error: unknown) {
+            logger.error('❌ Error formatting minutes ago:', error);
         return '';
     }
 }
@@ -104,8 +104,8 @@ export function formatToTime(input: string | Date): string {
     try {
         const date = normalizeToDate(input);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (error: any) {
-        logger.error('❌ Error formatting to time:', error);
+    } catch (error: unknown) {
+            logger.error('❌ Error formatting to time:', error);
         return String(input);
     }
 }
@@ -160,8 +160,8 @@ export function addMinutesToIso(input: string | Date, minutes: number): Date | n
         if (Number.isNaN(d.getTime())) return null;
         d.setMinutes(d.getMinutes() + Number(minutes));
         return d;
-    } catch (e: any) {
-        logger.error('❌ Error adding minutes to ISO/date:', e);
+    } catch (e: unknown) {
+            logger.error('❌ Error adding minutes to ISO/date:', e);
         return null;
     }
 }

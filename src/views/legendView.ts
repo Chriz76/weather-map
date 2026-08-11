@@ -1,7 +1,8 @@
-const L = (window as any).L;
+const L = window.L as typeof import('leaflet');
+import type { Map as LeafletMap } from 'leaflet';
 
-export function registerLegendView(map: any): void {
-  L.Control.LegendView = L.Control.extend({
+export function registerLegendView(map: LeafletMap): void {
+  (L.Control as unknown as { LegendView?: unknown }).LegendView = (L.Control as unknown as { extend: Function }).extend({
     options: { position: 'topleft' },
     onAdd: function () {
       const container = L.DomUtil.create('div', 'legend-view');
@@ -47,6 +48,6 @@ export function registerLegendView(map: any): void {
     }
   });
 
-  L.control.legendView = function (options: any) { return new L.Control.LegendView(options); };
-  (map as any).legendViewControl = L.control.legendView().addTo(map);
+  const createLegendControl = (options?: unknown) => new ((L.Control as unknown as { LegendView: new (o?: unknown) => unknown }).LegendView)(options);
+  (map as unknown as Record<string, unknown>)['legendViewControl'] = (createLegendControl() as unknown as { addTo: (m: LeafletMap) => unknown }).addTo(map);
 }
