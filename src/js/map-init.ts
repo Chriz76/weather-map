@@ -3,7 +3,7 @@
 import { providers } from './config.ts';
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
-import { D2 } from './weatherProvider/providerIds.js';
+import { D2 } from './weatherProvider/providerIds';
 import type * as Leaflet from 'leaflet';
 import * as L from 'leaflet';
 

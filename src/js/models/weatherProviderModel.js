@@ -1,6 +1,6 @@
 import { determineActiveIndex } from '../utils/time';
 import { logger } from '../utils/logger';
-import { D2, AROME } from '../weatherProvider/providerIds.js';
+import { D2, AROME } from '../weatherProvider/providerIds';
 
 /**
  * @typedef {{lat: number, lng: number}} LatLng

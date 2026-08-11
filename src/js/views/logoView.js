@@ -1,6 +1,6 @@
 /* global L */
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { D2, AROME } from '../weatherProvider/providerIds.js';
+import { D2, AROME } from '../weatherProvider/providerIds';
 
 /**
  * Registers the logo/info control.

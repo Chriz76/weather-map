@@ -2,7 +2,7 @@
 import { EXPECTED_API_VERSION } from '../config.ts';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
-import { providerManager } from '../weatherProvider/providerManager.js';
+import { providerManager } from '../weatherProvider/providerManager';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { logger } from '../utils/logger';
 

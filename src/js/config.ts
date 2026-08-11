@@ -1,6 +1,6 @@
 export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
 
-import { D2, AROME } from './weatherProvider/providerIds.js';
+import { D2, AROME } from './weatherProvider/providerIds';
 import type * as Leaflet from 'leaflet';
 
 export type ProviderConfig = {
