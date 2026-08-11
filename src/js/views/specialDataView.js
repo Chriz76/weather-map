@@ -2,8 +2,8 @@
 /** @type {any} */
 const L = window.L;
 
-import { commonDataModel } from '../models/commonDataModel.js';
-import { uiStateModel } from '../models/uiStateModel.js';
+import { commonDataModel } from '../models/commonDataModel';
+import { uiStateModel } from '../models/uiStateModel';
 
 const TARGET_LAT = 47.6506;
 const TARGET_LNG = 11.3365;

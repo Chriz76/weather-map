@@ -1,8 +1,8 @@
 // controllers/uiController.js
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { toastController } from './toastController.js';
-import { weatherProviderModel } from '../models/weatherProviderModel.js';
-import { uiStateModel } from '../models/uiStateModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel';
+import { uiStateModel } from '../models/uiStateModel';
 import { retryStartupSync } from './lifecycleController.js';
 import { updateOverlayForTimestampAction } from './actions.js';
 import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time';

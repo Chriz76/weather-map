@@ -1,7 +1,7 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { uiStateModel } from '../models/uiStateModel.js';
+import { uiStateModel } from '../models/uiStateModel';
 
 /**
  * Registers a GPS control button and binds locating state updates.

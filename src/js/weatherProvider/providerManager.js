@@ -2,7 +2,7 @@ import { d2Provider } from './d2Provider.js';
 import { aromeProvider } from './aromeProvider.js';
 import { D2, AROME } from './providerIds.js';
 import { logger } from '../utils/logger';
-import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers as providerConfig } from '../config.ts';
 
 const providers = { [D2]: d2Provider, [AROME]: aromeProvider };

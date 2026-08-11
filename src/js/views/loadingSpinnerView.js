@@ -1,5 +1,5 @@
 // views/loadingSpinnerView.js
-import { uiStateModel } from '../models/uiStateModel.js';
+import { uiStateModel } from '../models/uiStateModel';
 
 /**
  * Initializes the global loading spinner view and binds it to model updates.

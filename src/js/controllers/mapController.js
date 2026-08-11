@@ -1,6 +1,6 @@
 // controllers/mapController.js
-import { weatherProviderModel } from '../models/weatherProviderModel.js';
-import { uiStateModel } from '../models/uiStateModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel';
+import { uiStateModel } from '../models/uiStateModel';
 import { storage } from '../utils/storage';
 import { formatMinutesAgo } from '../utils/time';
 import { formatStationToast } from '../utils/stationToastFormatter';

@@ -1,4 +1,4 @@
-import { uiStateModel } from '../models/uiStateModel.js';
+import { uiStateModel } from '../models/uiStateModel';
 
 /**
  * @typedef {{ message: string }} ToastPayload

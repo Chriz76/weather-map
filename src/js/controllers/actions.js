@@ -1,7 +1,7 @@
 // controllers/actions.js
 import { EXPECTED_API_VERSION } from '../config.ts';
-import { weatherProviderModel } from '../models/weatherProviderModel.js';
-import { uiStateModel } from '../models/uiStateModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel';
+import { uiStateModel } from '../models/uiStateModel';
 import { providerManager } from '../weatherProvider/providerManager.js';
 import { loadingSpinnerController } from './loadingSpinnerController.js';
 import { logger } from '../utils/logger';

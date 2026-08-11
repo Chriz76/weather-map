@@ -1,7 +1,7 @@
 /* global L */
 // --- src/map-init.js ---
 import { providers } from './config.ts';
-import { weatherProviderModel } from './models/weatherProviderModel.js';
+import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
 import { D2 } from './weatherProvider/providerIds.js';
 import type * as Leaflet from 'leaflet';

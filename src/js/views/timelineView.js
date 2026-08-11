@@ -1,4 +1,4 @@
-import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel';
 import { formatModelTimestampToTimeAndDescription } from '../utils/time';
 import { logger } from '../utils/logger';
 

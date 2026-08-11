@@ -1,7 +1,7 @@
 // controllers/updateStationsOnMapAction.js
-import { commonDataModel } from '../models/commonDataModel.js';
-import { uiStateModel } from '../models/uiStateModel.js';
-import { fetchWindDataForStation } from '../services/measurementsService.js';
+import { commonDataModel } from '../models/commonDataModel';
+import { uiStateModel } from '../models/uiStateModel';
+import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
 
 /**

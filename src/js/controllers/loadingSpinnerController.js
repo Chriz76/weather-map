@@ -1,5 +1,5 @@
 // controllers/loadingSpinnerController.js
-import { uiStateModel } from '../models/uiStateModel.js';
+import { uiStateModel } from '../models/uiStateModel';
 
 class LoadingSpinnerController {
     constructor(delayMs = 500) {

@@ -1,5 +1,5 @@
 /* global L */
-import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel';
 import { D2, AROME } from '../weatherProvider/providerIds.js';
 
 /**

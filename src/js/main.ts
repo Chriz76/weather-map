@@ -1,7 +1,7 @@
 ﻿// main.js
-import { weatherProviderModel } from './models/weatherProviderModel.js';
+import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
-import { uiStateModel } from './models/uiStateModel.js';
+import { uiStateModel } from './models/uiStateModel';
 import { initMap } from './map-init.ts';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
