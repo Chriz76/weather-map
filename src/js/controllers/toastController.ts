@@ -1,24 +1,23 @@
 import { uiStateModel } from '../models/uiStateModel';
 
-/**
- * @typedef {{ message: string }} ToastPayload
- */
+export type ToastPayload = { message: string };
 
 class ToastController {
+    private defaultTimeoutMs: number;
+    private timeoutId: number | null = null;
+
     constructor(defaultTimeoutMs = 4000) {
         this.defaultTimeoutMs = defaultTimeoutMs;
-        /** @type {number|null} */
-        this.timeoutId = null;
     }
 
-    clearTimeout() {
+    private clearTimeout(): void {
         if (this.timeoutId !== null) {
-            window.clearTimeout(this.timeoutId);
+            window.clearTimeout(this.timeoutId as unknown as number);
             this.timeoutId = null;
         }
     }
 
-    clearToast() {
+    clearToast(): void {
         this.clearTimeout();
         uiStateModel.setToast(null);
     }
@@ -27,14 +26,13 @@ class ToastController {
      * Shows a toast using the model's toast payload shape.
      * @param {ToastPayload | string | null} payload
      * @param {number} [timeout] Auto-clear timeout in ms. Defaults to controller default. 0 = persistent
-     * @returns {void}
      */
-    showToast(payload, timeout) {
+    showToast(payload: ToastPayload | string | null, timeout?: number): void {
         this.clearTimeout();
 
-        const toastPayload = typeof payload === 'string'
+        const toastPayload: ToastPayload | null = typeof payload === 'string'
             ? { message: payload }
-            : payload;
+            : (payload as ToastPayload | null);
 
         if (!toastPayload || !toastPayload.message) {
             uiStateModel.setToast(null);
@@ -48,7 +46,7 @@ class ToastController {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
                 uiStateModel.setToast(null);
-            }, effectiveTimeout);
+            }, effectiveTimeout) as unknown as number;
         }
     }
 }
