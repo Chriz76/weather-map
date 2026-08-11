@@ -46,5 +46,5 @@ export function registerWindToggleView(map: any): void {
     }
   });
 
-  map.addControl(new (window as any).L.Control(WindToggleControl));
+  map.addControl(new WindToggleControl());
 }

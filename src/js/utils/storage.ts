@@ -17,12 +17,12 @@ function debounce<T extends (...args: any[]) => void>(func: T, delayMs = 250) {
 }
 
 const core = {
-    set(key: string, val: any) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { logger.error(e); } },
-    get(key: string, fallback: any, isObj?: boolean) { try { const item = localStorage.getItem(key); return item ? (isObj ? JSON.parse(item) : item) : fallback; } catch (e) { return fallback; } },
+    set(key: string, val: unknown) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { logger.error(e); } },
+    get(key: string, fallback: unknown, isObj?: boolean): unknown { try { const item = localStorage.getItem(key); return item ? (isObj ? JSON.parse(item) : item) : fallback; } catch (e) { return fallback; } },
     remove(key: string) { try { localStorage.removeItem(key); } catch (e) {} }
 };
 
-function setStorageValue(key: string, val: any) {
+function setStorageValue(key: string, val: unknown) {
     core.set(key, val);
 }
 

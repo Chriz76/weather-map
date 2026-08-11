@@ -1,12 +1,13 @@
 import { formatMinutesAgo } from './time';
+import { Station } from '../../types';
 
-export function formatStationToast(station: any): string {
+export function formatStationToast(station: Station): string {
     const stationName = station.station_name || station.name || 'Station';
-    const windData = station.windData || {};
-    const windSpeed = typeof windData.windSpeed === 'number' ? windData.windSpeed.toFixed(1) : '--';
-    const windGust = typeof windData.windGustSpeed === 'number' ? Math.round(windData.windGustSpeed) : '--';
-    const temperature = typeof windData.temperature === 'number' ? windData.temperature.toFixed(1) : '--';
-    const age = formatMinutesAgo(windData.timestamp);
+    const windData = station.windData ?? {};
+    const windSpeed = typeof (windData as any).windSpeed === 'number' ? (windData as any).windSpeed.toFixed(1) : '--';
+    const windGust = typeof (windData as any).windGustSpeed === 'number' ? Math.round((windData as any).windGustSpeed) : '--';
+    const temperature = typeof (windData as any).temperature === 'number' ? (windData as any).temperature.toFixed(1) : '--';
+    const age = formatMinutesAgo((windData as any).timestamp);
     const lat = typeof station.lat === 'number' ? station.lat.toFixed(4) : '--';
     const lon = typeof station.lon === 'number' ? station.lon.toFixed(4) : '--';
 

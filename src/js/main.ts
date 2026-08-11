@@ -2,8 +2,8 @@
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
 import { uiStateModel } from './models/uiStateModel';
-import { initMap } from './map-init.ts';
-import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
+import { initMap } from './map-init';
+import { loadingSpinnerController } from './controllers/loadingSpinnerController';
 
 // Controller Imports
 import { initLifecycleController } from './controllers/lifecycleController';
@@ -12,18 +12,18 @@ import { initUiController } from './controllers/uiController';
 import { loadWeatherDataForLocationAction } from './controllers/actions';
 
 // Views
-import { registerTimelineView } from './views/timelineView.js';
-import { registerForecastView } from './views/forecastView.js';
-import { registerLegendView } from './views/legendView.js';
-import { registerLogoView } from './views/logoView.js';
-import { registerModelInfoView } from './views/modelInfoView.js';
-import { registerMapOverlayView } from './views/mapOverlayView.js';
-import { registerGpsView } from './views/gpsView.js';
-import { registerWindToggleView } from './views/windToggleView.js';
-import { registerLoadingView } from './views/loadingSpinnerView.js';
-import { registerNotificationView } from './views/notificationView.js';
-import { registerToastView } from './views/toastView.js';
-import { specialDataView } from './views/specialDataView.js';
+import { registerTimelineView } from './views/timelineView';
+import { registerForecastView } from './views/forecastView';
+import { registerLegendView } from './views/legendView';
+import { registerLogoView } from './views/logoView';
+import { registerModelInfoView } from './views/modelInfoView';
+import { registerMapOverlayView } from './views/mapOverlayView';
+import { registerGpsView } from './views/gpsView';
+import { registerWindToggleView } from './views/windToggleView';
+import { registerLoadingView } from './views/loadingSpinnerView';
+import { registerNotificationView } from './views/notificationView';
+import { registerToastView } from './views/toastView';
+import { specialDataView } from './views/specialDataView';
 
 // --- 1. INITIALISIERUNG ---
 // Restore previously selected provider (before map init so imageBounds are correct)

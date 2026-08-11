@@ -2,7 +2,7 @@
 
 .marker-popup {
     text-align: center;
-    padding: 2px 3px;
+    padding: 8px 10px;
     width: fit-content;
 }
 
@@ -27,6 +27,7 @@
     font-size: 12px;
     font-weight: 600;
     margin-left: 2px;
+    margin-right: 8px;
 }
 
 .marker-popup__direction {
@@ -62,7 +63,7 @@
 .leaflet-popup-content-wrapper {
     border-radius: 6px;
     box-shadow: 0 3px 14px rgba(0,0,0,0.2);
-    padding: 10px 12px 12px;
+    padding: 16px 18px 18px;
 }
 
 .leaflet-popup-content {
@@ -74,8 +75,8 @@
     height: 20px;
     line-height: 20px;
     font-size: 16px;
-    right: -4px;
-    top: -4px;
+    right: 12px;
+    top: 6px;
     border-radius: 0;
     background: transparent;
     box-shadow: none;

@@ -62,7 +62,13 @@ function createMarker(map: any, lat: number, lng: number, popupContent: string) 
     weight: 2
   }).addTo(map);
 
-  activeSpotMarker.bindPopup(popupContent, { offset: [0, -10] }).openPopup();
+  // Ensure popup is kept in view and avoid UI controls overlapping it.
+  activeSpotMarker.bindPopup(popupContent, {
+    offset: [0, -10],
+    keepInView: true,
+    // give extra padding so popups near the bottom/right don't overlap controls
+    autoPanPadding: [50, 120]
+  }).openPopup();
 }
 
 function getExistingCoordsDisplay() {

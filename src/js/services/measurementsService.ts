@@ -27,13 +27,24 @@ async function fetchFromBrightSky(dwdStationId: string): Promise<WindData | null
     return null;
   }
 
-  return {
-    speed: Math.round(speedKmh * 0.539957 * 10) / 10,
-    direction: typeof direction === 'number' ? direction : 0,
-    gust: gustKmh === null ? null : Math.round(gustKmh * 0.539957),
+  const speed = Math.round(speedKmh * 0.539957 * 10) / 10;
+  const directionVal = typeof direction === 'number' ? direction : 0;
+  const gust = gustKmh === null ? null : Math.round(gustKmh * 0.539957);
+
+  const result: any = {
+    // canonical (new) shape
+    speed,
+    direction: directionVal,
+    gust,
     temperature,
     timestamp,
+    // legacy aliases used across older views
+    windSpeed: speed,
+    windDirection: directionVal,
+    windGustSpeed: gust,
   };
+
+  return result as WindData;
 }
 
 export async function fetchWindDataForStation(
