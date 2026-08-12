@@ -1,5 +1,6 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
+import { getStationKey } from '../utils/stationKey';
 import type { Station } from '../types';
 import type { Map as LeafletMap, LayerGroup, Marker, DivIcon, LatLngExpression } from 'leaflet';
 
@@ -47,7 +48,7 @@ export const stationView = (() => {
     const nextStationKeys = new Set<string>();
 
     stations.forEach((station) => {
-      const stationKey = (station as any).id ?? (station as any).station_id ?? `${station.lat}-${station.lon}`;
+      const stationKey = getStationKey(station);
       nextStationKeys.add(stationKey);
       const lat = Number(station.lat ?? 0);
       const lon = Number(station.lon ?? 0);

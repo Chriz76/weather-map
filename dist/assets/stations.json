@@ -2537,11 +2537,10 @@
   },
   {
     "id": "00259",
-    "name": "Karlsruhe/Baden-Baden",
+    "station_name": "Karlsruhe/Baden-Baden",
     "state": "BW",
     "lat": 48.7794,
     "lon": 8.0805,
-    "priority": 3.0,
     "altitude": 124,
     "metar_icao": "EDSB"
   },

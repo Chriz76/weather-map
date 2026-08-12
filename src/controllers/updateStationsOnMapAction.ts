@@ -2,6 +2,7 @@ import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
+import { getStationKey } from '../utils/stationKey';
 import type { Station } from '../types';
 import type { LatLngBounds } from 'leaflet';
 
@@ -73,9 +74,10 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
       try {
         const stationIdRaw = (station as unknown as Record<string, unknown>)['id'] ?? (station as unknown as Record<string, unknown>)['station_id'];
         const stationId = stationIdRaw ? String(stationIdRaw) : undefined;
+        const stationKey = getStationKey(station);
         if (stationId) {
           const data = await fetchWindDataForStation(stationId);
-          if (data && stationId) fetched[stationId] = data;
+          if (data) fetched[stationKey] = data;
         }
       } catch (err: unknown) {
         logger.error('Error fetching wind for station', (station as unknown as Record<string, unknown>)['id'], err);
@@ -85,10 +87,10 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
   await Promise.all(fetchPromises);
 
   const stationsWithFinalData = topStations.map((station) => {
-    const stationId = (station as any).id ?? (station as any).station_id;
+    const stationKey = getStationKey(station);
     return {
       ...station,
-      windData: stationId ? (fetched[stationId] || null) : null
+      windData: fetched[stationKey] || null
     };
   });
 
