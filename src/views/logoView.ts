@@ -7,6 +7,7 @@ export function registerLogoView(map: LeafletMap): void {
   (L.Control as unknown as { LogoView?: unknown }).LogoView = (L.Control as unknown as { extend: Function }).extend({
     options: { position: 'topleft' },
     onAdd: function () {
+      const logoHref = `${import.meta.env.BASE_URL}favicon.svg`;
       const container = L.DomUtil.create('div', 'logo-view');
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
@@ -14,7 +15,7 @@ export function registerLogoView(map: LeafletMap): void {
       container.innerHTML = `
         <div class="logo-view__container">
           <a href="./info.html" class="logo-view__link" title="Dokumentation und Projekt-Informationen anzeigen">
-            <img class="logo-view__icon" src="favicon.svg" alt="ICON-D2 RUC Wetterkarte Logo" />
+            <img class="logo-view__icon" src="${logoHref}" alt="ICON-D2 RUC Wetterkarte Logo" />
           </a>
 
           <div class="logo-view__text-box">
