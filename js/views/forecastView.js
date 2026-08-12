@@ -1,7 +1,7 @@
 /* global L */
 /** @type {any} */
 const L = window.L;
-import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
 
 /**
  * Registers the forecast table control and binds it to model events.
@@ -45,6 +45,22 @@ export function registerForecastView(map) {
                     </table>
                 </div>
             `;
+
+            // Klick auf Forecast-Spalte -> Timeline springen
+            container.addEventListener('click', (ev) => {
+                // Verhindere, dass der Klick an die Leaflet-Karte weitergereicht wird
+                L.DomEvent.stop(ev);
+
+                const target = /** @type {HTMLElement} */ (ev.target);
+                const cell = target.closest('[data-time]') || null;
+                if (!cell) return;
+                const timeKey = cell.getAttribute('data-time');
+                if (!timeKey) return;
+                const idx = weatherProviderModel.availableTimestamps.indexOf(timeKey);
+                if (idx >= 0) {
+                    window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: idx } }));
+                }
+            });
 
             // Pure render function for table
             /**
@@ -90,16 +106,18 @@ export function registerForecastView(map) {
                 let directionHtml = '';
 
                 forecast.forEach(item => {
-                    const colorClass = getColorClass(item.wind);
-                    const formattedValue = item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1);
-                    
+                    // Use 0 as fallback for color calculations, but display '--' when value is missing
+                    const colorClass = getColorClass(item.wind ?? 0);
+                    const formattedValue = (item.wind == null) ? '--' : (item.wind >= 10 ? Math.round(item.wind) : item.wind.toFixed(1));
+
                     // Böen analog zu Wind verarbeiten (Farbklasse & Rundung)
-                    const gustColorClass = getColorClass(item.gust || 0);
-                    const formattedGust = item.gust >= 10 ? Math.round(item.gust) : (item.gust ?? 0).toFixed(1);
+                    const gustColorClass = getColorClass(item.gust ?? 0);
+                    const formattedGust = (item.gust == null) ? '--' : (item.gust >= 10 ? Math.round(item.gust) : item.gust.toFixed(1));
                     
                     const directionIcon = renderDirectionIcon(item.direction);
 
-                    headerHtml += `<th class="forecast-view__cell-header" data-time="${item.fullKey}">${item.hour}h</th>`;
+                    const displayHour = (typeof item.hour === 'string' && item.hour.indexOf(':') !== -1) ? item.hour : `${item.hour}h`;
+                    headerHtml += `<th class="forecast-view__cell-header" data-time="${item.fullKey}">${displayHour}</th>`;
                     valuesHtml += `<td class="forecast-view__cell-value ${colorClass}" data-time="${item.fullKey}">${formattedValue}</td>`;
                     // 🌟 KORREKTUR: Klassenstruktur exakt an das neue CSS angepasst für perfekte Symmetrie und Zentrierung
                     gustsHtml += `<td class="forecast-view__cell-value forecast-view__cell-gust ${gustColorClass}" data-time="${item.fullKey}">${formattedGust}</td>`;
@@ -116,7 +134,7 @@ export function registerForecastView(map) {
             };
 
             self.highlightActiveForecastHour = function () {
-                const currentKey = weatherModel.activeTimestamp;
+                const currentKey = weatherProviderModel.activeTimestamp;
                 if (!currentKey) return;
 
                 const activeElements = /** @type {NodeListOf<HTMLElement>} */ (
@@ -142,11 +160,11 @@ export function registerForecastView(map) {
                 }
             };
 
-            weatherModel.addEventListener('model:forecast-data-updated', () => {
-                self.renderTable(weatherModel.forecast);
+            weatherProviderModel.addEventListener('model:forecast-data-updated', () => {
+                self.renderTable(weatherProviderModel.forecast);
             });
 
-            weatherModel.addEventListener('model:timestamp-index-updated', () => {
+            weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
                 if (container.classList.contains('forecast-view--has-data')) {
                     self.highlightActiveForecastHour();
                     self.scrollActiveForecastHourToCenter();

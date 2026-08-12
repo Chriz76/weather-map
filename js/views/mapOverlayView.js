@@ -1,6 +1,7 @@
 /* global L */
-import { weatherModel } from '../models/weatherDomainModel.js';
-import { weatherUi } from '../models/weatherUiModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
+import { providers } from '../config.js';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView.js';
 
 /**
@@ -11,16 +12,16 @@ import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from '
  */
 export function registerMapOverlayView(map, windOverlay) {
 
-    weatherModel.addEventListener('model:windspeed-updated', () => {
-        if (weatherModel.windData) {
-            updateMapMarkerWindspeed(map, weatherModel.windData);
+    weatherProviderModel.addEventListener('model:windspeed-updated', () => {
+        if (weatherProviderModel.lastClickedLatLng) {
+            updateMapMarkerWindspeed(map, weatherProviderModel.windData);
         } else {
             clearMarker(map);
         }
     });
 
-    weatherModel.addEventListener('model:location-updated', () => {
-        const latLng = weatherModel.lastClickedLatLng;
+    weatherProviderModel.addEventListener('model:location-updated', () => {
+        const latLng = weatherProviderModel.lastClickedLatLng;
         if (latLng) {
             updateMapMarkerLocation(map, latLng.lat, latLng.lng);
         } else {
@@ -28,10 +29,22 @@ export function registerMapOverlayView(map, windOverlay) {
         }
     });
 
-    weatherUi.addEventListener('ui:overlay-url-updated', () => {
-        const url = weatherUi.activeOverlayUrl;
+    uiStateModel.addEventListener('ui:overlay-url-updated', () => {
+        const url = uiStateModel.activeOverlayUrl;
         if (windOverlay && url) {
             windOverlay.setUrl(url);
+        }
+    });
+
+    // Update image bounds when the active provider changes so overlays match provider extents
+    weatherProviderModel.addEventListener('model:provider-changed', () => {
+        const newBounds = providers[weatherProviderModel.getActiveProviderId()]?.imageBounds ?? null;
+        if (windOverlay && newBounds) {
+            try {
+                windOverlay.setBounds(newBounds);
+            } catch (e) {
+                // ignore failures — prefer setBounds; recreate overlay if you observe rendering issues
+            }
         }
     });
 }

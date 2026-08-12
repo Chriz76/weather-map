@@ -1,6 +1,7 @@
 ﻿// main.js
-import { weatherModel } from './models/weatherDomainModel.js';
-import { weatherUi } from './models/weatherUiModel.js';
+import { weatherProviderModel } from './models/weatherProviderModel.js';
+import { storage } from './utils/storage.js';
+import { uiStateModel } from './models/uiStateModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
@@ -22,8 +23,14 @@ import { registerWindToggleView } from './views/windToggleView.js';
 import { registerLoadingView } from './views/loadingSpinnerView.js';
 import { registerNotificationView } from './views/notificationView.js';
 import { registerToastView } from './views/toastView.js';
+import { specialDataView } from './views/specialDataView.js';
 
 // --- 1. INITIALISIERUNG ---
+// Restore previously selected provider (before map init so imageBounds are correct)
+const storedProvider = storage.getActiveProvider(weatherProviderModel.getActiveProviderId());
+if (storedProvider && storedProvider !== weatherProviderModel.getActiveProviderId()) {
+    weatherProviderModel.setActiveProvider(storedProvider);
+}
 const { map, windOverlay } = initMap();
 
 // Views registrieren
@@ -38,7 +45,7 @@ registerNotificationView();
 registerToastView();
 
 registerGpsView(map, () => {
-    weatherUi.setIsLocating(true);
+    uiStateModel.setIsLocating(true);
     map.locate({ 
         setView: false, 
         enableHighAccuracy: true 
@@ -46,14 +53,15 @@ registerGpsView(map, () => {
 });
 
 registerWindToggleView(map);
+specialDataView.init(map);
 
 // --- 2. CONTROLLER SYSTEM START ---
 
 async function initApp() {
-    initMapController(map);
+    await initMapController(map);
     initUiController();
 
-    await initLifecycleController();
+    await initLifecycleController(map);
 
     await loadingSpinnerController.track(async () => {
         // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
@@ -74,7 +82,7 @@ async function initApp() {
                     await loadWeatherDataForLocationAction(targetLatLng);
                 } catch (error) {
                     const errMsg = error instanceof Error ? error.message : String(error);
-                    weatherModel.setPointDataLoadError(errMsg);
+                    weatherProviderModel.setPointDataLoadError(errMsg);
                 }
             }
         }

@@ -1,0 +1,20 @@
+.special-data-badge {
+    font-family: sans-serif;
+}
+
+.special-data-badge-inner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    font-size: 10px;
+    line-height: 1;
+    color: #1f2933;
+    cursor: pointer;
+}

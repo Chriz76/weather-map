@@ -2545,24 +2545,6 @@
     "metar_icao": "EDSB"
   },
   {
-    "id": "03857",
-    "station_name": "Paderborn/Lippstadt",
-    "state": "NW",
-    "lat": 51.6141,
-    "lon": 8.6162,
-    "altitude": 213,
-    "metar_icao": "EDLP"
-  },
-  {
-    "id": "02629",
-    "station_name": "Weeze/Niederrhein",
-    "state": "NW",
-    "lat": 51.6024,
-    "lon": 6.1422,
-    "altitude": 32,
-    "metar_icao": "EDLV"
-  },
-  {
     "id": "00259",
     "name": "Müllheim",
     "lat": 47.8086,

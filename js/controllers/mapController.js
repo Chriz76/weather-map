@@ -1,41 +1,39 @@
 // controllers/mapController.js
-import { weatherModel } from '../models/weatherDomainModel.js';
-import { weatherUi } from '../models/weatherUiModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 import { storage } from '../utils/storage.js';
 import { formatMinutesAgo } from '../utils/time.js';
+import { formatStationToast } from '../utils/stationToastFormatter.js';
 import { toastController } from './toastController.js';
 import { loadWeatherDataForLocationAction } from './actions.js';
 import { stationView } from '../views/stationView.js';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction.js';
+import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction.js';
+import { logger } from '../utils/logger.js';
 
 let stationViewHandle = null;
 // stationView handles rendering; update action manages station data & cache
 
-function formatStationToast(station) {
-    const stationName = station.station_name || station.name || 'Station';
-    const windData = station.windData || {};
-    const windSpeed = typeof windData.windSpeed === 'number' ? windData.windSpeed.toFixed(1) : '--';
-    const windGust = typeof windData.windGustSpeed === 'number' ? Math.round(windData.windGustSpeed) : '--';
-    const temperature = typeof windData.temperature === 'number' ? windData.temperature.toFixed(1) : '--';
-    const age = formatMinutesAgo(windData.timestamp);
-    const lat = typeof station.lat === 'number' ? station.lat.toFixed(4) : '--';
-    const lon = typeof station.lon === 'number' ? station.lon.toFixed(4) : '--';
+// `formatStationToast` moved to `js/utils/stationToastFormatter.js`
 
-    return `${stationName}
-${age}
-${windSpeed} kts max ${windGust} kts
-${temperature}°C
-lat ${lat}, lon ${lon}`;
-}
-
-export function initMapController(map) {
+export async function initMapController(map) {
     /** @type {number | null} */
     let lastClusterClickToken = null;
 
-    weatherUi.setShowWindMeasurements(storage.getWindMeasurements(weatherUi.showWindMeasurements));
+    uiStateModel.setShowWindMeasurements(storage.getWindMeasurements(uiStateModel.showWindMeasurements));
 
     // Initial trigger: action lädt Stationsdaten intern
-    updateStationsOnMapAction(map.getBounds());
+    try {
+        await updateStationsOnMapAction(map.getBounds());
+    } catch (e) {
+        logger.error('Error during initial stations update:', e);
+    }
+
+    try {
+        await updateSpecialDataOnMapAction(map);
+    } catch (e) {
+        logger.error('Error during initial special data update:', e);
+    }
 
     // Move update logic to action: see controllers/updateStationsOnMapAction.js
 
@@ -47,7 +45,6 @@ export function initMapController(map) {
             await loadWeatherDataForLocationAction(latlng);
         } catch (error) {
             const errMsg = error instanceof Error ? error.message : String(error);
-            // Direct user action: toast is sufficient, don't persist pointDataLoadError.
             toastController.showToast({ message: 'Error loading location data: ' + errMsg }, 5000);
         }
 
@@ -67,23 +64,33 @@ export function initMapController(map) {
         try {
             await triggerLoadAtLatLng(e.latlng);
         } finally {
-            weatherUi.setIsLocating(false);
+            uiStateModel.setIsLocating(false);
         }
     }
 
     function handleLocationError(e) {
         toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
-        weatherUi.setIsLocating(false);
+        uiStateModel.setIsLocating(false);
     }
 
     function handlePopupClose() {
         lastClusterClickToken = null;
-        weatherModel.removePointData();
+        weatherProviderModel.removePointData();
     }
 
-    function handleMoveEnd() {
+    async function handleMoveEnd() {
         // --- NEU: Bei jeder Kartenbewegung (Verschieben/Zoomen) den Filter ausführen ---
-        updateStationsOnMapAction(map.getBounds());
+        try {
+            await updateStationsOnMapAction(map.getBounds());
+        } catch (e) {
+            logger.error('Error updating stations on moveend:', e);
+        }
+
+        try {
+            await updateSpecialDataOnMapAction(map);
+        } catch (e) {
+            logger.error('Error updating special data on moveend:', e);
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('lat') && urlParams.has('lon')) return;
@@ -102,11 +109,21 @@ export function initMapController(map) {
     map.on('popupclose', handlePopupClose);
     map.on('moveend', handleMoveEnd);
 
-    weatherUi.addEventListener('ui:wind-measurements-visibility-changed', () => {
-        storage.saveWindMeasurements(weatherUi.showWindMeasurements);
+    uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
+        storage.saveWindMeasurements(uiStateModel.showWindMeasurements);
 
-        if (weatherUi.showWindMeasurements) {
-            updateStationsOnMapAction(map.getBounds());
+        if (uiStateModel.showWindMeasurements) {
+            try {
+                await updateStationsOnMapAction(map.getBounds());
+            } catch (e) {
+                logger.error('Error updating stations after visibility change:', e);
+            }
+
+            try {
+                await updateSpecialDataOnMapAction(map);
+            } catch (e) {
+                logger.error('Error updating special data after visibility change:', e);
+            }            
         }
     });
 
