@@ -73,8 +73,7 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
     const fetchPromises = topStations.map(async (station) => {
       try {
         const stationIdRaw = (station as unknown as Record<string, unknown>)['id']
-          ?? (station as unknown as Record<string, unknown>)['station_id']
-          ?? (station as unknown as Record<string, unknown>)['metar_icao'];
+          ?? (station as unknown as Record<string, unknown>)['station_id'];
         const stationId = stationIdRaw ? String(stationIdRaw) : undefined;
         const stationKey = getStationKey(station);
         if (stationId) {
