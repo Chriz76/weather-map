@@ -1,5 +1,5 @@
 // views/notificationView.js
-import { weatherModel } from '../models/weatherDomainModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
 
 /**
  * Registers the global Notification View for error notifications and modal actions.
@@ -80,18 +80,18 @@ export function registerNotificationView() {
     };
 
     const showErrorNotification = () => {
-        if (weatherModel.apiMismatchError) {
+        if (weatherProviderModel.apiMismatchError) {
             showNotification({
-                message: weatherModel.apiMismatchError,
+                message: weatherProviderModel.apiMismatchError,
                 isModal: true,
                 action: { event: 'app:reload-requested', text: 'Reload App' }
             });
             return;
         }
 
-        if (weatherModel.startupError) {
+        if (weatherProviderModel.startupError) {
             showNotification({
-                message: weatherModel.startupError,
+                message: weatherProviderModel.startupError,
                 isModal: true,
                 action: { event: 'app:startup-retry', text: 'Retry' }
             });
@@ -99,9 +99,9 @@ export function registerNotificationView() {
         }
 
         const hasLoadErrors = !!(
-            weatherModel.indexLoadError ||
-            weatherModel.pointDataLoadError ||
-            weatherModel.overlayLoadError
+            weatherProviderModel.indexLoadError ||
+            weatherProviderModel.pointDataLoadError ||
+            weatherProviderModel.overlayLoadError
         );
 
         if (!hasLoadErrors) {
@@ -128,7 +128,7 @@ export function registerNotificationView() {
     };
 
     const render = () => {
-        if (weatherModel.hasLoadError) {
+        if (weatherProviderModel.hasLoadError) {
             showErrorNotification();
             return;
         }
@@ -138,5 +138,5 @@ export function registerNotificationView() {
 
     const onLoadErrorChanged = () => render();
 
-    weatherModel.addEventListener('model:load-error-changed', onLoadErrorChanged);
+    weatherProviderModel.addEventListener('model:load-error-changed', onLoadErrorChanged);
 }

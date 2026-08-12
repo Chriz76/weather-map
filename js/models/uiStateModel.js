@@ -3,7 +3,7 @@
  * @typedef {{ activeOverlayUrl: string|null, isLocating: boolean, isActiveLoading: boolean, isLoadingModal: boolean, toast: string | ToastPayload | null, showWindMeasurements: boolean }} UIState
  */
 
-export class WeatherUi extends EventTarget {
+export class UiStateModel extends EventTarget {
     /**
      * @param {(eventName: string, detail: any) => void} [dispatchEventCallback]
      */
@@ -106,5 +106,5 @@ export class WeatherUi extends EventTarget {
     }
 }
 
-export const weatherUi = new WeatherUi();
-export default weatherUi;
+export const uiStateModel = new UiStateModel();
+export default uiStateModel;

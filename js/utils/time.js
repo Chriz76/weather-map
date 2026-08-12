@@ -9,13 +9,29 @@
  * @param {string} timestampStr
  * @returns {Date}
  */
-function parseModelTimestamp(timestampStr) {
+export function parseModelTimestamp(timestampStr) {
     const year = parseInt(timestampStr.substring(0, 4), 10);
     const month = parseInt(timestampStr.substring(4, 6), 10) - 1;
     const day = parseInt(timestampStr.substring(6, 8), 10);
-    const hour = parseInt(timestampStr.substring(9, 11), 10);
-    
-    const date = new Date(Date.UTC(year, month, day, hour, 0, 0));
+
+    const parts = (timestampStr.split('_')[1] || '');
+    let hour = 0;
+    let minute = 0;
+
+    if (parts.length === 2) {
+        // Format like "HH"
+        hour = parseInt(parts, 10);
+    } else if (parts.length === 4) {
+        // Format like "HHMM"
+        hour = parseInt(parts.substring(0, 2), 10);
+        minute = parseInt(parts.substring(2, 4), 10);
+    } else {
+        // Fallback: try to parse first two as hour and next two as minutes if present
+        hour = parseInt(parts.substring(0, 2) || '0', 10);
+        minute = parseInt(parts.substring(2, 4) || '0', 10);
+    }
+
+    const date = new Date(Date.UTC(year, month, day, hour, minute, 0));
     if (Number.isNaN(date.getTime())) throw new Error("Invalid model timestamp format");
     return date;
 }
@@ -162,18 +178,43 @@ export function formatToTime(input) {
 export function determineActiveIndex(sortedTimestamps, prevActiveTimestamp) {
     if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
+    // If a previous timestamp is provided, prefer an exact match or the temporally closest entry.
     if (prevActiveTimestamp) {
         const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
         if (exactMatchIndex !== -1) return exactMatchIndex;
+
+        try {
+            const prevDate = parseModelTimestamp(prevActiveTimestamp);
+            let bestIdx = 0;
+            let bestDiff = Infinity;
+
+            for (let i = 0; i < sortedTimestamps.length; i++) {
+                try {
+                    const d = parseModelTimestamp(sortedTimestamps[i]);
+                    const diff = Math.abs(d.getTime() - prevDate.getTime());
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        bestIdx = i;
+                    }
+                } catch {
+                    continue;
+                }
+            }
+
+            return bestIdx;
+        } catch {
+            // If parsing fails, fall back to the time-based heuristic below.
+        }
     }
 
+    // Default behaviour: first timestamp >= now, otherwise last available
     const now = new Date();
     for (let idx = 0; idx < sortedTimestamps.length; idx++) {
         try {
             const tDate = parseModelTimestamp(sortedTimestamps[idx]);
             if (tDate >= now) return idx;
         } catch {
-            continue; // Falls ein fehlerhafter Timestamp in der Liste ist, überspringen
+            continue; // Skip malformed entries
         }
     }
 

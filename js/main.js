@@ -1,6 +1,7 @@
 ﻿// main.js
-import { weatherModel } from './models/weatherDomainModel.js';
-import { weatherUi } from './models/weatherUiModel.js';
+import { weatherProviderModel } from './models/weatherProviderModel.js';
+import { storage } from './utils/storage.js';
+import { uiStateModel } from './models/uiStateModel.js';
 import { initMap } from './map-init.js';
 import { loadingSpinnerController } from './controllers/loadingSpinnerController.js';
 
@@ -25,6 +26,11 @@ import { registerToastView } from './views/toastView.js';
 import { specialDataView } from './views/specialDataView.js';
 
 // --- 1. INITIALISIERUNG ---
+// Restore previously selected provider (before map init so imageBounds are correct)
+const storedProvider = storage.getActiveProvider(weatherProviderModel.getActiveProviderId());
+if (storedProvider && storedProvider !== weatherProviderModel.getActiveProviderId()) {
+    weatherProviderModel.setActiveProvider(storedProvider);
+}
 const { map, windOverlay } = initMap();
 
 // Views registrieren
@@ -39,7 +45,7 @@ registerNotificationView();
 registerToastView();
 
 registerGpsView(map, () => {
-    weatherUi.setIsLocating(true);
+    uiStateModel.setIsLocating(true);
     map.locate({ 
         setView: false, 
         enableHighAccuracy: true 
@@ -76,7 +82,7 @@ async function initApp() {
                     await loadWeatherDataForLocationAction(targetLatLng);
                 } catch (error) {
                     const errMsg = error instanceof Error ? error.message : String(error);
-                    weatherModel.setPointDataLoadError(errMsg);
+                    weatherProviderModel.setPointDataLoadError(errMsg);
                 }
             }
         }

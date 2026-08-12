@@ -1,4 +1,4 @@
-import { weatherModel } from '../models/weatherDomainModel.js';
+import { commonDataModel } from '../models/commonDataModel.js';
 import { fetchSpecialData, selectForecastEntries, buildSpecialDataSummary } from '../services/specialDataService.js';
 import { logger } from '../utils/logger.js';
 
@@ -41,9 +41,9 @@ export async function updateSpecialDataOnMapAction(map = null) {
         const entries = await fetchSpecialData();
         const selection = selectForecastEntries(entries, getReferenceDay());
         const summary = buildSpecialDataSummary(selection);
-        weatherModel.setSpecialDataSummary(summary);
+        commonDataModel.setSpecialDataSummary(summary);
     } catch (error) {
         logger.error('Error refreshing special data badge:', error);
-        weatherModel.setSpecialDataSummary(null);
+        commonDataModel.setSpecialDataSummary(null);
     }
 }

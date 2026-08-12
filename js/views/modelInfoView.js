@@ -1,5 +1,5 @@
 ﻿import { formatToDateTime, formatModelTimestampToTime, addMinutesToIso, formatToTime } from '../utils/time.js';
-import { weatherModel } from '../models/weatherDomainModel.js'; // 👈 Wichtig: Modell importieren!
+import { weatherProviderModel } from '../models/weatherProviderModel.js'; // 👈 Wichtig: Modell importieren!
 
 /**
  * Registers the model metadata info renderer.
@@ -39,17 +39,17 @@ export function registerModelInfoView(map) {
     });
 
     // Update the text content when model metadata changes — keep the original look
-    weatherModel.addEventListener('model:model-metadata-updated', () => {
+    weatherProviderModel.addEventListener('model:model-metadata-updated', () => {
         try {
             let displayStr = '';
 
-            if (weatherModel.modelGeneratedAt) {
-                displayStr += `Updated ${formatToDateTime(weatherModel.modelGeneratedAt)} `;
+            if (weatherProviderModel.modelGeneratedAt) {
+                displayStr += `Updated ${formatToDateTime(weatherProviderModel.modelGeneratedAt)} `;
             }
 
             // Also append Next = generatedAt + 65 minutes, separated by space
-            if (weatherModel.modelGeneratedAt) {
-                const nextDate = addMinutesToIso(weatherModel.modelGeneratedAt, 65);
+            if (weatherProviderModel.modelGeneratedAt) {
+                const nextDate = addMinutesToIso(weatherProviderModel.modelGeneratedAt, 65);
                 if (nextDate) {
                     displayStr += ` | Next ~${formatToTime(nextDate)}`;
                 }

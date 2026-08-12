@@ -1,6 +1,6 @@
 // controllers/mapController.js
-import { weatherModel } from '../models/weatherDomainModel.js';
-import { weatherUi } from '../models/weatherUiModel.js';
+import { weatherProviderModel } from '../models/weatherProviderModel.js';
+import { uiStateModel } from '../models/uiStateModel.js';
 import { storage } from '../utils/storage.js';
 import { formatMinutesAgo } from '../utils/time.js';
 import { formatStationToast } from '../utils/stationToastFormatter.js';
@@ -20,7 +20,7 @@ export async function initMapController(map) {
     /** @type {number | null} */
     let lastClusterClickToken = null;
 
-    weatherUi.setShowWindMeasurements(storage.getWindMeasurements(weatherUi.showWindMeasurements));
+    uiStateModel.setShowWindMeasurements(storage.getWindMeasurements(uiStateModel.showWindMeasurements));
 
     // Initial trigger: action lädt Stationsdaten intern
     try {
@@ -45,7 +45,6 @@ export async function initMapController(map) {
             await loadWeatherDataForLocationAction(latlng);
         } catch (error) {
             const errMsg = error instanceof Error ? error.message : String(error);
-            // Direct user action: toast is sufficient, don't persist pointDataLoadError.
             toastController.showToast({ message: 'Error loading location data: ' + errMsg }, 5000);
         }
 
@@ -65,18 +64,18 @@ export async function initMapController(map) {
         try {
             await triggerLoadAtLatLng(e.latlng);
         } finally {
-            weatherUi.setIsLocating(false);
+            uiStateModel.setIsLocating(false);
         }
     }
 
     function handleLocationError(e) {
         toastController.showToast({ message: 'Error processing GPS location: ' + e.message }, 5000);
-        weatherUi.setIsLocating(false);
+        uiStateModel.setIsLocating(false);
     }
 
     function handlePopupClose() {
         lastClusterClickToken = null;
-        weatherModel.removePointData();
+        weatherProviderModel.removePointData();
     }
 
     async function handleMoveEnd() {
@@ -110,10 +109,10 @@ export async function initMapController(map) {
     map.on('popupclose', handlePopupClose);
     map.on('moveend', handleMoveEnd);
 
-    weatherUi.addEventListener('ui:wind-measurements-visibility-changed', async () => {
-        storage.saveWindMeasurements(weatherUi.showWindMeasurements);
+    uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
+        storage.saveWindMeasurements(uiStateModel.showWindMeasurements);
 
-        if (weatherUi.showWindMeasurements) {
+        if (uiStateModel.showWindMeasurements) {
             try {
                 await updateStationsOnMapAction(map.getBounds());
             } catch (e) {

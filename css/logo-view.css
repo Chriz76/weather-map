@@ -3,8 +3,8 @@
 .logo-view {
     /* Opaque background for the logo control */
     background: #ffffff; /* fully opaque white */
-    /* Compact vertical padding */
-    padding: 3px 7px;
+    /* Less bottom padding to bring control visually lower; keep small top padding */
+    padding: 5px 7px 2px 7px; /* top right bottom left */
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
  }
@@ -17,6 +17,7 @@
     outline: none;
     border: none;
     display: flex; /* Sorgt dafür, dass der Link den gesamten inneren Bereich ausfüllt */
+    align-items: center; /* ensure icon/text are vertically centered inside the link */
 }
 
     /* Ein dezenter Hover-Effekt, damit Nutzer merken, dass das Logo klickbar ist */
@@ -36,16 +37,17 @@
 /* Make the svg icon match the combined height of the two text lines */
 .logo-view__icon {
     width: auto;
-    height: 30px; /* target combined text height (approx) */
+    height: 30px; /* slightly smaller so overall control is lower */
     display: block;
 }
 
 .logo-view__text-box {
     display: flex;
     flex-direction: column;
-    /* ensure the text block has same height as the svg */
-    height: 30px;
-    justify-content: space-between; /* h1 top, h2 bottom */
+    /* remove fixed height so content can size naturally */
+    gap: 3px; /* very small spacing between toggle and subtitle */
+    padding-bottom: 2px; /* much less space below subtitle */
+    align-items: flex-start; /* keep toggle only as wide as its content */
 }
 
 .logo-view__title {
@@ -61,8 +63,46 @@
     font-size: 9.5px;
     line-height: 10px;
     margin: 0;
-    color: #0077a4; /* Behält deine gewünschte Akzentfarbe */
+    color: #111827; /* black text for subtitle */
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+}
+
+/* Toggle buttons for switching providers */
+.logo-view__toggle {
+    display: inline-flex;
+    gap: 0;
+    margin: 0;
+    align-items: center;
+    border: 1px solid #1f2937; /* darker grey border around both buttons */
+    background: #ffffff;
+    border-radius: 4px; /* match slider/nav button rounding */
+    overflow: hidden; /* ensure rounded corners apply to children */
+    align-self: flex-start; /* avoid stretching to fill parent */
+}
+
+.logo-view__toggle-btn {
+    border: 0;
+    padding: 2px 8px; /* minimal vertical padding for compact buttons */
+    background: transparent;
+    color: #6B7280; /* inactive: gray */
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1;
+    flex: 1 1 auto; /* make both buttons equal width */
+    text-align: center;
+    min-width: 60px; /* ensure reasonable tappable width */
+}
+
+.logo-view__toggle-btn--active {
+    color: #0b0b0b; /* active: black */
+    background: #2aa7d6; /* lighter logo-blue background for active button */
+}
+
+.logo-view__toggle-btn:first-child { border-right: 1px solid rgba(0,0,0,0.06); }
+
+.logo-view__toggle-btn:focus {
+    outline: 2px solid rgba(59,130,246,0.12);
 }

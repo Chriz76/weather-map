@@ -1,7 +1,9 @@
 /* global L */
 // --- src/map-init.js ---
-import { imageBounds } from './config.js';
+import { providers } from './config.js';
+import { weatherProviderModel } from './models/weatherProviderModel.js';
 import { storage } from './utils/storage.js';
+import { D2 } from './weatherProvider/providerIds.js';
 
 /** @type {any} */
 const L = window.L;
@@ -45,6 +47,8 @@ export function initMap() {
         className: 'map-redesign',
         detectRetina: true
     }).addTo(mapInstance);
+
+    const imageBounds = providers[weatherProviderModel.getActiveProviderId()].imageBounds;
 
     // Weather graphic overlay in the middle
     windOverlayInstance = L.imageOverlay('', imageBounds, {
