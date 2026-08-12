@@ -13,8 +13,8 @@ export function registerLogoView(map: LeafletMap): void {
 
       container.innerHTML = `
         <div class="logo-view__container">
-          <a href="./info.html" class="logo-view__link" title="Dokumentation und Projekt-Informationen anzeigen">
-            <img class="logo-view__icon" src="favicon.svg" alt="ICON-D2 RUC Wetterkarte Logo" />
+          <a href="./info.html" class="logo-view__link" title="Show documentation and project information">
+            <img class="logo-view__icon" src="/favicon.svg" alt="ICON-D2 RUC Wetterkarte Logo" />
           </a>
 
           <div class="logo-view__text-box">
