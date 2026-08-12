@@ -2536,7 +2536,7 @@
     "metar_icao": null
   },
   {
-    "id": "00259",
+    "id": "EDSB",
     "name": "Karlsruhe/Baden-Baden",
     "state": "BW",
     "lat": 48.7794,
@@ -2546,7 +2546,7 @@
     "metar_icao": "EDSB"
   },
   {
-    "id": "00259",
+    "id": "00259-2",
     "name": "Müllheim",
     "lat": 47.8086,
     "lon": 7.6311,
