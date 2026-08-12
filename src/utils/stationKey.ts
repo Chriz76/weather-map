@@ -14,5 +14,5 @@ export function getStationKey(station: Station): string {
   const latPart = Number.isFinite(lat) ? lat.toFixed(4) : '';
   const lonPart = Number.isFinite(lon) ? lon.toFixed(4) : '';
 
-  return [id, name, latPart, lonPart].join('|');
+  return JSON.stringify([id, name, latPart, lonPart]);
 }

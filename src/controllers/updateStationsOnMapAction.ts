@@ -79,6 +79,8 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
         if (stationId) {
           const data = await fetchWindDataForStation(stationId);
           if (data) fetched[stationKey] = data;
+        } else {
+          logger.warn('Skipping wind fetch for station without an id:', stationKey);
         }
       } catch (err: unknown) {
         logger.error('Error fetching wind for station', (station as unknown as Record<string, unknown>)['id'], err);
