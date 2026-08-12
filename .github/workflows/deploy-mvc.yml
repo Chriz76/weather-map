@@ -1,9 +1,9 @@
-name: Deploy mvc Branch to Cloudflare Pages
+name: Deploy typescript Branch to Cloudflare Pages
 
 on:
   push:
     branches:
-      - mvc # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
+      - typescript # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
   workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
 
 jobs:
@@ -15,6 +15,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Vite Build ausführen
+      - name: Build project
+        run: npm run build
+
       # 2. Direkt zu Cloudflare Pages hochladen
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
@@ -22,4 +35,4 @@ jobs:
           apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           accountId: c728452fcd5090f3d7f2bacc5e75fcd2
           projectName: 'windapp-preview' # Der Name deines Cloudflare-Projekts
-          directory: '.'         # '.' bedeutet, dass das gesamte Hauptverzeichnis hochgeladen wird
+          directory: './dist'         # '.' bedeutet, dass das gesamte Hauptverzeichnis hochgeladen wird
