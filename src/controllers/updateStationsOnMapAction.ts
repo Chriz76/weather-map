@@ -15,7 +15,7 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
 
   if ((!allStations || allStations.length === 0) && bounds) {
     try {
-      const resp = await fetch(`${import.meta.env.BASE_URL}assets/stations.json`);
+      const resp = await fetch('assets/stations.json');
       allStations = await resp.json();
       commonDataModel.setAllStations(allStations);
       logger.info('📍 Station data loaded (fallback):', allStations.length);
