@@ -1,6 +1,6 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { D2, AROME } from '../weatherProvider/providerIds';
-const L = window.L as typeof import('leaflet');
+import L from '../lib/leaflet-wrapper';
 import type { Map as LeafletMap } from 'leaflet';
 
 export function registerLogoView(map: LeafletMap): void {

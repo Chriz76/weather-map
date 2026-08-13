@@ -1,8 +1,7 @@
 import { logger } from '../utils/logger';
 import type { WindData } from '../types';
+import L from '../lib/leaflet-wrapper';
 import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
-
-const L = window.L as typeof import('leaflet');
 import type { CircleMarker } from 'leaflet';
 let activeSpotMarker: CircleMarker | Marker | null = null;
 

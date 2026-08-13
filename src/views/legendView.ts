@@ -1,4 +1,4 @@
-const L = window.L as typeof import('leaflet');
+import L from '../lib/leaflet-wrapper';
 import type { Map as LeafletMap } from 'leaflet';
 
 export function registerLegendView(map: LeafletMap): void {

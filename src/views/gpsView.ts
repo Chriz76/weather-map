@@ -1,7 +1,7 @@
 import { uiStateModel } from '../models/uiStateModel';
+import L from '../lib/leaflet-wrapper';
 import type { Map as LeafletMap } from 'leaflet';
 
-const L = (window as unknown as { L: unknown }).L as any; // limited cast to access global Leaflet; wrap further if needed
 
 export function registerGpsView(map: LeafletMap, onGpsClick: () => void): void {
   const GpsControl = L.Control.extend({

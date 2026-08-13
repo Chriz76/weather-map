@@ -1,9 +1,9 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { formatModelTimestampToTimeAndDescription } from '../utils/time';
 import { logger } from '../utils/logger';
+import L from '../lib/leaflet-wrapper';
 import type { Map as LeafletMap } from 'leaflet';
 
-const L = window.L as typeof import('leaflet');
 
 export function registerTimelineView(mapInstance: LeafletMap): void {
   (L.Control as unknown as Record<string, unknown>)['TimelineView'] = (L.Control as unknown as { extend: Function }).extend({

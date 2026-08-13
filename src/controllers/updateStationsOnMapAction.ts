@@ -3,7 +3,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
 import type { Station } from '../types';
-import * as L from 'leaflet';
+import L from '../lib/leaflet-wrapper';
 import type { LatLngBounds } from 'leaflet';
 
 export async function updateStationsOnMapAction(bounds: LatLngBounds | null = null): Promise<void> {
