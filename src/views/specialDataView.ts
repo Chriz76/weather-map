@@ -49,13 +49,15 @@ export const specialDataView = (() => {
     if (!layerGroup && map) layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
 
     if (!marker && map) {
-      marker = (window as any).L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(commonDataModel.specialDataSummary as any) }) as Marker;
+      const summary = typeof commonDataModel.specialDataSummary === 'string' ? commonDataModel.specialDataSummary : String(commonDataModel.specialDataSummary ?? '');
+      marker = (window as any).L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(summary) }) as Marker;
       marker.on('click', () => window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer'));
       if (layerGroup) layerGroup.addLayer(marker);
     }
 
     if (marker) {
-      marker.setIcon(createIcon(commonDataModel.specialDataSummary as any));
+      const summary = typeof commonDataModel.specialDataSummary === 'string' ? commonDataModel.specialDataSummary : String(commonDataModel.specialDataSummary ?? '');
+      marker.setIcon(createIcon(summary));
       marker.setLatLng([TARGET_LAT, TARGET_LNG] as LatLngExpression);
     }
   }
@@ -69,7 +71,7 @@ export const specialDataView = (() => {
 
   function init(mapInstance: LeafletMap) {
     map = mapInstance;
-    layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
+    layerGroup = (window as unknown as { L: any }).L.layerGroup().addTo(map) as LayerGroup;
     commonDataModel.addEventListener('model:special-data-updated', renderBadge as EventListener);
     uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', renderBadge as EventListener);
     map.on('move zoom moveend', renderBadge as any);

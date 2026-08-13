@@ -1,4 +1,4 @@
-const L = (window as any).L;
+const L = (window as unknown as { L: any }).L; // access global Leaflet via window, typed minimally
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ForecastItem } from '../types';
@@ -19,7 +19,7 @@ export function registerForecastView(map: LeafletMap): void {
         highlightActiveForecastHour?: () => void;
         scrollActiveForecastHourToCenter?: () => void;
       };
-      const self = this as unknown as ForecastControl;
+      const self = this as unknown as ForecastControl; // narrow 'this' to ForecastControl for internal methods
       const container = L.DomUtil.create('div', 'forecast-view');
       L.DomEvent.disableClickPropagation(container);
 

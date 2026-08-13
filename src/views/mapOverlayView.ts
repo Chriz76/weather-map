@@ -10,7 +10,7 @@ type WindOverlayLike = {
   setBounds?: (...args: unknown[]) => void;
 };
 
-export function registerMapOverlayView(map: LeafletMap, windOverlay: unknown | null): void {
+export function registerMapOverlayView(map: LeafletMap, windOverlay: WindOverlayLike | null): void {
   weatherProviderModel.addEventListener('model:windspeed-updated', () => {
     if (weatherProviderModel.lastClickedLatLng) {
       updateMapMarkerWindspeed(map, weatherProviderModel.windData as WindData | null);
@@ -30,17 +30,17 @@ export function registerMapOverlayView(map: LeafletMap, windOverlay: unknown | n
 
   uiStateModel.addEventListener('ui:overlay-url-updated', () => {
     const url = uiStateModel.activeOverlayUrl;
-    if (windOverlay && url && typeof (windOverlay as any).setUrl === 'function') {
-      (windOverlay as any).setUrl(url);
+    if (windOverlay && url && typeof windOverlay.setUrl === 'function') {
+      windOverlay.setUrl(url);
     }
   });
 
   weatherProviderModel.addEventListener('model:provider-changed', () => {
     const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
     const newBounds = providerCfg ? providerCfg.imageBounds : null;
-    if (windOverlay && newBounds && typeof (windOverlay as any).setBounds === 'function') {
+    if (windOverlay && newBounds && typeof windOverlay.setBounds === 'function') {
       try {
-        (windOverlay as any).setBounds(newBounds as LatLngBoundsExpression);
+        windOverlay.setBounds(newBounds as LatLngBoundsExpression);
       } catch (e) {
         // ignore
       }
