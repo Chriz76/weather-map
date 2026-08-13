@@ -15,7 +15,7 @@ let windOverlayInstance: Leaflet.ImageOverlay | null = null;
  * Initializes the Leaflet map once and returns singleton instances.
  * @returns {{map: import('leaflet').Map | null, windOverlay: import('leaflet').ImageOverlay | null}} Map and weather overlay references.
  */
-export function initMap() {
+export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.ImageOverlay | null } {
     if (mapInstance) return { map: mapInstance, windOverlay: windOverlayInstance };
 
     // 1. Get last state from storage.

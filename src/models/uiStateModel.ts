@@ -25,25 +25,25 @@ export class UiStateModel extends EventTarget {
         this._dispatchEventCallback = typeof dispatchEventCallback === 'function' ? dispatchEventCallback : null;
     }
 
-    private _emit(eventName: string, detail?: unknown) {
+    private _emit(eventName: string, detail?: unknown): void {
         const event = new CustomEvent(eventName);
         super.dispatchEvent(event);
         if (this._dispatchEventCallback) this._dispatchEventCallback(eventName, detail);
     }
 
-    get activeOverlayUrl() { return this._ui.activeOverlayUrl; }
-    get isLocating() { return this._ui.isLocating; }
-    get isActiveLoading() { return this._ui.isActiveLoading; }
-    get showWindMeasurements() { return this._ui.showWindMeasurements; }
-    get isLoadingModal() { return this._ui.isLoadingModal; }
-    get toast() { return this._ui.toast; }
+    get activeOverlayUrl(): string | null { return this._ui.activeOverlayUrl; }
+    get isLocating(): boolean { return this._ui.isLocating; }
+    get isActiveLoading(): boolean { return this._ui.isActiveLoading; }
+    get showWindMeasurements(): boolean { return this._ui.showWindMeasurements; }
+    get isLoadingModal(): boolean { return this._ui.isLoadingModal; }
+    get toast(): string | ToastPayload | null { return this._ui.toast; }
 
-    setToast(payload: string | ToastPayload | null) {
+    setToast(payload: string | ToastPayload | null): void {
         this._ui.toast = payload;
         this._emit('ui:toast-changed', payload);
     }
 
-    setIsActiveLoading(isLoading: boolean, modal = false) {
+    setIsActiveLoading(isLoading: boolean, modal = false): void {
         const isLoadingBool = !!isLoading;
         const modalBool = !!modal;
         this._ui.isActiveLoading = isLoadingBool;
@@ -51,17 +51,17 @@ export class UiStateModel extends EventTarget {
         this._emit('ui:loading-changed', { isLoading: isLoadingBool, modal: modalBool });
     }
 
-    setIsLocating(value: boolean) {
+    setIsLocating(value: boolean): void {
         this._ui.isLocating = value;
         this._emit('ui:locating-changed', value);
     }
 
-    setActiveOverlayUrl(url: string | null) {
+    setActiveOverlayUrl(url: string | null): void {
         this._ui.activeOverlayUrl = url;
         this._emit('ui:overlay-url-updated', url);
     }
 
-    setShowWindMeasurements(value: boolean) {
+    setShowWindMeasurements(value: boolean): void {
         this._ui.showWindMeasurements = !!value;
         this._emit('ui:wind-measurements-visibility-changed', this._ui.showWindMeasurements);
     }

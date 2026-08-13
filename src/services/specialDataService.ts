@@ -71,7 +71,16 @@ export function buildSpecialDataSummary(entries: Record<string, unknown>[]): str
     if (!isObject(e)) return '0';
     const raw = e['foehnProbabilityPct'] ?? e['foehn_probability_pct'] ?? 0;
     const num = toFiniteNumber(raw) ?? 0;
-    return String(Math.round(num));
+    // Use round-half-to-even for .5 cases to match expected presentation in tests
+    const intPart = Math.trunc(num);
+    const frac = Math.abs(num - intPart);
+    let rounded: number;
+    if (Math.abs(frac - 0.5) < 1e-9) {
+      rounded = (intPart % 2 === 0) ? intPart : intPart + 1;
+    } else {
+      rounded = Math.round(num);
+    }
+    return String(rounded);
   });
 
   return vals.join('/') + '%';

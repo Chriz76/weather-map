@@ -11,28 +11,28 @@ export class CommonDataModel extends EventTarget {
         this._dispatchEventCallback = typeof dispatchEventCallback === 'function' ? dispatchEventCallback : null;
     }
 
-    private _emit(eventName: string, detail?: unknown) {
+    private _emit(eventName: string, detail?: unknown): void {
         const event = new CustomEvent(eventName);
         super.dispatchEvent(event);
         if (this._dispatchEventCallback) this._dispatchEventCallback(eventName, detail);
     }
 
-    get allStations() { return this._allStations; }
-    get visibleStations() { return this._visibleStations; }
+    get allStations(): Station[] { return this._allStations; }
+    get visibleStations(): Station[] { return this._visibleStations; }
 
-    setAllStations(stations: Station[] | unknown) {
+    setAllStations(stations: Station[] | unknown): void {
         this._allStations = Array.isArray(stations) ? (stations as Station[]) : [];
         this._emit('model:all-stations-updated', this._allStations);
     }
 
-    setVisibleStations(stations: Station[] | unknown) {
+    setVisibleStations(stations: Station[] | unknown): void {
         this._visibleStations = Array.isArray(stations) ? (stations as Station[]) : [];
         this._emit('model:visible-stations-updated', this._visibleStations);
     }
 
-    get specialDataSummary() { return this._specialDataSummary; }
+    get specialDataSummary(): string | null { return this._specialDataSummary; }
 
-    setSpecialDataSummary(summary: string | null) {
+    setSpecialDataSummary(summary: string | null): void {
         this._specialDataSummary = summary ?? null;
         this._emit('model:special-data-updated', this._specialDataSummary);
     }

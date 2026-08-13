@@ -10,9 +10,10 @@ function getDisplayHour(tKey: string) {
     return parts[0] ?? '';
 }
 
-export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
+export function calculatewindSpeeds(latlng: LatLng | null, cluster: Cluster | null, timestamp?: string): { forecast: { hour: string; wind: number; gust: number; direction: number | null; fullKey: string }[] | null; windData: { speed: number | null; gust: number | null; direction: number | null } | null } | { hour: string; wind: number; gust: number; direction: number | null; fullKey: string }[] | null {
     try {
         if (!latlng || !cluster || !cluster.timeline) {
+            if (timestamp !== undefined) return { forecast: null, windData: null };
             return null;
         }
 
@@ -102,6 +103,16 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
                 direction: tDirectionInterpolated === null ? null : Math.round(tDirectionInterpolated * 10) / 10,
                 fullKey: tKey
             };
+        }
+
+        if (timestamp !== undefined) {
+            // if a concrete timestamp string was provided, try to find matching entry
+            let windData = null;
+            if (typeof timestamp === 'string') {
+                const entry = dynamicForecastArray.find(e => e.fullKey === timestamp) || dynamicForecastArray[0] || null;
+                windData = entry ? { speed: entry.wind, gust: entry.gust, direction: entry.direction ?? null } : null;
+            }
+            return { forecast: dynamicForecastArray, windData };
         }
 
         return dynamicForecastArray;

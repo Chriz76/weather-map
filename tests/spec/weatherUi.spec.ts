@@ -9,12 +9,12 @@ describe('UiStateModel', () => {
         ui.setIsLocating(true);
         ui.setActiveOverlayUrl('https://example.com/overlay.png');
 
-        expect(ui.isActiveLoading).toBeTrue();
-        expect(ui.isLocating).toBeTrue();
+        expect(ui.isActiveLoading).toBeTruthy();
+        expect(ui.isLocating).toBeTruthy();
         expect(ui.activeOverlayUrl).toBe('https://example.com/overlay.png');
-        expect(events.some(e => e.eventName === 'ui:loading-changed')).toBeTrue();
-        expect(events.some(e => e.eventName === 'ui:locating-changed')).toBeTrue();
-        expect(events.some(e => e.eventName === 'ui:overlay-url-updated')).toBeTrue();
+        expect(events.some(e => e.eventName === 'ui:loading-changed')).toBeTruthy();
+        expect(events.some(e => e.eventName === 'ui:locating-changed')).toBeTruthy();
+        expect(events.some(e => e.eventName === 'ui:overlay-url-updated')).toBeTruthy();
     });
 
     it('should update toast and dispatch toast event', () => {

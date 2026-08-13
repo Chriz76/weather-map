@@ -7,7 +7,8 @@ export function formatStationToast(station: Station): string {
     const windSpeed = typeof windData?.speed === 'number' ? windData.speed.toFixed(1) : '--';
     const windGust = typeof windData?.gust === 'number' ? String(Math.round(windData.gust)) : '--';
     const temperature = typeof windData?.temperature === 'number' ? windData.temperature.toFixed(1) : '--';
-    const age = formatMinutesAgo((windData as unknown as { timestamp?: unknown })?.timestamp);
+    const ts = windData?.timestamp ?? null;
+    const age = (typeof ts === 'string' || ts instanceof Date) ? formatMinutesAgo(ts) : '';
     const lat = typeof station.lat === 'number' ? station.lat.toFixed(4) : '--';
     const lon = typeof station.lon === 'number' ? station.lon.toFixed(4) : '--';
 

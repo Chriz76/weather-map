@@ -117,7 +117,7 @@ function getExistingWindDisplay() {
   };
 }
 
-export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | number | null | undefined) {
+export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | number | null | undefined): void {
   try {
     const normalized = normalizeWindData(windData);
     const formattedValue = (normalized.speed === null || Number.isNaN(normalized.speed as number)) ? '?' : (normalized.speed as number).toFixed(1);
@@ -136,7 +136,7 @@ export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | n
   }
 }
 
-export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: number) {
+export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: number): void {
   try {
     const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     const existingWind = getExistingWindDisplay();
@@ -159,7 +159,7 @@ export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: numbe
   }
 }
 
-export function clearMarker(map: LeafletMap) {
+export function clearMarker(map: LeafletMap): void {
   if (activeSpotMarker) {
     map.removeLayer(activeSpotMarker as unknown as import('leaflet').Layer);
     activeSpotMarker = null;

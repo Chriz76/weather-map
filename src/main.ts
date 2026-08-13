@@ -33,35 +33,41 @@ if (storedProvider && storedProvider !== weatherProviderModel.getActiveProviderI
 }
 const { map, windOverlay } = initMap();
 
+if (!map) {
+    throw new Error('Map initialization failed');
+}
+
+const mapNN = map as import('leaflet').Map;
+
 // Views registrieren
-registerTimelineView(map);
-registerForecastView(map);
-registerLogoView(map);
-registerLegendView(map);
-registerModelInfoView(map);
-registerMapOverlayView(map, windOverlay);
+registerTimelineView(mapNN);
+registerForecastView(mapNN);
+registerLogoView(mapNN);
+registerLegendView(mapNN);
+registerModelInfoView(mapNN);
+registerMapOverlayView(mapNN, windOverlay);
 registerLoadingView();
 registerNotificationView();
 registerToastView();
 
-registerGpsView(map, () => {
+registerGpsView(mapNN, () => {
     uiStateModel.setIsLocating(true);
-    map.locate({ 
+    mapNN.locate({ 
         setView: false, 
         enableHighAccuracy: true 
     });
 });
 
-registerWindToggleView(map);
-specialDataView.init(map);
+registerWindToggleView(mapNN);
+specialDataView.init(mapNN);
 
 // --- 2. CONTROLLER SYSTEM START ---
 
 async function initApp() {
-    await initMapController(map);
+    await initMapController(mapNN);
     initUiController();
 
-    await initLifecycleController(map);
+    await initLifecycleController(mapNN);
 
     await loadingSpinnerController.track(async () => {
         // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
@@ -75,7 +81,7 @@ async function initApp() {
 
             if (!isNaN(lat) && !isNaN(lng)) {
                 const targetLatLng = { lat, lng };
-                map.setView(targetLatLng, 12);
+                mapNN.setView(targetLatLng, 12);
                 
                 // Schiebt die Koordinaten direkt linear in die Pipeline
                 try {

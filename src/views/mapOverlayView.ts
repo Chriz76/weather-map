@@ -41,8 +41,10 @@ export function registerMapOverlayView(map: LeafletMap, windOverlay: WindOverlay
     const newBounds = providerCfg ? providerCfg.imageBounds : null;
     if (windOverlay && newBounds && typeof windOverlay.setBounds === 'function') {
       try {
-        // Normalize bounds to Leaflet LatLngBounds before calling setBounds to satisfy ImageOverlay signature
-        windOverlay.setBounds(L.latLngBounds(newBounds as LatLngBoundsExpression));
+        // Call setBounds with the raw provider bounds. Accept runtime variations.
+        // Use unknown cast to avoid mismatched Leaflet type signatures across versions.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (windOverlay as any).setBounds(newBounds);
       } catch (e) {
         // ignore
       }

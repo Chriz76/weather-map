@@ -6,9 +6,9 @@ const KEYS = {
     ACTIVE_PROVIDER: 'ruc_active_provider'
 } as const;
 
-function debounce<T extends (...args: unknown[]) => void>(func: T, delayMs = 250) {
+function debounce<T extends (...args: unknown[]) => void>(func: T, delayMs = 250): (...args: Parameters<T>) => void {
     let timeoutId: number | null = null;
-    return (...args: Parameters<T>) => {
+    return (...args: Parameters<T>): void => {
         if (timeoutId !== null) {
             clearTimeout(timeoutId);
         }
@@ -17,37 +17,37 @@ function debounce<T extends (...args: unknown[]) => void>(func: T, delayMs = 250
 }
 
 const core = {
-    set(key: string, val: unknown) { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { logger.error(e); } },
+    set(key: string, val: unknown): void { try { localStorage.setItem(key, typeof val === 'object' ? JSON.stringify(val) : String(val)); } catch (e) { logger.error(e); } },
     get(key: string, fallback: unknown, isObj?: boolean): unknown { try { const item = localStorage.getItem(key); return item ? (isObj ? JSON.parse(item) : item) : fallback; } catch (e) { return fallback; } },
-    remove(key: string) { try { localStorage.removeItem(key); } catch (e) {} }
+    remove(key: string): void { try { localStorage.removeItem(key); } catch (e) {} }
 };
 
-function setStorageValue(key: string, val: unknown) {
+function setStorageValue(key: string, val: unknown): void {
     core.set(key, val);
 }
 
-const setDebounced = debounce((...args: unknown[]) => setStorageValue(String(args[0]), args[1]), 300);
+const setDebounced = debounce((...args: unknown[]): void => setStorageValue(String(args[0]), args[1]), 300);
 
 export const storage = {
-    saveMapState(state: { lat: number; lng: number; zoom: number }) {
+    saveMapState(state: { lat: number; lng: number; zoom: number }): void {
         setDebounced(KEYS.MAP_STATE, state);
     },
-    getMapState(fallback: { lat: number; lng: number; zoom: number }) {
+    getMapState(fallback: { lat: number; lng: number; zoom: number }): { lat: number; lng: number; zoom: number } {
         return core.get(KEYS.MAP_STATE, fallback, true) as { lat: number; lng: number; zoom: number };
     },
-    saveWindMeasurements(value: boolean) {
+    saveWindMeasurements(value: boolean): void {
         core.set(KEYS.WIND_MEASUREMENTS, !!value);
     },
-    getWindMeasurements(fallback = true) {
+    getWindMeasurements(fallback = true): boolean {
         const value = core.get(KEYS.WIND_MEASUREMENTS, fallback, false);
         if (value === 'true') return true;
         if (value === 'false') return false;
         return !!fallback;
     },
-    saveActiveProvider(providerId: string | null) {
+    saveActiveProvider(providerId: string | null): void {
         core.set(KEYS.ACTIVE_PROVIDER, providerId === null ? '' : String(providerId));
     },
-    getActiveProvider(fallback: string) {
+    getActiveProvider(fallback: string): string {
         const val = core.get(KEYS.ACTIVE_PROVIDER, '', false);
         return val && typeof val === 'string' && val.length > 0 ? val : fallback;
     }
