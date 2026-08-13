@@ -10,7 +10,7 @@ type ProviderState = {
   modelCurrentHour: string | null;
   lastIndexSync: Date | null;
   locationContext: { latLng: LatLng } | null;
-  currentClusterData?: any | null;
+  currentClusterData?: unknown | null;
   windData: { speed: number | null; gust: number | null; direction: number | null } | null;
   forecast: ForecastItem[] | null;
   indexLoadError: string | null;
@@ -84,7 +84,7 @@ export class WeatherProviderModel extends EventTarget {
   get windDirection(): number | null { return this._getActiveModel().windData?.direction ?? null; }
   get windGust(): number | null { return this._getActiveModel().windData?.gust ?? null; }
   get forecast(): ForecastItem[] | null { return this._getActiveModel().forecast; }
-  get currentClusterData(): any | null { return this._getActiveModel().currentClusterData ?? null; }
+  get currentClusterData(): unknown | null { return this._getActiveModel().currentClusterData ?? null; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }
 
@@ -200,7 +200,7 @@ export class WeatherProviderModel extends EventTarget {
     }
   }
 
-  setPointData(latlng: LatLng, forecast: import('../types').ForecastItem[] | null): void {
+  setPointData(latlng: LatLng, forecast: import('../types').ForecastItem[] | unknown | null): void {
     this._getActiveModel().locationContext = { latLng: latlng };
     this._globalLastClickedLatLng = latlng;
     this.setPointDataLoadError(null);
@@ -211,10 +211,10 @@ export class WeatherProviderModel extends EventTarget {
       this._getActiveModel().currentClusterData = null;
     } else if (forecast && typeof forecast === 'object') {
       // store raw cluster for callers/tests that rely on it
-      this._getActiveModel().currentClusterData = forecast as any;
+      this._getActiveModel().currentClusterData = forecast as unknown;
       // attempt to compute forecast from cluster if possible
       try {
-        const computed = calculatewindSpeeds(latlng as LatLng, forecast as any) as ForecastItem[] | null;
+        const computed = calculatewindSpeeds(latlng as LatLng, forecast as unknown as import('../types').Cluster) as ForecastItem[] | null;
         this._getActiveModel().forecast = Array.isArray(computed) ? computed : null;
       } catch (e) {
         this._getActiveModel().forecast = null;
