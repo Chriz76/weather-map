@@ -3,6 +3,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
 import type { Station } from '../types';
+import * as L from 'leaflet';
 import type { LatLngBounds } from 'leaflet';
 
 export async function updateStationsOnMapAction(bounds: LatLngBounds | null = null): Promise<void> {
@@ -35,9 +36,8 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
         return false;
       }
 
-      try {
-        // Use Leaflet global L in runtime
-        return bounds.contains(window.L!.latLng(lat, lon));
+        try {
+        return bounds.contains(L.latLng(lat, lon));
       } catch (error) {
         logger.warn('Skipping station with invalid map bounds payload:', (station as unknown as Record<string, unknown>)['id'], error);
         return false;

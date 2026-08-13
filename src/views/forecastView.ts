@@ -1,4 +1,4 @@
-const L = (window as unknown as { L: any }).L; // access global Leaflet via window, typed minimally
+import * as L from 'leaflet';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ForecastItem } from '../types';
@@ -11,7 +11,7 @@ function renderDirectionIcon(direction: number | null) {
 }
 
 export function registerForecastView(map: LeafletMap): void {
-  L.Control.ForecastView = L.Control.extend({
+  (L.Control as any).ForecastView = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
       type ForecastControl = {
@@ -132,6 +132,6 @@ export function registerForecastView(map: LeafletMap): void {
     }
   });
 
-  L.control.forecastView = function (options?: unknown) { return new (L.Control as any).ForecastView(options); };
-  (map as any).forecastViewControl = L.control.forecastView().addTo(map);
+  (L.control as any).forecastView = function (options?: unknown) { return new (L.Control as any).ForecastView(options); };
+  (map as any).forecastViewControl = (L.control as any).forecastView().addTo(map);
 }
