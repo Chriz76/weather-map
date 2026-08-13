@@ -12,8 +12,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint 'src/**/*.{ts,tsx}' --ext .ts",
-    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --ext .ts --fix",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "lint:ci": "eslint src --ext .ts --max-warnings=0",
     "ci": "npm run typecheck && npm run lint"
   },
   "repository": {

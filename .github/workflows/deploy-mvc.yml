@@ -24,7 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Vite Build ausführen
+      # Lint, typecheck and build
+      - name: Run lint (CI)
+        run: npm run lint:ci
+
       - name: Run typecheck (skip lint)
         run: npm run typecheck
 
