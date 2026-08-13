@@ -17,8 +17,9 @@ const escapeHtml = (value: string): string =>
     .replaceAll("'", '&#39;');
 
 const renderImage = (href: string, title: string | null, text: string): string => {
+  const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
+
   if (!href || /^https?:\/\//i.test(href) || href.startsWith('data:')) {
-    const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
     return `<img src="${href}" alt="${escapeHtml(text)}"${titleAttr}>`;
   }
 
@@ -26,10 +27,8 @@ const renderImage = (href: string, title: string | null, text: string): string =
   const assetPath = path.resolve(repoRoot, cleanHref.replace(/^\//, ''));
 
   if (!fs.existsSync(assetPath) || !fs.statSync(assetPath).isFile()) {
-    const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
     return `<img src="${escapeHtml(href)}" alt="${escapeHtml(text)}"${titleAttr}>`;
   }
-  const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
   const assetName = path.basename(assetPath);
 
   return `<img src="/${assetName}" alt="${escapeHtml(text)}"${titleAttr} loading="lazy">`;
