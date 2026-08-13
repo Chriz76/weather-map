@@ -56,7 +56,7 @@ export function initMap() {
     }).addTo(mapInstance);
 
     const providerId = weatherProviderModel.getActiveProviderId();
-    const imageBounds = providers[providerId].imageBounds;
+    const imageBounds = providers[providerId]!.imageBounds;
 
     // Weather graphic overlay in the middle
     windOverlayInstance = L.imageOverlay('', imageBounds, {

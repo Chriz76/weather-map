@@ -11,20 +11,20 @@ const providers: Record<string, Provider> = { [D2]: d2Provider, [AROME]: aromePr
 export const providerManager = {
   async fetchIndex(): Promise<IndexData> {
     const activeId = weatherProviderModel.getActiveProviderId();
-    const fetcher = providers[activeId];
-    return await fetcher.fetchIndex(providerConfig[activeId]);
+    const fetcher = providers[activeId]!;
+    return await fetcher.fetchIndex(providerConfig[activeId]!);
   },
 
   async fetchForecast(latlng: LatLng | null): Promise<ForecastItem[] | null> {
     const activeId = weatherProviderModel.getActiveProviderId();
-    const fetcher = providers[activeId];
-    return await fetcher.fetchForecast(latlng, providerConfig[activeId]);
+    const fetcher = providers[activeId]!;
+    return await fetcher.fetchForecast(latlng, providerConfig[activeId]!);
   },
 
   async fetchWeatherImageBlob(timestamp: string): Promise<Blob> {
     const activeId = weatherProviderModel.getActiveProviderId();
-    const fetcher = providers[activeId];
-    return await fetcher.fetchWeatherImageBlob(timestamp, providerConfig[activeId]);
+    const fetcher = providers[activeId]!;
+    return await fetcher.fetchWeatherImageBlob(timestamp, providerConfig[activeId]!);
   }
 };
 

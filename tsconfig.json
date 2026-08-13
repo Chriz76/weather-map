@@ -11,7 +11,10 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*", "leaflet.d.ts"],
   "exclude": ["tests"]

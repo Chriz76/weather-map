@@ -6,7 +6,8 @@ type TimelineEntry = { speeds?: Array<number | undefined>; dirs?: Array<number |
 type Cluster = { lats: number[]; lons: number[]; timeline: Record<string, TimelineEntry> };
 
 function getDisplayHour(tKey: string) {
-    return formatModelTimestampToTime(tKey).split(':')[0];
+    const parts = formatModelTimestampToTime(tKey).split(':');
+    return parts[0] ?? '';
 }
 
 export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
@@ -30,8 +31,8 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
         const lons = cluster.lons;
 
         for (let i = 0; i < totalPoints; i++) {
-            const dLat = lats[i] - clickLat;
-            const dLng = lons[i] - clickLng;
+            const dLat = (lats[i] ?? clickLat) - clickLat;
+            const dLng = (lons[i] ?? clickLng) - clickLng;
             const distSq = (dLat * dLat) + (dLng * dLng);
 
             if (distSq < dSq1) {
@@ -45,6 +46,8 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
                 dSq3 = distSq; idx3 = i;
             }
         }
+
+        if (idx1 < 0) return null;
 
         const dist1 = Math.sqrt(dSq1);
         const dist2 = Math.sqrt(dSq2);
@@ -85,7 +88,7 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
         const dynamicForecastArray: Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}> = new Array(len);
 
         for (let k = 0; k < len; k++) {
-            const tKey = timelineKeys[k];
+            const tKey = timelineKeys[k]!;
             const tData = cluster.timeline[tKey] || { speeds: [], dirs: [], gusts: [] };
             
             const tWindInterpolated = calcScalar(tData.speeds || []);
@@ -93,7 +96,7 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
             const tDirectionInterpolated = calcDirection(tData.dirs || []);
 
             dynamicForecastArray[k] = {
-                hour: getDisplayHour(tKey),
+                hour: getDisplayHour(tKey!),
                 wind: Math.round(tWindInterpolated * 10) / 10,
                 gust: Math.round(tGustInterpolated * 10) / 10,
                 direction: tDirectionInterpolated === null ? null : Math.round(tDirectionInterpolated * 10) / 10,

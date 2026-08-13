@@ -72,7 +72,7 @@ export class WeatherProviderModel extends EventTarget {
     this.dispatchEvent(new CustomEvent('model:provider-changed', { detail: { providerId: id } }));
   }
 
-  private _getActiveModel() { return this.providerModels[this.activeProviderId]; }
+  private _getActiveModel(): ProviderState { return this.providerModels[this.activeProviderId]!; }
 
   get availableTimestamps() { return this._getActiveModel().availableTimestamps; }
   get modelGeneratedAt() { return this._getActiveModel().modelGeneratedAt; }

@@ -124,7 +124,7 @@ export function determineActiveIndex(sortedTimestamps: string[], prevActiveTimes
 
             for (let i = 0; i < sortedTimestamps.length; i++) {
                 try {
-                    const d = parseModelTimestamp(sortedTimestamps[i]);
+                    const d = parseModelTimestamp(sortedTimestamps[i]!);
                     const diff = Math.abs(d.getTime() - prevDate.getTime());
                     if (diff < bestDiff) {
                         bestDiff = diff;
@@ -144,7 +144,7 @@ export function determineActiveIndex(sortedTimestamps: string[], prevActiveTimes
     const now = new Date();
     for (let idx = 0; idx < sortedTimestamps.length; idx++) {
         try {
-            const tDate = parseModelTimestamp(sortedTimestamps[idx]);
+            const tDate = parseModelTimestamp(sortedTimestamps[idx]!);
             if (tDate >= now) return idx;
         } catch {
             continue;
