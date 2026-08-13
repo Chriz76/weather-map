@@ -9,21 +9,29 @@ const CACHE_BUSTER = `cb=${Date.now()}`;
 export const d2Provider = {
   id: ID,
 
-  async fetchIndex(config: Record<string, any>): Promise<import('../types').IndexData> {
-    const response = await fetch(`${config.baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
+  async fetchIndex(config: Record<string, unknown>): Promise<import('../types').IndexData> {
+    const baseUrl = typeof config?.baseUrl === 'string' ? config.baseUrl : '';
+    const response = await fetch(`${baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`index.json could not be loaded (status: ${response.status})`);
-    return await response.json();
+    const json = await response.json();
+    return (json && typeof json === 'object') ? (json as import('../types').IndexData) : ({} as import('../types').IndexData);
   },
 
-  async fetchForecast(latlng: LatLng | null, config: Record<string, any> | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null> {
     if (!latlng || !config) return null;
 
-    const latMin = config.imageBounds[0][0];
-    const lonMin = config.imageBounds[0][1];
+    const imageBounds = config.imageBounds;
+    const gridCellSize = config.gridCellSize;
+    const baseUrl = typeof config.baseUrl === 'string' ? config.baseUrl : '';
 
-    const col = Math.floor((latlng.lng - lonMin) / config.gridCellSize);
-    const row = Math.floor((latlng.lat - latMin) / config.gridCellSize);
-    const clusterUrl = `${config.baseUrl}grid_cluster/cluster_${col}_${row}.json?${CACHE_BUSTER}`;
+    if (!Array.isArray(imageBounds) || typeof gridCellSize !== 'number') return null;
+
+    const latMin = (imageBounds[0] as unknown[])[0] as number;
+    const lonMin = (imageBounds[0] as unknown[])[1] as number;
+
+    const col = Math.floor((latlng.lng - lonMin) / (gridCellSize as number));
+    const row = Math.floor((latlng.lat - latMin) / (gridCellSize as number));
+    const clusterUrl = `${baseUrl}grid_cluster/cluster_${col}_${row}.json?${CACHE_BUSTER}`;
 
     const response = await fetch(clusterUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`Cluster file could not be loaded (${response.status})`);

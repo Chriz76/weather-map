@@ -9,13 +9,15 @@ const CACHE_BUSTER = `cb=${Date.now()}`;
 export const aromeProvider = {
   id: ID,
 
-  async fetchIndex(config: Record<string, any>): Promise<import('../types').IndexData> {
-    const response = await fetch(`${config.baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
+  async fetchIndex(config: Record<string, unknown>): Promise<import('../types').IndexData> {
+    const baseUrl = typeof config?.baseUrl === 'string' ? config.baseUrl : '';
+    const response = await fetch(`${baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`index.json could not be loaded (status: ${response.status})`);
-    return await response.json();
+    const json = await response.json();
+    return (json && typeof json === 'object') ? (json as import('../types').IndexData) : ({} as import('../types').IndexData);
   },
 
-  async fetchForecast(latlng: LatLng | null, config: Record<string, any> | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null> {
     if (!latlng) return null;
 
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&models=meteofrance_arome_france_15min,meteofrance_arome_france_hd_15min&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_hours=1&forecast_hours=12&temporal_resolution=native&${CACHE_BUSTER}`;
@@ -61,7 +63,7 @@ export const aromeProvider = {
 
     if (lastIdx === -1) return null;
 
-    const sliceTo = (arr: unknown) => (Array.isArray(arr) ? (arr as any[]).slice(0, lastIdx + 1) : []);
+    const sliceTo = (arr: unknown): unknown[] => (Array.isArray(arr) ? (arr as unknown[]).slice(0, lastIdx + 1) : []);
     const timesTrim = sliceTo(times);
     const speed15Trim = sliceTo(speed15);
     const dir15Trim = sliceTo(dir15);
@@ -72,17 +74,17 @@ export const aromeProvider = {
 
     const result: ForecastItem[] = [];
     for (let i = 0; i < timesTrim.length; i++) {
-      const t = timesTrim[i];
-      const s15 = speed15Trim[i];
-      const sHd = speedHdTrim[i];
-      const g15 = gust15Trim[i];
-      const gHd = gustHdTrim[i];
-      const d15 = dir15Trim[i];
-      const dHd = dirHdTrim[i];
+      const t = Number(timesTrim[i]);
+      const s15 = typeof speed15Trim[i] === 'number' ? (speed15Trim[i] as number) : null;
+      const sHd = typeof speedHdTrim[i] === 'number' ? (speedHdTrim[i] as number) : null;
+      const g15 = typeof gust15Trim[i] === 'number' ? (gust15Trim[i] as number) : null;
+      const gHd = typeof gustHdTrim[i] === 'number' ? (gustHdTrim[i] as number) : null;
+      const d15 = typeof dir15Trim[i] === 'number' ? (dir15Trim[i] as number) : null;
+      const dHd = typeof dirHdTrim[i] === 'number' ? (dirHdTrim[i] as number) : null;
 
-      const speed = (s15 != null) ? s15 : (sHd != null ? sHd : null);
-      const gust = (g15 != null) ? g15 : (gHd != null ? gHd : null);
-      const direction = (d15 != null) ? d15 : (dHd != null ? dHd : null);
+      const speed = s15 != null ? s15 : (sHd != null ? sHd : null);
+      const gust = g15 != null ? g15 : (gHd != null ? gHd : null);
+      const direction = d15 != null ? d15 : (dHd != null ? dHd : null);
 
       const fullKey = unixToModelKey(t);
       result.push({
