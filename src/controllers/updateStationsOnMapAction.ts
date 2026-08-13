@@ -17,9 +17,23 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
   if ((!allStations || allStations.length === 0) && bounds) {
     try {
       const resp = await fetch('/assets/stations.json');
-      allStations = await resp.json();
-      commonDataModel.setAllStations(allStations);
-      logger.info('📍 Station data loaded (fallback):', allStations.length);
+      const payload: unknown = await resp.json();
+      if (Array.isArray(payload)) {
+        const stations = payload
+          .filter((s: unknown) => s !== null && typeof s === 'object')
+          .map((s: unknown) => {
+            const r = s as Record<string, unknown>;
+            const id = typeof r['id'] === 'string' ? r['id'] : (typeof r['station_id'] === 'string' ? r['station_id'] : undefined);
+            const name = typeof r['name'] === 'string' ? r['name'] : (typeof r['station_name'] === 'string' ? r['station_name'] : undefined);
+            const lat = typeof r['lat'] === 'number' ? r['lat'] : (typeof r['latitude'] === 'number' ? r['latitude'] : undefined);
+            const lon = typeof r['lon'] === 'number' ? r['lon'] : (typeof r['longitude'] === 'number' ? r['longitude'] : undefined);
+            const priority = typeof r['priority'] === 'number' ? r['priority'] : undefined;
+            return { id, name, lat, lon, priority } as Station;
+          });
+        allStations = stations;
+        commonDataModel.setAllStations(allStations);
+        logger.info('📍 Station data loaded (fallback):', allStations.length);
+      }
     } catch (e: unknown) {
       logger.error('Error loading stations.json (fallback):', e);
     }
@@ -85,11 +99,16 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
   await Promise.all(fetchPromises);
 
   const stationsWithFinalData = topStations.map((station) => {
-    const stationId = (station as any).id ?? (station as any).station_id;
+    const sRec = station as Record<string, unknown>;
+    const idRaw = sRec['id'] ?? sRec['station_id'];
+    let stationId: string | undefined;
+    if (typeof idRaw === 'string') stationId = idRaw;
+    else if (typeof idRaw === 'number') stationId = String(idRaw);
+
     return {
       ...station,
-      windData: stationId ? (fetched[stationId] || null) : null
-    };
+      windData: stationId ? (fetched[stationId] ?? null) : null
+    } as Station;
   });
 
   commonDataModel.setVisibleStations(stationsWithFinalData);

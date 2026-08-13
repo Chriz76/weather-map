@@ -16,18 +16,18 @@ let pollTimer: number | null = null;
 let appMap: LeafletMap | null = null;
 
 function startPolling() {
-  if (pollTimer !== null) clearInterval(pollTimer as any);
+  if (pollTimer !== null) clearInterval(pollTimer);
   logger.info('⏰ Polling started.');
   pollTimer = window.setInterval(async () => {
     logger.debug('⏰ Regular background poll triggered.');
     await safeSyncApp();
     await updateStationsOnMap();
-  }, POLL_INTERVAL_MS) as unknown as number;
+  }, POLL_INTERVAL_MS);
 }
 
 function stopPolling() {
   if (pollTimer !== null) {
-    clearInterval(pollTimer as any);
+    clearInterval(pollTimer);
     pollTimer = null;
     logger.info('🛑 Polling stopped (app hidden).');
   }

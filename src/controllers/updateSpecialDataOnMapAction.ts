@@ -22,7 +22,14 @@ function shouldShowSpecialData(map: LeafletMap | null): boolean {
   const bounds = map.getBounds();
   if (!bounds || typeof bounds.contains !== 'function') return false;
   try {
-    return bounds.contains((window as any).L.latLng(SPECIAL_DATA_TARGET_LAT, SPECIAL_DATA_TARGET_LNG));
+    const win = window as unknown as Record<string, unknown>;
+    const Lobj = win['L'];
+    if (Lobj && typeof (Lobj as Record<string, unknown>)['latLng'] === 'function') {
+      const latLngFn = (Lobj as Record<string, unknown>)['latLng'] as (a: number, b: number) => unknown;
+      const latlng = latLngFn(SPECIAL_DATA_TARGET_LAT, SPECIAL_DATA_TARGET_LNG);
+      return bounds.contains(latlng as unknown as import('leaflet').LatLngExpression);
+    }
+    return false;
   } catch (e) {
     return false;
   }
