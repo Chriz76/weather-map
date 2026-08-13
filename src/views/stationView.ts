@@ -11,10 +11,11 @@ export const stationView = (() => {
   const stationMarkerMap = new Map<string, Marker>();
 
   function createIcon(station: Station): DivIcon {
-    const hasData = station.windData && typeof (station.windData as any).windSpeed === 'number';
+    const wd = station.windData ?? null;
+    const hasData = wd !== null && typeof wd?.speed === 'number';
     const shouldShowValues = uiStateModel.showWindMeasurements && hasData;
-    const speedValue = shouldShowValues ? String(Math.round((station.windData as any).windSpeed)) : '';
-    const rotation = shouldShowValues ? (station.windData as any).windDirection : null;
+    const speedValue = shouldShowValues ? String(Math.round(wd!.speed as number)) : '';
+    const rotation = shouldShowValues && typeof wd?.direction === 'number' ? wd!.direction as number : null;
     const iconRotation = rotation === null ? null : (((rotation % 360) + 360) % 360 + 90) % 360;
     const arrowOpacity = shouldShowValues ? 1 : 0.25;
 
@@ -48,7 +49,9 @@ export const stationView = (() => {
     const nextStationKeys = new Set<string>();
 
     stations.forEach((station) => {
-      const stationKey = (station as any).id ?? (station as any).station_id ?? `${station.lat}-${station.lon}`;
+      const sRec = station as Record<string, unknown>;
+      const idRaw = sRec['id'] ?? sRec['station_id'];
+      const stationKey = typeof idRaw === 'string' ? idRaw : (typeof idRaw === 'number' ? String(idRaw) : `${station.lat}-${station.lon}`);
       nextStationKeys.add(stationKey);
       const lat = Number(station.lat ?? 0);
       const lon = Number(station.lon ?? 0);

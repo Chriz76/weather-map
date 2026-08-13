@@ -21,5 +21,6 @@ L.Icon.Default.mergeOptions({
 
 // Expose the imported Leaflet instance as a global `L` only if not already present.
 if (typeof window !== 'undefined') {
-  (window as any).L = (window as any).L ?? L;
+  const w = window as unknown as { L?: typeof L };
+  if (!w.L) w.L = L;
 }

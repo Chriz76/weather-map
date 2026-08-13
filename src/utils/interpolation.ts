@@ -85,7 +85,7 @@ export function calculatewindSpeeds(latlng: LatLng, cluster: Cluster) {
         };
 
         const len = timelineKeys.length;
-        const dynamicForecastArray: Array<{hour:string,wind:number,gust:number,direction:number|null,fullKey:string}> = new Array(len);
+        const dynamicForecastArray = new Array<{ hour: string; wind: number; gust: number; direction: number | null; fullKey: string }>(len);
 
         for (let k = 0; k < len; k++) {
             const tKey = timelineKeys[k]!;

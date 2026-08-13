@@ -42,7 +42,7 @@ export function registerMapOverlayView(map: LeafletMap, windOverlay: WindOverlay
     if (windOverlay && newBounds && typeof windOverlay.setBounds === 'function') {
       try {
         // Normalize bounds to Leaflet LatLngBounds before calling setBounds to satisfy ImageOverlay signature
-        (windOverlay as any).setBounds(L.latLngBounds(newBounds as any));
+        windOverlay.setBounds(L.latLngBounds(newBounds as LatLngBoundsExpression));
       } catch (e) {
         // ignore
       }

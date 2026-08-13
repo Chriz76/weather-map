@@ -11,7 +11,13 @@ function renderDirectionIcon(direction: number | null) {
 }
 
 export function registerForecastView(map: LeafletMap): void {
-  (L.Control as any).ForecastView = L.Control.extend({
+  type ForecastControl = {
+    renderTable?: (forecast: ForecastItem[] | null) => void;
+    highlightActiveForecastHour?: () => void;
+    scrollActiveForecastHourToCenter?: () => void;
+  };
+
+  const ForecastViewClass = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
       type ForecastControl = {
@@ -35,7 +41,7 @@ export function registerForecastView(map: LeafletMap): void {
             `;
 
       container.addEventListener('click', (ev: Event) => {
-        L.DomEvent.stop(ev as any);
+        L.DomEvent.stop(ev as Event);
         const target = ev.target as HTMLElement;
         const cell = target.closest('[data-time]') as HTMLElement | null;
         if (!cell) return;
@@ -132,6 +138,11 @@ export function registerForecastView(map: LeafletMap): void {
     }
   });
 
-  (L.control as any).forecastView = function (options?: unknown) { return new (L.Control as any).ForecastView(options); };
-  (map as any).forecastViewControl = (L.control as any).forecastView().addTo(map);
+  // expose a factory on L.control.forecastView and attach the control instance to the map
+  const controlRecord = L.control as unknown as Record<string, unknown>;
+  type ForecastViewCtor = new (options?: L.ControlOptions) => L.Control & ForecastControl;
+  const ForecastViewCtor = ForecastViewClass as unknown as ForecastViewCtor;
+  controlRecord['forecastView'] = function (options?: L.ControlOptions) { return new ForecastViewCtor(options); };
+  const mapRecord = map as unknown as Record<string, unknown>;
+  mapRecord['forecastViewControl'] = (controlRecord['forecastView'] as (o?: L.ControlOptions) => L.Control)().addTo(map);
 }

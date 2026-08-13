@@ -6,9 +6,12 @@ import type { Map as LeafletMap } from 'leaflet';
 
 
 export function registerTimelineView(mapInstance: LeafletMap): void {
-  (L.Control as unknown as Record<string, unknown>)['TimelineView'] = (L.Control as unknown as { extend: Function }).extend({
-    options: { position: 'bottomleft' },
-    onAdd: function () {
+  class TimelineControl extends L.Control {
+    constructor() {
+      super({ position: 'bottomleft' });
+    }
+
+    onAdd(): HTMLElement {
       const container = L.DomUtil.create('div', 'timeline-view');
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
@@ -97,8 +100,9 @@ export function registerTimelineView(mapInstance: LeafletMap): void {
 
       return container;
     }
-  });
+  }
 
-  const createTimelineControl = (options?: unknown) => new (((L.Control as unknown as Record<string, unknown>)['TimelineView']) as unknown as new (o?: unknown) => unknown)(options);
-  (mapInstance as unknown as Record<string, unknown>)['timelineViewControl'] = (createTimelineControl() as unknown as { addTo: (m: import('leaflet').Map) => unknown }).addTo(mapInstance);
+  const control = new TimelineControl();
+  control.addTo(mapInstance);
+  (mapInstance as unknown as Record<string, unknown>)['timelineViewControl'] = control;
 }

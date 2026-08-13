@@ -73,7 +73,7 @@ export const specialDataView = (() => {
     layerGroup = L.layerGroup().addTo(map) as LayerGroup;
     commonDataModel.addEventListener('model:special-data-updated', renderBadge as EventListener);
     uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', renderBadge as EventListener);
-    map.on('move zoom moveend', renderBadge as any);
+    map.on('move zoom moveend', renderBadge);
     renderBadge();
     return { refresh: renderBadge };
   }

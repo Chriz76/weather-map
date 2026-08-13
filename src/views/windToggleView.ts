@@ -20,11 +20,14 @@ import type { Map as LeafletMap } from 'leaflet';
 import * as L from 'leaflet';
 
 export function registerWindToggleView(map: LeafletMap): void {
-  const WindToggleControl = (L.Control as any).extend({
-    options: { position: 'topright' },
-    onAdd: function () {
-      const container = L.DomUtil.create('div', 'leaflet-bar');
-      const button = L.DomUtil.create('a', 'wind-toggle-view', container);
+  class WindToggleControl extends L.Control {
+    constructor() {
+      super({ position: 'topright' });
+    }
+
+    onAdd(): HTMLElement {
+      const container = L.DomUtil.create('div', 'leaflet-bar') as HTMLElement;
+      const button = L.DomUtil.create('a', 'wind-toggle-view', container) as HTMLElement;
 
       button.innerHTML = renderIcon();
       button.title = 'Toggle wind measurements';
@@ -47,7 +50,7 @@ export function registerWindToggleView(map: LeafletMap): void {
 
       return container;
     }
-  });
+  }
 
   map.addControl(new WindToggleControl());
 }

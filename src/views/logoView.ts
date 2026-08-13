@@ -4,9 +4,12 @@ import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
 export function registerLogoView(map: LeafletMap): void {
-  (L.Control as unknown as { LogoView?: unknown }).LogoView = (L.Control as unknown as { extend: Function }).extend({
-    options: { position: 'topleft' },
-    onAdd: function () {
+  class LogoControl extends L.Control {
+    constructor() {
+      super({ position: 'topleft' });
+    }
+
+    onAdd(): HTMLElement {
       const container = L.DomUtil.create('div', 'logo-view');
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
@@ -42,13 +45,13 @@ export function registerLogoView(map: LeafletMap): void {
         L.DomEvent.on(toggle, 'click', (ev: Event) => {
           L.DomEvent.stopPropagation(ev);
           L.DomEvent.preventDefault(ev);
-        const target = ev.target as HTMLElement;
-        const btn = target.closest('.logo-view__toggle-btn') as HTMLElement | null;
-        if (!btn) return;
-        const selected = btn.getAttribute('data-provider');
-        if (!selected) return;
+          const target = ev.target as HTMLElement;
+          const btn = target.closest('.logo-view__toggle-btn') as HTMLElement | null;
+          if (!btn) return;
+          const selected = btn.getAttribute('data-provider');
+          if (!selected) return;
 
-        window.dispatchEvent(new CustomEvent('ui:logo-provider-clicked', { detail: { providerId: selected } }));
+          window.dispatchEvent(new CustomEvent('ui:logo-provider-clicked', { detail: { providerId: selected } }));
         });
       }
 
@@ -58,8 +61,9 @@ export function registerLogoView(map: LeafletMap): void {
 
       return container;
     }
-  });
+  }
 
-  const createLogoControl = (options?: unknown) => new ((L.Control as unknown as { LogoView: new (o?: unknown) => unknown }).LogoView)(options);
-  (map as unknown as Record<string, unknown>)['logoViewControl'] = (createLogoControl() as unknown as { addTo: (m: LeafletMap) => unknown }).addTo(map);
+  const control = new LogoControl();
+  control.addTo(map);
+  (map as unknown as Record<string, unknown>)['logoViewControl'] = control;
 }
