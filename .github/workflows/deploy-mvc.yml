@@ -25,6 +25,9 @@ jobs:
         run: npm ci
 
       # Vite Build ausführen
+      - name: Run typecheck & lint
+        run: npm run ci
+
       - name: Build project
         run: npm run build
 
