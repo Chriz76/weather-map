@@ -4,7 +4,7 @@
 
 The app visualizes localized wind forecast data for **Germany** **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI 2.5 km** using the logo row.
 
-[![App Screenshot](Screenshot_20260606-175259_Chrome.png)](https://chriz76.github.io/weather-map/)
+[![App Screenshot](public/Screenshot_20260606-175259_Chrome.png)](https://chriz76.github.io/weather-map/)
 
 The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI 2.5 km** via Open-Meteo using Météo-France model data. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
 

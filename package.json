@@ -27,8 +27,10 @@
   "homepage": "https://github.com/Chriz76/weather-map#readme",
   "devDependencies": {
     "@types/leaflet": "^1.9.22",
+    "marked": "^18.0.9",
     "typescript": "^7.0.2",
-    "vite": "^8.2.1"
+    "vite": "^8.2.1",
+    "vite-plugin-html": "^3.2.2"
   },
   "dependencies": {
     "leaflet": "^1.9.4"
