@@ -13,8 +13,7 @@ declare module 'leaflet' {
   }
 
   // Cast control namespace to accept dynamic entries like forecastView
-  namespace control {
-    export function forecastView(...args: any[]): any;
-    export function [key: string]: any;
-  }
+  // Provide a loose-typed control namespace to allow runtime-extended controls
+  export const control: any;
 }
+

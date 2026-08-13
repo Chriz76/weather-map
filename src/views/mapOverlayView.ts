@@ -3,6 +3,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { providers } from '../config';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView';
 import type { Map as LeafletMap, LatLngBoundsExpression, ImageOverlay } from 'leaflet';
+import L from '../lib/leaflet-wrapper';
 import type { WindData } from '../types';
 
 type WindOverlayLike = ImageOverlay | {
@@ -41,7 +42,7 @@ export function registerMapOverlayView(map: LeafletMap, windOverlay: WindOverlay
     if (windOverlay && newBounds && typeof windOverlay.setBounds === 'function') {
       try {
         // Normalize bounds to Leaflet LatLngBounds before calling setBounds to satisfy ImageOverlay signature
-        (windOverlay as any).setBounds((window as any).L.latLngBounds(newBounds as any));
+        (windOverlay as any).setBounds(L.latLngBounds(newBounds as any));
       } catch (e) {
         // ignore
       }

@@ -1,8 +1,7 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import type { Map as LeafletMap, LayerGroup, Marker, LatLngExpression, DivIcon } from 'leaflet';
-
-const L = (window as any).L;
+import L from '../lib/leaflet-wrapper';
 const TARGET_LAT = 47.6506;
 const TARGET_LNG = 11.3365;
 const MIN_ZOOM = 7;
@@ -34,7 +33,7 @@ export const specialDataView = (() => {
     if (!bounds || typeof bounds.contains !== 'function') return false;
 
     try {
-      return bounds.contains((window as any).L.latLng(TARGET_LAT, TARGET_LNG));
+      return bounds.contains(L.latLng(TARGET_LAT, TARGET_LNG));
     } catch (e) {
       return false;
     }
@@ -46,11 +45,11 @@ export const specialDataView = (() => {
       return;
     }
 
-    if (!layerGroup && map) layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
+    if (!layerGroup && map) layerGroup = L.layerGroup().addTo(map) as LayerGroup;
 
     if (!marker && map) {
       const summary = typeof commonDataModel.specialDataSummary === 'string' ? commonDataModel.specialDataSummary : String(commonDataModel.specialDataSummary ?? '');
-      marker = (window as any).L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(summary) }) as Marker;
+      marker = L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(summary) }) as Marker;
       marker.on('click', () => window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer'));
       if (layerGroup) layerGroup.addLayer(marker);
     }
@@ -71,7 +70,7 @@ export const specialDataView = (() => {
 
   function init(mapInstance: LeafletMap) {
     map = mapInstance;
-    layerGroup = (window as unknown as { L: any }).L.layerGroup().addTo(map) as LayerGroup;
+    layerGroup = L.layerGroup().addTo(map) as LayerGroup;
     commonDataModel.addEventListener('model:special-data-updated', renderBadge as EventListener);
     uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', renderBadge as EventListener);
     map.on('move zoom moveend', renderBadge as any);

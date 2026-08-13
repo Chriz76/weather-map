@@ -16,5 +16,5 @@ export function getL(): LeafletType {
   return L;
 }
 
-export const latLng = (...args: Parameters<LeafletType['latLng']>) => L.latLng(...(args as any));
+export const latLng = (...args: any[]) => (L.latLng as unknown as (...a: any[]) => any)(...args);
 export const control = (L.control as unknown) as any;

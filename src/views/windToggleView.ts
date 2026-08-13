@@ -17,13 +17,14 @@ function renderIcon() {
 }
 
 import type { Map as LeafletMap } from 'leaflet';
+import L from '../lib/leaflet-wrapper';
 
 export function registerWindToggleView(map: LeafletMap): void {
-  const WindToggleControl = (window as any).L.Control.extend({
+  const WindToggleControl = (L.Control as any).extend({
     options: { position: 'topright' },
     onAdd: function () {
-      const container = (window as any).L.DomUtil.create('div', 'leaflet-bar');
-      const button = (window as any).L.DomUtil.create('a', 'wind-toggle-view', container);
+      const container = L.DomUtil.create('div', 'leaflet-bar');
+      const button = L.DomUtil.create('a', 'wind-toggle-view', container);
 
       button.innerHTML = renderIcon();
       button.title = 'Toggle wind measurements';
@@ -31,9 +32,9 @@ export function registerWindToggleView(map: LeafletMap): void {
       button.style.cursor = 'pointer';
       button.setAttribute('aria-pressed', String(uiStateModel.showWindMeasurements));
 
-      (window as any).L.DomEvent.on(button, 'click', (e: Event) => {
-        (window as any).L.DomEvent.stopPropagation(e as Event);
-        (window as any).L.DomEvent.preventDefault(e as Event);
+      L.DomEvent.on(button, 'click', (e: Event) => {
+        L.DomEvent.stopPropagation(e as Event);
+        L.DomEvent.preventDefault(e as Event);
         const requested = !uiStateModel.showWindMeasurements;
         window.dispatchEvent(new CustomEvent('ui:wind-toggle-clicked', { detail: { show: requested } }));
       });

@@ -2,6 +2,7 @@ import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import type { Station } from '../types';
 import type { Map as LeafletMap, LayerGroup, Marker, DivIcon, LatLngExpression } from 'leaflet';
+import L from '../lib/leaflet-wrapper';
 
 export const stationView = (() => {
   let map: LeafletMap | null = null;
@@ -17,7 +18,7 @@ export const stationView = (() => {
     const iconRotation = rotation === null ? null : (((rotation % 360) + 360) % 360 + 90) % 360;
     const arrowOpacity = shouldShowValues ? 1 : 0.25;
 
-    return (window as any).L.divIcon({
+    return L.divIcon({
       className: 'station-badge',
       html: `
                 <div class="station-badge-inner" style="cursor:default;">
@@ -34,7 +35,7 @@ export const stationView = (() => {
 
   function renderStations(stations: Station[] = []) {
     if (!map) return;
-    if (!layerGroup) layerGroup = (window as any).L.layerGroup().addTo(map);
+    if (!layerGroup) layerGroup = L.layerGroup().addTo(map);
 
     if (!uiStateModel.showWindMeasurements) {
       stationMarkerMap.forEach((marker) => {
@@ -53,7 +54,7 @@ export const stationView = (() => {
       const lon = Number(station.lon ?? 0);
 
       const existingMarker = stationMarkerMap.get(stationKey) as Marker | undefined;
-      const marker = existingMarker || (window as any).L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station) }) as Marker;
+      const marker = existingMarker || L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station) }) as Marker;
 
       marker.setIcon(createIcon(station));
       marker.setLatLng([lat, lon] as LatLngExpression);
@@ -85,7 +86,7 @@ export const stationView = (() => {
   function init(mapInstance: LeafletMap, options: { onMarkerClick?: (station: Station) => void } = {}) {
     map = mapInstance;
     opts = options || {};
-    layerGroup = (window as any).L.layerGroup().addTo(map) as LayerGroup;
+    layerGroup = L.layerGroup().addTo(map) as LayerGroup;
     commonDataModel.addEventListener('model:visible-stations-updated', handleVisibleStations as EventListener);
     uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', handleVisibleStations as EventListener);
 
