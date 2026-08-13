@@ -29,21 +29,10 @@ const renderImage = (href: string, title: string | null, text: string): string =
     const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
     return `<img src="${escapeHtml(href)}" alt="${escapeHtml(text)}"${titleAttr}>`;
   }
-
-  const extension = path.extname(assetPath).toLowerCase();
-  const mimeType = extension === '.svg'
-    ? 'image/svg+xml'
-    : extension === '.jpg' || extension === '.jpeg'
-      ? 'image/jpeg'
-      : extension === '.gif'
-        ? 'image/gif'
-        : extension === '.webp'
-          ? 'image/webp'
-          : 'image/png';
   const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
-  const dataUri = fs.readFileSync(assetPath).toString('base64');
+  const assetName = path.basename(assetPath);
 
-  return `<img src="data:${mimeType};base64,${dataUri}" alt="${escapeHtml(text)}"${titleAttr} loading="lazy">`;
+  return `<img src="/${assetName}" alt="${escapeHtml(text)}"${titleAttr} loading="lazy">`;
 };
 
 const renderReadme = (): string => {

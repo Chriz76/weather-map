@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/><title>ICON-D2 RUC & Arome PI | Hourly Forecasts</title><script>window.WEATHER_DEBUG = new URLSearchParams(window.location.search).get('debug') === 'true';
+
+      if (window.WEATHER_DEBUG) {
+          // 1. Eruda Skript-Tag erstellen
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+          
+          // 2. Initialisieren, sobald das Skript geladen ist
+          script.onload = function () {
+              eruda.init({
+                  theme: 'dark',
+                  defaults: {
+                      displaySize: 50, 
+                      transparency: 90
+                  }
+              });
+              console.log('Eruda DevTools erfolgreich geladen. Viel Spaß beim Debuggen!');
+              
+              // Falls du den Puffer-Logger nutzt, hier einspielen:
+              // if (window.flushEarlyLogs) window.flushEarlyLogs();
+          };   
+
+          // 3. WICHTIG: In den <head> (document.head) einfügen, da body noch null ist!
+          document.head.appendChild(script);
+      }</script><link rel="canonical" href="https://wind.zink.tv/"><script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "ICON-D2 RUC & Arome PI | Hourly Forecasts",
+      "url": "https://wind.zink.tv/"
+    }</script><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png"><script type="module" crossorigin src="/assets/index-kHHqgS3P.js"></script><link rel="stylesheet" crossorigin href="/assets/index-C5Oh8QP6.css"></head><body><div id="map"></div><div class="model-info">Model run: Loading...</div><script>if (!window.WEATHER_DEBUG) {
+    // 2. Tracking Skript dynamisch nachladen (wenn debug DEAKTIVIERT ist)
+    const trackingScript = document.createElement('script');
+    trackingScript.src = 'https://cloud.umami.is/script.js';
+    trackingScript.setAttribute('data-website-id', '8a85a60f-4770-4ff7-9210-63badbb5d34c');
+    trackingScript.defer = true;
+    document.head.appendChild(trackingScript);
+  }</script></body></html>
