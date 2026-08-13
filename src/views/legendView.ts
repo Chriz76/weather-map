@@ -1,4 +1,4 @@
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
 export function registerLegendView(map: LeafletMap): void {

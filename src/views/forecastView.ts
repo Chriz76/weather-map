@@ -1,4 +1,4 @@
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ForecastItem } from '../types';

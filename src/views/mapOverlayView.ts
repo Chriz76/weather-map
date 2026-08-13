@@ -3,7 +3,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { providers } from '../config';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView';
 import type { Map as LeafletMap, LatLngBoundsExpression, ImageOverlay } from 'leaflet';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import type { WindData } from '../types';
 
 type WindOverlayLike = ImageOverlay | {

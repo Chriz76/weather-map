@@ -1,6 +1,6 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { D2, AROME } from '../weatherProvider/providerIds';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
 export function registerLogoView(map: LeafletMap): void {

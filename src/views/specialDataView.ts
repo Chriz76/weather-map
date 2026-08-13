@@ -1,7 +1,7 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import type { Map as LeafletMap, LayerGroup, Marker, LatLngExpression, DivIcon } from 'leaflet';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 const TARGET_LAT = 47.6506;
 const TARGET_LNG = 11.3365;
 const MIN_ZOOM = 7;

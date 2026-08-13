@@ -17,7 +17,7 @@ function renderIcon() {
 }
 
 import type { Map as LeafletMap } from 'leaflet';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 
 export function registerWindToggleView(map: LeafletMap): void {
   const WindToggleControl = (L.Control as any).extend({
