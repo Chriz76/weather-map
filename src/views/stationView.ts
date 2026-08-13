@@ -2,7 +2,7 @@ import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import type { Station } from '../types';
 import type { Map as LeafletMap, LayerGroup, Marker, DivIcon, LatLngExpression } from 'leaflet';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 
 export const stationView = (() => {
   let map: LeafletMap | null = null;

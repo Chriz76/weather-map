@@ -1,7 +1,7 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { formatModelTimestampToTimeAndDescription } from '../utils/time';
 import { logger } from '../utils/logger';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
 

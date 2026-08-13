@@ -1,5 +1,5 @@
 import { uiStateModel } from '../models/uiStateModel';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
 

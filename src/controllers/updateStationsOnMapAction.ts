@@ -3,7 +3,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { fetchWindDataForStation } from '../services/measurementsService';
 import { logger } from '../utils/logger';
 import type { Station } from '../types';
-import L from '../lib/leaflet-wrapper';
+import * as L from 'leaflet';
 import type { LatLngBounds } from 'leaflet';
 
 export async function updateStationsOnMapAction(bounds: LatLngBounds | null = null): Promise<void> {
@@ -52,8 +52,8 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
         const pr = apr - bpr;
         if (pr !== 0) return pr;
 
-        const da = center.distanceTo(window.L!.latLng(Number(a.lat), Number(a.lon)));
-        const db = center.distanceTo(window.L!.latLng(Number(b.lat), Number(b.lon)));
+        const da = center.distanceTo(L.latLng(Number(a.lat), Number(a.lon)));
+        const db = center.distanceTo(L.latLng(Number(b.lat), Number(b.lon)));
         return da - db;
       });
     }
