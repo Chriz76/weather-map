@@ -8,19 +8,31 @@ type CacheEntry = { data: WindData | null; ts: number };
 const windCache: Record<string, CacheEntry> = {};
 const inflight: Record<string, Promise<WindData | null> | undefined> = {};
 
+function isObject(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object';
+}
+
+function toFiniteNumber(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 async function fetchFromBrightSky(dwdStationId: string): Promise<WindData | null> {
   const url = `https://api.brightsky.dev/current_weather?dwd_station_id=${dwdStationId}&${CACHE_BUSTER}`;
   const response = await fetch(url, { cache: 'no-cache' });
   if (!response.ok) throw new Error(`API-Error: ${response.status}`);
-  const data = await response.json();
-  const current = data.weather;
+  const data: unknown = await response.json();
+  if (!isObject(data)) return null;
+  const current = isObject(data.weather) ? (data.weather as Record<string, unknown>) : null;
   if (!current) return null;
 
-  const speedKmh = typeof current.wind_speed_10 === 'number' ? current.wind_speed_10 : null;
-  const direction = typeof current.wind_direction_10 === 'number' ? current.wind_direction_10 : null;
-  const gustKmh = typeof current.wind_gust_speed_10 === 'number' ? current.wind_gust_speed_10 : null;
-  const temperature = typeof current.temperature === 'number' ? current.temperature : null;
-  const timestamp = typeof current.timestamp === 'string' ? current.timestamp : null;
+  const speedKmh = toFiniteNumber(current['wind_speed_10']);
+  const direction = toFiniteNumber(current['wind_direction_10']);
+  const gustKmh = toFiniteNumber(current['wind_gust_speed_10']);
+  const temperature = toFiniteNumber(current['temperature']);
+  const timestamp = typeof current['timestamp'] === 'string' ? current['timestamp'] as string : null;
 
   if (speedKmh === null) {
     logger.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);
@@ -31,20 +43,15 @@ async function fetchFromBrightSky(dwdStationId: string): Promise<WindData | null
   const directionVal = typeof direction === 'number' ? direction : 0;
   const gust = gustKmh === null ? null : Math.round(gustKmh * 0.539957);
 
-  const result: Record<string, unknown> = {
-    // canonical (new) shape
+  const result: WindData = {
     speed,
     direction: directionVal,
     gust,
     temperature,
     timestamp,
-    // legacy aliases used across older views
-    windSpeed: speed,
-    windDirection: directionVal,
-    windGustSpeed: gust,
   };
 
-  return result as unknown as WindData;
+  return result;
 }
 
 export async function fetchWindDataForStation(

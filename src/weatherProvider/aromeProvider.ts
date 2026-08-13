@@ -13,7 +13,7 @@ export const aromeProvider = {
     const baseUrl = typeof config?.baseUrl === 'string' ? config.baseUrl : '';
     const response = await fetch(`${baseUrl}index.json?${CACHE_BUSTER}`, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`index.json could not be loaded (status: ${response.status})`);
-    const json = await response.json();
+    const json: unknown = await response.json();
     return (json && typeof json === 'object') ? (json as import('../types').IndexData) : ({} as import('../types').IndexData);
   },
 
@@ -24,20 +24,29 @@ export const aromeProvider = {
 
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
-    const payload = await res.json();
+    const payload: unknown = await res.json();
 
-    if (!payload || !payload.hourly || !Array.isArray(payload.hourly.time)) {
+    const isObject = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object';
+    const toFiniteNumber = (v: unknown): number | null => {
+      if (v === null || v === undefined) return null;
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const asNumberArray = (v: unknown): Array<number | null> => Array.isArray(v) ? v.map(item => toFiniteNumber(item)) : [];
+
+    if (!isObject(payload) || !isObject(payload.hourly) || !Array.isArray((payload.hourly as Record<string, unknown>).time)) {
       throw new Error('Open-Meteo payload invalid');
     }
 
-    const h = payload.hourly;
-    const times = h.time;
-    const speed15 = h['wind_speed_10m_meteofrance_arome_france_15min'] || [];
-    const dir15 = h['wind_direction_10m_meteofrance_arome_france_15min'] || [];
-    const gust15 = h['wind_gusts_10m_meteofrance_arome_france_15min'] || [];
-    const speedHd = h['wind_speed_10m_meteofrance_arome_france_hd_15min'] || [];
-    const dirHd = h['wind_direction_10m_meteofrance_arome_france_hd_15min'] || [];
-    const gustHd = h['wind_gusts_10m_meteofrance_arome_france_hd_15min'] || [];
+    const h = payload.hourly as Record<string, unknown>;
+    const times = Array.isArray(h.time) ? h.time : [];
+    const speed15 = asNumberArray(h['wind_speed_10m_meteofrance_arome_france_15min']);
+    const dir15 = asNumberArray(h['wind_direction_10m_meteofrance_arome_france_15min']);
+    const gust15 = asNumberArray(h['wind_gusts_10m_meteofrance_arome_france_15min']);
+    const speedHd = asNumberArray(h['wind_speed_10m_meteofrance_arome_france_hd_15min']);
+    const dirHd = asNumberArray(h['wind_direction_10m_meteofrance_arome_france_hd_15min']);
+    const gustHd = asNumberArray(h['wind_gusts_10m_meteofrance_arome_france_hd_15min']);
 
     const unixToModelKey = (sec: number) => {
       const d = new Date(Number(sec) * 1000);
@@ -63,8 +72,8 @@ export const aromeProvider = {
 
     if (lastIdx === -1) return null;
 
-    const sliceTo = (arr: unknown): unknown[] => (Array.isArray(arr) ? (arr as unknown[]).slice(0, lastIdx + 1) : []);
-    const timesTrim = sliceTo(times);
+    const sliceTo = <T,>(arr: T[]): T[] => Array.isArray(arr) ? arr.slice(0, lastIdx + 1) : [];
+    const timesTrim = sliceTo(times as unknown[]);
     const speed15Trim = sliceTo(speed15);
     const dir15Trim = sliceTo(dir15);
     const gust15Trim = sliceTo(gust15);
@@ -74,33 +83,35 @@ export const aromeProvider = {
 
     const result: ForecastItem[] = [];
     for (let i = 0; i < timesTrim.length; i++) {
-      const t = Number(timesTrim[i]);
-      const s15 = typeof speed15Trim[i] === 'number' ? (speed15Trim[i] as number) : null;
-      const sHd = typeof speedHdTrim[i] === 'number' ? (speedHdTrim[i] as number) : null;
-      const g15 = typeof gust15Trim[i] === 'number' ? (gust15Trim[i] as number) : null;
-      const gHd = typeof gustHdTrim[i] === 'number' ? (gustHdTrim[i] as number) : null;
-      const d15 = typeof dir15Trim[i] === 'number' ? (dir15Trim[i] as number) : null;
-      const dHd = typeof dirHdTrim[i] === 'number' ? (dirHdTrim[i] as number) : null;
+      const t = toFiniteNumber(timesTrim[i]) ?? 0;
+      const s15 = toFiniteNumber(speed15Trim[i]);
+      const sHd = toFiniteNumber(speedHdTrim[i]);
+      const g15 = toFiniteNumber(gust15Trim[i]);
+      const gHd = toFiniteNumber(gustHdTrim[i]);
+      const d15 = toFiniteNumber(dir15Trim[i]);
+      const dHd = toFiniteNumber(dirHdTrim[i]);
 
-      const speed = s15 != null ? s15 : (sHd != null ? sHd : null);
-      const gust = g15 != null ? g15 : (gHd != null ? gHd : null);
+      const speed = s15 != null ? s15 : (sHd != null ? sHd : 0);
+      const gust = g15 != null ? g15 : (gHd != null ? gHd : 0);
       const direction = d15 != null ? d15 : (dHd != null ? dHd : null);
 
       const fullKey = unixToModelKey(t);
       result.push({
         hour: formatModelTimestampToTime(fullKey),
-        wind: speed == null ? null as number | null : Math.round(speed * 10) / 10,
-        gust: gust == null ? null as number | null : Math.round(gust * 10) / 10,
+        wind: Math.round((speed ?? 0) * 10) / 10,
+        gust: Math.round((gust ?? 0) * 10) / 10,
         direction: direction == null ? null : Math.round(direction * 10) / 10,
         fullKey
-      } as unknown as ForecastItem);
+      });
     }
 
     return result;
   },
 
-  async fetchWeatherImageBlob(timestamp: string, config: Record<string, any>): Promise<Blob> {
-    const imageUrl = `${config.baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`;
+  async fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob> {
+    const cfg = config as Record<string, unknown> | undefined;
+    const baseUrl = cfg && typeof cfg.baseUrl === 'string' ? cfg.baseUrl : '';
+    const imageUrl = `${baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`;
     const response = await fetch(imageUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Image could not be loaded');
     return await response.blob();
