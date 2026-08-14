@@ -18,10 +18,10 @@
     transition: height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out, border 0.15s ease-out;
 }
 
-/* 🌟 KORREKTUR: Feste, starre Höhe auf 95px gesetzt, um die Box präzise zu vergrößern 
-   und den blauen Aktivitätsrahmen vor der Scrollbar zu schützen */
+/* 🌟 KORREKTUR: Bessere Höhenanpassung gegen Quetschung in Firefox */
 .forecast-view--has-data {
-    height: 95px;
+    height: auto;
+    max-height: 100px;
     opacity: 1;
     pointer-events: auto; /* Make clickable again */
     border: 2px solid rgba(0, 0, 0, 0.15);
@@ -38,9 +38,13 @@
     overflow-y: hidden;
     display: block;
     -webkit-overflow-scrolling: touch;
+
+    /* 🟢 FIREFOX & W3C STANDARD (Macht den Scrollbalken in Firefox schmal & entfernt Pfeile) */
+    scrollbar-width: thin;
+    scrollbar-color: #bbb #f1f1f1;
 }
 
-    /* Minimize scrollbar design */
+    /* Minimize scrollbar design (Webkit: Chrome, Safari, Edge) */
     .forecast-view__scroll-container::-webkit-scrollbar {
         height: 3px;
     }
@@ -122,6 +126,7 @@
     vertical-align: middle; 
     box-sizing: border-box;
 }
+
 .forecast-view__dir-icon--unknown {
     transform: none;
 }
