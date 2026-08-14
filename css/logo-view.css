@@ -7,7 +7,7 @@
     padding: 5px 7px 2px 7px; /* top right bottom left */
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
- }
+}
 
 /* Prevent the link from showing blue/underlined styling and keep the layout compact */
 .logo-view__link,
@@ -20,12 +20,12 @@
     align-items: center; /* Keep the icon and text vertically centered */
 }
 
-    /* Subtle hover feedback so users notice the logo is clickable */
-    .logo-view__link:hover,
-    .logo-view__link:focus {
-        opacity: 0.85;
-        cursor: pointer;
-    }
+/* Subtle hover feedback so users notice the logo is clickable */
+.logo-view__link:hover,
+.logo-view__link:focus {
+    opacity: 0.85;
+    cursor: pointer;
+}
 
 .logo-view__container {
     display: flex;
@@ -46,7 +46,7 @@
     flex-direction: column;
     /* Remove fixed height so the content can size naturally */
     gap: 3px; /* Very small spacing between toggle and subtitle */
-    padding-bottom: 2px; /* Less space below the subtitle */
+    padding-bottom: 1px; /* Um 1px reduziert für weniger Platz unter dem Subtitle */
     align-items: flex-start; /* Keep the toggle only as wide as its content */
 }
 
@@ -84,7 +84,7 @@
 
 .logo-view__toggle-btn {
     border: 0;
-    padding: 2px 8px; /* Minimal vertical padding for compact buttons */
+    padding: 3px 8px 2px 8px; /* Leicht verschobener vertikaler Padding zum Ausgleich der Font-Baseline */
     background: transparent;
     color: #6B7280; /* Inactive: gray */
     font-weight: 700;
@@ -94,6 +94,11 @@
     flex: 1 1 auto; /* Make both buttons equal width */
     text-align: center;
     min-width: 60px; /* Ensure a reasonable tappable width */
+
+    /* Flexbox für exakte vertikale und horizontale Zentrierung */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .logo-view__toggle-btn--active {
