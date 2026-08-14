@@ -1,4 +1,4 @@
-/* Timeline / Slider Styles - Umgestellt auf BEM-Namensschema */
+/* Timeline / slider styles using BEM naming */
 
 .timeline-view {
     background: #ffffff;
@@ -11,14 +11,14 @@
     width: calc(100vw - 20px);
     max-width: 550px; /* Prevents excessive width on desktop monitors */
 
-    height: 44px; /* Reduziert von 54px für ein deutlich kompakteres Design */
-    padding: 0 8px; /* Abstand rechts zum Button auf 8px verringert (vorher 12px) */
+    height: 44px; /* Reduced from 54px for a much more compact design */
+    padding: 0 8px; /* Reduced right padding to 8px for the button area (previously 12px) */
     box-sizing: border-box;
-    /* Pushes the control up to make room for copyrights below */
+    /* Push the control up to make room for copyrights below */
     margin-bottom: 25px !important;
 }
 
-/* Time display on the left (zweizeilig, flexibel und zentriert) */
+/* Time display on the left (two lines, flexible, and centered) */
 .timeline-view__time-display {
     display: flex;
     flex-direction: column;
@@ -26,34 +26,34 @@
     align-items: center;
     user-select: none;
     text-align: center;
-    /* Auf 0 gesetzt, damit der Abstand links rein durch das Container-Padding (8px) bestimmt wird, exakt wie rechts */
-    padding-left: 0; 
-    /* Abstand zwischen Uhrzeit und Slider auf 10px verkürzt */
-    padding-right: 10px; 
+    /* Set to 0 so the left spacing is determined only by the container padding (8px), exactly like the right side */
+    padding-left: 0;
+    /* Reduce the space between the time and slider to 10px */
+    padding-right: 10px;
 }
 
-/* Große Uhrzeit oben */
+/* Large time display on top */
 .timeline-view__time-main {
-    font-size: 15px; /* Minimal verkleinert von 16px, um vertikalen Platz zu sparen */
+    font-size: 15px; /* Slightly reduced from 16px to save vertical space */
     font-weight: bold;
     color: #333333;
-    line-height: 1.2; /* Abstand zur Uhrzeit bleibt wie ursprünglich gewünscht */
+    line-height: 1.2; /* Keep the time spacing as originally intended */
 }
 
-/* Kleiner Subtext unten (Today, Tomorrow, Datum) */
+/* Small subtext below (today, tomorrow, date) */
 .timeline-view__time-subtext {
     font-size: 9.5px; 
     font-weight: 500;
     color: #757575;
-    line-height: 1.1; /* Abstand zur Uhrzeit bleibt wie ursprünglich gewünscht */
-    text-transform: lowercase; 
+    line-height: 1.1; /* Keep the time spacing as originally intended */
+    text-transform: lowercase;
 }
 
 /* Slider area in the center grows dynamically */
 .timeline-view__slider-wrapper {
     flex: 1;
-    /* Spiegelt die linke Seite: 0px links (da die Uhrzeit 10px rechts schiebt) und exakt 10px rechts zum ersten Knopf */
-    padding: 0 10px 0 0; 
+    /* Mirror the left side: 0px on the left (because the time block shifts 10px to the right) and exactly 10px on the right to the first button */
+    padding: 0 10px 0 0;
     display: flex;
     align-items: center;
 }
@@ -63,18 +63,18 @@
     cursor: pointer;
     -webkit-appearance: none;
     appearance: none;
-    height: 5px; /* Leicht dünnerer Slider (5px statt 6px) wirkt eleganter im flachen Container */
+    height: 5px; /* A slightly thinner slider (5px instead of 6px) looks better in the shallow container */
     background: #e0e0e0;
     border-radius: 3px;
     outline: none;
     margin: 0;
 }
 
-    /* Slider thumb styling (Webkit) */
+    /* Slider thumb styling (WebKit) */
     .timeline-view__slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 16px; /* Thumb von 18px auf 16px verkleinert, damit er nicht oben/unten aneckt */
+        width: 16px; /* Reduced from 18px to 16px so the thumb does not clip top or bottom */
         height: 16px;
         border-radius: 50%;
         background: var(--weather-map-accent-blue);
@@ -84,7 +84,7 @@
 
     /* Slider thumb styling (Firefox) */
     .timeline-view__slider::-moz-range-thumb {
-        width: 16px; /* Thumb von 18px auf 16px verkleinert */
+        width: 16px; /* Reduced from 18px to 16px */
         height: 16px;
         border-radius: 50%;
         background: var(--weather-map-accent-blue);
@@ -96,14 +96,14 @@
 /* Navigation buttons on the right */
 .timeline-view__navigation {
     display: flex;
-    gap: 4px; /* Abstand zwischen den beiden Buttons leicht verringert */
+    gap: 4px; /* Slightly reduce the gap between the two buttons */
 }
 
 .timeline-view__nav-btn {
     background-color: #ffffff;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 28px; /* Von 30px auf 28px verkleinert, passt perfekt zur 44px Container-Höhe */
+    width: 28px; /* Reduced from 30px to 28px, which fits the 44px container height perfectly */
     height: 28px;
     font-size: 12px;
     font-weight: 900;

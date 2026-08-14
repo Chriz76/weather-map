@@ -56,9 +56,10 @@ function createPopupHtml(formattedValue: string, formattedGust: string, directio
 
 function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: string) {
   activeSpotMarker = L.circleMarker([lat, lng] as LatLngExpression, {
+    className: 'weather-map-marker',
     radius: 6,
     color: '#ffffff',
-    fillColor: 'var(--weather-map-accent-blue)',
+    fillColor: '#0077a4',
     fillOpacity: 1,
     weight: 2
   }).addTo(map);

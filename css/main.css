@@ -6,6 +6,8 @@ html, body, #map, .leaflet-container, .leaflet-control {
   --weather-map-accent-blue: #0077a4;
   --weather-map-accent-blue-rgb: 0, 119, 164;
   --weather-map-accent-blue-light: #2aa7d6;
+  --weather-map-station-blue: #0b74a8;
+  --weather-map-spinner-blue: #0078A8;
 }
 
 html, body {

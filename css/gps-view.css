@@ -2,17 +2,17 @@
    GPS VIEW COMPONENT (Scoped to .gps-view)
    ========================================================================== */
 
-/* Der Button-Container von Leaflet */
+/* Leaflet button container */
 .gps-view {
     width: 30px !important;
     height: 30px !important;
     
-    /* Absolute Zentrierung für SVGs */
+    /* Center SVGs precisely */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     
-    /* Überschreibt störende Leaflet-Standardwerte */
+    /* Override Leaflet defaults */
     line-height: 30px !important; 
     padding: 0 !important;
     margin: 0 !important;
@@ -23,27 +23,26 @@
     transition: all 0.2s ease;
 }
 
-/* Hover-Zustand */
+/* Hover state */
 .gps-view:hover {
     color: var(--weather-map-accent-blue);
     background-color: #f4f4f4;
 }
 
-/* Aktiver/Gedrückter Zustand (während das Modell sucht) */
+/* Active/pressed state while the model is locating */
 .gps-view--active {
     color: var(--weather-map-accent-blue) !important;
     background-color: rgba(var(--weather-map-accent-blue-rgb), 0.08) !important;
-    /* Drückt den Button optisch leicht nach innen */
+    /* Give the button a subtle pressed-in look */
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important; 
     
-    /* Ruft die lokal gescoopte Pulsier-Animation auf */
+    /* Use the locally scoped pulsing animation */
     animation: gps-view--pulse 1.5s infinite ease-in-out;
-    pointer-events: none; /* Verhindert Mehrfachklicks während der Suche */
+    pointer-events: none; /* Prevent multiple clicks while locating */
 }
 
-/* * LOKAL GESCOOPTE KEYFRAMES
- * Sorgt für ein sanftes Pulsieren und leichtes Skalieren des Fadenkreuzes,
- * ohne dass das SVG eiert oder aus der Mitte springt.
+/* Locally scoped keyframes.
+ * This keeps the crosshair pulsing smoothly without shifting the SVG off center.
  */
 @keyframes gps-view--pulse {
     0% { 

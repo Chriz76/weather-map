@@ -1,4 +1,4 @@
-/* Forecast table styles - Umgestellt auf BEM-Namensschema */
+/* Forecast table styles using BEM naming */
 
 .forecast-view {
     background: #ffffff;
@@ -18,7 +18,7 @@
     transition: height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out, border 0.15s ease-out;
 }
 
-/* 🌟 KORREKTUR: Bessere Höhenanpassung gegen Quetschung in Firefox */
+/* FIX: Better height handling to avoid squashing in Firefox */
 .forecast-view--has-data {
     height: auto;
     max-height: 100px;
@@ -81,8 +81,8 @@
     box-sizing: border-box;
 }
 
-/* 🌟 ERWEITERT: .forecast-view__cell-gust hinzugefügt. 
-   Teilt sich nun alle Layout- und Zentrierungs-Eigenschaften mit der Wind-Zelle */
+/* EXTENDED: Added .forecast-view__cell-gust.
+   It now shares all layout and centering properties with the wind cell. */
 .forecast-view__cell-value,
 .forecast-view__cell-gust {
     height: 25px;
@@ -111,18 +111,18 @@
 }
 
 .forecast-view__dir-icon {
-    display: flex;         /* Geändert von inline-flex auf flex */
+    display: flex;         /* Changed from inline-flex to flex */
     justify-content: center;
     align-items: center;
-    width: 14px;           /* Feste, quadratische Pixelgröße statt em */
-    height: 14px;          /* Feste, quadratische Pixelgröße statt em */
+    width: 14px;           /* Fixed square pixel size instead of em */
+    height: 14px;          /* Fixed square pixel size instead of em */
     font-weight: 900;
     line-height: 1;
     transform: rotate(var(--dir-deg));
-    transform-origin: center center; /* Explizit x und y Achse benennen */
+    transform-origin: center center; /* Explicitly define the x and y axes */
     margin: 0 auto;
     
-    /* NEU: Verhindert, dass Text-Fluss-Eigenschaften die Rotation stören */
+    /* NEW: Prevent text-flow properties from interfering with rotation */
     vertical-align: middle; 
     box-sizing: border-box;
 }
@@ -131,10 +131,10 @@
     transform: none;
 }
 
-/* Markiert die aktive Stunde mit einem sauberen Rahmen */
+/* Mark the active hour with a clean border */
 .forecast-view__cell--active {
     position: relative;
-    /* Nur Rahmen; Hintergrund der Zelle (Farbklassse) soll nicht überschrieben werden */
+    /* Border only; do not override the cell background color class */
     box-shadow: inset 0 0 0 2px var(--weather-map-accent-blue);
 }
 
