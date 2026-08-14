@@ -2,7 +2,7 @@
 [![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://chriz76.github.io/weather-map/)
 [![Data Pipeline Repo](https://img.shields.io/badge/Data-Repository-green?style=flat-square)](https://github.com/Chriz76/weather-data)
 
-The app visualizes localized wind forecast data for **Germany** **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI** using the logo row.
+The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI** using the logo row.
 
 [![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://chriz76.github.io/weather-map/)
 
