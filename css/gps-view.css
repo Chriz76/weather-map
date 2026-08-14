@@ -25,14 +25,14 @@
 
 /* Hover-Zustand */
 .gps-view:hover {
-    color: #0077a4;
+    color: var(--weather-map-accent-blue);
     background-color: #f4f4f4;
 }
 
 /* Aktiver/Gedrückter Zustand (während das Modell sucht) */
 .gps-view--active {
-    color: #0077a4 !important;
-    background-color: #eef7fc !important;
+    color: var(--weather-map-accent-blue) !important;
+    background-color: rgba(var(--weather-map-accent-blue-rgb), 0.08) !important;
     /* Drückt den Button optisch leicht nach innen */
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important; 
     

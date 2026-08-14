@@ -2,6 +2,12 @@ html, body, #map, .leaflet-container, .leaflet-control {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+:root {
+  --weather-map-accent-blue: #0077a4;
+  --weather-map-accent-blue-rgb: 0, 119, 164;
+  --weather-map-accent-blue-light: #2aa7d6;
+}
+
 html, body {
     padding: 0;
     margin: 0;

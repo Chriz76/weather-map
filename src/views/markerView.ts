@@ -58,7 +58,7 @@ function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: s
   activeSpotMarker = L.circleMarker([lat, lng] as LatLngExpression, {
     radius: 6,
     color: '#ffffff',
-    fillColor: '#0077a4',
+    fillColor: 'var(--weather-map-accent-blue)',
     fillOpacity: 1,
     weight: 2
   }).addTo(map);

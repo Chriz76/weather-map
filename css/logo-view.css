@@ -98,11 +98,11 @@
 
 .logo-view__toggle-btn--active {
     color: #0b0b0b; /* active: black */
-    background: #2aa7d6; /* lighter logo-blue background for active button */
+    background: var(--weather-map-accent-blue-light); /* lighter logo-blue background for active button */
 }
 
 .logo-view__toggle-btn:first-child { border-right: 1px solid rgba(0,0,0,0.06); }
 
 .logo-view__toggle-btn:focus {
-    outline: 2px solid rgba(59,130,246,0.12);
+    outline: 2px solid rgba(var(--weather-map-accent-blue-rgb), 0.12);
 }

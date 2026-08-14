@@ -77,7 +77,7 @@
         width: 16px; /* Thumb von 18px auf 16px verkleinert, damit er nicht oben/unten aneckt */
         height: 16px;
         border-radius: 50%;
-        background: #0077a4;
+        background: var(--weather-map-accent-blue);
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
@@ -87,7 +87,7 @@
         width: 16px; /* Thumb von 18px auf 16px verkleinert */
         height: 16px;
         border-radius: 50%;
-        background: #0077a4;
+        background: var(--weather-map-accent-blue);
         cursor: pointer;
         border: none;
         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
