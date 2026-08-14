@@ -18,12 +18,12 @@ function syncOverlayBounds(providerBounds: LatLngBoundsExpression): void {
   const nextBounds = L.latLngBounds(providerBounds as [LatLngExpression, LatLngExpression]);
 
   try {
-   if (typeof windOverlayInstance.getBounds === 'function') {
-     const currentBounds = windOverlayInstance.getBounds();
-     if (currentBounds.equals(nextBounds)) return;
+    if (typeof windOverlayInstance.getBounds === 'function') {
+      const currentBounds = windOverlayInstance.getBounds();
+      if (currentBounds.equals(nextBounds)) return;
     }
   } catch {
-    // Fall through and update the bounds before applying the new overlay URL.
+    // getBounds threw; proceed to update bounds unconditionally.
   }
 
   windOverlayInstance.setBounds(nextBounds);
