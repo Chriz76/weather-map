@@ -4,9 +4,9 @@
 
 The app visualizes localized wind forecast data for **Germany** **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI 2.5 km** using the logo row.
 
-[![App Screenshot](public/Screenshot_20260606-175259_Chrome.png)](https://chriz76.github.io/weather-map/)
+[![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://chriz76.github.io/weather-map/)
 
-The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI 2.5 km** via Open-Meteo using Météo-France model data. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
+The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries from these high-resolution models.
 
@@ -18,21 +18,23 @@ To our knowledge, this is a **unique free implementation** providing hourly upda
 
 ---
 
-## Technical Specifications & Advantages of ICON-D2 RUC
-Most mainstream consumer weather applications render global or regional models with coarse resolution and slow update cycles. This application visualizes the DWD's premier high-resolution local model:
+## Technical Specifications & Advantages of ICON-D2 RUC / Arome PI
+Most mainstream consumer weather applications render global or regional models with coarse resolution and slow update cycles. This application visualizes premier high-resolution local models:
 
 | Parameter | ICON-D2 RUC / Arome PI | Standard Global Models (e.g., GFS) |
 | :--- | :--- | :--- |
-| **Horizontal Resolution** | **2.2/2.5 km** grid | 13 km – 27 km grid |
+| **Horizontal Resolution** | **2.2/1.3/2.5 km** grid | 13 km – 27 km grid |
 | **Update Cycle** | **Hourly (Every 60 minutes)** | Every 6 hours |
 | **Data Assimilation** | **Rapid Update Cycle (RUC)** (Continuous assimilation of local radar & station observations) | Intermittent batch assimilation |
 | **Forecast Range** | 28/6 hours | Multi-day extended range |
+
+Arome base wind is only available in 2.5km dataset. The forecasts use the 1.3km resolution for gusts.
 
 ### Application for Foiling:
 
 Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.2/2.5 km resolution of the ICON-D2 RUC/Arome PI model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
 
-AROME PI 2.5 km adds another high-resolution option for nearby regions via Open-Meteo and Météo-France model data.
+AROME PI 2.5/1.3 km adds another high-resolution option for nearby regions via Open-Meteo and Météo-France model data.
 
 ---
 
@@ -54,31 +56,13 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 
 ## Development & Contribution
 
-As this is an experimental project, contributions to optimize the JSON chunking sizes, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays are welcome.
+As this is an experimental project, contributions to optimize the JSON chunking sizes, add more rapid models like HRRR or Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
 
 This project is a private, free, and ad-free open-source web app. It is maintained strictly for hobby purposes and pursues no commercial interests.
 
 * **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
 * **AROME Attribution:** [Open-Meteo](https://open-meteo.com/) using [Météo-France](https://meteofrance.com/) model data.
 * **Author:** [Chriz76](https://github.com/Chriz76)
-
-## Testing with Jasmine
-
-A browser-based Jasmine test runner is available in `tests/index.html`.
-
-To run the tests:
-
-1. Start a local HTTP server in the project root.
-   - Example: `python -m http.server 8000`
-2. Open `http://127.0.0.1:8000/tests/index.html` in your browser.
-
-> ES modules require an HTTP or HTTPS context, so opening the HTML file directly via `file://` will not work.
-
-The current test files are:
-
-* `tests/spec/time.spec.js`
-* `tests/spec/interpolation.spec.js`
-* `tests/spec/weatherUi.spec.js`
 
 ## 📄 License & Terms of Use
 
