@@ -1,26 +1,26 @@
-/* Logo View Styles - Umgestellt auf BEM-Namensschema */
+/* Logo view styles using BEM naming */
 
 .logo-view {
     /* Opaque background for the logo control */
     background: #ffffff; /* fully opaque white */
-    /* Less bottom padding to bring control visually lower; keep small top padding */
+    /* Less bottom padding to bring the control visually lower; keep a small top padding */
     padding: 5px 7px 2px 7px; /* top right bottom left */
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
  }
 
-/* Verhindert, dass der Link blau/unterstrichen wird und hält das Layout kompakt */
+/* Prevent the link from showing blue/underlined styling and keep the layout compact */
 .logo-view__link,
 .logo-view__link:visited {
     text-decoration: none;
     color: inherit;
     outline: none;
     border: none;
-    display: flex; /* Sorgt dafür, dass der Link den gesamten inneren Bereich ausfüllt */
-    align-items: center; /* ensure icon/text are vertically centered inside the link */
+    display: flex; /* Let the link fill the full inner area */
+    align-items: center; /* Keep the icon and text vertically centered */
 }
 
-    /* Ein dezenter Hover-Effekt, damit Nutzer merken, dass das Logo klickbar ist */
+    /* Subtle hover feedback so users notice the logo is clickable */
     .logo-view__link:hover,
     .logo-view__link:focus {
         opacity: 0.85;
@@ -29,32 +29,32 @@
 
 .logo-view__container {
     display: flex;
-    /* keep items the same height so svg can match top/bottom of text */
+    /* Keep items the same height so the SVG can match the text block */
     align-items: center;
     gap: 8px;
 }
 
-/* Make the svg icon match the combined height of the two text lines */
+/* Make the SVG icon match the combined height of the two text lines */
 .logo-view__icon {
     width: auto;
-    height: 30px; /* slightly smaller so overall control is lower */
+    height: 30px; /* Slightly smaller so the overall control sits lower */
     display: block;
 }
 
 .logo-view__text-box {
     display: flex;
     flex-direction: column;
-    /* remove fixed height so content can size naturally */
-    gap: 3px; /* very small spacing between toggle and subtitle */
-    padding-bottom: 2px; /* much less space below subtitle */
-    align-items: flex-start; /* keep toggle only as wide as its content */
+    /* Remove fixed height so the content can size naturally */
+    gap: 3px; /* Very small spacing between toggle and subtitle */
+    padding-bottom: 2px; /* Less space below the subtitle */
+    align-items: flex-start; /* Keep the toggle only as wide as its content */
 }
 
 .logo-view__title {
     font-size: 17px;
     line-height: 17px;
     margin: 0;
-    color: #111; /* Bleibt anthrazit/schwarz */
+    color: #111; /* Remains charcoal/black */
     font-weight: 700;
     letter-spacing: -0.3px;
 }
@@ -63,7 +63,7 @@
     font-size: 9.5px;
     line-height: 10px;
     margin: 0;
-    color: #111827; /* black text for subtitle */
+    color: #111827; /* Black text for the subtitle */
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -75,34 +75,34 @@
     gap: 0;
     margin: 0;
     align-items: center;
-    border: 1px solid #1f2937; /* darker grey border around both buttons */
+    border: 1px solid #1f2937; /* Darker gray border around both buttons */
     background: #ffffff;
-    border-radius: 4px; /* match slider/nav button rounding */
-    overflow: hidden; /* ensure rounded corners apply to children */
-    align-self: flex-start; /* avoid stretching to fill parent */
+    border-radius: 4px; /* Match slider/nav button rounding */
+    overflow: hidden; /* Ensure rounded corners apply to children */
+    align-self: flex-start; /* Avoid stretching to fill the parent */
 }
 
 .logo-view__toggle-btn {
     border: 0;
-    padding: 2px 8px; /* minimal vertical padding for compact buttons */
+    padding: 2px 8px; /* Minimal vertical padding for compact buttons */
     background: transparent;
-    color: #6B7280; /* inactive: gray */
+    color: #6B7280; /* Inactive: gray */
     font-weight: 700;
     font-size: 13px;
     cursor: pointer;
     line-height: 1;
-    flex: 1 1 auto; /* make both buttons equal width */
+    flex: 1 1 auto; /* Make both buttons equal width */
     text-align: center;
-    min-width: 60px; /* ensure reasonable tappable width */
+    min-width: 60px; /* Ensure a reasonable tappable width */
 }
 
 .logo-view__toggle-btn--active {
-    color: #0b0b0b; /* active: black */
-    background: #2aa7d6; /* lighter logo-blue background for active button */
+    color: #0b0b0b; /* Active: black */
+    background: var(--weather-map-accent-blue-light); /* Lighter logo-blue background for the active button */
 }
 
 .logo-view__toggle-btn:first-child { border-right: 1px solid rgba(0,0,0,0.06); }
 
 .logo-view__toggle-btn:focus {
-    outline: 2px solid rgba(59,130,246,0.12);
+    outline: 2px solid rgba(var(--weather-map-accent-blue-rgb), 0.12);
 }
