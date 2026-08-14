@@ -1,8 +1,8 @@
-# Interactive DWD ICON-D2 RUC & AROME PI 2.5 km Wind Map
+# Interactive DWD ICON-D2 RUC & AROME PI Wind Map
 [![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://chriz76.github.io/weather-map/)
 [![Data Pipeline Repo](https://img.shields.io/badge/Data-Repository-green?style=flat-square)](https://github.com/Chriz76/weather-data)
 
-The app visualizes localized wind forecast data for **Germany** **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI 2.5 km** using the logo row.
+The app visualizes localized wind forecast data for **Germany** **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI** using the logo row.
 
 [![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://chriz76.github.io/weather-map/)
 
@@ -23,16 +23,17 @@ Most mainstream consumer weather applications render global or regional models w
 
 | Parameter | ICON-D2 RUC / Arome PI | Standard Global Models (e.g., GFS) |
 | :--- | :--- | :--- |
-| **Horizontal Resolution** | **2.2/1.3/2.5 km** grid | 13 km – 27 km grid |
+| **Horizontal Resolution** | **2.2/2.5(1.3) km** grid | 13 km – 27 km grid |
 | **Update Cycle** | **Hourly (Every 60 minutes)** | Every 6 hours |
+| **Interval** | **60/15 min** | 60-360 min |
 | **Data Assimilation** | **Rapid Update Cycle (RUC)** (Continuous assimilation of local radar & station observations) | Intermittent batch assimilation |
 | **Forecast Range** | 28/6 hours | Multi-day extended range |
 
-Arome base wind is only available in 2.5km dataset. The forecasts use the 1.3km resolution for gusts.
+Arome base wind is only available in the 2.5 km dataset. The forecasts use the 1.3 km resolution for gusts.
 
 ### Application for Foiling:
 
-Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.2/2.5 km resolution of the ICON-D2 RUC/Arome PI model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
+Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.2/2.5(1.3) km resolution of the ICON-D2 RUC/Arome PI model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
 
 AROME PI 2.5/1.3 km adds another high-resolution option for nearby regions via Open-Meteo and Météo-France model data.
 
