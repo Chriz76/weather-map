@@ -2,16 +2,38 @@ import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
 import { providers } from '../config';
 import { updateMapMarkerWindspeed, updateMapMarkerLocation, clearMarker } from './markerView';
-import type { Map as LeafletMap, LatLngBoundsExpression, ImageOverlay } from 'leaflet';
+import type { Map as LeafletMap, LatLngBounds, LatLngBoundsExpression, LatLngExpression, ImageOverlay } from 'leaflet';
 import * as L from 'leaflet';
 import type { WindData } from '../types';
 
 type WindOverlayLike = ImageOverlay | {
   setUrl?: (url: string) => unknown;
   setBounds?: (bounds: LatLngBoundsExpression) => unknown;
+  getBounds?: () => LatLngBounds;
 };
 
-export function registerMapOverlayView(map: LeafletMap, windOverlay: WindOverlayLike | null): void {
+function syncOverlayBounds(providerBounds: LatLngBoundsExpression): void {
+  if (!windOverlayInstance || typeof windOverlayInstance.setBounds !== 'function') return;
+
+  const nextBounds = L.latLngBounds(providerBounds as [LatLngExpression, LatLngExpression]);
+
+  try {
+   if (typeof windOverlayInstance.getBounds === 'function') {
+     const currentBounds = windOverlayInstance.getBounds();
+     if (currentBounds.equals(nextBounds)) return;
+    }
+  } catch {
+    // Fall through and update the bounds before applying the new overlay URL.
+  }
+
+  windOverlayInstance.setBounds(nextBounds);
+}
+
+let windOverlayInstance: WindOverlayLike | null = null;
+
+export function registerMapOverlayView(map: LeafletMap, overlay: WindOverlayLike | null): void {
+  windOverlayInstance = overlay;
+
   weatherProviderModel.addEventListener('model:windspeed-updated', () => {
     if (weatherProviderModel.lastClickedLatLng) {
       updateMapMarkerWindspeed(map, weatherProviderModel.windData as WindData | null);
@@ -31,21 +53,13 @@ export function registerMapOverlayView(map: LeafletMap, windOverlay: WindOverlay
 
   uiStateModel.addEventListener('ui:overlay-url-updated', () => {
     const url = uiStateModel.activeOverlayUrl;
-    if (windOverlay && url && typeof windOverlay.setUrl === 'function') {
-      windOverlay.setUrl(url);
-    }
-  });
-
-  weatherProviderModel.addEventListener('model:provider-changed', () => {
     const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
-    const newBounds = providerCfg ? providerCfg.imageBounds : null;
-    if (windOverlay && newBounds && typeof windOverlay.setBounds === 'function') {
-      try {
-        // Call setBounds with the provider bounds. Cast to the expected signature safely.
-        (windOverlay.setBounds as (b: LatLngBoundsExpression) => unknown)(newBounds as LatLngBoundsExpression);
-      } catch (e) {
-        // ignore runtime mismatch
-      }
+    if (providerCfg?.imageBounds) {
+      syncOverlayBounds(providerCfg.imageBounds);
+    }
+
+    if (windOverlayInstance && url && typeof windOverlayInstance.setUrl === 'function') {
+      windOverlayInstance.setUrl(url);
     }
   });
 }
