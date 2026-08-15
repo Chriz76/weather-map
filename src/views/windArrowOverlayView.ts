@@ -36,13 +36,13 @@ type DeckViewState = {
 class WindArrowDeckOverlay extends L.Layer {
   private mapInstance: LeafletMap | null = null;
   private container: HTMLDivElement | null = null;
-  private deck: Deck | null = null;
+  // KORREKTUR: Deck<any> verhindert den Generic-Mismatch mit MapView
+  private deck: Deck<any> | null = null;
   private data: WindArrowPoint[] = [];
 
   public override onAdd(map: LeafletMap): this {
     this.mapInstance = map;
 
-    // Explizit typisierte Panes-Abfrage zur Vermeidung von ESLint 'unsafe' Fehlen
     const panes = map.getPanes();
     const pane: HTMLElement = panes.overlayPane;
 
@@ -58,6 +58,8 @@ class WindArrowDeckOverlay extends L.Layer {
     pane.appendChild(this.container);
 
     const size = map.getSize();
+
+    // Zeile 61: Durch Deck<any> wird 'new MapView()' problemlos akzeptiert
     this.deck = new Deck({
       parent: this.container,
       views: new MapView({ repeat: false }),
@@ -106,7 +108,7 @@ class WindArrowDeckOverlay extends L.Layer {
     return {
       longitude: center.lng,
       latitude: center.lat,
-      zoom: this.mapInstance.getZoom() - 1, // Kacheloffset Leaflet (256) vs Deck.gl (512)
+      zoom: this.mapInstance.getZoom() - 1,
       pitch: 0,
       bearing: 0
     };
@@ -115,7 +117,6 @@ class WindArrowDeckOverlay extends L.Layer {
   private syncViewState(): void {
     if (!this.deck || !this.mapInstance || !this.container) return;
 
-    // Aufheben der Leaflet CSS-Transformation für das Canvas
     const topLeft = this.mapInstance.containerPointToLayerPoint([0, 0]);
     L.DomUtil.setPosition(this.container, topLeft);
 
