@@ -13,7 +13,7 @@ describe('wind WebP decoder', () => {
     data[index + 2] = 0;
     data[index + 3] = 255;
 
-    const imageData = new ImageData(data, width, height);
+    const imageData = { width, height, data } as ImageData;
     const points = decodeWindArrowPointsFromImageData(imageData, {
       bounds: [
         [37.5, -12.0],

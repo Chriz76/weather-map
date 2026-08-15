@@ -47,6 +47,13 @@ const mercatorHeadingFromVector = (u: number, v: number, lat: number): number =>
   return normalizeDegrees((Math.atan2(projectedEast, projectedNorth) * 180) / Math.PI);
 };
 
+/**
+ * Decodes a WebP wind raster into subsampled wind arrow points.
+ *
+ * @param imageData - The decoded image pixels.
+ * @param options - Bounds and decoding parameters for the wind field.
+ * @returns The geographic arrow points ready for a Deck.gl layer.
+ */
 export const decodeWindArrowPointsFromImageData = (
   imageData: ImageData,
   options: WindWebpDecodeOptions
@@ -61,11 +68,11 @@ export const decodeWindArrowPointsFromImageData = (
   for (let y = 0; y < height; y += step) {
     for (let x = 0; x < width; x += step) {
       const index = (y * width + x) * 4;
-      const alpha = data[index + 3];
+      const alpha = data[index + 3] ?? 0;
       if (alpha < alphaThreshold) continue;
 
-      const u = decodeRootScaledComponent(data[index], componentMax);
-      const v = decodeRootScaledComponent(data[index + 1], componentMax);
+      const u = decodeRootScaledComponent(data[index] ?? 0, componentMax);
+      const v = decodeRootScaledComponent(data[index + 1] ?? 0, componentMax);
       const speed = Math.hypot(u, v);
       if (speed < minSpeed) continue;
 
@@ -81,4 +88,3 @@ export const decodeWindArrowPointsFromImageData = (
 
   return points;
 };
-

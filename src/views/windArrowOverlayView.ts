@@ -36,7 +36,7 @@ type DeckViewState = {
 class WindArrowDeckOverlay extends L.Layer {
   private map: LeafletMap | null = null;
   private container: HTMLDivElement | null = null;
-  private deck: Deck | null = null;
+  private deck: { finalize: () => void; setProps: (props: Record<string, unknown>) => void } | null = null;
   private data: WindArrowPoint[] = [];
 
   onAdd(map: LeafletMap): this {
@@ -56,7 +56,6 @@ class WindArrowDeckOverlay extends L.Layer {
       width: map.getSize().x,
       height: map.getSize().y,
       layers: this.buildLayers(),
-      parameters: { depthTest: false },
       viewState: this.getViewState()
     });
 
@@ -81,7 +80,7 @@ class WindArrowDeckOverlay extends L.Layer {
 
   setData(data: WindArrowPoint[]): void {
     this.data = data;
-    this.render();
+    this.updateDeck();
   }
 
   private ensurePane(map: LeafletMap): HTMLElement {
@@ -111,13 +110,7 @@ class WindArrowDeckOverlay extends L.Layer {
 
   private syncViewState(): void {
     if (!this.deck || !this.map) return;
-    const size = this.map.getSize();
-    this.deck.setProps({
-      width: size.x,
-      height: size.y,
-      viewState: this.getViewState()
-    });
-    this.render();
+    this.updateDeck();
   }
 
   private buildLayers(): IconLayer<WindArrowPoint>[] {
@@ -147,9 +140,15 @@ class WindArrowDeckOverlay extends L.Layer {
     ];
   }
 
-  private render(): void {
+  private updateDeck(): void {
     if (!this.deck) return;
-    this.deck.setProps({ layers: this.buildLayers() });
+    const size = this.map?.getSize();
+    this.deck.setProps({
+      width: size?.x ?? 0,
+      height: size?.y ?? 0,
+      viewState: this.getViewState(),
+      layers: this.buildLayers()
+    });
   }
 }
 
@@ -205,22 +204,29 @@ async function refreshOverlay(): Promise<void> {
   }
 }
 
-export const windArrowOverlayView = {
-  init(map: LeafletMap): void {
-    if (!overlayInstance) {
-      overlayInstance = new WindArrowDeckOverlay();
-      overlayInstance.addTo(map);
-    }
-
-    uiStateModel.addEventListener('ui:overlay-url-updated', () => {
-      void refreshOverlay();
-    });
-
-    weatherProviderModel.addEventListener('model:provider-changed', () => {
-      void refreshOverlay();
-    });
-
-    void refreshOverlay();
+/**
+ * Leaflet view responsible for the Deck.gl wind arrow overlay.
+ */
+function initWindArrowOverlayView(map: LeafletMap): void {
+  if (!overlayInstance) {
+    overlayInstance = new WindArrowDeckOverlay();
+    overlayInstance.addTo(map);
   }
-};
 
+  uiStateModel.addEventListener('ui:overlay-url-updated', () => {
+    void refreshOverlay();
+  });
+
+  weatherProviderModel.addEventListener('model:provider-changed', () => {
+    void refreshOverlay();
+  });
+
+  void refreshOverlay();
+}
+
+/**
+ * Public API for the wind arrow overlay view.
+ */
+export const windArrowOverlayView = {
+  init: initWindArrowOverlayView
+};
