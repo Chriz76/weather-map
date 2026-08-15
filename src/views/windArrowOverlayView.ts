@@ -20,7 +20,7 @@ const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
 const WIND_ARROW_ICON_URL =
   'data:image/svg+xml;charset=utf-8,' +
   encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
       <path d="M32 4 L44 24 H36 V52 H28 V24 H20 Z" fill="white"/>
     </svg>
   `);
