@@ -36,8 +36,8 @@ type DeckViewState = {
 class WindArrowDeckOverlay extends L.Layer {
   private mapInstance: LeafletMap | null = null;
   private container: HTMLDivElement | null = null;
-  // KORREKTUR: Deck<any> verhindert den Generic-Mismatch mit MapView
-  private deck: Deck<any> | null = null;
+  // KORREKTUR: Typisiere explizit mit MapView statt any, um ESLint-Regel zu erfüllen
+  private deck: Deck<MapView> | null = null;
   private data: WindArrowPoint[] = [];
 
   public override onAdd(map: LeafletMap): this {
@@ -59,7 +59,6 @@ class WindArrowDeckOverlay extends L.Layer {
 
     const size = map.getSize();
 
-    // Zeile 61: Durch Deck<any> wird 'new MapView()' problemlos akzeptiert
     this.deck = new Deck({
       parent: this.container,
       views: new MapView({ repeat: false }),
