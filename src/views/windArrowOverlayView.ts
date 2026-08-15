@@ -16,6 +16,7 @@ import {
 } from '../utils/windWebpDecoder';
 
 const WIND_ARROW_PANE = 'wind-arrow-overlay-pane';
+const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
 const WIND_ARROW_ICON_URL =
   'data:image/svg+xml;charset=utf-8,' +
@@ -41,6 +42,10 @@ class WindArrowDeckOverlay extends L.Layer {
 
   onAdd(map: LeafletMap): this {
     this.map = map;
+    logger.info('Wind arrow overlay added to map.', {
+      size: map.getSize(),
+      zoom: map.getZoom()
+    });
     const pane = this.ensurePane(map);
     this.container = L.DomUtil.create('div', WIND_ARROW_CLASS) as HTMLDivElement;
     this.container.style.position = 'absolute';
@@ -48,6 +53,10 @@ class WindArrowDeckOverlay extends L.Layer {
     this.container.style.pointerEvents = 'none';
     this.container.style.zIndex = '1';
     pane.appendChild(this.container);
+    logger.info('Wind arrow overlay container attached.', {
+      pane: WIND_ARROW_PANE,
+      paneZIndex: pane.style.zIndex
+    });
 
     this.deck = new Deck({
       parent: this.container,
@@ -57,6 +66,11 @@ class WindArrowDeckOverlay extends L.Layer {
       height: map.getSize().y,
       layers: this.buildLayers(),
       viewState: this.getViewState()
+    });
+    logger.info('Wind arrow Deck.gl instance created.', {
+      layerCount: this.data.length,
+      width: map.getSize().x,
+      height: map.getSize().y
     });
 
     map.on('move zoom resize', this.syncViewState, this);
@@ -85,11 +99,21 @@ class WindArrowDeckOverlay extends L.Layer {
 
   private ensurePane(map: LeafletMap): HTMLElement {
     const existingPane = map.getPane(WIND_ARROW_PANE);
-    if (existingPane) return existingPane;
+    if (existingPane) {
+      logger.debug('Reusing existing wind arrow pane.', {
+        pane: WIND_ARROW_PANE,
+        zIndex: existingPane.style.zIndex
+      });
+      return existingPane;
+    }
 
     const pane = map.createPane(WIND_ARROW_PANE);
-    pane.style.zIndex = '11';
+    pane.style.zIndex = WIND_ARROW_PANE_Z_INDEX;
     pane.style.pointerEvents = 'none';
+    logger.info('Created wind arrow pane.', {
+      pane: WIND_ARROW_PANE,
+      zIndex: pane.style.zIndex
+    });
     return pane;
   }
 
@@ -110,10 +134,17 @@ class WindArrowDeckOverlay extends L.Layer {
 
   private syncViewState(): void {
     if (!this.deck || !this.map) return;
+    logger.debug('Syncing wind arrow Deck.gl view state.', {
+      zoom: this.map.getZoom(),
+      size: this.map.getSize()
+    });
     this.updateDeck();
   }
 
   private buildLayers(): IconLayer<WindArrowPoint>[] {
+    logger.debug('Building wind arrow Deck.gl layers.', {
+      pointCount: this.data.length
+    });
     return [
       new IconLayer<WindArrowPoint>({
         id: 'wind-arrow-layer',
@@ -141,8 +172,17 @@ class WindArrowDeckOverlay extends L.Layer {
   }
 
   private updateDeck(): void {
-    if (!this.deck) return;
+    if (!this.deck) {
+      logger.debug('Skipping wind arrow Deck.gl update because the deck instance is missing.');
+      return;
+    }
     const size = this.map?.getSize();
+    logger.debug('Applying wind arrow Deck.gl props.', {
+      width: size?.x ?? 0,
+      height: size?.y ?? 0,
+      pointCount: this.data.length,
+      hasMap: !!this.map
+    });
     this.deck.setProps({
       width: size?.x ?? 0,
       height: size?.y ?? 0,
@@ -157,28 +197,71 @@ let decodeToken = 0;
 
 async function decodeWindOverlay(url: string, providerId: string): Promise<WindArrowPoint[]> {
   const providerCfg = providers[providerId];
-  if (!providerCfg?.imageBounds) return [];
+  logger.info('Decoding wind overlay WebP.', {
+    providerId,
+    url
+  });
+  if (!providerCfg?.imageBounds) {
+    logger.info('Skipping wind overlay decode because provider bounds are missing.', {
+    providerId
+    });
+    return [];
+  }
 
   const response = await fetch(url);
+  logger.info('Wind overlay WebP fetch completed.', {
+    providerId,
+    url,
+    status: response.status,
+    ok: response.ok,
+    contentType: response.headers.get('content-type')
+  });
+  if (!response.ok) {
+    throw new Error(`Wind overlay WebP request failed (${response.status})`);
+  }
   const blob = await response.blob();
+  logger.info('Wind overlay blob received.', {
+    providerId,
+    url,
+    size: blob.size,
+    type: blob.type
+  });
+  if (typeof createImageBitmap !== 'function') {
+    throw new Error('createImageBitmap is not available in this browser');
+  }
+
   const bitmap = await createImageBitmap(blob);
+  logger.info('Wind overlay bitmap created.', {
+    providerId,
+    width: bitmap.width,
+    height: bitmap.height
+  });
   const canvas = document.createElement('canvas');
   canvas.width = bitmap.width;
   canvas.height = bitmap.height;
   const context = canvas.getContext('2d');
-  if (!context) return [];
+  if (!context) {
+    bitmap.close();
+    throw new Error('Unable to acquire a 2D canvas context for the wind overlay');
+  }
 
   context.drawImage(bitmap, 0, 0);
   const imageData = context.getImageData(0, 0, bitmap.width, bitmap.height);
   bitmap.close();
 
-  return decodeWindArrowPointsFromImageData(imageData, {
+  const points = decodeWindArrowPointsFromImageData(imageData, {
     bounds: providerCfg.imageBounds,
     step: WIND_WEBP_SAMPLE_STEP,
     componentMax: WIND_WEBP_COMPONENT_MAX,
     minSpeed: WIND_WEBP_MIN_SPEED,
     alphaThreshold: WIND_WEBP_ALPHA_THRESHOLD
   });
+  logger.info('Wind overlay WebP decoded into arrow points.', {
+    providerId,
+    url,
+    pointCount: points.length
+  });
+  return points;
 }
 
 async function refreshOverlay(): Promise<void> {
@@ -187,20 +270,49 @@ async function refreshOverlay(): Promise<void> {
   const currentUrl = uiStateModel.activeOverlayUrl;
   const providerId = weatherProviderModel.getActiveProviderId();
   const currentToken = ++decodeToken;
+  logger.info('Refreshing wind arrow overlay.', {
+    providerId,
+    hasUrl: !!currentUrl,
+    token: currentToken
+  });
 
   if (!currentUrl) {
+    logger.info('Clearing wind arrow overlay because no active overlay URL is available.');
     overlayInstance.setData([]);
     return;
   }
 
   try {
     const points = await decodeWindOverlay(currentUrl, providerId);
-    if (currentToken !== decodeToken) return;
+    if (currentToken !== decodeToken) {
+    logger.debug('Discarding outdated wind arrow decode result.', {
+      providerId,
+      token: currentToken,
+      latestToken: decodeToken,
+      pointCount: points.length
+    });
+    return;
+    }
+    logger.info('Updating wind arrow overlay with decoded points.', {
+    providerId,
+    pointCount: points.length
+    });
     overlayInstance.setData(points);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.warn('Wind arrow overlay decode failed:', message);
-    if (currentToken === decodeToken) overlayInstance.setData([]);
+    logger.warn('Wind arrow overlay decode failed.', {
+    providerId,
+    url: currentUrl,
+    token: currentToken,
+    message
+    });
+    if (currentToken === decodeToken) {
+    logger.info('Clearing wind arrow overlay after decode failure.', {
+      providerId,
+      token: currentToken
+    });
+    overlayInstance.setData([]);
+    }
   }
 }
 
@@ -208,6 +320,7 @@ async function refreshOverlay(): Promise<void> {
  * Leaflet view responsible for the Deck.gl wind arrow overlay.
  */
 function initWindArrowOverlayView(map: LeafletMap): void {
+  logger.info('Initializing wind arrow overlay view.');
   if (!overlayInstance) {
     overlayInstance = new WindArrowDeckOverlay();
     overlayInstance.addTo(map);
