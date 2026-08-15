@@ -3,7 +3,7 @@ name: Deploy typescript Branch to Cloudflare Pages
 on:
   push:
     branches:
-      - typescript # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
+      - arrows # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
   workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
 
 jobs:
