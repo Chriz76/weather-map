@@ -9,7 +9,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import {
   decodeWindArrowPointsFromImageData,
   WIND_WEBP_ALPHA_THRESHOLD,
-  WIND_WEBP_SAMPLE_STEP,
+  MIN_ARROW_SPACING_PX,
   type WindArrowPoint
 } from '../utils/windWebpDecoder';
 
@@ -68,7 +68,7 @@ class WindArrowDeckOverlay extends L.Layer {
     });
 
     map.on('move resize zoomAnim', this.syncViewState, this);
-    map.on('zoomend moveend', this.syncViewState, this);
+    map.on('zoomend moveend', this.handleMapMoveOrZoom, this);
 
     this.syncViewState();
     return this;
@@ -76,7 +76,7 @@ class WindArrowDeckOverlay extends L.Layer {
 
   public override onRemove(map: LeafletMap): this {
     map.off('move resize zoomAnim', this.syncViewState, this);
-    map.off('zoomend moveend', this.syncViewState, this);
+    map.off('zoomend moveend', this.handleMapMoveOrZoom, this);
 
     if (this.deck) {
       this.deck.finalize();
@@ -93,6 +93,10 @@ class WindArrowDeckOverlay extends L.Layer {
   public setData(data: WindArrowPoint[]): void {
     this.data = data;
     this.updateDeck();
+  }
+
+  public getMapInstance(): LeafletMap | null {
+    return this.mapInstance;
   }
 
   private getViewState(): DeckViewState {
@@ -123,6 +127,11 @@ class WindArrowDeckOverlay extends L.Layer {
       viewState: this.getViewState(),
       layers: this.buildLayers()
     });
+  }
+
+  private handleMapMoveOrZoom(): void {
+    this.syncViewState();
+    void renderPointsFromCache();
   }
 
   private buildLayers(): IconLayer<WindArrowPoint>[] {
@@ -168,9 +177,15 @@ class WindArrowDeckOverlay extends L.Layer {
 let overlayInstance: WindArrowDeckOverlay | null = null;
 let decodeToken = 0;
 
-async function decodeWindOverlay(url: string, providerId: string): Promise<WindArrowPoint[]> {
-  const providerCfg = providers[providerId];
-  if (!providerCfg?.imageBounds) return [];
+// Cache für das aktuell geladene ImageData, um Netzwerk- und Canvas-Aufwand beim Zoomen/Pannen zu sparen
+let cachedImageData: ImageData | null = null;
+let cachedProviderId: string | null = null;
+let cachedUrl: string | null = null;
+
+async function fetchAndCacheImageData(url: string, providerId: string): Promise<ImageData | null> {
+  if (cachedUrl === url && cachedProviderId === providerId && cachedImageData) {
+    return cachedImageData;
+  }
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -195,11 +210,38 @@ async function decodeWindOverlay(url: string, providerId: string): Promise<WindA
   const imageData = context.getImageData(0, 0, bitmap.width, bitmap.height);
   bitmap.close();
 
-  return decodeWindArrowPointsFromImageData(imageData, {
+  cachedImageData = imageData;
+  cachedUrl = url;
+  cachedProviderId = providerId;
+
+  return imageData;
+}
+
+function renderPointsFromCache(): void {
+  if (!overlayInstance || !cachedImageData || !cachedProviderId) return;
+
+  const map = overlayInstance.getMapInstance();
+  if (!map) return;
+
+  const providerCfg = providers[cachedProviderId];
+  if (!providerCfg?.imageBounds) return;
+
+  const mapBounds = map.getBounds();
+  const zoom = map.getZoom();
+
+  const points = decodeWindArrowPointsFromImageData(cachedImageData, {
     bounds: providerCfg.imageBounds,
-    step: WIND_WEBP_SAMPLE_STEP,
-    alphaThreshold: WIND_WEBP_ALPHA_THRESHOLD
+    zoom: zoom,
+    alphaThreshold: WIND_WEBP_ALPHA_THRESHOLD,
+    viewportBounds: {
+      southLat: mapBounds.getSouth(),
+      westLng: mapBounds.getWest(),
+      northLat: mapBounds.getNorth(),
+      eastLng: mapBounds.getEast()
+    }
   });
+
+  overlayInstance.setData(points);
 }
 
 async function refreshOverlay(): Promise<void> {
@@ -210,19 +252,26 @@ async function refreshOverlay(): Promise<void> {
   const currentToken = ++decodeToken;
 
   if (!currentUrl) {
+    cachedImageData = null;
+    cachedUrl = null;
+    cachedProviderId = null;
     overlayInstance.setData([]);
     return;
   }
 
   try {
-    const points = await decodeWindOverlay(currentUrl, providerId);
+    await fetchAndCacheImageData(currentUrl, providerId);
     if (currentToken !== decodeToken) return;
-    overlayInstance.setData(points);
+
+    renderPointsFromCache();
   } catch (error: unknown) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error(`Wind overlay decoding failed: ${err.message}`);
+    const errMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Wind overlay decoding failed: ${errMessage}`);
 
     if (currentToken === decodeToken) {
+      cachedImageData = null;
+      cachedUrl = null;
+      cachedProviderId = null;
       overlayInstance.setData([]);
     }
   }
