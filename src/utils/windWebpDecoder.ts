@@ -1,7 +1,7 @@
 import type { LatLngBoundsExpression } from 'leaflet';
 
 export const WIND_WEBP_ALPHA_THRESHOLD = 128;
-export const MIN_ARROW_SPACING_PX = 60; // Mindestabstand zwischen Pfeilen in Bildschirmpixeln
+export const MIN_ARROW_SPACING_PX = 80; // Erhöht auf 80px für sauberen Abstand auf Mobile Displays
 
 export type WindArrowPoint = {
   position: [number, number]; // [lon, lat]
@@ -24,41 +24,13 @@ export type WindWebpDecodeOptions = {
   alphaThreshold?: number;
 };
 
-// AROME 2.5km Lambert Conformal Conic (LCC) Projektions-Parameter (Météo-France)
-const DEG2RAD = Math.PI / 180;
-const RAD2DEG = 180 / Math.PI;
-
-const AROME_LCC = {
-  lat0: 46.7 * DEG2RAD,       // Center Latitude
-  lon0: 2.0 * DEG2RAD,        // Center Longitude
-  R: 6371229.0,               // Erdradius für AROME Modell
-  n: 0.727790898,             // Cone factor: sin(lat0)
-};
-
 const normalizeDegrees = (value: number): number => ((value % 360) + 360) % 360;
 
 /**
- * Wandelt Koordinaten (lat, lon) in AROME LCC-Projektionsmeter (easting, northing) um.
+ * Wandelt Pixelkoordinaten (x, y) aus dem unprojizierten AROME Grad-Gitter (EPSG:4326)
+ * direkt in echte [lon, lat] WGS84-Koordinaten um.
  */
-const projectLCC = (latDeg: number, lonDeg: number) => {
-  const lat = latDeg * DEG2RAD;
-  const lon = lonDeg * DEG2RAD;
-  const r = (AROME_LCC.R / AROME_LCC.n) * Math.pow(
-    Math.tan(Math.PI / 4 + AROME_LCC.lat0 / 2) / Math.tan(Math.PI / 4 + lat / 2),
-    AROME_LCC.n
-  );
-  const theta = AROME_LCC.n * (lon - AROME_LCC.lon0);
-  
-  return {
-    easting: r * Math.sin(theta),
-    northing: -r * Math.cos(theta),
-  };
-};
-
-/**
- * Wandelt Pixelkoordinaten (x, y) aus dem nativen AROME-Gitter über LCC-Meter in [lon, lat] um.
- */
-const toLonLatLCC = (
+const toLonLatEquirectangular = (
   x: number,
   y: number,
   width: number,
@@ -67,24 +39,13 @@ const toLonLatLCC = (
 ): [number, number] => {
   const [[southLat, westLng], [northLat, eastLng]] = bounds as [[number, number], [number, number]];
 
-  // 1. LCC-Meter für die Bounding-Box-Ecken berechnen
-  const nw = projectLCC(northLat, westLng);
-  const se = projectLCC(southLat, eastLng);
+  // Linear im WGS84 Grad-Gitter
+  const lon = westLng + (x / (width - 1)) * (eastLng - westLng);
+  
+  // Pixel-Y: 0 ist oben (northLat), height - 1 ist unten (southLat)
+  const lat = northLat - (y / (height - 1)) * (northLat - southLat);
 
-  // 2. Bilineare Interpolation im LCC-Meternetz
-  const currentEasting = nw.easting + (x / (width - 1)) * (se.easting - nw.easting);
-  const currentNorthing = nw.northing - (y / (height - 1)) * (nw.northing - se.northing);
-
-  // 3. Invers-Transformation: LCC-Meter zurück zu WGS84 [lon, lat]
-  const rUn = Math.hypot(currentEasting, currentNorthing);
-  const thetaUn = Math.atan2(currentEasting, -currentNorthing);
-
-  const lonRad = AROME_LCC.lon0 + thetaUn / AROME_LCC.n;
-  const latRad = 2 * Math.atan(
-    Math.pow((AROME_LCC.R / (AROME_LCC.n * rUn)), 1 / AROME_LCC.n) * Math.tan(Math.PI / 4 + AROME_LCC.lat0 / 2)
-  ) - Math.PI / 2;
-
-  return [lonRad * RAD2DEG, latRad * RAD2DEG];
+  return [lon, lat];
 };
 
 /**
@@ -132,7 +93,7 @@ export const decodeWindArrowPointsFromImageData = (
     step = calculateWindStep(width, options.bounds, zoom, MIN_ARROW_SPACING_PX);
   }
 
-  // 2. Viewport-Clipping im LCC-Gitter
+  // 2. Viewport-Clipping im WGS84-Raum (rein linear)
   let xMin = 0;
   let xMax = width;
   let yMin = 0;
@@ -142,19 +103,13 @@ export const decodeWindArrowPointsFromImageData = (
     const [[southLat, westLng], [northLat, eastLng]] = options.bounds as [[number, number], [number, number]];
     const { southLat: vSouth, westLng: vWest, northLat: vNorth, eastLng: vEast } = options.viewportBounds;
 
-    const nwBounds = projectLCC(northLat, westLng);
-    const seBounds = projectLCC(southLat, eastLng);
+    const lonSpan = eastLng - westLng;
+    const latSpan = northLat - southLat;
 
-    const nwView = projectLCC(vNorth, vWest);
-    const seView = projectLCC(vSouth, vEast);
-
-    const eastingSpan = seBounds.easting - nwBounds.easting;
-    const northingSpan = nwBounds.northing - seBounds.northing;
-
-    const pxWest = Math.floor(((nwView.easting - nwBounds.easting) / eastingSpan) * width);
-    const pxEast = Math.ceil(((seView.easting - nwBounds.easting) / eastingSpan) * width);
-    const pxNorth = Math.floor(((nwBounds.northing - nwView.northing) / northingSpan) * height);
-    const pxSouth = Math.ceil(((nwBounds.northing - seView.northing) / northingSpan) * height);
+    const pxWest = Math.floor(((vWest - westLng) / lonSpan) * width);
+    const pxEast = Math.ceil(((vEast - westLng) / lonSpan) * width);
+    const pxNorth = Math.floor(((northLat - vNorth) / latSpan) * height);
+    const pxSouth = Math.ceil(((northLat - vSouth) / latSpan) * height);
 
     xMin = Math.max(0, Math.min(width, pxWest));
     xMax = Math.max(0, Math.min(width, pxEast));
@@ -193,8 +148,8 @@ export const decodeWindArrowPointsFromImageData = (
       const angleDeg = (angleRad * 180.0) / Math.PI;
       const deckGlAngle = normalizeDegrees(-angleDeg);
 
-      // Geographische Position (LCC Invers-Transformation)
-      const [lon, lat] = toLonLatLCC(x, y, width, height, options.bounds);
+      // Geographische Position (WGS84)
+      const [lon, lat] = toLonLatEquirectangular(x, y, width, height, options.bounds);
 
       points.push({
         position: [lon, lat],
