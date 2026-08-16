@@ -9,8 +9,6 @@ import { uiStateModel } from '../models/uiStateModel';
 import {
   decodeWindArrowPointsFromImageData,
   WIND_WEBP_ALPHA_THRESHOLD,
-  WIND_WEBP_COMPONENT_MAX,
-  WIND_WEBP_MIN_SPEED,
   WIND_WEBP_SAMPLE_STEP,
   type WindArrowPoint
 } from '../utils/windWebpDecoder';
@@ -36,7 +34,6 @@ type DeckViewState = {
 class WindArrowDeckOverlay extends L.Layer {
   private mapInstance: LeafletMap | null = null;
   private container: HTMLDivElement | null = null;
-  // KORREKTUR: Typisiere explizit mit MapView statt any, um ESLint-Regel zu erfüllen
   private deck: Deck<MapView> | null = null;
   private data: WindArrowPoint[] = [];
 
@@ -201,8 +198,6 @@ async function decodeWindOverlay(url: string, providerId: string): Promise<WindA
   return decodeWindArrowPointsFromImageData(imageData, {
     bounds: providerCfg.imageBounds,
     step: WIND_WEBP_SAMPLE_STEP,
-    componentMax: WIND_WEBP_COMPONENT_MAX,
-    minSpeed: WIND_WEBP_MIN_SPEED,
     alphaThreshold: WIND_WEBP_ALPHA_THRESHOLD
   });
 }
@@ -224,6 +219,9 @@ async function refreshOverlay(): Promise<void> {
     if (currentToken !== decodeToken) return;
     overlayInstance.setData(points);
   } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error(`Wind overlay decoding failed: ${err.message}`);
+
     if (currentToken === decodeToken) {
       overlayInstance.setData([]);
     }
