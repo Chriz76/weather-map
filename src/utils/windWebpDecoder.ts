@@ -1,7 +1,7 @@
 import type { LatLngBoundsExpression } from 'leaflet';
 
 export const WIND_WEBP_ALPHA_THRESHOLD = 128;
-export const MIN_ARROW_SPACING_PX = 20; // Mindestabstand zwischen Pfeilen in Bildschirmpixeln
+export const MIN_ARROW_SPACING_PX = 60; // Mindestabstand zwischen Pfeilen in Bildschirmpixeln
 
 export type WindArrowPoint = {
   position: [number, number]; // [lon, lat]
