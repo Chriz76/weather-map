@@ -1,21 +1,17 @@
 import type { LatLngBoundsExpression } from 'leaflet';
 
 export const WIND_WEBP_SAMPLE_STEP = 20;
-export const WIND_WEBP_COMPONENT_MAX = 50.0; // Entspricht MAX_RAW_SPEED
-export const WIND_WEBP_MIN_SPEED = 0.1;
 export const WIND_WEBP_ALPHA_THRESHOLD = 128;
 
 export type WindArrowPoint = {
   position: [number, number]; // [lon, lat]
-  angle: number;              // 0° = Nord, 90° = Ost
-  speed: number;              // m/s
+  angle: number;              // 0° = Nord, 90° = Ost (Meteorologischer Kompasswinkel)
+  speed: number;              // Dummy/Einheitswert (z.B. 1.0 m/s), da Reintrikats-Richtungs-Tile
 };
 
 export type WindWebpDecodeOptions = {
   bounds: LatLngBoundsExpression;
   step?: number;
-  componentMax?: number;
-  minSpeed?: number;
   alphaThreshold?: number;
 };
 
@@ -35,15 +31,13 @@ const toLonLat = (
 };
 
 /**
- * Dekodiert das nicht-linear skalierte WebP-Windraster in Punkte für Deck.gl / Leaflet.
+ * Dekodiert das Einheitsvektor-WebP-Windraster in Richtungspunkte für Deck.gl / Leaflet.
  */
 export const decodeWindArrowPointsFromImageData = (
   imageData: ImageData,
   options: WindWebpDecodeOptions
 ): WindArrowPoint[] => {
   const step = options.step ?? WIND_WEBP_SAMPLE_STEP;
-  const maxSpeed = options.componentMax ?? WIND_WEBP_COMPONENT_MAX;
-  const minSpeed = options.minSpeed ?? WIND_WEBP_MIN_SPEED;
   const alphaThreshold = options.alphaThreshold ?? WIND_WEBP_ALPHA_THRESHOLD;
   
   const points: WindArrowPoint[] = [];
@@ -54,27 +48,21 @@ export const decodeWindArrowPointsFromImageData = (
       const index = (y * width + x) * 4;
       const alpha = data[index + 3] ?? 0;
       
+      // 1. Maskierte/Ungültige Randpixel ignorieren
       if (alpha < alphaThreshold) continue;
 
-      // 1. Byte [0, 255] zentriert auf [-1.0, +1.0] zurückrechnen (128 ist Nullwind)
-      const uScaled = ((data[index] ?? 128) / 255.0) * 2.0 - 1.0;
-      const vScaled = ((data[index + 1] ?? 128) / 255.0) * 2.0 - 1.0;
+      // 2. R/G Bytes [0, 255] zentriert auf normierte Einheitsvektoren [-1.0, +1.0] zurückrechnen
+      // 128 entspricht im Python-Backend exakt 0.0
+      const uNorm = ((data[index] ?? 128) - 128) / 127.5;
+      const vNorm = ((data[index + 1] ?? 128) - 128) / 127.5;
 
-      // 2. Skalierten Betrag f(S) berechnen
-      // f(S) = sqrt(S) / sqrt(S_max)
-      const fS = Math.hypot(uScaled, vScaled);
-      
-      if (fS === 0) continue;
+      // 3. Schwachwind-/Nullwind-Check: Wenn Vektorlänge nahe 0, fliegen schwache Punkte raus
+      const vectorLength = Math.hypot(uNorm, vNorm);
+      if (vectorLength < 0.05) continue; 
 
-      // 3. Physikalische Windgeschwindigkeit S rekonstruieren: S = (f(S))^2 * S_max
-      const speed = fS * fS * maxSpeed;
-      
-      if (speed < minSpeed) continue;
-
-      // 4. Kompasswinkel direkt aus den Erdnord-Komponenten berechnen
-      // Python hat (u_earth, v_earth) encodiert -> atan2(u, v) liefert mathematischen
-      // Winkel relativ zu Nord.
-      const angleRad = Math.atan2(uScaled, vScaled);
+      // 4. Kompasswinkel aus den Erdnord-Komponenten berechnen
+      // atan2(u_norm, v_norm) gibt den Winkel direkt relativ zu Erdnord (0° = Nord, 90° = Ost)
+      const angleRad = Math.atan2(uNorm, vNorm);
       const angle = normalizeDegrees((angleRad * 180.0) / Math.PI);
 
       // 5. Geographische Position im Pixelraster bestimmen
@@ -83,7 +71,7 @@ export const decodeWindArrowPointsFromImageData = (
       points.push({
         position: [lon, lat],
         angle,
-        speed
+        speed: 1.0 // Einheitsgeschwindigkeit für reine Pfeil-Visualisierung
       });
     }
   }
