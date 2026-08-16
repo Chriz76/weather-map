@@ -1,18 +1,14 @@
 import type { LatLngBoundsExpression } from 'leaflet';
 
 export const WIND_WEBP_SAMPLE_STEP = 20;
-export const WIND_WEBP_COMPONENT_MAX = 50;
+export const WIND_WEBP_COMPONENT_MAX = 50.0; // Entspricht MAX_RAW_SPEED
 export const WIND_WEBP_MIN_SPEED = 0.1;
 export const WIND_WEBP_ALPHA_THRESHOLD = 128;
 
-// AROME France Lambert Conformal Projection Center (Center Meridian & Standard Parallel)
-const AROME_LON_0 = 2.3371412;
-const AROME_LAT_0 = 46.7;
-
 export type WindArrowPoint = {
-  position: [number, number];
-  angle: number;
-  speed: number;
+  position: [number, number]; // [lon, lat]
+  angle: number;              // 0° = Nord, 90° = Ost
+  speed: number;              // m/s
 };
 
 export type WindWebpDecodeOptions = {
@@ -24,55 +20,6 @@ export type WindWebpDecodeOptions = {
 };
 
 const normalizeDegrees = (value: number): number => ((value % 360) + 360) % 360;
-
-/**
- * Wandelt den Uint8-Byte-Wert [0, 255] in das skalierte Intervall [-1.0, +1.0] um.
- */
-const byteToNormalized = (channelValue: number): number => {
-  return (channelValue / 255.0) * 2.0 - 1.0;
-};
-
-/**
- * Rekonstruiert die physikalische Windgeschwindigkeit (m/s oder Knots je nach Max-Wert)
- * durch Aufheben der Wurzel-Skalierung: S_phys = (S_norm)² * S_max
- */
-const decodePhysicalSpeed = (uNorm: number, vNorm: number, maxSpeed: number): number => {
-  const sNorm = Math.hypot(uNorm, vNorm);
-  return sNorm * sNorm * maxSpeed;
-};
-
-/**
- * Rechnet die AROME Lambert-Gitter-Komponenten (uGrid, vGrid)
- * in erdbezogene Komponenten (uEarth, vEarth) um (Meridiankonvergenz-Korrektur).
- */
-const rotateGridToEarth = (
-  uGrid: number,
-  vGrid: number,
-  lon: number,
-  lat: number
-): { uEarth: number; vEarth: number } => {
-  const latRad = (AROME_LAT_0 * Math.PI) / 180;
-  const dLonRad = ((lon - AROME_LON_0) * Math.PI) / 180;
-
-  // Meridiankonvergenz gamma = (lon - lon_0) * sin(lat_0)
-  const gamma = dLonRad * Math.sin(latRad);
-
-  const cosG = Math.cos(gamma);
-  const sinG = Math.sin(gamma);
-
-  return {
-    uEarth: uGrid * cosG + vGrid * sinG,
-    vEarth: -uGrid * sinG + vGrid * cosG
-  };
-};
-
-/**
- * Berechnet den Kompass-Winkel in Grad (0° = Nord, 90° = Ost) für Deck.gl IconLayer.
- */
-const calculateCompassHeading = (uEarth: number, vEarth: number): number => {
-  const angleRad = Math.atan2(uEarth, vEarth);
-  return normalizeDegrees((angleRad * 180.0) / Math.PI);
-};
 
 const toLonLat = (
   x: number,
@@ -88,20 +35,17 @@ const toLonLat = (
 };
 
 /**
- * Decodes a WebP wind raster into subsampled wind arrow points.
- *
- * @param imageData - The decoded image pixels.
- * @param options - Bounds and decoding parameters for the wind field.
- * @returns The geographic arrow points ready for a Deck.gl layer.
+ * Dekodiert das nicht-linear skalierte WebP-Windraster in Punkte für Deck.gl / Leaflet.
  */
 export const decodeWindArrowPointsFromImageData = (
   imageData: ImageData,
   options: WindWebpDecodeOptions
 ): WindArrowPoint[] => {
   const step = options.step ?? WIND_WEBP_SAMPLE_STEP;
-  const componentMax = options.componentMax ?? WIND_WEBP_COMPONENT_MAX;
+  const maxSpeed = options.componentMax ?? WIND_WEBP_COMPONENT_MAX;
   const minSpeed = options.minSpeed ?? WIND_WEBP_MIN_SPEED;
   const alphaThreshold = options.alphaThreshold ?? WIND_WEBP_ALPHA_THRESHOLD;
+  
   const points: WindArrowPoint[] = [];
   const { width, height, data } = imageData;
 
@@ -109,24 +53,32 @@ export const decodeWindArrowPointsFromImageData = (
     for (let x = 0; x < width; x += step) {
       const index = (y * width + x) * 4;
       const alpha = data[index + 3] ?? 0;
+      
       if (alpha < alphaThreshold) continue;
 
-      // 1. Gitter-Komponenten im Bereich [-1.0, +1.0] aus R/G Kanälen extrahieren
-      const uGridNorm = byteToNormalized(data[index] ?? 128);
-      const vGridNorm = byteToNormalized(data[index + 1] ?? 128);
+      // 1. Byte [0, 255] zentriert auf [-1.0, +1.0] zurückrechnen (128 ist Nullwind)
+      const uScaled = ((data[index] ?? 128) / 255.0) * 2.0 - 1.0;
+      const vScaled = ((data[index + 1] ?? 128) / 255.0) * 2.0 - 1.0;
 
-      // 2. Physikalische Geschwindigkeit rekonstruieren
-      const speed = decodePhysicalSpeed(uGridNorm, vGridNorm, componentMax);
+      // 2. Skalierten Betrag f(S) berechnen
+      // f(S) = sqrt(S) / sqrt(S_max)
+      const fS = Math.hypot(uScaled, vScaled);
+      
+      if (fS === 0) continue;
+
+      // 3. Physikalische Windgeschwindigkeit S rekonstruieren: S = (f(S))^2 * S_max
+      const speed = fS * fS * maxSpeed;
+      
       if (speed < minSpeed) continue;
 
-      // 3. Geographische Position berechnen
+      // 4. Kompasswinkel direkt aus den Erdnord-Komponenten berechnen
+      // Python hat (u_earth, v_earth) encodiert -> atan2(u, v) liefert mathematischen
+      // Winkel relativ zu Nord.
+      const angleRad = Math.atan2(uScaled, vScaled);
+      const angle = normalizeDegrees((angleRad * 180.0) / Math.PI);
+
+      // 5. Geographische Position im Pixelraster bestimmen
       const [lon, lat] = toLonLat(x, y, width, height, options.bounds);
-
-      // 4. AROME Lambert-Gittervektoren auf echtes Geographisch-Nord drehen
-      const { uEarth, vEarth } = rotateGridToEarth(uGridNorm, vGridNorm, lon, lat);
-
-      // 5. Winkeltreuen Kompasswinkel berechnen
-      const angle = calculateCompassHeading(uEarth, vEarth);
 
       points.push({
         position: [lon, lat],
