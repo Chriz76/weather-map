@@ -26,6 +26,16 @@ export type WindWebpDecodeOptions = {
 
 const normalizeDegrees = (value: number): number => ((value % 360) + 360) % 360;
 
+// Hilfsfunktionen für Mercator-Y (EPSG:3857) Projektion
+const latToMercatorY = (lat: number): number => {
+  const rad = (lat * Math.PI) / 180;
+  return Math.log(Math.tan(Math.PI / 4 + rad / 2));
+};
+
+const mercatorYToLat = (y: number): number => {
+  return (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * (180 / Math.PI);
+};
+
 /**
  * Berechnet das ideale Stepping als Zweierpotenz (1, 2, 4, 8, 16, 32, ...),
  * sodass der Abstand auf dem Bildschirm immer mindestens `minSpacingPx` entspricht.
@@ -40,7 +50,6 @@ export const calculateWindStep = (
   const lngSpan = Math.abs(eastLng - westLng);
 
   // 1. Berechne die Breite des gesamten Bildes in Bildschirmpixeln bei diesem Zoom-Level
-  // Formula: 256 * 2^zoom ist die Weltbreite in Pixeln bei 360° Längengraden
   const totalImageWidthPx = (lngSpan / 360.0) * 256 * Math.pow(2, zoom);
 
   // 2. Wieviele Bildschirmpixel entspricht 1 Pixel im WebP-Image?
@@ -55,6 +64,9 @@ export const calculateWindStep = (
   return powerOfTwoStep;
 };
 
+/**
+ * Wandelt Pixelkoordinaten (x, y) unter Berücksichtigung der Web-Mercator-Verzerrung in [lon, lat] um.
+ */
 const toLonLat = (
   x: number,
   y: number,
@@ -63,8 +75,18 @@ const toLonLat = (
   bounds: LatLngBoundsExpression
 ): [number, number] => {
   const [[southLat, westLng], [northLat, eastLng]] = bounds as [[number, number], [number, number]];
+  
+  // Längengrad ist linear
   const lon = westLng + (x / (width - 1)) * (eastLng - westLng);
-  const lat = northLat - (y / (height - 1)) * (northLat - southLat);
+
+  // Breitengrad über Mercator-Y entzerren
+  const minY = latToMercatorY(southLat);
+  const maxY = latToMercatorY(northLat);
+  
+  // y=0 ist oben (northLat), y=height-1 ist unten (southLat)
+  const currentY = maxY - (y / (height - 1)) * (maxY - minY);
+  const lat = mercatorYToLat(currentY);
+
   return [lon, lat];
 };
 
@@ -85,7 +107,7 @@ export const decodeWindArrowPointsFromImageData = (
     step = calculateWindStep(width, options.bounds, zoom, MIN_ARROW_SPACING_PX);
   }
 
-  // 2. Viewport-Clipping: Bestimme Pixelgrenzen (xMin, xMax, yMin, yMax) für den Ausschnitt
+  // 2. Viewport-Clipping mit Mercator-Berücksichtigung
   let xMin = 0;
   let xMax = width;
   let yMin = 0;
@@ -96,15 +118,19 @@ export const decodeWindArrowPointsFromImageData = (
     const { southLat: vSouth, westLng: vWest, northLat: vNorth, eastLng: vEast } = options.viewportBounds;
 
     const lonSpan = eastLng - westLng;
-    const latSpan = northLat - southLat;
-
-    // Koordinaten in Bild-Pixel umrechnen
     const pxWest = Math.floor(((vWest - westLng) / lonSpan) * width);
     const pxEast = Math.ceil(((vEast - westLng) / lonSpan) * width);
-    const pxNorth = Math.floor(((northLat - vNorth) / latSpan) * height);
-    const pxSouth = Math.ceil(((northLat - vSouth) / latSpan) * height);
 
-    // Auf Raster-Ebene und Bildgrenzen begrenzen
+    const minY = latToMercatorY(southLat);
+    const maxY = latToMercatorY(northLat);
+    const mSpan = maxY - minY;
+
+    const vNorthY = latToMercatorY(vNorth);
+    const vSouthY = latToMercatorY(vSouth);
+
+    const pxNorth = Math.floor(((maxY - vNorthY) / mSpan) * height);
+    const pxSouth = Math.ceil(((maxY - vSouthY) / mSpan) * height);
+
     xMin = Math.max(0, Math.min(width, pxWest));
     xMax = Math.max(0, Math.min(width, pxEast));
     yMin = Math.max(0, Math.min(height, pxNorth));
@@ -112,7 +138,6 @@ export const decodeWindArrowPointsFromImageData = (
   }
 
   // 3. Ausrichtung des Steppings an das globale Zweierpotenz-Grid
-  // (Verhindert Grid-Verschiebungen beim Pannen der Karte)
   const startX = Math.floor(xMin / step) * step;
   const startY = Math.floor(yMin / step) * step;
 
@@ -143,7 +168,7 @@ export const decodeWindArrowPointsFromImageData = (
       const angleDeg = (angleRad * 180.0) / Math.PI;
       const deckGlAngle = normalizeDegrees(-angleDeg);
 
-      // Geographische Position
+      // Geographische Position (Mercator-korrigiert)
       const [lon, lat] = toLonLat(x, y, width, height, options.bounds);
 
       points.push({
