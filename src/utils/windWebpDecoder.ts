@@ -25,15 +25,29 @@ export type WindWebpDecodeOptions = {
   step?: number;
   zoom?: number;
   alphaThreshold?: number;
+  debug?: boolean; // Schaltet erweiterte Debug-Logs ein/aus
 };
 
 const normalizeDegrees = (value: number): number => ((value % 360) + 360) % 360;
 
 /**
+ * Hilfsfunktion: Berechnet die Distanz zwischen zwei Lat/Lon Punkten in Kilometern (Haversine-Formel)
+ */
+const calculateDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Erdradius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+/**
  * Wandelt jegliche Leaflet LatLngBoundsExpression sicher in [[south, west], [north, east]] um.
  */
 const normalizeBounds = (bounds: LatLngBoundsExpression): NormalizedBounds => {
-  // Falls es ein Leaflet LatLngBounds Objekt ist
   if (bounds && typeof bounds === 'object' && 'getSouthWest' in bounds && typeof bounds.getSouthWest === 'function') {
     const b = bounds as LatLngBounds;
     const sw = b.getSouthWest();
@@ -41,11 +55,9 @@ const normalizeBounds = (bounds: LatLngBoundsExpression): NormalizedBounds => {
     return [[sw.lat, sw.lng], [ne.lat, ne.lng]];
   }
 
-  // Falls es bereits ein Array-Format ist
   if (Array.isArray(bounds)) {
     const [sw, ne] = bounds as unknown[];
 
-    // Format: [[south, west], [north, east]]
     if (Array.isArray(sw) && Array.isArray(ne)) {
       return [
         [Number(sw[0]), Number(sw[1])],
@@ -53,7 +65,6 @@ const normalizeBounds = (bounds: LatLngBoundsExpression): NormalizedBounds => {
       ];
     }
 
-    // Format: [LatLng, LatLng]
     if (sw && typeof sw === 'object' && 'lat' in sw && 'lng' in sw &&
         ne && typeof ne === 'object' && 'lat' in ne && 'lng' in ne) {
       const swObj = sw as { lat: number; lng: number };
@@ -62,7 +73,6 @@ const normalizeBounds = (bounds: LatLngBoundsExpression): NormalizedBounds => {
     }
   }
 
-  // Fallback / Fallback-Standard (falls ungültige Daten übergeben werden)
   return [[0, 0], [0, 0]];
 };
 
@@ -112,8 +122,8 @@ export const decodeWindArrowPointsFromImageData = (
   options: WindWebpDecodeOptions
 ): WindArrowPoint[] => {
   const { width, height, data } = imageData;
+  const enableDebug = options.debug ?? true; // Standardmäßig true für direkte Diagnose
   
-  // Sicheres Normalisieren für den internen Gebrauch
   const bounds = normalizeBounds(options.bounds);
   const alphaThreshold = options.alphaThreshold ?? WIND_WEBP_ALPHA_THRESHOLD;
 
@@ -183,6 +193,42 @@ export const decodeWindArrowPointsFromImageData = (
         speed: 1.0
       });
     }
+  }
+
+  // =========================================================================
+  // DEBUG LOGS
+  // =========================================================================
+  if (enableDebug) {
+    const [[sLat, wLng], [nLat, eLng]] = bounds;
+    
+    // Berechne Distanz zwischen 2 benachbarten Pixeln (Step = 1)
+    const [p0Lon, p0Lat] = toLonLatEquirectangular(0, 0, width, height, bounds);
+    const [p1Lon, p1Lat_Y] = toLonLatEquirectangular(0, 1, width, height, bounds);
+    const [p1Lon_X, p0Lat_X] = toLonLatEquirectangular(1, 0, width, height, bounds);
+
+    const distLatKm = calculateDistanceKm(p0Lat, p0Lon, p1Lat_Y, p0Lon);
+    const distLngKm = calculateDistanceKm(p0Lat, p0Lon, p0Lat_X, p1Lon_X);
+
+    console.groupCollapsed(`🔍 [WindDecoder Debug] Decodiert: ${points.length} Punkte (Step: ${step})`);
+    console.log(`📐 Image Dimensions:`, `${width}x${height} px`);
+    console.log(`🗺️ Normalized Bounds:`, {
+      SouthWest: [sLat, wLng],
+      NorthEast: [nLat, eLng],
+      LatSpan: (nLat - sLat).toFixed(4) + '°',
+      LngSpan: (eLng - wLng).toFixed(4) + '°',
+    });
+    console.log(`📏 Native Grid Pixel-Abstand (Step = 1):`, {
+      NordSüd_Distanz: `${distLatKm.toFixed(3)} km (${Math.abs(p0Lat - p1Lat_Y).toFixed(5)}°)`,
+      OstWest_Distanz: `${distLngKm.toFixed(3)} km (${Math.abs(p0Lon - p1Lon_X).toFixed(5)}°)`,
+    });
+    console.log(`🎯 Aktuelle Render-Schrittweite (Step = ${step}):`, {
+      Effektiver_NordSüd_Abstand: `${(distLatKm * step).toFixed(3)} km`,
+      Effektiver_OstWest_Abstand: `${(distLngKm * step).toFixed(3)} km`,
+    });
+    if (points.length > 1) {
+      console.log(`📍 Erste 2 Punkte im Output:`, [points[0], points[1]]);
+    }
+    console.groupEnd();
   }
 
   return points;
