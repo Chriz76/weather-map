@@ -5,8 +5,8 @@ export const WIND_WEBP_ALPHA_THRESHOLD = 128;
 
 export type WindArrowPoint = {
   position: [number, number]; // [lon, lat]
-  angle: number;              // 0° = Nord, 90° = Ost (Meteorologischer Kompasswinkel)
-  speed: number;              // Dummy/Einheitswert (z.B. 1.0 m/s), da Reintrikats-Richtungs-Tile
+  angle: number;              // 0° = Nord, 90° = Ost
+  speed: number;              // Einheitswert (1.0 m/s) für reine Richtungsanzeige
 };
 
 export type WindWebpDecodeOptions = {
@@ -31,7 +31,7 @@ const toLonLat = (
 };
 
 /**
- * Dekodiert das Einheitsvektor-WebP-Windraster in Richtungspunkte für Deck.gl / Leaflet.
+ * Dekodiert das Einheitsvektor-WebP-Windraster in Punkte für Deck.gl / Leaflet.
  */
 export const decodeWindArrowPointsFromImageData = (
   imageData: ImageData,
@@ -48,30 +48,27 @@ export const decodeWindArrowPointsFromImageData = (
       const index = (y * width + x) * 4;
       const alpha = data[index + 3] ?? 0;
       
-      // 1. Maskierte/Ungültige Randpixel ignorieren
       if (alpha < alphaThreshold) continue;
 
-      // 2. R/G Bytes [0, 255] zentriert auf normierte Einheitsvektoren [-1.0, +1.0] zurückrechnen
-      // 128 entspricht im Python-Backend exakt 0.0
+      // 1. R/G Bytes [0, 255] auf normierte Einheitsvektoren [-1.0, +1.0] zurückrechnen
       const uNorm = ((data[index] ?? 128) - 128) / 127.5;
       const vNorm = ((data[index + 1] ?? 128) - 128) / 127.5;
 
-      // 3. Schwachwind-/Nullwind-Check: Wenn Vektorlänge nahe 0, fliegen schwache Punkte raus
+      // 2. Schwachwind- bzw. Nullwindbereich filtern
       const vectorLength = Math.hypot(uNorm, vNorm);
-      if (vectorLength < 0.05) continue; 
+      if (vectorLength < 0.05) continue;
 
-      // 4. Kompasswinkel aus den Erdnord-Komponenten berechnen
-      // atan2(u_norm, v_norm) gibt den Winkel direkt relativ zu Erdnord (0° = Nord, 90° = Ost)
+      // 3. Kompasswinkel aus den Erdnord-Komponenten berechnen
       const angleRad = Math.atan2(uNorm, vNorm);
       const angle = normalizeDegrees((angleRad * 180.0) / Math.PI);
 
-      // 5. Geographische Position im Pixelraster bestimmen
+      // 4. Geographische Position im Pixelraster bestimmen
       const [lon, lat] = toLonLat(x, y, width, height, options.bounds);
 
       points.push({
         position: [lon, lat],
         angle,
-        speed: 1.0 // Einheitsgeschwindigkeit für reine Pfeil-Visualisierung
+        speed: 1.0
       });
     }
   }
