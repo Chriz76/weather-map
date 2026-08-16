@@ -1,51 +1,101 @@
+export const WIND_WEBP_ALPHA_THRESHOLD = 128;
+export const MIN_ARROW_SPACING_PX = 80;
+
+export type WindArrowPoint = {
+  position: [number, number]; // [lon, lat]
+  angle: number;              // Winkel für Deck.gl (im Gegenuhrzeigersinn)
+  speed: number;              // Einheitswert (1.0 m/s) für reine Richtungsanzeige
+};
+
+export type ViewportBounds = {
+  southLat: number;
+  westLng: number;
+  northLat: number;
+  eastLng: number;
+};
+
+// Explizites Tuple-Interface für die Bounds, um Unsafe-Member-Access Fehler zu vermeiden
+export type StrictLatLngBounds = [[number, number], [number, number]];
+
+export type WindWebpDecodeOptions = {
+  bounds: StrictLatLngBounds | Array<[number, number]>;
+  viewportBounds?: ViewportBounds;
+  step?: number;
+  zoom?: number;
+  alphaThreshold?: number;
+};
+
+const normalizeDegrees = (value: number): number => ((value % 360) + 360) % 360;
+
+/**
+ * Wandelt Pixelkoordinaten (x, y) aus dem unprojizierten AROME Grad-Gitter (EPSG:4326)
+ * direkt in echte [lon, lat] WGS84-Koordinaten um.
+ */
+const toLonLatEquirectangular = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  bounds: StrictLatLngBounds
+): [number, number] => {
+  const [[southLat, westLng], [northLat, eastLng]] = bounds;
+
+  const lon = westLng + (x / (width - 1)) * (eastLng - westLng);
+  const lat = northLat - (y / (height - 1)) * (northLat - southLat);
+
+  return [lon, lat];
+};
+
+/**
+ * Berechnet das ideale Stepping als Zweierpotenz (1, 2, 4, 8, 16, 32, ...).
+ */
 export const calculateWindStep = (
   imageWidth: number,
-  imageBounds: LatLngBoundsExpression,
+  imageBounds: StrictLatLngBounds,
   zoom: number,
   minSpacingPx: number = MIN_ARROW_SPACING_PX
 ): number => {
-  const [[, westLng], [, eastLng]] = imageBounds as [[number, number], [number, number]];
+  const [[, westLng], [, eastLng]] = imageBounds;
   const lngSpan = Math.abs(eastLng - westLng);
 
-  // 1. Breite des Bildes in Bildschirmpixeln bei aktuellem Zoom
   const totalImageWidthPx = (lngSpan / 360.0) * 256 * Math.pow(2, zoom);
-
-  // 2. Ratio: Wie viele Display-Pixel entspricht 1 Rasterpunkt?
   const pxRatio = totalImageWidthPx / imageWidth;
-
-  // 3. Wie viele Rasterpunkte für den gewünschten Abstand überspringen?
   const idealStep = minSpacingPx / pxRatio;
 
-  // 4. FIX: Zwingend auf eine Integer-Zweierpotenz >= 1 begrenzen (1, 2, 4, 8, 16...)
-  const powerOfTwoStep = Math.max(1, Math.pow(2, Math.ceil(Math.log2(idealStep))));
-
-  return powerOfTwoStep;
+  // Garantiert min. 1 und Zweierpotenz
+  return Math.max(1, Math.pow(2, Math.ceil(Math.log2(idealStep))));
 };
 
+/**
+ * Dekodiert das Einheitsvektor-WebP-Windraster dynamisch geclipped auf den Viewport.
+ */
 export const decodeWindArrowPointsFromImageData = (
   imageData: ImageData,
   options: WindWebpDecodeOptions
 ): WindArrowPoint[] => {
   const { width, height, data } = imageData;
+  
+  // Explizites Casting auf typensichere Tuple-Struktur
+  const bounds = options.bounds as StrictLatLngBounds;
   const alphaThreshold = options.alphaThreshold ?? WIND_WEBP_ALPHA_THRESHOLD;
 
-  // 1. Dynamisches Stepping (garantiert Integer >= 1)
+  // 1. Dynamisches Stepping bestimmen
   let step = options.step;
   if (!step) {
     const zoom = options.zoom ?? 6;
-    step = calculateWindStep(width, options.bounds, zoom, MIN_ARROW_SPACING_PX);
+    step = calculateWindStep(width, bounds, zoom, MIN_ARROW_SPACING_PX);
   } else {
     step = Math.max(1, Math.floor(step));
   }
 
-  // 2. Viewport Clipping
+  // 2. Viewport-Clipping
   let xMin = 0;
   let xMax = width;
   let yMin = 0;
   let yMax = height;
 
   if (options.viewportBounds) {
-    const [[southLat, westLng], [northLat, eastLng]] = options.bounds as [[number, number], [number, number]];
+    const [[southLat, westLng], [northLat, eastLng]] = bounds;
     const { southLat: vSouth, westLng: vWest, northLat: vNorth, eastLng: vEast } = options.viewportBounds;
 
     const lonSpan = eastLng - westLng;
@@ -57,20 +107,19 @@ export const decodeWindArrowPointsFromImageData = (
     yMax = Math.min(height, Math.ceil(((northLat - vSouth) / latSpan) * height));
   }
 
-  // 3. Ausrichtung des Steppings an das Zweierpotenz-Gitter
+  // 3. Ausrichtung des Steppings
   const startX = Math.floor(xMin / step) * step;
   const startY = Math.floor(yMin / step) * step;
 
   const points: WindArrowPoint[] = [];
 
-  // 4. FIX: Schleifenvariable MUSS zwingend als Integer iteriert werden!
+  // 4. Raster-Schleife über Integer-Koordinaten
   for (let y = startY; y < yMax; y += step) {
     if (y < 0 || y >= height) continue;
 
     for (let x = startX; x < xMax; x += step) {
       if (x < 0 || x >= width) continue;
 
-      // Integer-Pixelindex für Canvas ImageData
       const pixelX = Math.floor(x);
       const pixelY = Math.floor(y);
       const index = (pixelY * width + pixelX) * 4;
@@ -78,7 +127,6 @@ export const decodeWindArrowPointsFromImageData = (
       const alpha = data[index + 3] ?? 0;
       if (alpha < alphaThreshold) continue;
 
-      // R/G Bytes [0, 255] -> [-1.0, +1.0]
       const uNorm = ((data[index] ?? 128) - 128) / 127.5;
       const vNorm = ((data[index + 1] ?? 128) - 128) / 127.5;
 
@@ -89,8 +137,7 @@ export const decodeWindArrowPointsFromImageData = (
       const angleDeg = (angleRad * 180.0) / Math.PI;
       const deckGlAngle = normalizeDegrees(-angleDeg);
 
-      // Exakte Geoposition anhand von Integer-Pixelkoordinaten
-      const [lon, lat] = toLonLatEquirectangular(pixelX, pixelY, width, height, options.bounds);
+      const [lon, lat] = toLonLatEquirectangular(pixelX, pixelY, width, height, bounds);
 
       points.push({
         position: [lon, lat],
