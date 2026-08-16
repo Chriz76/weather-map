@@ -5,7 +5,7 @@ export const WIND_WEBP_ALPHA_THRESHOLD = 128;
 
 export type WindArrowPoint = {
   position: [number, number]; // [lon, lat]
-  angle: number;              // 0° = Nord, 90° = Ost
+  angle: number;              // Winkel für Deck.gl (im Gegenuhrzeigersinn)
   speed: number;              // Einheitswert (1.0 m/s) für reine Richtungsanzeige
 };
 
@@ -58,16 +58,21 @@ export const decodeWindArrowPointsFromImageData = (
       const vectorLength = Math.hypot(uNorm, vNorm);
       if (vectorLength < 0.05) continue;
 
-      // 3. Kompasswinkel aus den Erdnord-Komponenten berechnen
+      // 3. Kompasswinkel berechnen (0° = Nord, 90° = Ost)
       const angleRad = Math.atan2(uNorm, vNorm);
-      const angle = normalizeDegrees((angleRad * 180.0) / Math.PI);
+      const angleDeg = (angleRad * 180.0) / Math.PI;
 
-      // 4. Geographische Position im Pixelraster bestimmen
+      // 4. Invertierung für Deck.gl:
+      // Deck.gl IconLayer dreht Sprites im Gegenuhrzeigersinn (CCW).
+      // Durch die Negation wird der Winkel stufenlos und richtungsgetreu dargestellt.
+      const deckGlAngle = normalizeDegrees(-angleDeg);
+
+      // 5. Geographische Position im Pixelraster bestimmen
       const [lon, lat] = toLonLat(x, y, width, height, options.bounds);
 
       points.push({
         position: [lon, lat],
-        angle,
+        angle: deckGlAngle,
         speed: 1.0
       });
     }
