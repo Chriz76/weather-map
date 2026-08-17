@@ -1,6 +1,6 @@
 import type { LatLngBoundsExpression, LatLngBounds } from 'leaflet';
 
-export const MIN_ARROW_SPACING_PX = 80;
+export const MIN_ARROW_SPACING_PX = 45;
 
 export type WindArrowPoint = {
   position: [number, number]; // [lon, lat]
