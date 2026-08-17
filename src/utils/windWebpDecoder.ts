@@ -1,6 +1,5 @@
 import type { LatLngBoundsExpression, LatLngBounds } from 'leaflet';
 
-export const WIND_WEBP_ALPHA_THRESHOLD = 128;
 export const MIN_ARROW_SPACING_PX = 80;
 
 export type WindArrowPoint = {
@@ -20,11 +19,10 @@ export type ViewportBounds = {
 type NormalizedBounds = [[number, number], [number, number]];
 
 export type WindWebpDecodeOptions = {
-  bounds: LatLngBoundsExpression; // Akzeptiert wieder das reguläre Leaflet-Format
+  bounds: LatLngBoundsExpression; // Leaflet-Format oder [[south, west], [north, east]]
   viewportBounds?: ViewportBounds;
   step?: number;
   zoom?: number;
-  alphaThreshold?: number;
   debug?: boolean; // Schaltet erweiterte Debug-Logs ein/aus
 };
 
@@ -115,17 +113,16 @@ export const calculateWindStep = (
 };
 
 /**
- * Dekodiert das Einheitsvektor-WebP-Windraster dynamisch geclipped auf den Viewport.
+ * Dekodiert das 1-Kanal-Graustufen-WebP (8-Bit Direct Angle Encoding)
+ * dynamisch geclipped auf den Viewport.
  */
 export const decodeWindArrowPointsFromImageData = (
   imageData: ImageData,
   options: WindWebpDecodeOptions
 ): WindArrowPoint[] => {
   const { width, height, data } = imageData;
-  const enableDebug = options.debug ?? true; // Standardmäßig true für direkte Diagnose
-  
+  const enableDebug = options.debug ?? true;
   const bounds = normalizeBounds(options.bounds);
-  const alphaThreshold = options.alphaThreshold ?? WIND_WEBP_ALPHA_THRESHOLD;
 
   // 1. Dynamisches Stepping bestimmen
   let step = options.step;
@@ -172,17 +169,16 @@ export const decodeWindArrowPointsFromImageData = (
       const pixelY = Math.floor(y);
       const index = (pixelY * width + pixelX) * 4;
 
-      const alpha = data[index + 3] ?? 0;
-      if (alpha < alphaThreshold) continue;
+      // Im Canvas RGBA ist R = G = B = Graustufenwert (1..255)
+      const directionByte = data[index] ?? 0;
 
-      const uNorm = ((data[index] ?? 128) - 128) / 127.5;
-      const vNorm = ((data[index + 1] ?? 128) - 128) / 127.5;
+      // Byte 0 = Kein Wind / Inaktiv / Maskiert
+      if (directionByte === 0) continue;
 
-      const vectorLength = Math.hypot(uNorm, vNorm);
-      if (vectorLength < 0.05) continue;
+      // Dekodierung Byte (1..255) -> Grad (0°..360°)
+      const angleDeg = ((directionByte - 1) / 254.0) * 360.0;
 
-      const angleRad = Math.atan2(uNorm, vNorm);
-      const angleDeg = (angleRad * 180.0) / Math.PI;
+      // Winkel für Deck.gl ausrichten
       const deckGlAngle = normalizeDegrees(-angleDeg);
 
       const [lon, lat] = toLonLatEquirectangular(pixelX, pixelY, width, height, bounds);
@@ -200,11 +196,10 @@ export const decodeWindArrowPointsFromImageData = (
   // =========================================================================
   if (enableDebug) {
     const [[sLat, wLng], [nLat, eLng]] = bounds;
-    
-    // Berechne Distanz zwischen 2 benachbarten Pixeln (Step = 1)
+
     const [p0Lon, p0Lat] = toLonLatEquirectangular(0, 0, width, height, bounds);
-    const [p1Lon, p1Lat_Y] = toLonLatEquirectangular(0, 1, width, height, bounds);
-    const [p1Lon_X, p0Lat_X] = toLonLatEquirectangular(1, 0, width, height, bounds);
+    const [, p1Lat_Y] = toLonLatEquirectangular(0, 1, width, height, bounds);
+    const [p1Lon_X] = toLonLatEquirectangular(1, 0, width, height, bounds);
 
     const distLatKm = calculateDistanceKm(p0Lat, p0Lon, p1Lat_Y, p0Lon);
     const distLngKm = calculateDistanceKm(p0Lat, p0Lon, p0Lat_X, p1Lon_X);
