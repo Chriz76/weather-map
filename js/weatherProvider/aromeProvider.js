@@ -27,7 +27,7 @@ export const aromeProvider = {
         if (!latlng) return null;
 
         // Abruf ohne explizites Modell -> Nutzt Open-Meteo Seamless Blending im 15-Minuten-Raster
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&minutely_15=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_minutely_15=4&forecast_minutely_15=24&${CACHE_BUSTER}`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&minutely_15=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_minutely_15=8&forecast_minutely_15=32&${CACHE_BUSTER}`;
 
         const res = await fetch(url, { cache: 'no-cache' });
         if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
