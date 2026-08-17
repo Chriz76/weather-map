@@ -5,16 +5,17 @@ import * as L from 'leaflet';
 import { logger } from '../utils/logger';
 import { providers } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { uiStateModel } from '../models/uiStateModel';
 import {
   decodeWindArrowPointsFromImageData,
-  WIND_WEBP_ALPHA_THRESHOLD,
-  MIN_ARROW_SPACING_PX,
   type WindArrowPoint
 } from '../utils/windWebpDecoder';
 
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
+
+// Feste, statische WebP-Datei aus dem Root (public/)
+const STATIC_WIND_WEBP_URL = '/20260814_0815Z_dir_1channel_lossless.webp';
+
 const WIND_ARROW_ICON_URL =
   'data:image/svg+xml;charset=utf-8,' +
   encodeURIComponent(`
@@ -177,7 +178,7 @@ class WindArrowDeckOverlay extends L.Layer {
 let overlayInstance: WindArrowDeckOverlay | null = null;
 let decodeToken = 0;
 
-// Cache für das aktuell geladene ImageData, um Netzwerk- und Canvas-Aufwand beim Zoomen/Pannen zu sparen
+// Cache für das aktuell geladene ImageData
 let cachedImageData: ImageData | null = null;
 let cachedProviderId: string | null = null;
 let cachedUrl: string | null = null;
@@ -232,7 +233,6 @@ function renderPointsFromCache(): void {
   const points = decodeWindArrowPointsFromImageData(cachedImageData, {
     bounds: providerCfg.imageBounds,
     zoom: zoom,
-    alphaThreshold: WIND_WEBP_ALPHA_THRESHOLD,
     viewportBounds: {
       southLat: mapBounds.getSouth(),
       westLng: mapBounds.getWest(),
@@ -247,20 +247,12 @@ function renderPointsFromCache(): void {
 async function refreshOverlay(): Promise<void> {
   if (!overlayInstance) return;
 
-  const currentUrl = uiStateModel.activeOverlayUrl;
   const providerId = weatherProviderModel.getActiveProviderId();
   const currentToken = ++decodeToken;
 
-  if (!currentUrl) {
-    cachedImageData = null;
-    cachedUrl = null;
-    cachedProviderId = null;
-    overlayInstance.setData([]);
-    return;
-  }
-
   try {
-    await fetchAndCacheImageData(currentUrl, providerId);
+    // Lädt immer strikt die statische Datei aus dem Root
+    await fetchAndCacheImageData(STATIC_WIND_WEBP_URL, providerId);
     if (currentToken !== decodeToken) return;
 
     renderPointsFromCache();
@@ -283,16 +275,13 @@ export interface IWindArrowOverlayView {
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
   init: (map: LeafletMap): void => {
-    logger.info('Initializing wind arrow overlay view.');
+    logger.info('Initializing wind arrow overlay view with static root WebP.');
     if (!overlayInstance) {
       overlayInstance = new WindArrowDeckOverlay();
       overlayInstance.addTo(map);
     }
 
-    uiStateModel.addEventListener('ui:overlay-url-updated', () => {
-      void refreshOverlay();
-    });
-
+    // Aktualisiert das Overlay nur noch bei Wechsel des Wetteranbieters (Karten-Bounds)
     weatherProviderModel.addEventListener('model:provider-changed', () => {
       void refreshOverlay();
     });
