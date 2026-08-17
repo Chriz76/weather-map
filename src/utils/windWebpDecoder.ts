@@ -202,7 +202,7 @@ export const decodeWindArrowPointsFromImageData = (
     const [p1Lon_X] = toLonLatEquirectangular(1, 0, width, height, bounds);
 
     const distLatKm = calculateDistanceKm(p0Lat, p0Lon, p1Lat_Y, p0Lon);
-    const distLngKm = calculateDistanceKm(p0Lat, p0Lon, p0Lat_X, p1Lon_X);
+    const distLngKm = calculateDistanceKm(p0Lat, p0Lon, p0Lat, p1Lon_X);
 
     console.groupCollapsed(`🔍 [WindDecoder Debug] Decodiert: ${points.length} Punkte (Step: ${step})`);
     console.log(`📐 Image Dimensions:`, `${width}x${height} px`);
