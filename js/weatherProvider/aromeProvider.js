@@ -33,11 +33,11 @@ export const aromeProvider = {
         if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
         const payload = await res.json();
 
-        if (!payload || !payload.minutely_15 || !Array.isArray(payload.minutely_15.time)) {
+        if (!payload || !payload.hourly || !Array.isArray(payload.hourly.time)) {
             throw new Error('Open-Meteo payload invalid');
         }
 
-        const m15 = payload.minutely_15;
+        const m15 = payload.hourly;
         const times = m15.time;
         const speeds = m15.wind_speed_10m || [];
         const directions = m15.wind_direction_10m || [];
