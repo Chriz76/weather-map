@@ -21,8 +21,8 @@ export const aromeProvider = {
     if (!latlng) return null;
 
     // Abruf ohne explizites Modell -> Nutzt Open-Meteo Seamless Blending im 15-Minuten-Raster
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&minutely_15=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_minutely_15=8&forecast_minutely_15=32&${CACHE_BUSTER}`;
-
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&models=meteofrance_arome_seamless&forecast_days=4&timeformat=unixtime&wind_speed_unit=kn&forecast_hours=8&past_hours=2&temporal_resolution=native&${CACHE_BUSTER}`;
+  
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
     const payload: unknown = await res.json();
@@ -36,11 +36,15 @@ export const aromeProvider = {
     };
     const asNumberArray = (v: unknown): Array<number | null> => Array.isArray(v) ? v.map(item => toFiniteNumber(item)) : [];
 
-    if (!isObject(payload) || !isObject(payload.minutely_15) || !Array.isArray((payload.minutely_15 as Record<string, unknown>).time)) {
+    // Greift flexibel auf hourly, minutely15 ODER minutely_15 zu
+    const m15 = isObject(payload)
+      ? (isObject(payload.hourly) ? payload.hourly : isObject(payload.minutely15) ? payload.minutely15 : isObject(payload.minutely_15) ? payload.minutely_15 : null)
+      : null;
+
+    if (!m15 || !Array.isArray(m15.time)) {
       throw new Error('Open-Meteo payload invalid');
     }
 
-    const m15 = payload.minutely_15 as Record<string, unknown>;
     const times = Array.isArray(m15.time) ? m15.time : [];
     const speeds = asNumberArray(m15.wind_speed_10m);
     const directions = asNumberArray(m15.wind_direction_10m);
