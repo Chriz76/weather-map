@@ -1,30 +1,17 @@
-name: Deploy typescript Branch to GitHub Pages
+name: Deploy develop Branch to Cloudflare Pages
 
 on:
   push:
     branches:
-      - typescript
-  workflow_dispatch:
-
-# Berechtigungen für das GITHUB_TOKEN setzen
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Stellt sicher, dass nur ein Deployment gleichzeitig läuft
-concurrency:
-  group: 'pages'
-  cancel-in-progress: true
+      - develop # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
+  workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Code aus dem Repository auschecken
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -37,22 +24,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Lint, typecheck and build
       - name: Run lint (CI)
         run: npm run lint:ci
 
-      - name: Run typecheck
+      - name: Run typecheck (skip lint)
         run: npm run typecheck
 
       - name: Build project
         run: npm run build
 
-      # Artifacts für GitHub Pages vorbereiten
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      # 2. Direkt zu Cloudflare Pages hochladen
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
         with:
-          path: './dist' # Der Ordner mit deinen fertigen Build-Dateien
-
-      # Auf GitHub Pages veröffentlichen
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          accountId: c728452fcd5090f3d7f2bacc5e75fcd2
+          projectName: 'windapp-preview' # Der Name deines Cloudflare-Projekts
+          directory: './dist'         # '.' bedeutet, dass das gesamte Hauptverzeichnis hochgeladen wird
