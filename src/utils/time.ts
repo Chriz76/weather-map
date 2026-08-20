@@ -114,31 +114,8 @@ export function determineActiveIndex(sortedTimestamps: string[], prevActiveTimes
     if (!sortedTimestamps || sortedTimestamps.length === 0) return 0;
 
     if (prevActiveTimestamp) {
-        const exactMatchIndex = sortedTimestamps.indexOf(prevActiveTimestamp);
-        if (exactMatchIndex !== -1) return exactMatchIndex;
-
-        try {
-            const prevDate = parseModelTimestamp(prevActiveTimestamp);
-            let bestIdx = 0;
-            let bestDiff = Infinity;
-
-            for (let i = 0; i < sortedTimestamps.length; i++) {
-                try {
-                    const d = parseModelTimestamp(sortedTimestamps[i]!);
-                    const diff = Math.abs(d.getTime() - prevDate.getTime());
-                    if (diff < bestDiff) {
-                        bestDiff = diff;
-                        bestIdx = i;
-                    }
-                } catch {
-                    continue;
-                }
-            }
-
-            return bestIdx;
-        } catch {
-            // fallback
-        }
+        const matchedIndex = findMatchingTimestampIndex(sortedTimestamps, prevActiveTimestamp);
+        if (matchedIndex !== -1) return matchedIndex;
     }
 
     const now = new Date();
@@ -152,6 +129,102 @@ export function determineActiveIndex(sortedTimestamps: string[], prevActiveTimes
     }
 
     return sortedTimestamps.length - 1;
+}
+
+/**
+ * Returns the timestamp truncated to the hour so mixed hh and hhmm keys can be compared.
+ */
+function getHourBucket(timestampStr: string): string {
+    const date = parseModelTimestamp(timestampStr);
+    return getHourBucketFromDate(date);
+}
+
+function getHourBucketFromDate(date: Date): string {
+    const year = String(date.getUTCFullYear()).padStart(4, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hour = String(date.getUTCHours()).padStart(2, '0');
+    return `${year}${month}${day}_${hour}`;
+}
+
+/**
+ * Finds the closest timestamp index with a tolerant hour-bucket fallback.
+ * Falls back to the globally closest timestamp when no matching hour bucket exists.
+ * @param items Sorted timestamp-bearing items to search.
+ * @param targetTimestamp Timestamp key to match.
+ * @param getTimestamp Function that extracts a timestamp key from each item.
+ * @returns The best matching index, or -1 when no match exists.
+ */
+export function findMatchingTimestampIndexBy<T>(
+    items: T[],
+    targetTimestamp: string | null | undefined,
+    getTimestamp: (item: T) => string | null | undefined
+): number {
+    if (!items || items.length === 0 || !targetTimestamp) return -1;
+
+    try {
+        const targetBucket = getHourBucket(targetTimestamp);
+        const targetDate = parseModelTimestamp(targetTimestamp);
+        let bestIdx = -1;
+        let bestDiff = Infinity;
+        let bestSameHourIdx = -1;
+        let bestSameHourDiff = Infinity;
+
+        for (let i = 0; i < items.length; i++) {
+            const candidate = getTimestamp(items[i]!);
+            if (!candidate) continue;
+
+            if (candidate === targetTimestamp) return i;
+
+            try {
+                const candidateDate = parseModelTimestamp(candidate);
+                const diff = Math.abs(candidateDate.getTime() - targetDate.getTime());
+                if (getHourBucketFromDate(candidateDate) === targetBucket) {
+                    if (diff < bestSameHourDiff) {
+                        bestSameHourDiff = diff;
+                        bestSameHourIdx = i;
+                    }
+                }
+
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestIdx = i;
+                }
+            } catch {
+                continue;
+            }
+        }
+
+        if (bestSameHourIdx !== -1) {
+            return bestSameHourIdx;
+        }
+
+        return bestIdx;
+    } catch {
+        return -1;
+    }
+}
+
+/**
+ * Finds the closest timestamp index with a tolerant hour-bucket fallback.
+ * Falls back to the globally closest timestamp when no matching hour bucket exists.
+ * @param sortedTimestamps Sorted timestamp keys to search.
+ * @param targetTimestamp Timestamp key to match.
+ * @returns The best matching index, or -1 when no match exists.
+ */
+export function findMatchingTimestampIndex(sortedTimestamps: string[], targetTimestamp: string | null | undefined): number {
+    return findMatchingTimestampIndexBy(sortedTimestamps, targetTimestamp, (item) => item);
+}
+
+/**
+ * Resolves the best matching timestamp string for a target key.
+ * @param sortedTimestamps Sorted timestamp keys to search.
+ * @param targetTimestamp Timestamp key to match.
+ * @returns The matching timestamp key, or null when no match exists.
+ */
+export function findMatchingTimestamp(sortedTimestamps: string[], targetTimestamp: string | null | undefined): string | null {
+    const index = findMatchingTimestampIndex(sortedTimestamps, targetTimestamp);
+    return index === -1 ? null : (sortedTimestamps[index] ?? null);
 }
 
 export function addMinutesToIso(input: string | Date, minutes: number): Date | null {

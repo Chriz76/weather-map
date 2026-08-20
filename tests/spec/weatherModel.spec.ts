@@ -70,6 +70,18 @@ describe('WeatherProviderModel', () => {
         expect(weatherProviderModel.forecast.length).toBe(2);
     });
 
+    it('should tolerate mixed timestamp formats when matching forecast data', () => {
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260820_17', '20260820_18'], generated_at: null, current_hour: null });
+
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, [
+            { hour: '17:15', wind: 11, gust: 15, direction: 180, fullKey: '20260820_1715' },
+            { hour: '17:30', wind: 12, gust: 16, direction: 190, fullKey: '20260820_1730' }
+        ]);
+
+        expect(weatherProviderModel.activeTimestamp).toBe('20260820_17');
+        expect(weatherProviderModel.windData).toEqual({ speed: 11, gust: 15, direction: 180 });
+    });
+
     it('should change active timestamp index and dispatch timestamp event', () => {
         const events = [];
         const handler = (event) => {

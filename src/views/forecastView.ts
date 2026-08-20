@@ -1,5 +1,6 @@
 import * as L from 'leaflet';
 import { weatherProviderModel } from '../models/weatherProviderModel';
+import * as timeUtils from '../utils/time';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ForecastItem } from '../types';
 
@@ -28,6 +29,7 @@ export function registerForecastView(map: LeafletMap): void {
       const self = this as unknown as ForecastControl; // narrow 'this' to ForecastControl for internal methods
       const container = L.DomUtil.create('div', 'forecast-view');
       L.DomEvent.disableClickPropagation(container);
+      let renderedForecast: ForecastItem[] | null = null;
 
       container.innerHTML = `
                 <div class="forecast-view__scroll-container">
@@ -47,11 +49,12 @@ export function registerForecastView(map: LeafletMap): void {
         if (!cell) return;
         const timeKey = cell.getAttribute('data-time');
         if (!timeKey) return;
-        const idx = (weatherProviderModel.availableTimestamps as string[]).indexOf(timeKey);
-        if (idx >= 0) window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: idx } }));
+        const matchedIdx = timeUtils.findMatchingTimestampIndexBy(weatherProviderModel.availableTimestamps as string[], timeKey, (item) => item);
+        if (matchedIdx >= 0) window.dispatchEvent(new CustomEvent('ui:timeline-change', { detail: { index: matchedIdx } }));
       });
 
       self.renderTable = function (forecast: ForecastItem[] | null) {
+        renderedForecast = forecast;
         if (!forecast) {
           container.classList.remove('forecast-view--has-data');
           return;
@@ -110,11 +113,16 @@ export function registerForecastView(map: LeafletMap): void {
       self.highlightActiveForecastHour = function () {
         const currentKey = weatherProviderModel.activeTimestamp;
         if (!currentKey) return;
+        if (!renderedForecast || renderedForecast.length === 0) return;
 
         const activeElements = container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction') as NodeListOf<Element>;
         activeElements.forEach((el) => el.classList.remove('forecast-view__cell--active'));
 
-        const highlightedElements = container.querySelectorAll(`[data-time="${currentKey}"]`) as NodeListOf<Element>;
+        const matchedIndex = timeUtils.findMatchingTimestampIndexBy(renderedForecast, currentKey, (item) => item.fullKey);
+        const matchedKey = matchedIndex >= 0 ? renderedForecast[matchedIndex]?.fullKey ?? null : null;
+        if (!matchedKey) return;
+
+        const highlightedElements = container.querySelectorAll(`[data-time="${matchedKey}"]`) as NodeListOf<Element>;
         highlightedElements.forEach((el) => el.classList.add('forecast-view__cell--active'));
       };
 

@@ -1,4 +1,4 @@
-import { formatModelTimestampToTime, determineActiveIndex } from '../../src/utils/time';
+import { formatModelTimestampToTime, determineActiveIndex, findMatchingTimestampIndex } from '../../src/utils/time';
 
 describe('time utilities', () => {
     it('should format timeline keys to local time string', () => {
@@ -24,5 +24,15 @@ describe('time utilities', () => {
 
         const index = determineActiveIndex([currentKey, futureKey], null);
         expect(index).toBe(0);
+    });
+
+    it('should match mixed hour-only and minute timestamps', () => {
+        const timestamps = ['20260820_1715', '20260820_1730', '20260820_18'];
+
+        // 17:15 is closer to the hour bucket start than 17:30, so it should win here.
+        expect(findMatchingTimestampIndex(timestamps, '20260820_17')).toBe(0);
+        expect(findMatchingTimestampIndex(timestamps, '20260820_1730')).toBe(1);
+        // Minute-precision 18:00 should still resolve to the bare hour key.
+        expect(findMatchingTimestampIndex(timestamps, '20260820_1800')).toBe(2);
     });
 });
