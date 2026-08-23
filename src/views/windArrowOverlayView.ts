@@ -1,7 +1,8 @@
-import { Deck, MapView, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { IconLayer } from '@deck.gl/layers';
 import type { Map as LeafletMap } from 'leaflet';
 import * as L from 'leaflet';
+import { LeafletDeckOverlay } from '../utils/LeafletDeckOverlay';
+import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { logger } from '../utils/logger';
 import { providers } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
@@ -32,151 +33,13 @@ type DeckViewState = {
   bearing: number;
 };
 
-class WindArrowDeckOverlay extends L.Layer {
-  private mapInstance: LeafletMap | null = null;
-  private container: HTMLDivElement | null = null;
-  private deck: Deck<MapView> | null = null;
-  private data: WindArrowPoint[] = [];
+// Use the generic LeafletDeckOverlay wrapper to manage Deck lifecycle and view synchronization.
 
-  public override onAdd(map: LeafletMap): this {
-    this.mapInstance = map;
-
-    const panes = map.getPanes();
-    const pane: HTMLElement = panes.overlayPane;
-
-    this.container = L.DomUtil.create('div', WIND_ARROW_CLASS) as HTMLDivElement;
-    this.container.style.position = 'absolute';
-    this.container.style.width = '100%';
-    this.container.style.height = '100%';
-    this.container.style.top = '0';
-    this.container.style.left = '0';
-    this.container.style.pointerEvents = 'none';
-    this.container.style.zIndex = WIND_ARROW_PANE_Z_INDEX;
-
-    pane.appendChild(this.container);
-
-    const size = map.getSize();
-
-    this.deck = new Deck({
-      parent: this.container,
-      views: new MapView({ repeat: false }),
-      controller: false,
-      style: { pointerEvents: 'none' },
-      width: size.x,
-      height: size.y,
-      layers: this.buildLayers(),
-      viewState: this.getViewState()
-    });
-
-    map.on('move resize zoomAnim', this.syncViewState, this);
-    map.on('zoomend moveend', this.handleMapMoveOrZoom, this);
-
-    this.syncViewState();
-    return this;
-  }
-
-  public override onRemove(map: LeafletMap): this {
-    map.off('move resize zoomAnim', this.syncViewState, this);
-    map.off('zoomend moveend', this.handleMapMoveOrZoom, this);
-
-    if (this.deck) {
-      this.deck.finalize();
-      this.deck = null;
-    }
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
-    }
-    this.container = null;
-    this.mapInstance = null;
-    return this;
-  }
-
-  public setData(data: WindArrowPoint[]): void {
-    this.data = data;
-    this.updateDeck();
-  }
-
-  public getMapInstance(): LeafletMap | null {
-    return this.mapInstance;
-  }
-
-  private getViewState(): DeckViewState {
-    if (!this.mapInstance) {
-      return { longitude: 0, latitude: 0, zoom: 0, pitch: 0, bearing: 0 };
-    }
-
-    const center = this.mapInstance.getCenter();
-    return {
-      longitude: center.lng,
-      latitude: center.lat,
-      zoom: this.mapInstance.getZoom() - 1,
-      pitch: 0,
-      bearing: 0
-    };
-  }
-
-  private syncViewState(): void {
-    if (!this.deck || !this.mapInstance || !this.container) return;
-
-    const topLeft = this.mapInstance.containerPointToLayerPoint([0, 0]);
-    L.DomUtil.setPosition(this.container, topLeft);
-
-    const size = this.mapInstance.getSize();
-    this.deck.setProps({
-      width: size.x,
-      height: size.y,
-      viewState: this.getViewState(),
-      layers: this.buildLayers()
-    });
-  }
-
-  private handleMapMoveOrZoom(): void {
-    this.syncViewState();
-    void renderPointsFromCache();
-  }
-
-  private buildLayers(): IconLayer<WindArrowPoint>[] {
-    return [
-      new IconLayer<WindArrowPoint>({
-        id: 'wind-arrow-layer',
-        data: this.data,
-        iconAtlas: WIND_ARROW_ICON_URL,
-        iconMapping: {
-          arrow: {
-            x: 0,
-            y: 0,
-            width: 64,
-            height: 64,
-            mask: true
-          }
-        },
-        getIcon: () => 'arrow',
-        getPosition: (d: WindArrowPoint) => d.position,
-        getAngle: (d: WindArrowPoint) => d.angle,
-        getSize: 18,
-        sizeScale: 1,
-        getColor: [255, 255, 255, 220],
-        coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-        pickable: false
-      })
-    ];
-  }
-
-  private updateDeck(): void {
-    if (!this.deck || !this.mapInstance) return;
-
-    const size = this.mapInstance.getSize();
-    this.deck.setProps({
-      width: size.x,
-      height: size.y,
-      viewState: this.getViewState(),
-      layers: this.buildLayers()
-    });
-  }
-}
-
-let overlayInstance: WindArrowDeckOverlay | null = null;
+let overlayInstance: LeafletDeckOverlay | null = null;
 let decodeToken = 0;
+
+let currentIconLayer: IconLayer<WindArrowPoint> | null = null;
+let cachedPoints: WindArrowPoint[] | null = null;
 
 // Cache für das aktuell geladene ImageData
 let cachedImageData: ImageData | null = null;
@@ -241,7 +104,46 @@ function renderPointsFromCache(): void {
     }
   });
 
-  overlayInstance.setData(points);
+  setIconLayerFromPoints(points);
+}
+
+function pointsEqual(a: WindArrowPoint[] | null, b: WindArrowPoint[]): boolean {
+  if (a === b) return true;
+  if (!a) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const pa = a[i]!;
+    const pb = b[i]!;
+    if (pa.angle !== pb.angle) return false;
+    if (pa.position[0] !== pb.position[0] || pa.position[1] !== pb.position[1]) return false;
+  }
+  return true;
+}
+
+function setIconLayerFromPoints(points: WindArrowPoint[]): void {
+  if (!overlayInstance) return;
+  if (pointsEqual(cachedPoints, points)) return;
+
+  const iconLayer = new IconLayer<WindArrowPoint>({
+    id: 'wind-arrow-layer',
+    data: points,
+    iconAtlas: WIND_ARROW_ICON_URL,
+    iconMapping: {
+      arrow: { x: 0, y: 0, width: 64, height: 64, mask: true }
+    },
+    getIcon: () => 'arrow',
+    getPosition: (d: WindArrowPoint) => d.position,
+    getAngle: (d: WindArrowPoint) => d.angle,
+    getSize: 18,
+    sizeScale: 1,
+    getColor: [255, 255, 255, 220],
+    coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+    pickable: false
+  });
+
+  currentIconLayer = iconLayer;
+  cachedPoints = points;
+  overlayInstance.setLayers([iconLayer]);
 }
 
 async function refreshOverlay(): Promise<void> {
@@ -264,7 +166,7 @@ async function refreshOverlay(): Promise<void> {
       cachedImageData = null;
       cachedUrl = null;
       cachedProviderId = null;
-      overlayInstance.setData([]);
+      if (overlayInstance) overlayInstance.setLayers([]);
     }
   }
 }
@@ -277,8 +179,12 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
   init: (map: LeafletMap): void => {
     logger.info('Initializing wind arrow overlay view with static root WebP.');
     if (!overlayInstance) {
-      overlayInstance = new WindArrowDeckOverlay();
+      overlayInstance = new LeafletDeckOverlay({ className: WIND_ARROW_CLASS, zIndex: WIND_ARROW_PANE_Z_INDEX });
       overlayInstance.addTo(map);
+      // Trigger point recompute on completed map interactions
+      map.on('zoomend moveend', () => {
+        void renderPointsFromCache();
+      });
     }
 
     // Aktualisiert das Overlay nur noch bei Wechsel des Wetteranbieters (Karten-Bounds)
