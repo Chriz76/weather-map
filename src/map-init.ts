@@ -42,6 +42,8 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         zoomControl: false
     }).setView([savedState.lat, savedState.lng], savedState.zoom);
 
+    mapInstance.attributionControl.setPrefix(false);
+
     // Add zoom controls manually at top-right
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
 
