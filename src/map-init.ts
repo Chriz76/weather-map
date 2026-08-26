@@ -45,14 +45,17 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     // Add zoom controls manually at top-right
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
 
+    const CARTO_API_KEY = 'cb1_28i5_1_ccfb2588484de9213cc3f36f';
+    
     // Background base layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}', {
         maxZoom: 20,
         zIndex: 1,
         tileSize: 512,
         zoomOffset: -1,
         className: 'map-redesign',
-        detectRetina: true
+        detectRetina: true,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }).addTo(mapInstance);
 
     const providerId = weatherProviderModel.getActiveProviderId();
@@ -65,7 +68,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     }).addTo(mapInstance);
 
     // Labels layer on top of everything
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}', {
         maxZoom: 20,
         zIndex: 20,
         tileSize: 512,
