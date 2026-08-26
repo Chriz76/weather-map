@@ -57,7 +57,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         zoomOffset: -1,
         className: 'map-redesign',
         detectRetina: true,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        attribution: '&copy;<a href="https://www.openstreetmap.org/copyright">osm</a>|&copy;<a href="https://carto.com/attributions">carto</a>'
     }).addTo(mapInstance);
 
     const providerId = weatherProviderModel.getActiveProviderId();
