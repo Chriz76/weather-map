@@ -127,6 +127,7 @@ async function updateStationsOnMap() {
 function registerLifecycleListeners() {
   document.addEventListener('visibilitychange', () => handleAppVisibilitySync());
   window.addEventListener('pageshow', () => handleAppVisibilitySync());
+  window.addEventListener('focus', () => handleAppVisibilitySync());
 
   window.addEventListener('online', () => {
     logger.info('📶 Network connection restored. Starting recovery sync...');
@@ -164,7 +165,7 @@ function registerLifecycleListeners() {
     }
   });
 
-    window.addEventListener('ui:notification-retry', async () => {
+  window.addEventListener('ui:notification-retry', async () => {
     logger.debug('Retry requested.');
     try {
       await safeSyncApp();
