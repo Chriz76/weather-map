@@ -56,7 +56,7 @@ export class ViewportOffscreenLayer extends CompositeLayer<any> {
     // Framebuffer nur bei Änderung der Raster-Auflösung neu erzeugen
     if (!fb || this.state.gridWidth !== targetWidth || this.state.gridHeight !== targetHeight) {
       try {
-        if (fb) fb.destroy?.();
+        if (fb) (fb as any).destroy?.();
 
         const colorTexture = device.createTexture({
           id: `arome-offscreen-texture-z${effectiveZ}`,
@@ -169,7 +169,7 @@ export class ViewportOffscreenLayer extends CompositeLayer<any> {
    * Gibt das fertig befüllte luma.gl Texture-Objekt aus dem GPU-Speicher zurück.
    */
   getTexture() {
-    return this.state.framebuffer?.colorAttachments?.[0] ?? null;
+    return (this.state.framebuffer as any)?.colorAttachments?.[0] ?? null;
   }
 
   /**
@@ -181,7 +181,7 @@ export class ViewportOffscreenLayer extends CompositeLayer<any> {
 
   finalizeState() {
     const fb = (this.state as any)?.framebuffer;
-    fb?.destroy?.();
+    (fb as any)?.destroy?.();
   }
 }
 
