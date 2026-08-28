@@ -1,7 +1,7 @@
 import { IconLayer } from '@deck.gl/layers';
 import type { Map as LeafletMap } from 'leaflet';
 import * as L from 'leaflet';
-import { LeafletDeckOverlay } from '../utils/LeafletDeckOverlay';
+import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { logger } from '../utils/logger';
 import { providers } from '../config';
