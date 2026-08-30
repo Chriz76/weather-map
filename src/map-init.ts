@@ -37,9 +37,16 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         mapContainer.style.height = '500px';
     }
 
+    const worldBounds: Leaflet.LatLngBoundsExpression = [
+        [-85.05112878, -180],
+        [85.05112878, 180],
+    ];
+
     mapInstance = L.map('map', {
         closePopupOnClick: false,
-        zoomControl: false
+        zoomControl: false,
+        maxBounds: worldBounds,
+        maxBoundsViscosity: 1.0,
     }).setView([savedState.lat, savedState.lng], savedState.zoom);
 
     mapInstance.attributionControl.setPrefix(false);
@@ -57,6 +64,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         zoomOffset: -1,
         className: 'map-redesign',
         detectRetina: true,
+        noWrap: true,
         attribution: '&copy;<a href="https://www.openstreetmap.org/copyright">osm</a>|&copy;<a href="https://carto.com/attributions">carto</a>'
     }).addTo(mapInstance);
 
@@ -76,7 +84,8 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         tileSize: 512,
         zoomOffset: -1,
         pane: 'shadowPane',
-        detectRetina: true
+        detectRetina: true,
+        noWrap: true,
     }).addTo(mapInstance);
 
     return { map: mapInstance, windOverlay: windOverlayInstance };
