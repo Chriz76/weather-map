@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   deploy:
-    # Wichtig: Das Environment wird dynamisch gesetzt, damit GitHub Pages nicht bei develop fehlschlägt
+    # Important: The environment is set dynamically so GitHub Pages does not fail on develop.
     environment:
       name: ${{ github.ref_name == 'typescript' && 'github-pages' || 'cloudflare-pages' }}
       url: ${{ steps.deployment.outputs.page_url }}
@@ -47,7 +47,7 @@ jobs:
         run: npm run build
 
       # ==========================================
-      # DEPLOYMENT: GitHub Pages (Nur auf 'typescript')
+      # DEPLOYMENT: GitHub Pages (only on 'typescript')
       # ==========================================
       - name: Upload artifact for GitHub Pages
         if: github.ref_name == 'typescript'
@@ -61,13 +61,13 @@ jobs:
         uses: actions/deploy-pages@v4
 
       # ==========================================
-      # DEPLOYMENT: Cloudflare Pages (Nur auf 'develop')
+      # DEPLOYMENT: Cloudflare Pages (only on 'develop')
       # ==========================================
       - name: Deploy to Cloudflare Pages
         if: github.ref_name == 'develop'
         uses: cloudflare/pages-action@v1
         with:
-          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }} # Hinweisschild weiter unten beachten
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: c728452fcd5090f3d7f2bacc5e75fcd2
           projectName: 'windapp-preview'
           directory: './dist'

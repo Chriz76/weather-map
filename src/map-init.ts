@@ -37,7 +37,8 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         mapContainer.style.height = '500px';
     }
 
-    const worldBounds: Leaflet.LatLngBoundsExpression = [
+    // Use the Web Mercator latitude limit so Leaflet cannot pan into wrapped world copies.
+    const worldBounds: L.LatLngBoundsExpression = [
         [-85.05112878, -180],
         [85.05112878, 180],
     ];
