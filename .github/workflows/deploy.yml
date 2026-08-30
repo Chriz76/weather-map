@@ -1,17 +1,30 @@
-name: Deploy develop Branch to Cloudflare Pages
+name: Deploy Application
 
 on:
   push:
     branches:
-      - develop # Triggert die Action nur bei Änderungen auf dem Branch "mvc"
-  workflow_dispatch: # Ermöglicht den manuellen Start über die GitHub-Website
+      - typescript
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
 
 jobs:
   deploy:
+    # Wichtig: Das Environment wird dynamisch gesetzt, damit GitHub Pages nicht bei develop fehlschlägt
+    environment:
+      name: ${{ github.ref_name == 'typescript' && 'github-pages' || 'cloudflare-pages' }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Code aus dem Repository auschecken
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -24,21 +37,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Lint, typecheck and build
       - name: Run lint (CI)
         run: npm run lint:ci
 
-      - name: Run typecheck (skip lint)
+      - name: Run typecheck
         run: npm run typecheck
 
       - name: Build project
         run: npm run build
 
-      # 2. Direkt zu Cloudflare Pages hochladen
+      # ==========================================
+      # DEPLOYMENT: GitHub Pages (Nur auf 'typescript')
+      # ==========================================
+      - name: Upload artifact for GitHub Pages
+        if: github.ref_name == 'typescript'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        if: github.ref_name == 'typescript'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # ==========================================
+      # DEPLOYMENT: Cloudflare Pages (Nur auf 'develop')
+      # ==========================================
       - name: Deploy to Cloudflare Pages
+        if: github.ref_name == 'develop'
         uses: cloudflare/pages-action@v1
         with:
-          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }} # Hinweisschild weiter unten beachten
           accountId: c728452fcd5090f3d7f2bacc5e75fcd2
-          projectName: 'windapp-preview' # Der Name deines Cloudflare-Projekts
-          directory: './dist'         # '.' bedeutet, dass das gesamte Hauptverzeichnis hochgeladen wird
+          projectName: 'windapp-preview'
+          directory: './dist'
