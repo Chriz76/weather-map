@@ -14,7 +14,7 @@ To our knowledge, this is a **unique free implementation** providing hourly upda
 
 [Related: kitespots.zink.tv](https://kitespots.zink.tv)
 
-> ⚠️ **Disclaimer:** This project is experimental and currently in active development.
+> ⚠️ **Disclaimer:** Always check the local weather at your spot. Forecasts can be wrong. This project is currently in active development.
 
 ---
 
@@ -45,7 +45,7 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 
 
 ### 1. Data Ingestion & Extraction (`weather-data`)
-* **Pipeline Branch (`main`):** A Python-based script triggered hourly via GitHub Actions fetches the latest GRIB2 payload from the DWD Open Data servers.
+* **Pipeline Branch (`main`):** A Python-based script triggered hourly via GitHub Actions fetches the latest GRIB2 payload from the DWD Open Data servers and from Open-Meteo.
 * **Processing:** The pipeline crops the dataset to the target geographic bounding box, extracts wind speed arrays, and serializes the matrix data.
 * **Storage Branch (`gh-pages`):** The extracted data slices are pushed as static JSON structures to the [gh-pages branch](https://github.com/Chriz76/weather-data/tree/gh-pages), acting as a decentralized, free-tier CDN.
 
@@ -57,7 +57,7 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 
 ## Development & Contribution
 
-As this is an experimental project, contributions to optimize the JSON chunking sizes, add more rapid models like HRRR or Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
+As this is an actively developed project, contributions to optimize the JSON chunking sizes, add more rapid models like HRRR or Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
 
 This project is a private, free, and ad-free open-source web app. It is maintained strictly for hobby purposes and pursues no commercial interests.
 
