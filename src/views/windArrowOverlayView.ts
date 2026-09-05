@@ -8,16 +8,15 @@ import { PMTiles } from 'pmtiles';
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
 
-const PMTILES_WIND_URL = '/meteofrance_arome_france0025_15min_202609050600Z_202609051200Z_dir.pmtiles';
+const PMTILES_WIND_URL = '/meteofrance_arome_france0025_15min_202609050800Z_202609051400Z_dir.pmtiles';
 
 // Exakte AROME Bounding Box (EPSG:4326) – gepaddet auf Block-Vielfache
 const LON_MIN = -12.0;
 const LAT_MAX = 55.4;
 
-const TOTAL_LON_SPAN = 1136 * 0.025; // 28.4
-const TOTAL_LAT_SPAN = 720 * 0.025;  // 18.0
+const TOTAL_LON_SPAN = 1136 * 0.025; // 28.4°
+const TOTAL_LAT_SPAN = 720 * 0.025;  // 18.0°
 
-const LOD0_DEGREES = 0.4;
 const BASE_LEAFLET_ZOOM = 8;
 const MAX_PMTILES_Z = 4;
 
@@ -74,7 +73,7 @@ function getDensityConfig(map: LeafletMap) {
   let step: number;
 
   if (zoom <= 3) {
-    step = 0; // No arrows at very low zooms
+    step = 0; // Keine Pfeile bei sehr niedrigem Zoom
   } else if (zoom === 4) {
     step = 16;
   } else if (zoom === 5) {
@@ -87,7 +86,7 @@ function getDensityConfig(map: LeafletMap) {
     step = 1;
   }
 
-  if (step > 1) {step = step / 2;} // Halbiere den Schritt für feinere Dichte
+  if (step > 1) { step = step / 2; } // Halbiere den Schritt für feinere Dichte
 
   console.log(
     `[WindOverlay Config] Zoom: ${map.getZoom()} (floor: ${zoom}) -> PMTiles Z: ${pmZ}, Stride: ${step}`
@@ -131,30 +130,17 @@ function decodeWindArrowPointsFromImageData(
   tileIndex: { x: number; y: number; z: number },
   step: number
 ): WindArrowPoint[] {
+  if (step <= 0) return [];
+
   const { width, height, data } = imageData;
 
   // Globale Pixelkoordinaten der oberen linken Ecke dieser Kachel
   const globalPxX = tileIndex.x * width;
   const globalPxY = tileIndex.y * height;
 
-  // Der globale Ursprung (LOD 0 = 1px) skaliert mit 2^z mit der Bildauflösung mit
-  // LOD 0 -> 1px | LOD 1 -> 2px | LOD 2 -> 4px | LOD 3 -> 8px | LOD 4 -> 16px
-  const globalOffsetX = 1 << (tileIndex.z + 1); // 1 * Math.pow(2, z)
-  const globalOffsetY = 1 << (tileIndex.z + 1);
-
-  // Kachelübergreifender Stride-Startpunkt:
-  // Richtet das Ausdünnungs-Gitter exakt am skalierten globalen Ursprung aus.
-  const startPx = (step - ((globalPxX - globalOffsetX) % step)) % step;
-  const startPy = (step - ((globalPxY - globalOffsetY) % step)) % step;
-
-  // Stride-bezogenes Debug Logging
-  console.log(
-    `[WindOverlay Tile ${tileIndex.z}/${tileIndex.x}/${tileIndex.y}] ` +
-    `Dims: ${width}x${height}px | ` +
-    `Requested Stride/Step: ${step} | ` +
-    `Global Offset: (${globalPxX}, ${globalPxY}) | ` +
-    `Start Local Pixel: (${startPx}, ${startPy})`
-  );
+  // Kachelübergreifender Stride-Startpunkt (Phasen-Ausrichtung am globalen Raster)
+  const startPx = (step - (globalPxX % step)) % step;
+  const startPy = (step - (globalPxY % step)) % step;
 
   const points: WindArrowPoint[] = [];
 
@@ -169,26 +155,29 @@ function decodeWindArrowPointsFromImageData(
       scannedPixels++;
 
       const idx = (py * width + px) * 4;
-      const r = data[idx];
-      const g = data[idx + 1];
-      const a = data[idx + 3];
+      const r = data[idx]!;      // High Byte
+      const g = data[idx + 1]!;  // Low Byte
+      const b = data[idx + 2]!;  // Valid Mask (255 = Gültig, 0 = NaN/Padding)
 
-      if (a === 0 || (r === 255 && g === 255)) {
+      // Überspringe ungültige Pixel (NaN/Padding)
+      if (b !== 255) {
         continue;
       }
 
+      // Reorganisation des 16-Bit Wertes (0..360°)
       const deg16Bit = r * 256 + g;
       const degrees = (deg16Bit / 65535.0) * 360.0;
 
       const absPxX = globalPxX + px;
       const absPxY = globalPxY + py;
 
+      // Pixel-is-Point Alignment
       const lon = LON_MIN + absPxX * deltaLon;
       const lat = LAT_MAX - absPxY * deltaLat;
 
       points.push({
         position: [lon, lat],
-        angle: degrees
+        angle: - (degrees + 180) % 360 // Pfeilrichtung um 180° drehen, da Windrichtung = Gegenrichtung der Pfeilspitze
       });
     }
   }
@@ -248,7 +237,11 @@ async function updateViewportWindPoints(): Promise<void> {
   if (!map) return;
 
   const { pmZ, step } = getDensityConfig(map);
-  
+  if (step === 0) {
+    setIconLayerFromPoints([]);
+    return;
+  }
+
   const currentToken = ++loadToken;
   const visibleIndices = getVisibleTileIndices(map, pmZ);
 
@@ -266,7 +259,7 @@ async function updateViewportWindPoints(): Promise<void> {
     if (currentToken !== loadToken) return;
 
     const allPoints = results.flat();
-    
+
     console.log(`[WindOverlay Summary] Total Viewport Points: ${allPoints.length} across ${visibleIndices.length} tiles.`);
 
     logger.debug(`[WindOverlay] LOD z=${pmZ}, Step=${step} -> ${allPoints.length} Punkte auf dem Screen.`);

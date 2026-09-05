@@ -20,7 +20,7 @@ export const aromeProvider = {
   async fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null> {
     if (!latlng) return null;
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&models=meteofrance_arome_france_15min,meteofrance_arome_france_hd_15min&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_hours=1&forecast_hours=12&temporal_resolution=native&${CACHE_BUSTER}`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&models=meteofrance_arome_france_15min&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&timeformat=unixtime&wind_speed_unit=kn&past_hours=1&forecast_hours=12&temporal_resolution=native&${CACHE_BUSTER}`;
 
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
@@ -41,12 +41,15 @@ export const aromeProvider = {
 
     const h = payload.hourly as Record<string, unknown>;
     const times = Array.isArray(h.time) ? h.time : [];
-    const speed15 = asNumberArray(h['wind_speed_10m_meteofrance_arome_france_15min']);
-    const dir15 = asNumberArray(h['wind_direction_10m_meteofrance_arome_france_15min']);
-    const gust15 = asNumberArray(h['wind_gusts_10m_meteofrance_arome_france_15min']);
-    const speedHd = asNumberArray(h['wind_speed_10m_meteofrance_arome_france_hd_15min']);
-    const dirHd = asNumberArray(h['wind_direction_10m_meteofrance_arome_france_hd_15min']);
-    const gustHd = asNumberArray(h['wind_gusts_10m_meteofrance_arome_france_hd_15min']);
+
+    // Open-Meteo nutzt Standard-Keys, wenn nur 1 Modell angefragt wird
+    const rawSpeed = h['wind_speed_10m'] ?? h['wind_speed_10m_meteofrance_arome_france_15min'];
+    const rawDir = h['wind_direction_10m'] ?? h['wind_direction_10m_meteofrance_arome_france_15min'];
+    const rawGust = h['wind_gusts_10m'] ?? h['wind_gusts_10m_meteofrance_arome_france_15min'];
+
+    const speed15 = asNumberArray(rawSpeed);
+    const dir15 = asNumberArray(rawDir);
+    const gust15 = asNumberArray(rawGust);
 
     const unixToModelKey = (sec: number) => {
       const d = new Date(Number(sec) * 1000);
@@ -62,11 +65,8 @@ export const aromeProvider = {
     for (let i = times.length - 1; i >= 0; i--) {
       const anyValue =
         (speed15[i] != null) ||
-        (speedHd[i] != null) ||
         (gust15[i] != null) ||
-        (gustHd[i] != null) ||
-        (dir15[i] != null) ||
-        (dirHd[i] != null);
+        (dir15[i] != null);
       if (anyValue) { lastIdx = i; break; }
     }
 
@@ -77,29 +77,19 @@ export const aromeProvider = {
     const speed15Trim = sliceTo(speed15);
     const dir15Trim = sliceTo(dir15);
     const gust15Trim = sliceTo(gust15);
-    const speedHdTrim = sliceTo(speedHd);
-    const dirHdTrim = sliceTo(dirHd);
-    const gustHdTrim = sliceTo(gustHd);
 
     const result: ForecastItem[] = [];
     for (let i = 0; i < timesTrim.length; i++) {
       const t = toFiniteNumber(timesTrim[i]) ?? 0;
-      const s15 = toFiniteNumber(speed15Trim[i]);
-      const sHd = toFiniteNumber(speedHdTrim[i]);
-      const g15 = toFiniteNumber(gust15Trim[i]);
-      const gHd = toFiniteNumber(gustHdTrim[i]);
-      const d15 = toFiniteNumber(dir15Trim[i]);
-      const dHd = toFiniteNumber(dirHdTrim[i]);
-
-      const speed = s15 != null ? s15 : (sHd != null ? sHd : 0);
-      const gust = g15 != null ? g15 : (gHd != null ? gHd : 0);
-      const direction = d15 != null ? d15 : (dHd != null ? dHd : null);
+      const speed = toFiniteNumber(speed15Trim[i]) ?? 0;
+      const gust = toFiniteNumber(gust15Trim[i]) ?? 0;
+      const direction = toFiniteNumber(dir15Trim[i]);
 
       const fullKey = unixToModelKey(t);
       result.push({
         hour: formatModelTimestampToTime(fullKey),
-        wind: Math.round((speed ?? 0) * 10) / 10,
-        gust: Math.round((gust ?? 0) * 10) / 10,
+        wind: Math.round(speed * 10) / 10,
+        gust: Math.round(gust * 10) / 10,
         direction: direction == null ? null : Math.round(direction * 10) / 10,
         fullKey
       });
@@ -109,8 +99,7 @@ export const aromeProvider = {
   },
 
   async fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob> {
-    const cfg = config as Record<string, unknown> | undefined;
-    const baseUrl = cfg && typeof cfg.baseUrl === 'string' ? cfg.baseUrl : '';
+    const baseUrl = typeof (config as Record<string, unknown>)?.baseUrl === 'string' ? (config as Record<string, any>).baseUrl : '';
     const imageUrl = `${baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`;
     const response = await fetch(imageUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Image could not be loaded');
