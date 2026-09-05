@@ -8,31 +8,24 @@ import { PMTiles } from 'pmtiles';
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
 
-const PMTILES_WIND_URL = '/20260828_1200Z_arome_dir.pmtiles';
+const PMTILES_WIND_URL = '/meteofrance_arome_france0025_15min_202609050600Z_202609051200Z_dir.pmtiles';
 
 // Exakte AROME Bounding Box (EPSG:4326) – gepaddet auf Block-Vielfache
-// Korrigierte Bounds basierend auf 1136 x 720 Pixeln à 0.025 Grad
 const LON_MIN = -12.0;
 const LAT_MAX = 55.4;
 
-// 1136 Pixel * 0.025° = 28.4° Spanne (statt 28.175°)
 const TOTAL_LON_SPAN = 1136 * 0.025; // 28.4
+const TOTAL_LAT_SPAN = 720 * 0.025;  // 18.0
 
-// 720 Pixel * 0.025° = 18.0° Spanne
-const TOTAL_LAT_SPAN = 720 * 0.025; // 18.0
-
-
-// Parametrierung des AROME-Rasters
-const LOD0_DEGREES = 0.4;        // Nativer Punktabstand auf pmZ = 0 (1 Pixel = 0.4°)
-const BASE_LEAFLET_ZOOM = 8;     // Ab diesem Leaflet-Zoom ist pmZ = 0 bei step = 1 ideal
-const MAX_PMTILES_Z = 4;         // Höchstes verfügbares LOD im PMTiles-Archiv
+const LOD0_DEGREES = 0.4;
+const BASE_LEAFLET_ZOOM = 8;
+const MAX_PMTILES_Z = 4;
 
 export interface WindArrowPoint {
   position: [number, number]; // [lon, lat]
   angle: number;              // Grad (0..360°)
 }
 
-// Erweitertes SVG mit feinem Drop-Shadow-Filter für hohe Kontraste auf hellem/dunklem Grund
 const WIND_ARROW_ICON_URL =
   'data:image/svg+xml;charset=utf-8,' +
   encodeURIComponent(`
@@ -54,7 +47,6 @@ let cachedPoints: WindArrowPoint[] | null = null;
 const tileCache = new Map<string, ImageData>();
 let updateTimeoutId: ReturnType<setTimeout> | null = null;
 
-// Wiederverwendbare Canvas-Instanz für speichereffizientes Dekodieren
 let sharedCanvas: HTMLCanvasElement | null = null;
 let sharedCtx: CanvasRenderingContext2D | null = null;
 
@@ -72,11 +64,34 @@ function getTileBounds(x: number, y: number, z: number) {
 }
 
 function getDensityConfig(map: LeafletMap) {
-  const z = Math.floor(map.getZoom());
+  const zoom = Math.floor(map.getZoom());
 
-  const rawLOD = z - BASE_LEAFLET_ZOOM;
+  // PMTiles LOD-Level ermitteln (begrenzt auf 0 bis MAX_PMTILES_Z)
+  const rawLOD = zoom - BASE_LEAFLET_ZOOM;
   const pmZ = Math.min(MAX_PMTILES_Z, Math.max(0, rawLOD));
-  const step = z < BASE_LEAFLET_ZOOM ? Math.pow(2, BASE_LEAFLET_ZOOM - z) : 1;
+
+  // Stride-Zuordnung je nach Zoomstufe
+  let step: number;
+
+  if (zoom <= 3) {
+    step = 0; // No arrows at very low zooms
+  } else if (zoom === 4) {
+    step = 16;
+  } else if (zoom === 5) {
+    step = 8;
+  } else if (zoom === 6) {
+    step = 4;
+  } else if (zoom === 7) {
+    step = 2;
+  } else {
+    step = 1;
+  }
+
+  if (step > 1) {step = step / 2;} // Halbiere den Schritt für feinere Dichte
+
+  console.log(
+    `[WindOverlay Config] Zoom: ${map.getZoom()} (floor: ${zoom}) -> PMTiles Z: ${pmZ}, Stride: ${step}`
+  );
 
   return { pmZ, step };
 }
@@ -118,11 +133,28 @@ function decodeWindArrowPointsFromImageData(
 ): WindArrowPoint[] {
   const { width, height, data } = imageData;
 
+  // Globale Pixelkoordinaten der oberen linken Ecke dieser Kachel
   const globalPxX = tileIndex.x * width;
   const globalPxY = tileIndex.y * height;
 
-  const startPx = (step - (globalPxX % step)) % step;
-  const startPy = (step - (globalPxY % step)) % step;
+  // Der globale Ursprung (LOD 0 = 1px) skaliert mit 2^z mit der Bildauflösung mit
+  // LOD 0 -> 1px | LOD 1 -> 2px | LOD 2 -> 4px | LOD 3 -> 8px | LOD 4 -> 16px
+  const globalOffsetX = 1 << (tileIndex.z + 1); // 1 * Math.pow(2, z)
+  const globalOffsetY = 1 << (tileIndex.z + 1);
+
+  // Kachelübergreifender Stride-Startpunkt:
+  // Richtet das Ausdünnungs-Gitter exakt am skalierten globalen Ursprung aus.
+  const startPx = (step - ((globalPxX - globalOffsetX) % step)) % step;
+  const startPy = (step - ((globalPxY - globalOffsetY) % step)) % step;
+
+  // Stride-bezogenes Debug Logging
+  console.log(
+    `[WindOverlay Tile ${tileIndex.z}/${tileIndex.x}/${tileIndex.y}] ` +
+    `Dims: ${width}x${height}px | ` +
+    `Requested Stride/Step: ${step} | ` +
+    `Global Offset: (${globalPxX}, ${globalPxY}) | ` +
+    `Start Local Pixel: (${startPx}, ${startPy})`
+  );
 
   const points: WindArrowPoint[] = [];
 
@@ -130,8 +162,12 @@ function decodeWindArrowPointsFromImageData(
   const deltaLon = TOTAL_LON_SPAN / (numTiles * width);
   const deltaLat = TOTAL_LAT_SPAN / (numTiles * height);
 
+  let scannedPixels = 0;
+
   for (let py = startPy; py < height; py += step) {
     for (let px = startPx; px < width; px += step) {
+      scannedPixels++;
+
       const idx = (py * width + px) * 4;
       const r = data[idx];
       const g = data[idx + 1];
@@ -156,6 +192,11 @@ function decodeWindArrowPointsFromImageData(
       });
     }
   }
+
+  console.log(
+    `[WindOverlay Tile ${tileIndex.z}/${tileIndex.x}/${tileIndex.y}] ` +
+    `Scanned iterations: ${scannedPixels} | Points Extracted: ${points.length}`
+  );
 
   return points;
 }
@@ -207,6 +248,7 @@ async function updateViewportWindPoints(): Promise<void> {
   if (!map) return;
 
   const { pmZ, step } = getDensityConfig(map);
+  
   const currentToken = ++loadToken;
   const visibleIndices = getVisibleTileIndices(map, pmZ);
 
@@ -225,8 +267,7 @@ async function updateViewportWindPoints(): Promise<void> {
 
     const allPoints = results.flat();
     
-    // --- Konsolen-Ausgabe der Viewport-Pfeile ---
-    console.log(`[WindOverlay] Rendered Viewport Points (${allPoints.length}):`, allPoints);
+    console.log(`[WindOverlay Summary] Total Viewport Points: ${allPoints.length} across ${visibleIndices.length} tiles.`);
 
     logger.debug(`[WindOverlay] LOD z=${pmZ}, Step=${step} -> ${allPoints.length} Punkte auf dem Screen.`);
     setIconLayerFromPoints(allPoints);
