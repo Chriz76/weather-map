@@ -3,6 +3,9 @@ import type { Map as LeafletMap } from 'leaflet';
 import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { logger } from '../utils/logger';
+import { uiStateModel } from '../models/uiStateModel';
+import { weatherProviderModel } from '../models/weatherProviderModel';
+import { providers } from '../config';
 import { PMTiles } from 'pmtiles';
 
 const WIND_ARROW_PANE_Z_INDEX = '510';
@@ -42,9 +45,10 @@ let overlayInstance: LeafletDeckOverlay | null = null;
 let pmtilesInstance: PMTiles | null = null;
 let loadToken = 0;
 let cachedPoints: WindArrowPoint[] | null = null;
+let currentPmtilesUrl: string | null = null;
 
 const tileCache = new Map<string, ImageData>();
-let updateTimeoutId: ReturnType<setTimeout> | null = null;
+let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 let sharedCanvas: HTMLCanvasElement | null = null;
 let sharedCtx: CanvasRenderingContext2D | null = null;
@@ -326,6 +330,7 @@ function setIconLayerFromPoints(points: WindArrowPoint[]): void {
 
 export interface IWindArrowOverlayView {
   init: (map: LeafletMap, pmtilesUrl?: string) => void;
+  setPmtilesUrl?: (overlayUrl: string) => void;
 }
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
@@ -334,13 +339,93 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       overlayInstance = new LeafletDeckOverlay({ className: WIND_ARROW_CLASS, zIndex: WIND_ARROW_PANE_Z_INDEX });
       overlayInstance.addTo(map);
 
-      pmtilesInstance = new PMTiles(pmtilesUrl);
+      // Do not initialize a default PMTiles here — wait for model timestamps/provider
 
       map.on('moveend zoomend resize', () => {
         scheduleUpdateViewportWindPoints();
       });
     }
 
+    // React to overlay URL updates by deriving PMTiles URL from model + config
+    uiStateModel.addEventListener('ui:overlay-url-updated', () => {
+      const ts = weatherProviderModel.activeTimestamp;
+      const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
+      if (!ts || !providerCfg?.baseUrl) return;
+
+      const base = providerCfg.baseUrl.replace(/\/?$/, '/');
+      const pm = `${base}${ts}Z_dir.pmtiles`;
+      if (pm === currentPmtilesUrl) return;
+
+      try {
+        if (pmtilesInstance && (pmtilesInstance as any).close) {
+          try { (pmtilesInstance as any).close(); } catch {}
+        }
+      } catch {}
+
+      tileCache.clear();
+      pmtilesInstance = new PMTiles(pm);
+      currentPmtilesUrl = pm;
+      loadToken++; // invalidate any in-flight loads
+      scheduleUpdateViewportWindPoints();
+    });
+    // Initialize PMTiles only when the model provides a timestamp/provider
+    const setupFromModel = () => {
+      const ts = weatherProviderModel.activeTimestamp;
+      const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
+      if (!ts || !providerCfg?.baseUrl) return;
+
+      const base = providerCfg.baseUrl.replace(/\/?$/, '/');
+      const pm = `${base}${ts}Z_dir.pmtiles`;
+      if (pm === currentPmtilesUrl) return;
+
+      try {
+        if (pmtilesInstance && (pmtilesInstance as any).close) {
+          try { (pmtilesInstance as any).close(); } catch {}
+        }
+      } catch {}
+
+      tileCache.clear();
+      pmtilesInstance = new PMTiles(pm);
+      currentPmtilesUrl = pm;
+      loadToken++; // invalidate any in-flight loads
+      scheduleUpdateViewportWindPoints();
+    };
+
+    // call once in case model already has timestamps
+    setupFromModel();
+
+    // re-run setup when timestamps or provider change
+    weatherProviderModel.addEventListener('model:timestamps-updated', setupFromModel);
+    weatherProviderModel.addEventListener('model:provider-changed', setupFromModel);
+
     scheduleUpdateViewportWindPoints();
   }
 };
+
+function setPmtilesUrlFromOverlayUrl(overlayUrl?: string): void {
+  if (!overlayUrl) return;
+
+  let pmurl = overlayUrl;
+
+  // If the URL doesn't already look like a _dir.pmtiles file, try to convert
+  if (!/_dir\.pmtiles$/i.test(pmurl)) {
+    pmurl = pmurl.replace(/\.webp(?:\?.*)?$/i, '_dir.pmtiles');
+  }
+
+  if (pmurl === currentPmtilesUrl) return;
+
+  try {
+    if (pmtilesInstance && (pmtilesInstance as any).close) {
+      try { (pmtilesInstance as any).close(); } catch {}
+    }
+  } catch {}
+
+  tileCache.clear();
+  pmtilesInstance = new PMTiles(pmurl);
+  currentPmtilesUrl = pmurl;
+  loadToken++; // invalidate any in-flight loads
+  scheduleUpdateViewportWindPoints();
+}
+
+// expose the setter on the exported view
+windArrowOverlayView.setPmtilesUrl = (overlayUrl: string) => setPmtilesUrlFromOverlayUrl(overlayUrl);
