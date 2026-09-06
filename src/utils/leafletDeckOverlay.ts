@@ -24,11 +24,12 @@ export class LeafletDeckOverlay extends L.Layer {
   public override onAdd(map: LeafletMap): this {
     this.mapInstance = map;
 
-    // Verwende den mapPane oder den Map Container direkt, damit Leaflet-Transformationen 
-    // das Canvas nicht doppelt verschieben.
-    const container = map.getContainer();
+    // Prefer attaching to a Leaflet pane so stacking is handled by Leaflet (popupPane stays on top).
+    // Fall back to the map container if panes are not available for some reason.
+    const panes = (map as any).getPanes ? (map as any).getPanes() : null;
+    const parentEl: HTMLElement = (panes && panes.overlayPane) ? panes.overlayPane as HTMLElement : map.getContainer();
 
-    this.container = L.DomUtil.create('div', this.className, container) as HTMLDivElement;
+    this.container = L.DomUtil.create('div', this.className, parentEl) as HTMLDivElement;
     this.container.style.position = 'absolute';
     this.container.style.top = '0px';
     this.container.style.left = '0px';
