@@ -1,6 +1,6 @@
 /* global L */
 // --- src/map-init.js ---
-import { providers } from './config.ts';
+import { CARTO_API_KEY, DEFAULT_MAP_VIEW, providers } from './config.ts';
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
 import { D2 } from './weatherProvider/providerIds';
@@ -20,11 +20,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
 
     // 1. Get last state from storage.
     // If empty/missing, falls back directly to the provided default object (Augsburg).
-    const savedState = storage.getMapState({ 
-        lat: 48.3528, 
-        lng: 10.9043, 
-        zoom: 8 
-    });
+    const savedState = storage.getMapState(DEFAULT_MAP_VIEW);
 
     // 2. Ensure the map container exists and has height. If height is 0 (CSS not yet applied), apply a temporary fallback.
     const mapContainer = document.getElementById('map');
@@ -37,9 +33,17 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         mapContainer.style.height = '500px';
     }
 
+    // Use the Web Mercator latitude limit so Leaflet cannot pan into wrapped world copies.
+    const worldBounds: L.LatLngBoundsExpression = [
+        [-85.05112878, -180],
+        [85.05112878, 180],
+    ];
+
     mapInstance = L.map('map', {
         closePopupOnClick: false,
-        zoomControl: false
+        zoomControl: false,
+        maxBounds: worldBounds,
+        maxBoundsViscosity: 1.0,
     }).setView([savedState.lat, savedState.lng], savedState.zoom);
 
     mapInstance.attributionControl.setPrefix(false);
@@ -47,8 +51,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     // Add zoom controls manually at top-right
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
 
-    const CARTO_API_KEY = 'cb1_28i5_1_ccfb2588484de9213cc3f36f';
-    
+
     // Background base layer
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`, {
         maxZoom: 20,
@@ -57,6 +60,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         zoomOffset: -1,
         className: 'map-redesign',
         detectRetina: true,
+        noWrap: true,
         attribution: '&copy;<a href="https://www.openstreetmap.org/copyright">osm</a>|&copy;<a href="https://carto.com/attributions">carto</a>'
     }).addTo(mapInstance);
 
@@ -76,7 +80,8 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         tileSize: 512,
         zoomOffset: -1,
         pane: 'shadowPane',
-        detectRetina: true
+        detectRetina: true,
+        noWrap: true,
     }).addTo(mapInstance);
 
     return { map: mapInstance, windOverlay: windOverlayInstance };

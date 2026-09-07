@@ -3,6 +3,14 @@ import type * as Leaflet from 'leaflet';
 
 export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
 
+export const CARTO_API_KEY = 'cb1_28i5_1_ccfb2588484de9213cc3f36f';
+
+export const DEFAULT_MAP_VIEW = {
+  lat: 48.3528,
+  lng: 10.9043,
+  zoom: 8,
+} as const;
+
 export type ProviderConfig = {
   baseUrl: string;
   gridCellSize: number;

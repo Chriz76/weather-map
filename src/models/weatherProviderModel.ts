@@ -1,4 +1,4 @@
-import { determineActiveIndex } from '../utils/time';
+import * as timeUtils from '../utils/time';
 import { logger } from '../utils/logger';
 import { D2, AROME } from '../weatherProvider/providerIds';
 import { calculatewindSpeeds } from '../utils/interpolation';
@@ -156,7 +156,8 @@ export class WeatherProviderModel extends EventTarget {
       return;
     }
 
-    const entry = model.forecast.find(e => e.fullKey === this.activeTimestamp) || model.forecast[0];
+    const matchingIndex = timeUtils.findMatchingTimestampIndexBy(model.forecast, this.activeTimestamp, (item) => item.fullKey);
+    const entry = matchingIndex >= 0 ? model.forecast[matchingIndex] : model.forecast[0];
     model.windData = entry ? { speed: entry.wind, gust: entry.gust, direction: entry.direction ?? null } : null;
   }
 
@@ -180,7 +181,7 @@ export class WeatherProviderModel extends EventTarget {
   setIndexMetadata(indexData: import('../types').IndexData, prevActiveTimestamp: string | null = null): void {
     const sortedTimestamps = (indexData.available_timestamps || []).sort();
     const reference = prevActiveTimestamp || this.activeTimestamp;
-    const activeIndex = determineActiveIndex(sortedTimestamps, reference);
+    const activeIndex = timeUtils.determineActiveIndex(sortedTimestamps, reference);
 
     this._getActiveModel().availableTimestamps = sortedTimestamps;
     this._getActiveModel().activeTimestampIndex = activeIndex;

@@ -1,18 +1,17 @@
-name: Deploy typescript Branch to GitHub Pages
+name: Deploy Application
 
 on:
   push:
+    # Reagiert auf alle Branches
     branches:
-      - typescript
+      - '**'
   workflow_dispatch:
 
-# Berechtigungen für das GITHUB_TOKEN setzen
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Stellt sicher, dass nur ein Deployment gleichzeitig läuft
 concurrency:
   group: 'pages'
   cancel-in-progress: true
@@ -20,7 +19,7 @@ concurrency:
 jobs:
   deploy:
     environment:
-      name: github-pages
+      name: ${{ github.ref_name == 'typescript' && 'github-pages' || 'cloudflare-pages' }}
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
@@ -46,13 +45,29 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # Artifacts für GitHub Pages vorbereiten
-      - name: Upload artifact
+      # ==========================================
+      # DEPLOYMENT: GitHub Pages (Exklusiv für 'typescript')
+      # ==========================================
+      - name: Upload artifact for GitHub Pages
+        if: github.ref_name == 'typescript'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # Der Ordner mit deinen fertigen Build-Dateien
+          path: './dist'
 
-      # Auf GitHub Pages veröffentlichen
       - name: Deploy to GitHub Pages
+        if: github.ref_name == 'typescript'
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # ==========================================
+      # DEPLOYMENT: Cloudflare Pages (Alle Branches AUSSER 'typescript')
+      # ==========================================
+      - name: Deploy to Cloudflare Pages
+        if: github.ref_name != 'typescript'
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          accountId: c728452fcd5090f3d7f2bacc5e75fcd2
+          projectName: 'windapp-preview'
+          directory: './dist'
+          

@@ -35,8 +35,14 @@ export const aromeProvider = {
       return Number.isFinite(n) ? n : null;
     };
     const asNumberArray = (v: unknown): Array<number | null> => Array.isArray(v) ? v.map(item => toFiniteNumber(item)) : [];
+    const pickSeries = (obj: Record<string, unknown>, keys: string[]): unknown => {
+      for (const key of keys) {
+        if (Array.isArray(obj[key])) return obj[key];
+      }
+      return null;
+    };
 
-    // Greift flexibel auf hourly, minutely15 ODER minutely_15 zu
+    // Flexibly reads hourly, minutely15, or minutely_15 payloads.
     const m15 = isObject(payload)
       ? (isObject(payload.hourly) ? payload.hourly : isObject(payload.minutely15) ? payload.minutely15 : isObject(payload.minutely_15) ? payload.minutely_15 : null)
       : null;
@@ -46,9 +52,9 @@ export const aromeProvider = {
     }
 
     const times = Array.isArray(m15.time) ? m15.time : [];
-    const speeds = asNumberArray(m15.wind_speed_10m);
-    const directions = asNumberArray(m15.wind_direction_10m);
-    const gusts = asNumberArray(m15.wind_gusts_10m);
+    const speeds = asNumberArray(pickSeries(m15, ['wind_speed_10m', 'wind_speed_10m_meteofrance_arome_france_15min', 'wind_speed_10m_meteofrance_arome_seamless']));
+    const directions = asNumberArray(pickSeries(m15, ['wind_direction_10m', 'wind_direction_10m_meteofrance_arome_france_15min', 'wind_direction_10m_meteofrance_arome_seamless']));
+    const gusts = asNumberArray(pickSeries(m15, ['wind_gusts_10m', 'wind_gusts_10m_meteofrance_arome_france_15min', 'wind_gusts_10m_meteofrance_arome_seamless']));
 
     const unixToModelKey = (sec: number) => {
       const d = new Date(Number(sec) * 1000);
