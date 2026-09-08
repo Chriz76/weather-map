@@ -3,11 +3,9 @@ import type { Map as LeafletMap } from 'leaflet';
 
 const SHARE_ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="18" cy="5" r="3" />
-  <circle cx="6" cy="12" r="3" />
-  <circle cx="18" cy="19" r="3" />
-  <path d="M8.59 13.51 15.42 17.49" />
-  <path d="M15.41 6.51 8.59 10.49" />
+  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+  <polyline points="16 6 12 2 8 6"></polyline>
+  <line x1="12" y1="2" x2="12" y2="15"></line>
 </svg>`;
 
 /**
