@@ -9,42 +9,11 @@ import { stationView } from '../views/stationView';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
 import { logger } from '../utils/logger';
+import { shareCurrentLocation } from '../utils/share';
 import type { Map as LeafletMap, LatLngExpression, LeafletMouseEvent, LocationEvent, ErrorEvent } from 'leaflet';
 import type { Station } from '../types';
 
 let stationViewHandle: ReturnType<typeof stationView.init> | null = null;
-const SHARE_TEXT = 'High-res ICON-D2 & AROME wind nowcasting. Free & open-source.';
-
-function getShareLatLng(map: LeafletMap) {
-  return weatherProviderModel.lastClickedLatLng ?? map.getCenter();
-}
-
-function buildShareUrl(lat: number, lng: number, providerId: string): string {
-  const url = new URL(window.location.origin + window.location.pathname);
-  url.searchParams.set('lat', lat.toFixed(4));
-  url.searchParams.set('lon', lng.toFixed(4));
-  url.searchParams.set('model', providerId);
-  return url.toString();
-}
-
-async function handleShareRequest(map: LeafletMap): Promise<void> {
-  const latlng = getShareLatLng(map);
-  const providerId = weatherProviderModel.getActiveProviderId();
-  const shareUrl = buildShareUrl(latlng.lat, latlng.lng, providerId);
-  const shareData = {
-    title: `Wind @ ${latlng.lat.toFixed(2)}, ${latlng.lng.toFixed(2)}`,
-    text: SHARE_TEXT,
-    url: shareUrl,
-  };
-
-  if (navigator.share) {
-    await navigator.share(shareData).catch(() => {});
-    return;
-  }
-
-  await navigator.clipboard.writeText(shareUrl);
-  alert('Link in die Zwischenablage kopiert!');
-}
 
 export async function initMapController(map: LeafletMap): Promise<void> {
   let lastClusterClickToken: number | null = null;
@@ -175,7 +144,7 @@ export async function initMapController(map: LeafletMap): Promise<void> {
 
   window.addEventListener('ui:share-request', async () => {
     try {
-      await handleShareRequest(map);
+      await shareCurrentLocation(map);
     } catch (error: unknown) {
       logger.error('Error while sharing current location:', error);
     }

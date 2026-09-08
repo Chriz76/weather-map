@@ -1,8 +1,8 @@
 /* ==========================================================================
-   WIND TOGGLE VIEW COMPONENT
+   SHARE VIEW COMPONENT
    ========================================================================== */
 
-.leaflet-bar a.wind-toggle-view {
+.leaflet-bar a.share-view {
     width: 30px !important;
     height: 30px !important;
     display: flex !important;
@@ -21,17 +21,13 @@
     text-decoration: none !important;
 }
 
-.leaflet-bar a.wind-toggle-view:hover,
-.leaflet-bar a.wind-toggle-view:focus,
-.leaflet-bar a.wind-toggle-view:active {
-    color: #555 !important;
-    background-color: #fff !important;
+.leaflet-bar a.share-view:hover,
+.leaflet-bar a.share-view:focus,
+.leaflet-bar a.share-view:active {
+    color: var(--weather-map-accent-blue) !important;
+    background-color: #f4f4f4 !important;
 }
 
-.leaflet-bar a.wind-toggle-view svg {
+.leaflet-bar a.share-view svg {
     stroke: currentColor;
-}
-
-.leaflet-bar a.wind-toggle-view svg.wind-toggle-icon-disabled {
-    stroke: #9CA3AF !important;
 }

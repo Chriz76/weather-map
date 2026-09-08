@@ -1,5 +1,5 @@
 import { logger } from '../utils/logger';
-import { SHARE_ICON_SVG } from './windToggleView';
+import { SHARE_ICON_SVG } from './shareView';
 import type { WindData } from '../types';
 import * as L from 'leaflet';
 import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
