@@ -26,15 +26,10 @@ import { registerNotificationView } from './views/notificationView';
 import { registerToastView } from './views/toastView';
 import { specialDataView } from './views/specialDataView';
 import { D2, AROME } from './weatherProvider/providerIds';
+import { parseUrlParams, cleanUrlHistory, normalizeProviderId } from './utils/url';
 
-const urlParams = new URLSearchParams(window.location.search);
-
-function normalizeProviderId(value: string | null): string | null {
-    if (value === D2 || value === AROME) return value;
-    return null;
-}
-
-const urlProviderId = normalizeProviderId(urlParams.get('model'));
+const { providerId: urlProviderId, location: urlLocation, hadParams } = parseUrlParams();
+if (hadParams) cleanUrlHistory();
 const storedProviderId = normalizeProviderId(storage.getActiveProvider(weatherProviderModel.getActiveProviderId()));
 const initialProviderId = urlProviderId ?? storedProviderId ?? weatherProviderModel.getActiveProviderId();
 
@@ -83,25 +78,17 @@ async function initApp() {
     await initLifecycleController(mapNN);
 
     await loadingSpinnerController.track(async () => {
-        // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
-        const latParam = urlParams.get('lat');
-        const lonParam = urlParams.get('lon');
+        // 1. Deep-Linking URL Parameter prüfen (via parseUrlParams)
+        if (urlLocation) {
+            const targetLatLng = { lat: urlLocation.lat, lng: urlLocation.lng };
+            mapNN.setView(targetLatLng, 12);
 
-        if (latParam && lonParam) {
-            const lat = parseFloat(latParam);
-            const lng = parseFloat(lonParam);
-
-            if (!isNaN(lat) && !isNaN(lng)) {
-                const targetLatLng = { lat, lng };
-                mapNN.setView(targetLatLng, 12);
-                
-                // Schiebt die Koordinaten direkt linear in die Pipeline
-                try {
-                    await loadWeatherDataForLocationAction(targetLatLng);
-                } catch (error) {
-                    const errMsg = error instanceof Error ? error.message : String(error);
-                    weatherProviderModel.setPointDataLoadError(errMsg);
-                }
+            // Schiebt die Koordinaten direkt linear in die Pipeline
+            try {
+                await loadWeatherDataForLocationAction(targetLatLng);
+            } catch (error) {
+                const errMsg = error instanceof Error ? error.message : String(error);
+                weatherProviderModel.setPointDataLoadError(errMsg);
             }
         }
     });
