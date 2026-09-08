@@ -13,6 +13,38 @@ import type { Map as LeafletMap, LatLngExpression, LeafletMouseEvent, LocationEv
 import type { Station } from '../types';
 
 let stationViewHandle: ReturnType<typeof stationView.init> | null = null;
+const SHARE_TEXT = 'High-res ICON-D2 & AROME wind nowcasting. Free & open-source.';
+
+function getShareLatLng(map: LeafletMap) {
+  return weatherProviderModel.lastClickedLatLng ?? map.getCenter();
+}
+
+function buildShareUrl(lat: number, lng: number, providerId: string): string {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('lat', lat.toFixed(4));
+  url.searchParams.set('lon', lng.toFixed(4));
+  url.searchParams.set('model', providerId);
+  return url.toString();
+}
+
+async function handleShareRequest(map: LeafletMap): Promise<void> {
+  const latlng = getShareLatLng(map);
+  const providerId = weatherProviderModel.getActiveProviderId();
+  const shareUrl = buildShareUrl(latlng.lat, latlng.lng, providerId);
+  const shareData = {
+    title: `Wind @ ${latlng.lat.toFixed(2)}, ${latlng.lng.toFixed(2)}`,
+    text: SHARE_TEXT,
+    url: shareUrl,
+  };
+
+  if (navigator.share) {
+    await navigator.share(shareData).catch(() => {});
+    return;
+  }
+
+  await navigator.clipboard.writeText(shareUrl);
+  alert('Link in die Zwischenablage kopiert!');
+}
 
 export async function initMapController(map: LeafletMap): Promise<void> {
   let lastClusterClickToken: number | null = null;
@@ -82,6 +114,16 @@ export async function initMapController(map: LeafletMap): Promise<void> {
     weatherProviderModel.removePointData();
   }
 
+  function handleMapContainerClick(e: Event) {
+    const target = e.target as HTMLElement | null;
+    const shareButton = target?.closest('.marker-popup__share-button') as HTMLElement | null;
+    if (!shareButton) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    window.dispatchEvent(new CustomEvent('ui:share-request'));
+  }
+
   async function handleMoveEnd() {
     try {
       await updateStationsOnMapAction(map.getBounds());
@@ -111,6 +153,7 @@ export async function initMapController(map: LeafletMap): Promise<void> {
   map.on('locationerror', handleLocationError);
   map.on('popupclose', handlePopupClose);
   map.on('moveend', handleMoveEnd);
+  map.getContainer().addEventListener('click', handleMapContainerClick);
 
   uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
     storage.saveWindMeasurements(uiStateModel.showWindMeasurements);
@@ -127,6 +170,14 @@ export async function initMapController(map: LeafletMap): Promise<void> {
       } catch (e: unknown) {
         logger.error('Error updating special data after visibility change:', e);
       }
+    }
+  });
+
+  window.addEventListener('ui:share-request', async () => {
+    try {
+      await handleShareRequest(map);
+    } catch (error: unknown) {
+      logger.error('Error while sharing current location:', error);
     }
   });
 

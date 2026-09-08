@@ -19,17 +19,28 @@ import { registerLogoView } from './views/logoView';
 import { registerModelInfoView } from './views/modelInfoView';
 import { registerMapOverlayView } from './views/mapOverlayView';
 import { registerGpsView } from './views/gpsView';
-import { registerWindToggleView } from './views/windToggleView';
+import { registerShareView, registerWindToggleView } from './views/windToggleView';
 import { registerLoadingView } from './views/loadingSpinnerView';
 import { registerNotificationView } from './views/notificationView';
 import { registerToastView } from './views/toastView';
 import { specialDataView } from './views/specialDataView';
+import { D2, AROME } from './weatherProvider/providerIds';
+
+const urlParams = new URLSearchParams(window.location.search);
+
+function normalizeProviderId(value: string | null): string | null {
+    if (value === D2 || value === AROME) return value;
+    return null;
+}
+
+const urlProviderId = normalizeProviderId(urlParams.get('model'));
+const storedProviderId = normalizeProviderId(storage.getActiveProvider(weatherProviderModel.getActiveProviderId()));
+const initialProviderId = urlProviderId ?? storedProviderId ?? weatherProviderModel.getActiveProviderId();
 
 // --- 1. INITIALISIERUNG ---
 // Restore previously selected provider (before map init so imageBounds are correct)
-const storedProvider = storage.getActiveProvider(weatherProviderModel.getActiveProviderId());
-if (storedProvider && storedProvider !== weatherProviderModel.getActiveProviderId()) {
-    weatherProviderModel.setActiveProvider(storedProvider);
+if (initialProviderId !== weatherProviderModel.getActiveProviderId()) {
+    weatherProviderModel.setActiveProvider(initialProviderId);
 }
 const { map, windOverlay } = initMap();
 
@@ -59,6 +70,7 @@ registerGpsView(mapNN, () => {
 });
 
 registerWindToggleView(mapNN);
+registerShareView(mapNN);
 specialDataView.init(mapNN);
 
 // --- 2. CONTROLLER SYSTEM START ---
@@ -71,7 +83,6 @@ async function initApp() {
 
     await loadingSpinnerController.track(async () => {
         // 1. Deep-Linking URL Parameter prüfen (?lat=54.4150&lon=11.1022)
-        const urlParams = new URLSearchParams(window.location.search);
         const latParam = urlParams.get('lat');
         const lonParam = urlParams.get('lon');
 
