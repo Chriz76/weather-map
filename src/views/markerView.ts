@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger';
+import { SHARE_ICON_SVG } from './shareView';
 import type { WindData } from '../types';
 import * as L from 'leaflet';
 import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
@@ -50,6 +51,10 @@ function createPopupHtml(formattedValue: string, formattedGust: string, directio
                                 </div>
                         </div>
             <div class="marker-popup__coords">${coordsDisplay}</div>
+            <button type="button" class="marker-popup__share-button" aria-label="Share current location">
+                ${SHARE_ICON_SVG}
+                <span>Share location</span>
+            </button>
         </div>
     `;
 }
