@@ -1,0 +1,33 @@
+/* ==========================================================================
+   SHARE VIEW COMPONENT
+   ========================================================================== */
+
+.leaflet-bar a.share-view {
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 30px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: #555 !important;
+    background-color: #fff !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+}
+
+.leaflet-bar a.share-view:hover,
+.leaflet-bar a.share-view:focus,
+.leaflet-bar a.share-view:active {
+    color: var(--weather-map-accent-blue) !important;
+    background-color: #f4f4f4 !important;
+}
+
+.leaflet-bar a.share-view svg {
+    stroke: currentColor;
+}
