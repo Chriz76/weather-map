@@ -58,11 +58,28 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         const topPopupPane = mapInstance!.createPane('topPopupPane', mapContainerEl);
         topPopupPane.style.zIndex = '800';
 
-        // Synchronisiere die pixel-Position des topPopupPane mit der mapPane so
-        // dass Popups optisch an der gleichen Stelle bleiben während Panning/Drag.
+        // Ensure the default popup pane is above overlays/arrows as well
+        const defaultPopupPane = mapInstance!.getPanes().popupPane;
+        if (defaultPopupPane) {
+            defaultPopupPane.style.zIndex = '810';
+        }
+
+        // Erstelle ein eigenes Pane für die Labels und setze es zwischen Overlay und Popups
+        // Ensure label pane exists and is properly configured
+        const topLabelPane = mapInstance!.getPane('topLabelPane') || mapInstance!.createPane('topLabelPane', mapContainerEl);
+        // Put labels above overlays but below popups
+        // Use 790 so it's just below `topPopupPane` (800) but above typical overlays
+        topLabelPane.style.zIndex = '790';
+        // Labels should not capture pointer events so map interactions still work
+        topLabelPane.style.pointerEvents = 'none';
+
+        // Synchronisiere die pixel-Position des topPopupPane und topLabelPane mit der mapPane
+        // so dass Popups und Labels optisch an der gleichen Stelle bleiben während Panning/Drag.
         const syncTopPopupPane = () => {
             const mapPanePos = L.DomUtil.getPosition(mapInstance!.getPanes().mapPane);
-            L.DomUtil.setPosition(topPopupPane, mapPanePos || L.point(0, 0));
+            const pos = mapPanePos || L.point(0, 0);
+            L.DomUtil.setPosition(topPopupPane, pos);
+            L.DomUtil.setPosition(topLabelPane, pos);
         };
 
         // Initiales Ausrichten
@@ -93,13 +110,13 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         zIndex: 10
     }).addTo(mapInstance);
 
-    // Labels layer on top of everything
+    // Labels layer on top of everything (use synced label pane so labels stay aligned with map)
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`, {
         maxZoom: 20,
-        zIndex: 20,
+        zIndex: 790,
         tileSize: 512,
         zoomOffset: -1,
-        pane: 'shadowPane',
+        pane: 'topLabelPane',
         detectRetina: true,
         noWrap: true,
     }).addTo(mapInstance);

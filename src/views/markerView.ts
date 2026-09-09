@@ -66,7 +66,8 @@ function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: s
     color: '#ffffff',
     fillColor: '#0077a4',
     fillOpacity: 1,
-    weight: 2
+    weight: 2,
+    pane: 'topPopupPane'
   }).addTo(map);
 
   // Ensure popup is kept in view and avoid UI controls overlapping it.
