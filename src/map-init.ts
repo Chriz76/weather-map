@@ -51,6 +51,26 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     // Add zoom controls manually at top-right
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
 
+        // Erstelle ein eigenes Pane FÜR Popups außerhalb des mapPane, aber im
+        // mapContainer. Dadurch kann es einen höheren z-Index gegenüber Deck.gl
+        // besitzen und wir synchronisieren seine Pixel-Position bei jedem Move.
+        const mapContainerEl = mapInstance!.getContainer();
+        const topPopupPane = mapInstance!.createPane('topPopupPane', mapContainerEl);
+        topPopupPane.style.zIndex = '800';
+
+        // Synchronisiere die pixel-Position des topPopupPane mit der mapPane so
+        // dass Popups optisch an der gleichen Stelle bleiben während Panning/Drag.
+        const syncTopPopupPane = () => {
+            const mapPanePos = L.DomUtil.getPosition(mapInstance!.getPanes().mapPane);
+            L.DomUtil.setPosition(topPopupPane, mapPanePos || L.point(0, 0));
+        };
+
+        // Initiales Ausrichten
+        syncTopPopupPane();
+
+        // Aktualisieren bei Bewegung und View-Resets
+        mapInstance!.on('move viewreset zoomAnim', syncTopPopupPane);
+
 
     // Background base layer
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`, {

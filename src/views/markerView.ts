@@ -72,6 +72,7 @@ function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: s
   // Ensure popup is kept in view and avoid UI controls overlapping it.
   if (activeSpotMarker) {
     activeSpotMarker.bindPopup(popupContent, {
+      pane: 'topPopupPane',
       offset: [0, -10],
       keepInView: true,
       // give extra padding so popups near the bottom/right don't overlap controls
