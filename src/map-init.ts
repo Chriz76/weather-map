@@ -64,6 +64,12 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
             defaultPopupPane.style.zIndex = '810';
         }
 
+        // Erstelle ein eigenes Pane für Badges zwischen Labels und Popups
+        const topBadgesPane = mapInstance!.getPane('topBadgesPane') || mapInstance!.createPane('topBadgesPane', mapContainerEl);
+        topBadgesPane.style.zIndex = '795';
+        // Badges müssen pointer events erhalten, damit Marker-Klicks funktionieren
+        topBadgesPane.style.pointerEvents = 'auto';
+
         // Erstelle ein eigenes Pane für die Labels und setze es zwischen Overlay und Popups
         // Ensure label pane exists and is properly configured
         const topLabelPane = mapInstance!.getPane('topLabelPane') || mapInstance!.createPane('topLabelPane', mapContainerEl);
@@ -73,12 +79,13 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         // Labels should not capture pointer events so map interactions still work
         topLabelPane.style.pointerEvents = 'none';
 
-        // Synchronisiere die pixel-Position des topPopupPane und topLabelPane mit der mapPane
-        // so dass Popups und Labels optisch an der gleichen Stelle bleiben während Panning/Drag.
+        // Synchronisiere die pixel-Position des topPopupPane, topBadgesPane und topLabelPane mit der mapPane
+        // so dass Popups, Badges und Labels optisch an der gleichen Stelle bleiben während Panning/Drag.
         const syncTopPopupPane = () => {
             const mapPanePos = L.DomUtil.getPosition(mapInstance!.getPanes().mapPane);
             const pos = mapPanePos || L.point(0, 0);
             L.DomUtil.setPosition(topPopupPane, pos);
+            L.DomUtil.setPosition(topBadgesPane, pos);
             L.DomUtil.setPosition(topLabelPane, pos);
         };
 

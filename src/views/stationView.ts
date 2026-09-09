@@ -57,7 +57,7 @@ export const stationView = (() => {
       const lon = Number(station.lon ?? 0);
 
       const existingMarker = stationMarkerMap.get(stationKey) as Marker | undefined;
-      const marker = existingMarker || L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station) }) as Marker;
+      const marker = existingMarker || L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station), pane: 'topBadgesPane' }) as Marker;
 
       marker.setIcon(createIcon(station));
       marker.setLatLng([lat, lon] as LatLngExpression);
