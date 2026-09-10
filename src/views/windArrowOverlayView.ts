@@ -11,15 +11,20 @@ import { PMTiles } from 'pmtiles';
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
 
-// Exakte AROME Bounding Box (EPSG:4326) – gepaddet auf Block-Vielfache
-const LON_MIN = -12.0;
-const LAT_MAX = 55.4;
+// Arrow/grid configuration is provided per-provider via `providers[providerId].arrows`.
+function getArrowsConfig() {
+  const providerCfg = providers[weatherProviderModel.getActiveProviderId()] as any;
+  const arrows = providerCfg?.arrows ?? {};
 
-const TOTAL_LON_SPAN = 1136 * 0.025; // 28.4°
-const TOTAL_LAT_SPAN = 720 * 0.025;  // 18.0°
+  const lonMin = typeof arrows.lonMin === 'number' ? arrows.lonMin : (typeof arrows.LON_MIN === 'number' ? arrows.LON_MIN : -12.0);
+  const latMax = typeof arrows.latMax === 'number' ? arrows.latMax : (typeof arrows.LAT_MAX === 'number' ? arrows.LAT_MAX : 55.4);
+  const totalLonSpan = typeof arrows.totalLonSpan === 'number' ? arrows.totalLonSpan : (typeof arrows.TOTAL_LON_SPAN === 'number' ? arrows.TOTAL_LON_SPAN : 1136 * 0.025);
+  const totalLatSpan = typeof arrows.totalLatSpan === 'number' ? arrows.totalLatSpan : (typeof arrows.TOTAL_LAT_SPAN === 'number' ? arrows.TOTAL_LAT_SPAN : 720 * 0.025);
+  const baseLeafletZoom = typeof arrows.baseLeafletZoom === 'number' ? arrows.baseLeafletZoom : (typeof arrows.BASE_LEAFLET_ZOOM === 'number' ? arrows.BASE_LEAFLET_ZOOM : 8);
+  const maxPmtilesZ = typeof arrows.maxPmtilesZ === 'number' ? arrows.maxPmtilesZ : (typeof arrows.MAX_PMTILES_Z === 'number' ? arrows.MAX_PMTILES_Z : 4);
 
-const BASE_LEAFLET_ZOOM = 8;
-const MAX_PMTILES_Z = 4;
+  return { lonMin, latMax, totalLonSpan, totalLatSpan, baseLeafletZoom, maxPmtilesZ };
+}
 
 export interface WindArrowPoint {
   position: [number, number]; // [lon, lat]
@@ -52,24 +57,26 @@ let sharedCanvas: HTMLCanvasElement | null = null;
 let sharedCtx: CanvasRenderingContext2D | null = null;
 
 function getTileBounds(x: number, y: number, z: number) {
+  const cfg = getArrowsConfig();
   const numTiles = 1 << z;
-  const tileWidthLon = TOTAL_LON_SPAN / numTiles;
-  const tileHeightLat = TOTAL_LAT_SPAN / numTiles;
+  const tileWidthLon = cfg.totalLonSpan / numTiles;
+  const tileHeightLat = cfg.totalLatSpan / numTiles;
 
-  const west = LON_MIN + x * tileWidthLon;
-  const east = LON_MIN + (x + 1) * tileWidthLon;
-  const north = LAT_MAX - y * tileHeightLat;
-  const south = LAT_MAX - (y + 1) * tileHeightLat;
+  const west = cfg.lonMin + x * tileWidthLon;
+  const east = cfg.lonMin + (x + 1) * tileWidthLon;
+  const north = cfg.latMax - y * tileHeightLat;
+  const south = cfg.latMax - (y + 1) * tileHeightLat;
 
   return { west, south, east, north };
 }
 
 function getDensityConfig(map: LeafletMap) {
   const zoom = Math.floor(map.getZoom());
+  const cfg = getArrowsConfig();
 
-  // PMTiles LOD-Level ermitteln (begrenzt auf 0 bis MAX_PMTILES_Z)
-  const rawLOD = zoom - BASE_LEAFLET_ZOOM;
-  const pmZ = Math.min(MAX_PMTILES_Z, Math.max(0, rawLOD));
+  // PMTiles LOD-Level ermitteln (begrenzt auf 0 bis maxPmtilesZ)
+  const rawLOD = zoom - cfg.baseLeafletZoom;
+  const pmZ = Math.min(cfg.maxPmtilesZ, Math.max(0, rawLOD));
 
   // Stride-Zuordnung je nach Zoomstufe
   let step: number;
@@ -146,9 +153,10 @@ function decodeWindArrowPointsFromImageData(
 
   const points: WindArrowPoint[] = [];
 
+  const cfg = getArrowsConfig();
   const numTiles = 1 << tileIndex.z;
-  const deltaLon = TOTAL_LON_SPAN / (numTiles * width);
-  const deltaLat = TOTAL_LAT_SPAN / (numTiles * height);
+  const deltaLon = cfg.totalLonSpan / (numTiles * width);
+  const deltaLat = cfg.totalLatSpan / (numTiles * height);
 
   let scannedPixels = 0;
 
@@ -174,8 +182,8 @@ function decodeWindArrowPointsFromImageData(
       const absPxY = globalPxY + py;
 
       // Pixel-is-Point Alignment
-      const lon = LON_MIN + absPxX * deltaLon;
-      const lat = LAT_MAX - absPxY * deltaLat;
+      const lon = cfg.lonMin + absPxX * deltaLon;
+      const lat = cfg.latMax - absPxY * deltaLat;
 
       points.push({
         position: [lon, lat],
