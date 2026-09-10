@@ -1,6 +1,7 @@
 import { calculatewindSpeeds } from '../utils/interpolation';
 import { D2 } from './providerIds';
 import type { LatLng, Cluster, ForecastItem } from '../types';
+import BaseProvider from './baseProvider';
 
 export const ID = D2;
 
@@ -91,12 +92,7 @@ export const d2Provider = {
   },
 
   async fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob> {
-    const cfg = config as Record<string, unknown> | undefined;
-    const baseUrl = cfg && typeof cfg.baseUrl === 'string' ? cfg.baseUrl : '';
-    const imageUrl = `${baseUrl}${timestamp}Z.webp?${CACHE_BUSTER}`;
-    const response = await fetch(imageUrl, { cache: 'no-cache' });
-    if (!response.ok) throw new Error('Image could not be loaded');
-    return await response.blob();
+    return BaseProvider.fetchWeatherImageBlob(timestamp, config, CACHE_BUSTER);
   }
 };
 

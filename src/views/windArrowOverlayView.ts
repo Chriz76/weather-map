@@ -218,7 +218,23 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     uiStateModel.addEventListener('ui:overlay-url-updated', () => {
       const ts = weatherProviderModel.activeTimestamp;
       const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
-      if (!ts || !providerCfg?.baseUrl) return;
+      // If the active provider does not expose arrow/overlay configuration,
+      // it does not provide PMTiles for wind arrows. Clean up any existing
+      // tiles/layers and skip initialization.
+      if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
+        try {
+          if (pmtilesInstance && (pmtilesInstance as any).close) {
+            try { (pmtilesInstance as any).close(); } catch {}
+          }
+        } catch {}
+        tileCache.clear();
+        pmtilesInstance = null;
+        currentPmtilesUrl = null;
+        loadToken++; // invalidate in-flight loads
+        cachedPoints = null;
+        setIconLayerFromPoints([]);
+        return;
+      }
 
       const base = providerCfg.baseUrl.replace(/\/?$/, '/');
       const pm = `${base}${ts}Z_dir.pmtiles`;
@@ -240,7 +256,21 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     const setupFromModel = () => {
       const ts = weatherProviderModel.activeTimestamp;
       const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
-      if (!ts || !providerCfg?.baseUrl) return;
+      // Only initialize PMTiles when the provider actually supports arrows/overlays
+      if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
+        try {
+          if (pmtilesInstance && (pmtilesInstance as any).close) {
+            try { (pmtilesInstance as any).close(); } catch {}
+          }
+        } catch {}
+        tileCache.clear();
+        pmtilesInstance = null;
+        currentPmtilesUrl = null;
+        loadToken++; // invalidate in-flight loads
+        cachedPoints = null;
+        setIconLayerFromPoints([]);
+        return;
+      }
 
       const base = providerCfg.baseUrl.replace(/\/?$/, '/');
       const pm = `${base}${ts}Z_dir.pmtiles`;
@@ -281,6 +311,10 @@ function setPmtilesUrlFromOverlayUrl(overlayUrl?: string): void {
   }
 
   if (pmurl === currentPmtilesUrl) return;
+
+  // Guard: only allow manual PMTiles URL setting for providers that support overlays
+  const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
+  if (!providerCfg?.arrows) return;
 
   try {
     if (pmtilesInstance && (pmtilesInstance as any).close) {

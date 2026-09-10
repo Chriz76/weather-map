@@ -37,15 +37,7 @@ export const providers: Record<string, ProviderConfig> = {
       [43.0440, -4.1616],
       [58.1647, 20.5444]
     ]
-    ,
-    arrows: {
-      lonMin: -12.0,
-      latMax: 55.4,
-      totalLonSpan: 1136 * 0.025,
-      totalLatSpan: 720 * 0.025,
-      baseLeafletZoom: 8,
-      maxPmtilesZ: 4
-    }
+    
   },
   [AROME]: {
     baseUrl: "/output/",
