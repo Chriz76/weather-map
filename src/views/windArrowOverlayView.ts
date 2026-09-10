@@ -7,6 +7,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers } from '../config';
 import { PMTiles } from 'pmtiles';
+import { getTileBounds, getDensityConfig, getVisibleTileIndices, decodeWindArrowPointsFromImageData, WindArrowPoint } from '../utils/tile';
 
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
@@ -26,10 +27,7 @@ function getArrowsConfig() {
   return { lonMin, latMax, totalLonSpan, totalLatSpan, baseLeafletZoom, maxPmtilesZ };
 }
 
-export interface WindArrowPoint {
-  position: [number, number]; // [lon, lat]
-  angle: number;              // Grad (0..360°)
-}
+// `WindArrowPoint` type is imported from utils/tile
 
 const WIND_ARROW_ICON_URL =
   'data:image/svg+xml;charset=utf-8,' +
@@ -56,149 +54,11 @@ let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let sharedCanvas: HTMLCanvasElement | null = null;
 let sharedCtx: CanvasRenderingContext2D | null = null;
 
-function getTileBounds(x: number, y: number, z: number) {
-  const cfg = getArrowsConfig();
-  const numTiles = 1 << z;
-  const tileWidthLon = cfg.totalLonSpan / numTiles;
-  const tileHeightLat = cfg.totalLatSpan / numTiles;
+// tile utilities (getTileBounds, getDensityConfig, getVisibleTileIndices) are provided
+// by `src/utils/tile.ts` and imported above. They are stateless and accept an
+// optional arrows config when needed.
 
-  const west = cfg.lonMin + x * tileWidthLon;
-  const east = cfg.lonMin + (x + 1) * tileWidthLon;
-  const north = cfg.latMax - y * tileHeightLat;
-  const south = cfg.latMax - (y + 1) * tileHeightLat;
-
-  return { west, south, east, north };
-}
-
-function getDensityConfig(map: LeafletMap) {
-  const zoom = Math.floor(map.getZoom());
-  const cfg = getArrowsConfig();
-
-  // PMTiles LOD-Level ermitteln (begrenzt auf 0 bis maxPmtilesZ)
-  const rawLOD = zoom - cfg.baseLeafletZoom;
-  const pmZ = Math.min(cfg.maxPmtilesZ, Math.max(0, rawLOD));
-
-  // Stride-Zuordnung je nach Zoomstufe
-  let step: number;
-
-  if (zoom <= 3) {
-    step = 0; // Keine Pfeile bei sehr niedrigem Zoom
-  } else if (zoom === 4) {
-    step = 16;
-  } else if (zoom === 5) {
-    step = 8;
-  } else if (zoom === 6) {
-    step = 4;
-  } else if (zoom === 7) {
-    step = 2;
-  } else {
-    step = 1;
-  }
-
-  if (step > 1) { step = step / 2; } // Halbiere den Schritt für feinere Dichte
-
-  console.log(
-    `[WindOverlay Config] Zoom: ${map.getZoom()} (floor: ${zoom}) -> PMTiles Z: ${pmZ}, Stride: ${step}`
-  );
-
-  return { pmZ, step };
-}
-
-function getVisibleTileIndices(map: LeafletMap, pmZ: number) {
-  const numTiles = 1 << pmZ;
-  const bounds = map.getBounds();
-  const west = bounds.getWest();
-  const east = bounds.getEast();
-  const south = bounds.getSouth();
-  const north = bounds.getNorth();
-
-  const visibleIndices: { x: number; y: number; z: number }[] = [];
-
-  for (let y = 0; y < numTiles; y++) {
-    for (let x = 0; x < numTiles; x++) {
-      const t = getTileBounds(x, y, pmZ);
-
-      const isVisible = !(
-        t.east < west ||
-        t.west > east ||
-        t.south > north ||
-        t.north < south
-      );
-
-      if (isVisible) {
-        visibleIndices.push({ x, y, z: pmZ });
-      }
-    }
-  }
-
-  return visibleIndices;
-}
-
-function decodeWindArrowPointsFromImageData(
-  imageData: ImageData,
-  tileIndex: { x: number; y: number; z: number },
-  step: number
-): WindArrowPoint[] {
-  if (step <= 0) return [];
-
-  const { width, height, data } = imageData;
-
-  // Globale Pixelkoordinaten der oberen linken Ecke dieser Kachel
-  const globalPxX = tileIndex.x * width;
-  const globalPxY = tileIndex.y * height;
-
-  // Kachelübergreifender Stride-Startpunkt (Phasen-Ausrichtung am globalen Raster)
-  const startPx = (step - (globalPxX % step)) % step;
-  const startPy = (step - (globalPxY % step)) % step;
-
-  const points: WindArrowPoint[] = [];
-
-  const cfg = getArrowsConfig();
-  const numTiles = 1 << tileIndex.z;
-  const deltaLon = cfg.totalLonSpan / (numTiles * width);
-  const deltaLat = cfg.totalLatSpan / (numTiles * height);
-
-  let scannedPixels = 0;
-
-  for (let py = startPy; py < height; py += step) {
-    for (let px = startPx; px < width; px += step) {
-      scannedPixels++;
-
-      const idx = (py * width + px) * 4;
-      const r = data[idx]!;      // High Byte
-      const g = data[idx + 1]!;  // Low Byte
-      const b = data[idx + 2]!;  // Valid Mask (255 = Gültig, 0 = NaN/Padding)
-
-      // Überspringe ungültige Pixel (NaN/Padding)
-      if (b !== 255) {
-        continue;
-      }
-
-      // Reorganisation des 16-Bit Wertes (0..360°)
-      const deg16Bit = r * 256 + g;
-      const degrees = (deg16Bit / 65535.0) * 360.0;
-
-      const absPxX = globalPxX + px;
-      const absPxY = globalPxY + py;
-
-      // Pixel-is-Point Alignment
-      const lon = cfg.lonMin + absPxX * deltaLon;
-      const lat = cfg.latMax - absPxY * deltaLat;
-
-      points.push({
-        position: [lon, lat],
-        angle: - (degrees + 180) % 360 // Pfeilrichtung um 180° drehen, da Windrichtung = Gegenrichtung der Pfeilspitze
-      });
-    }
-  }
-
-  console.log(
-    `[WindOverlay Tile ${tileIndex.z}/${tileIndex.x}/${tileIndex.y}] ` +
-    `Scanned iterations: ${scannedPixels} | Points Extracted: ${points.length}`
-  );
-
-  return points;
-}
+// decoding moved to utils/decode; view uses `decodeWindArrowPointsFromImageData` import
 
 async function loadTileImageData(pmtiles: PMTiles, x: number, y: number, z: number): Promise<ImageData | null> {
   const cacheKey = `${z}/${x}/${y}`;
@@ -246,23 +106,25 @@ async function updateViewportWindPoints(): Promise<void> {
   const map = overlayInstance.getMapInstance();
   if (!map) return;
 
-  const { pmZ, step } = getDensityConfig(map);
+  const cfg = getArrowsConfig();
+  const { pmZ, step } = getDensityConfig(map, cfg);
   if (step === 0) {
     setIconLayerFromPoints([]);
     return;
   }
 
   const currentToken = ++loadToken;
-  const visibleIndices = getVisibleTileIndices(map, pmZ);
+  const visibleIndices = getVisibleTileIndices(map, pmZ, cfg);
 
   if (visibleIndices.length === 0) return;
 
   try {
+    const cfg = getArrowsConfig();
     const tilePromises = visibleIndices.map(async (index) => {
       const imageData = await loadTileImageData(pmtilesInstance!, index.x, index.y, index.z);
       if (!imageData) return [];
 
-      return decodeWindArrowPointsFromImageData(imageData, index, step);
+      return decodeWindArrowPointsFromImageData(imageData, index, step, cfg);
     });
 
     const results = await Promise.all(tilePromises);
