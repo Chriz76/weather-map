@@ -102,16 +102,12 @@ export function decodeWindArrowPointsFromImageData(
   const deltaLon = cfg.totalLonSpan / (numTiles * width);
   const deltaLat = cfg.totalLatSpan / (numTiles * height);
 
-  let scannedPixels = 0;
-
   for (let py = startPy; py < height; py += step) {
     for (let px = startPx; px < width; px += step) {
-      scannedPixels++;
-
       const idx = (py * width + px) * 4;
-      const r = data[idx]!;      // High Byte
-      const g = data[idx + 1]!;  // Low Byte
-      const b = data[idx + 2]!;  // Valid Mask (255 = gültig, 0 = NaN/Padding)
+      const r = data[idx]!; // High Byte
+      const g = data[idx + 1]!; // Low Byte
+      const b = data[idx + 2]!; // Valid Mask (255 = gültig, 0 = NaN/Padding)
 
       if (b !== 255) continue;
 
@@ -130,3 +126,4 @@ export function decodeWindArrowPointsFromImageData(
 
   return points;
 }
+

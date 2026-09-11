@@ -6,8 +6,8 @@ import { logger } from '../utils/logger';
 import { uiStateModel } from '../models/uiStateModel';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers } from '../config';
-import { PMTiles } from 'pmtiles';
-import { getTileBounds, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, decodeWindArrowPointsFromImageData, WindArrowPoint } from '../utils/tile';
+import { getTileBounds, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, WindArrowPoint } from '../utils/tile';
+import { windArrowService } from '../services/windArrowService';
 
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
@@ -43,16 +43,10 @@ const WIND_ARROW_ICON_URL =
   `);
 
 let overlayInstance: LeafletDeckOverlay | null = null;
-let pmtilesInstance: PMTiles | null = null;
 let loadToken = 0;
 let cachedPoints: WindArrowPoint[] | null = null;
 let currentPmtilesUrl: string | null = null;
-
-const tileCache = new Map<string, ImageData>();
 let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-let sharedCanvas: HTMLCanvasElement | null = null;
-let sharedCtx: CanvasRenderingContext2D | null = null;
 
 // tile utilities (getTileBounds, getDensityConfig, getVisibleTileIndices) are provided
 // by `src/utils/tile.ts` and imported above. They are stateless and accept an
@@ -60,48 +54,10 @@ let sharedCtx: CanvasRenderingContext2D | null = null;
 
 // decoding moved to utils/decode; view uses `decodeWindArrowPointsFromImageData` import
 
-async function loadTileImageData(pmtiles: PMTiles, x: number, y: number, z: number): Promise<ImageData | null> {
-  const cacheKey = `${z}/${x}/${y}`;
-  if (tileCache.has(cacheKey)) {
-    return tileCache.get(cacheKey)!;
-  }
-
-  try {
-    const resp = await pmtiles.getZxy(z, x, y);
-    if (!resp || !resp.data) {
-      return null;
-    }
-
-    const blob = new Blob([resp.data], { type: 'image/webp' });
-    const bitmap = await createImageBitmap(blob);
-
-    if (!sharedCanvas) {
-      sharedCanvas = document.createElement('canvas');
-      sharedCtx = sharedCanvas.getContext('2d', { willReadFrequently: true });
-    }
-
-    sharedCanvas.width = bitmap.width;
-    sharedCanvas.height = bitmap.height;
-
-    if (!sharedCtx) {
-      bitmap.close();
-      return null;
-    }
-
-    sharedCtx.drawImage(bitmap, 0, 0);
-    const imageData = sharedCtx.getImageData(0, 0, bitmap.width, bitmap.height);
-    bitmap.close();
-
-    tileCache.set(cacheKey, imageData);
-    return imageData;
-  } catch (e) {
-    console.error(`[WindOverlay] Fehler beim Laden der Kachel z=${z}, x=${x}, y=${y}:`, e);
-    return null;
-  }
-}
+// Tile loading, decoding and caching moved into `windArrowService`.
 
 async function updateViewportWindPoints(): Promise<void> {
-  if (!overlayInstance || !pmtilesInstance) return;
+  if (!overlayInstance || !windArrowService.isReady()) return;
 
   const map = overlayInstance.getMapInstance();
   if (!map) return;
@@ -121,27 +77,17 @@ async function updateViewportWindPoints(): Promise<void> {
 
   if (visibleIndices.length === 0) return;
 
-  try {
-    const cfg = getArrowsConfig();
-    const tilePromises = visibleIndices.map(async (index) => {
-      const imageData = await loadTileImageData(pmtilesInstance!, index.x, index.y, index.z);
-      if (!imageData) return [];
+    try {
+      const cfg = getArrowsConfig();
+      const allPoints = await windArrowService.decodeTilesToPoints(visibleIndices, step, cfg);
+      if (currentToken !== loadToken) return;
 
-      return decodeWindArrowPointsFromImageData(imageData, index, step, cfg);
-    });
-
-    const results = await Promise.all(tilePromises);
-    if (currentToken !== loadToken) return;
-
-    const allPoints = results.flat();
-
-    console.log(`[WindOverlay Summary] Total Viewport Points: ${allPoints.length} across ${visibleIndices.length} tiles.`);
-
-    logger.debug(`[WindOverlay] LOD z=${pmZ}, Step=${step} -> ${allPoints.length} Punkte auf dem Screen.`);
-    setIconLayerFromPoints(allPoints);
-  } catch (err) {
-    console.error('[WindOverlay] Fehler in updateViewportWindPoints:', err);
-  }
+      console.log(`[WindOverlay Summary] Total Viewport Points: ${allPoints.length} across ${visibleIndices.length} tiles.`);
+      logger.debug(`[WindOverlay] LOD z=${pmZ}, Step=${step} -> ${allPoints.length} Punkte auf dem Screen.`);
+      setIconLayerFromPoints(allPoints);
+    } catch (err) {
+      console.error('[WindOverlay] Fehler in updateViewportWindPoints:', err);
+    }
 }
 
 function scheduleUpdateViewportWindPoints(): void {
@@ -225,13 +171,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       // it does not provide PMTiles for wind arrows. Clean up any existing
       // tiles/layers and skip initialization.
       if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
-        try {
-          if (pmtilesInstance && (pmtilesInstance as any).close) {
-            try { (pmtilesInstance as any).close(); } catch {}
-          }
-        } catch {}
-        tileCache.clear();
-        pmtilesInstance = null;
+        try { windArrowService.clear(); } catch {}
         currentPmtilesUrl = null;
         loadToken++; // invalidate in-flight loads
         cachedPoints = null;
@@ -243,14 +183,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       const pm = `${base}${ts}Z_dir.pmtiles`;
       if (pm === currentPmtilesUrl) return;
 
-      try {
-        if (pmtilesInstance && (pmtilesInstance as any).close) {
-          try { (pmtilesInstance as any).close(); } catch {}
-        }
-      } catch {}
-
-      tileCache.clear();
-      pmtilesInstance = new PMTiles(pm);
+      try { windArrowService.setPmtilesUrl(pm); } catch (e) { /* ignore */ }
       currentPmtilesUrl = pm;
       loadToken++; // invalidate any in-flight loads
       scheduleUpdateViewportWindPoints();
@@ -261,13 +194,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
       // Only initialize PMTiles when the provider actually supports arrows/overlays
       if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
-        try {
-          if (pmtilesInstance && (pmtilesInstance as any).close) {
-            try { (pmtilesInstance as any).close(); } catch {}
-          }
-        } catch {}
-        tileCache.clear();
-        pmtilesInstance = null;
+        try { windArrowService.clear(); } catch {}
         currentPmtilesUrl = null;
         loadToken++; // invalidate in-flight loads
         cachedPoints = null;
@@ -279,14 +206,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       const pm = `${base}${ts}Z_dir.pmtiles`;
       if (pm === currentPmtilesUrl) return;
 
-      try {
-        if (pmtilesInstance && (pmtilesInstance as any).close) {
-          try { (pmtilesInstance as any).close(); } catch {}
-        }
-      } catch {}
-
-      tileCache.clear();
-      pmtilesInstance = new PMTiles(pm);
+      try { windArrowService.setPmtilesUrl(pm); } catch (e) { /* ignore */ }
       currentPmtilesUrl = pm;
       loadToken++; // invalidate any in-flight loads
       scheduleUpdateViewportWindPoints();
@@ -319,14 +239,7 @@ function setPmtilesUrlFromOverlayUrl(overlayUrl?: string): void {
   const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
   if (!providerCfg?.arrows) return;
 
-  try {
-    if (pmtilesInstance && (pmtilesInstance as any).close) {
-      try { (pmtilesInstance as any).close(); } catch {}
-    }
-  } catch {}
-
-  tileCache.clear();
-  pmtilesInstance = new PMTiles(pmurl);
+  try { windArrowService.setPmtilesUrl(pmurl); } catch (e) { /* ignore */ }
   currentPmtilesUrl = pmurl;
   loadToken++; // invalidate any in-flight loads
   scheduleUpdateViewportWindPoints();
