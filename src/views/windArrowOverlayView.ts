@@ -7,7 +7,7 @@ import { uiStateModel } from '../models/uiStateModel';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers } from '../config';
 import { PMTiles } from 'pmtiles';
-import { getTileBounds, getDensityConfig, getVisibleTileIndices, decodeWindArrowPointsFromImageData, WindArrowPoint } from '../utils/tile';
+import { getTileBounds, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, decodeWindArrowPointsFromImageData, WindArrowPoint } from '../utils/tile';
 
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
@@ -107,14 +107,17 @@ async function updateViewportWindPoints(): Promise<void> {
   if (!map) return;
 
   const cfg = getArrowsConfig();
-  const { pmZ, step } = getDensityConfig(map, cfg);
+  const zoom = Math.floor(map.getZoom());
+  const { pmZ, step } = getDensityConfigFromZoom(zoom, cfg);
   if (step === 0) {
     setIconLayerFromPoints([]);
     return;
   }
 
   const currentToken = ++loadToken;
-  const visibleIndices = getVisibleTileIndices(map, pmZ, cfg);
+  const b = map.getBounds();
+  const bounds = { west: b.getWest(), east: b.getEast(), south: b.getSouth(), north: b.getNorth() };
+  const visibleIndices = getVisibleTileIndicesFromBounds(bounds, pmZ, cfg);
 
   if (visibleIndices.length === 0) return;
 

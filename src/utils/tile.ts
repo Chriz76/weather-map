@@ -1,5 +1,3 @@
-import type { Map as LeafletMap } from 'leaflet';
-
 export type ArrowsConfig = {
   lonMin: number;
   latMax: number;
@@ -8,17 +6,7 @@ export type ArrowsConfig = {
   baseLeafletZoom: number;
   maxPmtilesZ: number;
 };
-
-const DEFAULT_ARROWS_CONFIG: ArrowsConfig = {
-  lonMin: -12.0,
-  latMax: 55.4,
-  totalLonSpan: 1136 * 0.025,
-  totalLatSpan: 720 * 0.025,
-  baseLeafletZoom: 8,
-  maxPmtilesZ: 4
-};
-
-export function getTileBounds(x: number, y: number, z: number, cfg: ArrowsConfig = DEFAULT_ARROWS_CONFIG) {
+export function getTileBounds(x: number, y: number, z: number, cfg: ArrowsConfig) {
   const numTiles = 1 << z;
   const tileWidthLon = cfg.totalLonSpan / numTiles;
   const tileHeightLat = cfg.totalLatSpan / numTiles;
@@ -31,9 +19,9 @@ export function getTileBounds(x: number, y: number, z: number, cfg: ArrowsConfig
   return { west, south, east, north };
 }
 
-export function getDensityConfig(map: LeafletMap, cfg: ArrowsConfig = DEFAULT_ARROWS_CONFIG) {
-  const zoom = Math.floor(map.getZoom());
+export type DensityResult = { pmZ: number; step: number };
 
+export function getDensityConfigFromZoom(zoom: number, cfg: ArrowsConfig): DensityResult {
   const rawLOD = zoom - cfg.baseLeafletZoom;
   const pmZ = Math.min(cfg.maxPmtilesZ, Math.max(0, rawLOD));
 
@@ -57,13 +45,11 @@ export function getDensityConfig(map: LeafletMap, cfg: ArrowsConfig = DEFAULT_AR
   return { pmZ, step };
 }
 
-export function getVisibleTileIndices(map: LeafletMap, pmZ: number, cfg: ArrowsConfig = DEFAULT_ARROWS_CONFIG) {
+export type Bounds = { west: number; east: number; south: number; north: number };
+
+export function getVisibleTileIndicesFromBounds(bounds: Bounds, pmZ: number, cfg: ArrowsConfig) {
   const numTiles = 1 << pmZ;
-  const bounds = map.getBounds();
-  const west = bounds.getWest();
-  const east = bounds.getEast();
-  const south = bounds.getSouth();
-  const north = bounds.getNorth();
+  const { west, east, south, north } = bounds;
 
   const visibleIndices: { x: number; y: number; z: number }[] = [];
 
@@ -96,7 +82,7 @@ export function decodeWindArrowPointsFromImageData(
   imageData: ImageData,
   tileIndex: { x: number; y: number; z: number },
   step: number,
-  cfg: ArrowsConfig = DEFAULT_ARROWS_CONFIG
+  cfg: ArrowsConfig
 ): WindArrowPoint[] {
   if (step <= 0) return [];
 
@@ -125,7 +111,7 @@ export function decodeWindArrowPointsFromImageData(
       const idx = (py * width + px) * 4;
       const r = data[idx]!;      // High Byte
       const g = data[idx + 1]!;  // Low Byte
-      const b = data[idx + 2]!;  // Valid Mask (255 = Gültig, 0 = NaN/Padding)
+      const b = data[idx + 2]!;  // Valid Mask (255 = gültig, 0 = NaN/Padding)
 
       if (b !== 255) continue;
 

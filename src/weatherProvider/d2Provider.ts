@@ -1,7 +1,7 @@
 import { calculatewindSpeeds } from '../utils/interpolation';
 import { D2 } from './providerIds';
 import type { LatLng, Cluster, ForecastItem } from '../types';
-import BaseProvider from './baseProvider';
+
 
 export const ID = D2;
 
@@ -91,9 +91,7 @@ export const d2Provider = {
     return calculatewindSpeeds(latlng, cluster) as ForecastItem[] | null;
   },
 
-  async fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob> {
-    return BaseProvider.fetchWeatherImageBlob(timestamp, config, CACHE_BUSTER);
-  }
+  // Image fetching is handled centrally in providerManager
 };
 
 export default d2Provider;

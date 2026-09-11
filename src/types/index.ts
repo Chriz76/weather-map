@@ -53,5 +53,4 @@ export interface Provider {
   id: ProviderId;
   fetchIndex(config: Record<string, unknown>): Promise<IndexData>;
   fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null>;
-  fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob>;
 }
