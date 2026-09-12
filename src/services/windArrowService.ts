@@ -1,6 +1,8 @@
 import { PMTiles } from 'pmtiles';
-import { decodeWindArrowPointsFromImageData } from '../utils/tile';
-import type { ArrowsConfig, WindArrowPoint } from '../utils/tile';
+import { decodeWindArrowPointsFromImageData, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, type ArrowsConfig } from '../utils/tile';
+import type { WindArrowPoint } from '../utils/tile';
+import { weatherProviderModel } from '../models/weatherProviderModel';
+import { providers } from '../config';
 
 const tileCache = new Map<string, ImageData>();
 let pmtilesInstance: PMTiles | null = null;
@@ -107,6 +109,29 @@ export const windArrowService = {
     if (myToken !== loadToken) return [];
 
     return results.flat();
+  },
+
+  async loadWindArrowsForBounds(bounds: { west: number; east: number; south: number; north: number }, zoom: number): Promise<WindArrowPoint[]> {
+    const providerCfg = providers[weatherProviderModel.getActiveProviderId()] as any;
+    const arrows = providerCfg?.arrows ?? null;
+    if (!arrows) return [];
+
+    const cfg: ArrowsConfig = {
+      lonMin: typeof arrows.lonMin === 'number' ? arrows.lonMin : (typeof arrows.LON_MIN === 'number' ? arrows.LON_MIN : -12.0),
+      latMax: typeof arrows.latMax === 'number' ? arrows.latMax : (typeof arrows.LAT_MAX === 'number' ? arrows.LAT_MAX : 55.4),
+      totalLonSpan: typeof arrows.totalLonSpan === 'number' ? arrows.totalLonSpan : (typeof arrows.TOTAL_LON_SPAN === 'number' ? arrows.TOTAL_LON_SPAN : 1136 * 0.025),
+      totalLatSpan: typeof arrows.totalLatSpan === 'number' ? arrows.totalLatSpan : (typeof arrows.TOTAL_LAT_SPAN === 'number' ? arrows.TOTAL_LAT_SPAN : 720 * 0.025),
+      baseLeafletZoom: typeof arrows.baseLeafletZoom === 'number' ? arrows.baseLeafletZoom : (typeof arrows.BASE_LEAFLET_ZOOM === 'number' ? arrows.BASE_LEAFLET_ZOOM : 8),
+      maxPmtilesZ: typeof arrows.maxPmtilesZ === 'number' ? arrows.maxPmtilesZ : (typeof arrows.MAX_PMTILES_Z === 'number' ? arrows.MAX_PMTILES_Z : 4)
+    };
+
+    const { pmZ, step } = getDensityConfigFromZoom(Math.floor(zoom), cfg);
+    if (step === 0) return [];
+
+    const visibleIndices = getVisibleTileIndicesFromBounds(bounds, pmZ, cfg);
+    if (visibleIndices.length === 0) return [];
+
+    return await this.decodeTilesToPoints(visibleIndices, step, cfg);
   },
 
   isReady(): boolean {

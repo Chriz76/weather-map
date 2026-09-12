@@ -5,27 +5,14 @@ import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { logger } from '../utils/logger';
 import { uiStateModel } from '../models/uiStateModel';
 import { weatherProviderModel } from '../models/weatherProviderModel';
+import { commonDataModel } from '../models/commonDataModel';
+import { updateWindArrowsAction } from '../controllers/updateWindArrowsAction';
 import { providers } from '../config';
 import { getTileBounds, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, WindArrowPoint } from '../utils/tile';
 import { windArrowService } from '../services/windArrowService';
 
 const WIND_ARROW_PANE_Z_INDEX = '510';
 const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
-
-// Arrow/grid configuration is provided per-provider via `providers[providerId].arrows`.
-function getArrowsConfig() {
-  const providerCfg = providers[weatherProviderModel.getActiveProviderId()] as any;
-  const arrows = providerCfg?.arrows ?? {};
-
-  const lonMin = typeof arrows.lonMin === 'number' ? arrows.lonMin : (typeof arrows.LON_MIN === 'number' ? arrows.LON_MIN : -12.0);
-  const latMax = typeof arrows.latMax === 'number' ? arrows.latMax : (typeof arrows.LAT_MAX === 'number' ? arrows.LAT_MAX : 55.4);
-  const totalLonSpan = typeof arrows.totalLonSpan === 'number' ? arrows.totalLonSpan : (typeof arrows.TOTAL_LON_SPAN === 'number' ? arrows.TOTAL_LON_SPAN : 1136 * 0.025);
-  const totalLatSpan = typeof arrows.totalLatSpan === 'number' ? arrows.totalLatSpan : (typeof arrows.TOTAL_LAT_SPAN === 'number' ? arrows.TOTAL_LAT_SPAN : 720 * 0.025);
-  const baseLeafletZoom = typeof arrows.baseLeafletZoom === 'number' ? arrows.baseLeafletZoom : (typeof arrows.BASE_LEAFLET_ZOOM === 'number' ? arrows.BASE_LEAFLET_ZOOM : 8);
-  const maxPmtilesZ = typeof arrows.maxPmtilesZ === 'number' ? arrows.maxPmtilesZ : (typeof arrows.MAX_PMTILES_Z === 'number' ? arrows.MAX_PMTILES_Z : 4);
-
-  return { lonMin, latMax, totalLonSpan, totalLatSpan, baseLeafletZoom, maxPmtilesZ };
-}
 
 // `WindArrowPoint` type is imported from utils/tile
 
@@ -43,7 +30,6 @@ const WIND_ARROW_ICON_URL =
   `);
 
 let overlayInstance: LeafletDeckOverlay | null = null;
-let loadToken = 0;
 let cachedPoints: WindArrowPoint[] | null = null;
 let currentPmtilesUrl: string | null = null;
 let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -56,49 +42,7 @@ let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 // Tile loading, decoding and caching moved into `windArrowService`.
 
-async function updateViewportWindPoints(): Promise<void> {
-  if (!overlayInstance || !windArrowService.isReady()) return;
-
-  const map = overlayInstance.getMapInstance();
-  if (!map) return;
-
-  const cfg = getArrowsConfig();
-  const zoom = Math.floor(map.getZoom());
-  const { pmZ, step } = getDensityConfigFromZoom(zoom, cfg);
-  if (step === 0) {
-    setIconLayerFromPoints([]);
-    return;
-  }
-
-  const currentToken = ++loadToken;
-  const b = map.getBounds();
-  const bounds = { west: b.getWest(), east: b.getEast(), south: b.getSouth(), north: b.getNorth() };
-  const visibleIndices = getVisibleTileIndicesFromBounds(bounds, pmZ, cfg);
-
-  if (visibleIndices.length === 0) return;
-
-    try {
-      const cfg = getArrowsConfig();
-      const allPoints = await windArrowService.decodeTilesToPoints(visibleIndices, step, cfg);
-      if (currentToken !== loadToken) return;
-
-      console.log(`[WindOverlay Summary] Total Viewport Points: ${allPoints.length} across ${visibleIndices.length} tiles.`);
-      logger.debug(`[WindOverlay] LOD z=${pmZ}, Step=${step} -> ${allPoints.length} Punkte auf dem Screen.`);
-      setIconLayerFromPoints(allPoints);
-    } catch (err) {
-      console.error('[WindOverlay] Fehler in updateViewportWindPoints:', err);
-    }
-}
-
-function scheduleUpdateViewportWindPoints(): void {
-  if (updateTimeoutId !== null) {
-    clearTimeout(updateTimeoutId);
-  }
-  updateTimeoutId = setTimeout(() => {
-    updateTimeoutId = null;
-    void updateViewportWindPoints();
-  }, 50);
-}
+// view no longer performs tile decoding; controller action handles updates
 
 function pointsEqual(a: WindArrowPoint[] | null, b: WindArrowPoint[]): boolean {
   if (a === b) return true;
@@ -158,10 +102,14 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
 
       // Do not initialize a default PMTiles here — wait for model timestamps/provider
 
-      map.on('moveend zoomend resize', () => {
-        scheduleUpdateViewportWindPoints();
-      });
+      // map movement handled centrally by mapController; view only renders model updates
     }
+
+    // Render when model updates wind arrows
+    commonDataModel.addEventListener('model:wind-arrows-updated', () => {
+      const pts = commonDataModel.windArrows ?? [];
+      setIconLayerFromPoints(pts);
+    });
 
     // React to overlay URL updates by deriving PMTiles URL from model + config
     uiStateModel.addEventListener('ui:overlay-url-updated', () => {
@@ -171,11 +119,10 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       // it does not provide PMTiles for wind arrows. Clean up any existing
       // tiles/layers and skip initialization.
       if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
-        try { windArrowService.clear(); } catch {}
-        currentPmtilesUrl = null;
-        loadToken++; // invalidate in-flight loads
-        cachedPoints = null;
-        setIconLayerFromPoints([]);
+          try { windArrowService.clear(); } catch {}
+          currentPmtilesUrl = null;
+          cachedPoints = null;
+          try { commonDataModel.setWindArrows([]); } catch (e) { /* ignore */ }
         return;
       }
 
@@ -185,8 +132,8 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
 
       try { windArrowService.setPmtilesUrl(pm); } catch (e) { /* ignore */ }
       currentPmtilesUrl = pm;
-      loadToken++; // invalidate any in-flight loads
-      scheduleUpdateViewportWindPoints();
+      // trigger an immediate update via controller action
+      try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
     });
     // Initialize PMTiles only when the model provides a timestamp/provider
     const setupFromModel = () => {
@@ -196,9 +143,8 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
         try { windArrowService.clear(); } catch {}
         currentPmtilesUrl = null;
-        loadToken++; // invalidate in-flight loads
         cachedPoints = null;
-        setIconLayerFromPoints([]);
+        try { commonDataModel.setWindArrows([]); } catch (e) { /* ignore */ }
         return;
       }
 
@@ -208,8 +154,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
 
       try { windArrowService.setPmtilesUrl(pm); } catch (e) { /* ignore */ }
       currentPmtilesUrl = pm;
-      loadToken++; // invalidate any in-flight loads
-      scheduleUpdateViewportWindPoints();
+      try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
     };
 
     // call once in case model already has timestamps
@@ -219,7 +164,8 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     weatherProviderModel.addEventListener('model:timestamps-updated', setupFromModel);
     weatherProviderModel.addEventListener('model:provider-changed', setupFromModel);
 
-    scheduleUpdateViewportWindPoints();
+    // initial trigger via controller action
+    try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
   }
 };
 
@@ -241,8 +187,7 @@ function setPmtilesUrlFromOverlayUrl(overlayUrl?: string): void {
 
   try { windArrowService.setPmtilesUrl(pmurl); } catch (e) { /* ignore */ }
   currentPmtilesUrl = pmurl;
-  loadToken++; // invalidate any in-flight loads
-  scheduleUpdateViewportWindPoints();
+  try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
 }
 
 // expose the setter on the exported view

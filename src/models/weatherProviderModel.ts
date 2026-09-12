@@ -18,7 +18,6 @@ type ProviderState = {
   pointDataLoadError: string | null;
   apiMismatchError: string | null;
   startupError: string | null;
-  specialDataSummary?: string | null;
   activeTimestampIndex: number;
 };
 
@@ -240,12 +239,6 @@ export class WeatherProviderModel extends EventTarget {
     this.dispatchEvent(new CustomEvent('model:location-updated'));
     this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
     this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
-  }
-
-  get specialDataSummary(): string | null { return this._getActiveModel().specialDataSummary ?? null; }
-  setSpecialDataSummary(value: string | null): void {
-    this._getActiveModel().specialDataSummary = value;
-    this.dispatchEvent(new CustomEvent('model:special-data-summary-changed'));
   }
 }
 
