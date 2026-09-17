@@ -1,6 +1,6 @@
 import { weatherProviderModel } from '../../src/models/weatherProviderModel';
 import { uiStateModel } from '../../src/models/uiStateModel';
-import { uiStateModel } from '../../src/models/uiStateModel';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('WeatherProviderModel', () => {
     const cluster = {
@@ -29,11 +29,14 @@ describe('WeatherProviderModel', () => {
     }
 
     beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-20T16:00:00Z'));
         resetModel();
     });
 
     afterEach(() => {
         resetModel();
+        vi.useRealTimers();
     });
 
     it('should initialize with empty state', () => {
