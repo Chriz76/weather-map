@@ -1,14 +1,13 @@
-import { d2Provider } from './d2Provider';
-import { aromeProvider } from './aromeProvider';
-import { D2, AROME } from './providerIds';
-import { logger } from '../utils/logger';
+import { d2Provider } from '../weatherProvider/d2Provider';
+import { aromeProvider } from '../weatherProvider/aromeProvider';
+import { D2, AROME } from '../weatherProvider/providerIds';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers as providerConfig } from '../config';
 import type { Provider, LatLng, ForecastItem, IndexData } from '../types';
 
 const providers: Record<string, Provider> = { [D2]: d2Provider, [AROME]: aromeProvider };
 
-export const providerManager = {
+export const weatherService = {
   async fetchIndex(): Promise<IndexData> {
     const activeId = weatherProviderModel.getActiveProviderId();
     const fetcher = providers[activeId]!;
@@ -28,4 +27,4 @@ export const providerManager = {
   }
 };
 
-export default providerManager;
+export default weatherService;
