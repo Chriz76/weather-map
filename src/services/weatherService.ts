@@ -22,8 +22,14 @@ export const weatherService = {
 
   async fetchWeatherImageBlob(timestamp: string): Promise<Blob> {
     const activeId = weatherProviderModel.getActiveProviderId();
-    const fetcher = providers[activeId]!;
-    return await fetcher.fetchWeatherImageBlob(timestamp, providerConfig[activeId]!);
+    const cfg = providerConfig[activeId] as Record<string, unknown> | undefined;
+    const baseUrl = cfg && typeof cfg.baseUrl === 'string' ? cfg.baseUrl : '';
+    const cb = `cb=${Date.now()}`;
+    const imageUrl = `${baseUrl}${timestamp}Z.webp?${cb}`;
+
+    const response = await fetch(imageUrl, { cache: 'no-cache' });
+    if (!response.ok) throw new Error('Image could not be loaded');
+    return await response.blob();
   }
 };
 
