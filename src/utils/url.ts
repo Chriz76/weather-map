@@ -37,7 +37,12 @@ export function parseUrlParams(): InitialUrlParams {
 
 export function cleanUrlHistory(): void {
   if (window.location.search) {
-    const cleanUrl = window.location.pathname + window.location.hash;
+    const params = new URLSearchParams(window.location.search);
+    params.delete('model');
+    params.delete('lat');
+    params.delete('lon');
+    const search = params.toString();
+    const cleanUrl = window.location.pathname + (search ? `?${search}` : '') + window.location.hash;
     window.history.replaceState({}, document.title, cleanUrl);
   }
 }
