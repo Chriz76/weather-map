@@ -5,7 +5,8 @@ import { weatherProviderModel } from '../models/weatherProviderModel';
 
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
-const pmCache = new Map<string, PMTiles>();
+type PmWithClose = PMTiles & { close?: () => void };
+const pmCache = new Map<string, PmWithClose>();
 const USAGE_ORDER: string[] = [];
 const CACHE_LIMIT = 20;
 
@@ -46,8 +47,8 @@ function getPm(pmUrl: string) {
   while (USAGE_ORDER.length > CACHE_LIMIT) {
     const oldest = USAGE_ORDER.shift()!;
     const p = pmCache.get(oldest);
-    if (p && typeof (p as any).close === 'function') {
-      try { (p as any).close(); } catch (e) { /* ignore */ }
+    if (p && typeof p.close === 'function') {
+      try { p.close(); } catch (e) { /* ignore */ }
     }
     pmCache.delete(oldest);
   }
@@ -55,17 +56,29 @@ function getPm(pmUrl: string) {
   return pm;
 }
 
+function toArrayBufferFromTileData(d: unknown): ArrayBuffer | null {
+  if (d instanceof ArrayBuffer) return d;
+  if (ArrayBuffer.isView(d)) {
+    const view = d as ArrayBufferView;
+    return new Uint8Array(view.buffer, (view as any).byteOffset ?? 0, (view as any).byteLength ?? view.buffer.byteLength).slice().buffer;
+  }
+  if (d && typeof d === 'object' && 'buffer' in d && d && (d as any).buffer instanceof ArrayBuffer) {
+    const v = d as { buffer: ArrayBuffer; byteOffset?: number; byteLength?: number };
+    const byteOffset = typeof v.byteOffset === 'number' ? v.byteOffset : 0;
+    const byteLength = typeof v.byteLength === 'number' ? v.byteLength : v.buffer.byteLength - byteOffset;
+    return new Uint8Array(v.buffer, byteOffset, byteLength).slice().buffer;
+  }
+  return null;
+}
+
 export async function getTilePoints(pmUrl: string, z: number, x: number, y: number) {
   try {
     const pm = getPm(pmUrl);
     const tileRes = await pm.getZxy(z, x, y);
-    if (!tileRes || !tileRes.data) return [];
+    if (!tileRes || tileRes.data == null) return [];
 
-    let buffer: ArrayBuffer;
-    const d = tileRes.data as any;
-    if (d instanceof ArrayBuffer) buffer = d;
-    else if (ArrayBuffer.isView(d)) buffer = new Uint8Array(d.buffer, d.byteOffset, d.byteLength).slice().buffer;
-    else buffer = d as ArrayBuffer;
+    const buffer = toArrayBufferFromTileData(tileRes.data);
+    if (!buffer) return [];
 
     if (buffer.byteLength < 24) return [];
 
@@ -97,8 +110,8 @@ export async function getTilePoints(pmUrl: string, z: number, x: number, y: numb
     }
 
     return points;
-  } catch (err) {
-    logger.error('[windArrowService] getTilePoints error', err as any);
+  } catch (err: unknown) {
+    logger.error('[windArrowService] getTilePoints error', err);
     return [];
   }
 }
@@ -107,8 +120,8 @@ export function disposePmtiles(pmUrl: string) {
   const key = urlWithCacheBuster(pmUrl);
   const pm = pmCache.get(key);
   if (pm) {
-    if (typeof (pm as any).close === 'function') {
-      try { (pm as any).close(); } catch (e) { /* ignore */ }
+    if (typeof pm.close === 'function') {
+      try { pm.close(); } catch (e) { /* ignore */ }
     }
     pmCache.delete(key);
     const i = USAGE_ORDER.indexOf(key);
@@ -118,8 +131,8 @@ export function disposePmtiles(pmUrl: string) {
 
 export function clearPmCache() {
   pmCache.forEach((p) => {
-    if (typeof (p as any).close === 'function') {
-      try { (p as any).close(); } catch (e) { /* ignore */ }
+    if (p && typeof p.close === 'function') {
+      try { p.close(); } catch (e) { /* ignore */ }
     }
   });
   pmCache.clear();
