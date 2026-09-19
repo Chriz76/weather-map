@@ -64,10 +64,9 @@ jobs:
       # ==========================================
       - name: Deploy to Cloudflare Pages
         if: github.ref_name != 'typescript'
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           accountId: c728452fcd5090f3d7f2bacc5e75fcd2
-          projectName: 'windapp-preview'
-          directory: './dist'
+          command: pages deploy ./dist --project-name=windapp-preview
           
