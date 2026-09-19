@@ -31,10 +31,10 @@ function createTileLayer(pmUrl: string) {
 
     getTileData: async ({ index: { x, y, z } }: any) => {
       try {
-        logger.info('[windArrowOverlayView] getTileData (delegated)', { pmUrl, z, x, y });
+        logger.debug('[windArrowOverlayView] getTileData (delegated)', { pmUrl, z, x, y });
         return await getTilePoints(pmUrl, z, x, y);
       } catch (err) {
-        console.error('[windArrowOverlayView] getTileData error', err);
+        logger.error('[windArrowOverlayView] getTileData error', err);
         return [];
       }
     },
@@ -71,7 +71,7 @@ function createTileLayer(pmUrl: string) {
         getIcon: () => 'arrow',
         getPosition: (d: any) => d.position,
         getAngle: (d: any) => 180 - d.angle,
-        getSize: (d: any) => Math.min(Math.max(d.speed * 2.5, 16), 60),
+        getSize: (d: any) => Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, d.speed * 1.94384 - 3)) * 4.8), 30),
 
         // Update-Triggers für den Sublayer, wenn sich die Daten verändern
         updateTriggers: {
@@ -109,15 +109,15 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
         // if the active provider does not support PMTiles, clear any existing arrows
         if (!weatherProviderModel.supportsArrowOverlay && overlayInstance) {
-          logger.info('[windArrowOverlayView] active provider does not support PMTiles; clearing layers');
+          logger.debug('[windArrowOverlayView] active provider does not support PMTiles; clearing layers');
           try { overlayInstance.setLayers([]); } catch (e) { /* ignore */ }
           return;
         }
 
         const ts = weatherProviderModel.activeTimestamp;
         if (!ts) return;
-        const pmUrl = `/output/${ts}Z_dir.pmtiles`;
-        logger.info('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: pmUrl });
+        const pmUrl = `/${ts}Z_dir.pmtiles`;
+        logger.debug('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: pmUrl });
         windArrowOverlayView.setPmtilesUrl?.(pmUrl);
       });
 
@@ -127,7 +127,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
   setPmtilesUrl(pmUrl: string) {
     if (!pmUrl || !overlayInstance) return;
 
-    logger.info('[windArrowOverlayView] setPmtilesUrl', pmUrl);
+    logger.debug('[windArrowOverlayView] setPmtilesUrl', pmUrl);
 
     const tileLayer = createTileLayer(pmUrl);
     overlayInstance.setLayers([tileLayer]);

@@ -40,7 +40,7 @@ export const providers: Record<string, ProviderConfig> = {
     
   },
   [AROME]: {
-    baseUrl: "/output/",
+    baseUrl: "https://chriz76.github.io/weather-data/",
     gridCellSize: 1.0,
     imageBounds: [
       [37.5, -12.0],

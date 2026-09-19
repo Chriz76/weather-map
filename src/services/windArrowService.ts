@@ -1,5 +1,7 @@
 import { PMTiles } from 'pmtiles';
 import { logger } from '../utils/logger';
+import { providers as providerConfig } from '../config';
+import { weatherProviderModel } from '../models/weatherProviderModel';
 
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
@@ -11,8 +13,26 @@ function urlWithCacheBuster(pmUrl: string) {
   return pmUrl.includes('?') ? `${pmUrl}&${CACHE_BUSTER}` : `${pmUrl}?${CACHE_BUSTER}`;
 }
 
+function resolvePmUrl(pmUrl: string) {
+  // If already absolute, return as-is
+  if (/^https?:\/\//i.test(pmUrl) || pmUrl.startsWith('//')) return pmUrl;
+
+  const activeId = weatherProviderModel.getActiveProviderId();
+  const cfg = providerConfig[activeId] as Record<string, unknown> | undefined;
+  const baseUrl = cfg && typeof cfg.baseUrl === 'string' ? cfg.baseUrl : '';
+
+  if (!baseUrl) return pmUrl;
+
+  // Join baseUrl and pmUrl without duplicating slashes
+  if (pmUrl.startsWith('/')) {
+    return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) + pmUrl : baseUrl + pmUrl;
+  }
+  return baseUrl.endsWith('/') ? baseUrl + pmUrl : baseUrl + '/' + pmUrl;
+}
+
 function getPm(pmUrl: string) {
-  const key = urlWithCacheBuster(pmUrl);
+  const resolvedUrl = resolvePmUrl(pmUrl);
+  const key = urlWithCacheBuster(resolvedUrl);
   let pm = pmCache.get(key);
   if (!pm) {
     pm = new PMTiles(key);
