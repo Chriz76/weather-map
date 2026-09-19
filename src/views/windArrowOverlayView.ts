@@ -29,7 +29,7 @@ function createTileLayer(pmUrl: string) {
     zoomOffset: -4,
     extent: [-180, -85.051129, 180, 85.051129],
 
-    getTileData: async ({ index: { x, y, z } }: any) => {
+    getTileData: async ({ index: { x, y, z } }: { index: { x: number; y: number; z: number } }) => {
       try {
         logger.debug('[windArrowOverlayView] getTileData (delegated)', { pmUrl, z, x, y });
         return await getTilePoints(pmUrl, z, x, y);
@@ -39,8 +39,19 @@ function createTileLayer(pmUrl: string) {
       }
     },
 
-    renderSubLayers: (props: any) => {
-      const { data } = props;
+    renderSubLayers: (props: unknown) => {
+      const maybe = props as { data?: unknown };
+      const rawData = maybe.data;
+
+      type WindPoint = { position: [number, number]; angle: number; speed: number };
+      const isWindPoint = (v: unknown): v is WindPoint => {
+        if (typeof v !== 'object' || v === null) return false;
+        const obj = v as Record<string, unknown>;
+        const pos = obj.position;
+        return Array.isArray(pos) && pos.length === 2 && typeof pos[0] === 'number' && typeof pos[1] === 'number' && typeof obj.angle === 'number' && typeof obj.speed === 'number';
+      };
+
+      const data: WindPoint[] = Array.isArray(rawData) ? rawData.filter(isWindPoint) : [];
 
       const arrowSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 80" width="40" height="80">
@@ -64,14 +75,16 @@ function createTileLayer(pmUrl: string) {
       `;
       const iconUrl = `data:image/svg+xml;utf8,${encodeURIComponent(arrowSvg)}`;
 
-      return new IconLayer(props, {
+      const iconLayerProps = props as ConstructorParameters<typeof IconLayer>[0];
+
+      return new IconLayer(iconLayerProps, {
         data,
         iconAtlas: iconUrl,
         iconMapping: { arrow: { x: 0, y: 0, width: 40, height: 80, mask: false } },
         getIcon: () => 'arrow',
-        getPosition: (d: any) => d.position,
-        getAngle: (d: any) => 180 - d.angle,
-        getSize: (d: any) => Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, d.speed * 1.94384 - 3)) * 4.8), 30),
+        getPosition: (d: WindPoint) => d.position,
+        getAngle: (d: WindPoint) => 180 - d.angle,
+        getSize: (d: WindPoint) => Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, d.speed * 1.94384 - 3)) * 4.8), 30),
 
         // Update-Triggers für den Sublayer, wenn sich die Daten verändern
         updateTriggers: {
