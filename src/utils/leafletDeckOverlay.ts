@@ -43,7 +43,7 @@ export class LeafletDeckOverlay extends L.Layer {
 
     const size = map.getSize();
 
-    this.deck = new Deck({
+    this.deck = new Deck<MapView>({
       parent: this.container,
       views: new MapView({ repeat: false }),
       controller: false,
@@ -100,7 +100,7 @@ export class LeafletDeckOverlay extends L.Layer {
     }
 
     try {
-      this.deck.setProps({ layers } as unknown as Partial<DeckProps>);
+      this.deck.setProps({ layers } as unknown as Partial<DeckProps<MapView>>);
     } catch (e) {
       // Fehlerbehandlung
     }
@@ -148,14 +148,14 @@ export class LeafletDeckOverlay extends L.Layer {
     const props = (this.deck as unknown as { props?: { _animate?: boolean } }).props;
     if (props && typeof props._animate === 'boolean' && props._animate) {
       this.animateBackup = props._animate;
-      this.deck.setProps({ _animate: false } as unknown as Partial<DeckProps>);
+      this.deck.setProps({ _animate: false } as unknown as Partial<DeckProps<MapView>>);
     }
   }
 
   private unpauseAnimation(): void {
     if (!this.deck) return;
     if (this.animateBackup) {
-      this.deck.setProps({ _animate: this.animateBackup } as unknown as Partial<DeckProps>);
+      this.deck.setProps({ _animate: this.animateBackup } as unknown as Partial<DeckProps<MapView>>);
       this.animateBackup = undefined;
     }
   }

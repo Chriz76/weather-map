@@ -82,9 +82,12 @@ function createTileLayer(pmUrl: string) {
         iconAtlas: iconUrl,
         iconMapping: { arrow: { x: 0, y: 0, width: 40, height: 80, mask: false } },
         getIcon: () => 'arrow',
-        getPosition: (d: WindPoint) => d.position,
-        getAngle: (d: WindPoint) => 180 - d.angle,
-        getSize: (d: WindPoint) => Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, d.speed * 1.94384 - 3)) * 4.8), 30),
+        getPosition: (obj: unknown) => (obj as WindPoint).position,
+        getAngle: (obj: unknown) => 180 - (obj as WindPoint).angle,
+        getSize: (obj: unknown) => {
+          const p = obj as WindPoint;
+          return Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, p.speed * 1.94384 - 3)) * 4.8), 30);
+        },
 
         // Update-Triggers für den Sublayer, wenn sich die Daten verändern
         updateTriggers: {
