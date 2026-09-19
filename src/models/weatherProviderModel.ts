@@ -9,6 +9,7 @@ type ProviderState = {
   modelGeneratedAt: string | null;
   modelCurrentHour: string | null;
   lastIndexSync: Date | null;
+  supportsArrowOverlay?: boolean;
   locationContext: { latLng: LatLng } | null;
   currentClusterData?: unknown | null;
   windData: { speed: number | null; gust: number | null; direction: number | null } | null;
@@ -18,7 +19,6 @@ type ProviderState = {
   pointDataLoadError: string | null;
   apiMismatchError: string | null;
   startupError: string | null;
-  specialDataSummary?: string | null;
   activeTimestampIndex: number;
 };
 
@@ -35,6 +35,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
+        supportsArrowOverlay: false,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -50,6 +51,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
+        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -87,6 +89,7 @@ export class WeatherProviderModel extends EventTarget {
   get currentClusterData(): unknown | null { return this._getActiveModel().currentClusterData ?? null; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }
+  get supportsArrowOverlay(): boolean { return !!this._getActiveModel().supportsArrowOverlay; }
 
   setLastIndexSync(date: Date | null): void {
     this._getActiveModel().lastIndexSync = date;
@@ -240,12 +243,6 @@ export class WeatherProviderModel extends EventTarget {
     this.dispatchEvent(new CustomEvent('model:location-updated'));
     this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
     this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
-  }
-
-  get specialDataSummary(): string | null { return this._getActiveModel().specialDataSummary ?? null; }
-  setSpecialDataSummary(value: string | null): void {
-    this._getActiveModel().specialDataSummary = value;
-    this.dispatchEvent(new CustomEvent('model:special-data-summary-changed'));
   }
 }
 

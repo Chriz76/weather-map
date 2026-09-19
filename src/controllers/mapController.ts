@@ -106,9 +106,6 @@ export async function initMapController(map: LeafletMap): Promise<void> {
       logger.error('Error updating special data on moveend:', e);
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('lat') && urlParams.has('lon')) return;
-
     const center = map.getCenter();
     storage.saveMapState({
       lat: center.lat,

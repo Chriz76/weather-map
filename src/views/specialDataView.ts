@@ -52,7 +52,7 @@ export const specialDataView = (() => {
 
     if (!marker && map) {
       const summary = typeof commonDataModel.specialDataSummary === 'string' ? commonDataModel.specialDataSummary : String(commonDataModel.specialDataSummary ?? '');
-      marker = $L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(summary) }) as Marker;
+      marker = $L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(summary), pane: 'topBadgesPane' }) as Marker;
       marker.on('click', () => window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer'));
       if (layerGroup) layerGroup.addLayer(marker);
     }

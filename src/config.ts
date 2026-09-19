@@ -15,6 +15,14 @@ export type ProviderConfig = {
   baseUrl: string;
   gridCellSize: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
+  arrows?: {
+    lonMin: number;
+    latMax: number;
+    totalLonSpan: number;
+    totalLatSpan: number;
+    baseLeafletZoom: number;
+    maxPmtilesZ: number;
+  };
 };
 
 /**
@@ -29,6 +37,7 @@ export const providers: Record<string, ProviderConfig> = {
       [43.0440, -4.1616],
       [58.1647, 20.5444]
     ]
+    
   },
   [AROME]: {
     baseUrl: "https://chriz76.github.io/weather-data/",
@@ -37,5 +46,14 @@ export const providers: Record<string, ProviderConfig> = {
       [37.5, -12.0],
       [55.4, 16.0]
     ]
+    ,
+    arrows: {
+      lonMin: -12.0,
+      latMax: 55.4,
+      totalLonSpan: 1136 * 0.025,
+      totalLatSpan: 720 * 0.025,
+      baseLeafletZoom: 8,
+      maxPmtilesZ: 4
+    }
   }
 };
