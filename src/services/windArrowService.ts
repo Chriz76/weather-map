@@ -6,15 +6,16 @@ import { weatherProviderModel } from '../models/weatherProviderModel';
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
 type PmWithClose = PMTiles & { close?: () => void };
+type BufferLike = { buffer: ArrayBuffer; byteOffset?: number; byteLength?: number };
 const pmCache = new Map<string, PmWithClose>();
 const USAGE_ORDER: string[] = [];
 const CACHE_LIMIT = 20;
 
-function urlWithCacheBuster(pmUrl: string) {
+function urlWithCacheBuster(pmUrl: string): string {
   return pmUrl.includes('?') ? `${pmUrl}&${CACHE_BUSTER}` : `${pmUrl}?${CACHE_BUSTER}`;
 }
 
-function resolvePmUrl(pmUrl: string) {
+function resolvePmUrl(pmUrl: string): string {
   // If already absolute, return as-is
   if (/^https?:\/\//i.test(pmUrl) || pmUrl.startsWith('//')) return pmUrl;
 
@@ -58,20 +59,28 @@ function getPm(pmUrl: string) {
 
 function toArrayBufferFromTileData(d: unknown): ArrayBuffer | null {
   if (d instanceof ArrayBuffer) return d;
+
   if (ArrayBuffer.isView(d)) {
-    const view = d as ArrayBufferView;
-    return new Uint8Array(view.buffer, (view as any).byteOffset ?? 0, (view as any).byteLength ?? view.buffer.byteLength).slice().buffer;
+    const view = d as unknown as BufferLike;
+    const byteOffset = typeof view.byteOffset === 'number' ? view.byteOffset : 0;
+    const byteLength = typeof view.byteLength === 'number' ? view.byteLength : view.buffer.byteLength - byteOffset;
+    return new Uint8Array(view.buffer, byteOffset, byteLength).slice().buffer;
   }
-  if (d && typeof d === 'object' && 'buffer' in d && d && (d as any).buffer instanceof ArrayBuffer) {
-    const v = d as { buffer: ArrayBuffer; byteOffset?: number; byteLength?: number };
-    const byteOffset = typeof v.byteOffset === 'number' ? v.byteOffset : 0;
-    const byteLength = typeof v.byteLength === 'number' ? v.byteLength : v.buffer.byteLength - byteOffset;
-    return new Uint8Array(v.buffer, byteOffset, byteLength).slice().buffer;
+
+  if (d && typeof d === 'object') {
+    const obj = d as Record<string, unknown>;
+    if (obj.buffer instanceof ArrayBuffer) {
+      const v = obj as BufferLike;
+      const byteOffset = typeof v.byteOffset === 'number' ? v.byteOffset : 0;
+      const byteLength = typeof v.byteLength === 'number' ? v.byteLength : v.buffer.byteLength - byteOffset;
+      return new Uint8Array(v.buffer, byteOffset, byteLength).slice().buffer;
+    }
   }
+
   return null;
 }
 
-export async function getTilePoints(pmUrl: string, z: number, x: number, y: number) {
+export async function getTilePoints(pmUrl: string, z: number, x: number, y: number): Promise<Array<{ position: [number, number]; angle: number; speed: number }>> {
   try {
     const pm = getPm(pmUrl);
     const tileRes = await pm.getZxy(z, x, y);
@@ -116,7 +125,7 @@ export async function getTilePoints(pmUrl: string, z: number, x: number, y: numb
   }
 }
 
-export function disposePmtiles(pmUrl: string) {
+export function disposePmtiles(pmUrl: string): void {
   const key = urlWithCacheBuster(pmUrl);
   const pm = pmCache.get(key);
   if (pm) {
@@ -129,7 +138,7 @@ export function disposePmtiles(pmUrl: string) {
   }
 }
 
-export function clearPmCache() {
+export function clearPmCache(): void {
   pmCache.forEach((p) => {
     if (p && typeof p.close === 'function') {
       try { p.close(); } catch (e) { /* ignore */ }
@@ -144,7 +153,7 @@ export function clearPmCache() {
 // returns an empty array. Implement a real tile-scanning approach here if
 // needed later.
 export const windArrowService = {
-  async loadWindArrowsForBounds(_bounds: { west: number; east: number; south: number; north: number }, _zoom: number) {
+  async loadWindArrowsForBounds(_bounds: { west: number; east: number; south: number; north: number }, _zoom: number): Promise<Array<{ position: [number, number]; angle: number; speed: number }>> {
     logger.info('[windArrowService] loadWindArrowsForBounds called (fallback)');
     return [] as Array<{ position: [number, number]; angle: number; speed: number }>;
   }
