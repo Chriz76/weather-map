@@ -1,146 +1,118 @@
 import { PMTiles } from 'pmtiles';
-import { decodeWindArrowPointsFromImageData, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, type ArrowsConfig } from '../utils/tile';
-import type { WindArrowPoint } from '../utils/tile';
-import { weatherProviderModel } from '../models/weatherProviderModel';
-import { providers } from '../config';
+import { logger } from '../utils/logger';
 
-const tileCache = new Map<string, ImageData>();
-let pmtilesInstance: PMTiles | null = null;
-let currentPmtilesUrl: string | null = null;
-let sharedCanvas: HTMLCanvasElement | null = null;
-let sharedCtx: CanvasRenderingContext2D | null = null;
-let loadToken = 0;
+const CACHE_BUSTER = `cb=${Date.now()}`;
 
-async function _loadTileImageData(x: number, y: number, z: number): Promise<ImageData | null> {
-  const cacheKey = `${z}/${x}/${y}`;
-  if (tileCache.has(cacheKey)) return tileCache.get(cacheKey)!;
+const pmCache = new Map<string, PMTiles>();
+const USAGE_ORDER: string[] = [];
+const CACHE_LIMIT = 20;
 
-  const pm = pmtilesInstance;
-  if (!pm) return null;
+function urlWithCacheBuster(pmUrl: string) {
+  return pmUrl.includes('?') ? `${pmUrl}&${CACHE_BUSTER}` : `${pmUrl}?${CACHE_BUSTER}`;
+}
 
+function getPm(pmUrl: string) {
+  const key = urlWithCacheBuster(pmUrl);
+  let pm = pmCache.get(key);
+  if (!pm) {
+    pm = new PMTiles(key);
+    pmCache.set(key, pm);
+  }
+
+  const idx = USAGE_ORDER.indexOf(key);
+  if (idx >= 0) USAGE_ORDER.splice(idx, 1);
+  USAGE_ORDER.push(key);
+
+  while (USAGE_ORDER.length > CACHE_LIMIT) {
+    const oldest = USAGE_ORDER.shift()!;
+    const p = pmCache.get(oldest);
+    if (p && typeof (p as any).close === 'function') {
+      try { (p as any).close(); } catch (e) { /* ignore */ }
+    }
+    pmCache.delete(oldest);
+  }
+
+  return pm;
+}
+
+export async function getTilePoints(pmUrl: string, z: number, x: number, y: number) {
   try {
-    const resp = await pm.getZxy(z, x, y);
-    if (!resp || !resp.data) return null;
+    const pm = getPm(pmUrl);
+    const tileRes = await pm.getZxy(z, x, y);
+    if (!tileRes || !tileRes.data) return [];
 
-    const blob = new Blob([resp.data], { type: 'image/webp' });
-    const bitmap = await createImageBitmap(blob);
+    let buffer: ArrayBuffer;
+    const d = tileRes.data as any;
+    if (d instanceof ArrayBuffer) buffer = d;
+    else if (ArrayBuffer.isView(d)) buffer = new Uint8Array(d.buffer, d.byteOffset, d.byteLength).slice().buffer;
+    else buffer = d as ArrayBuffer;
 
-    if (!sharedCanvas) {
-      sharedCanvas = document.createElement('canvas');
-      sharedCtx = sharedCanvas.getContext('2d', { willReadFrequently: true });
+    if (buffer.byteLength < 24) return [];
+
+    const header = new Float32Array(buffer, 0, 6);
+    const originLng = header[0]!;
+    const originLat = header[1]!;
+    const deltaLng = header[2]!;
+    const deltaLat = header[3]!;
+    const rows = Math.round(header[4]!);
+    const cols = Math.round(header[5]!);
+
+    const uv = new Float32Array(buffer, 24);
+    const points: { position: [number, number]; angle: number; speed: number }[] = [];
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = (r * cols + c) * 2;
+        const u = uv[idx]!;
+        const v = uv[idx + 1]!;
+        if (!Number.isFinite(u) || !Number.isFinite(v)) continue;
+
+        const lng = originLng + c * deltaLng;
+        const lat = originLat - r * deltaLat;
+        const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
+        const speed = Math.sqrt(u * u + v * v);
+
+        points.push({ position: [lng, lat], angle, speed });
+      }
     }
 
-    sharedCanvas.width = bitmap.width;
-    sharedCanvas.height = bitmap.height;
-
-    if (!sharedCtx) {
-      bitmap.close();
-      return null;
-    }
-
-    sharedCtx.drawImage(bitmap, 0, 0);
-    const imageData = sharedCtx.getImageData(0, 0, bitmap.width, bitmap.height);
-    bitmap.close();
-
-    tileCache.set(cacheKey, imageData);
-    return imageData;
-  } catch (e) {
-    console.error('[windArrowService] Fehler beim Laden der Kachel:', e);
-    return null;
+    return points;
+  } catch (err) {
+    logger.error('[windArrowService] getTilePoints error', err as any);
+    return [];
   }
 }
-// decoder is imported from utils/tile
 
+export function disposePmtiles(pmUrl: string) {
+  const key = urlWithCacheBuster(pmUrl);
+  const pm = pmCache.get(key);
+  if (pm) {
+    if (typeof (pm as any).close === 'function') {
+      try { (pm as any).close(); } catch (e) { /* ignore */ }
+    }
+    pmCache.delete(key);
+    const i = USAGE_ORDER.indexOf(key);
+    if (i >= 0) USAGE_ORDER.splice(i, 1);
+  }
+}
+
+export function clearPmCache() {
+  pmCache.forEach((p) => {
+    if (typeof (p as any).close === 'function') {
+      try { (p as any).close(); } catch (e) { /* ignore */ }
+    }
+  });
+  pmCache.clear();
+  USAGE_ORDER.length = 0;
+}
+
+// Compatibility wrapper for existing callers that import `windArrowService`.
+// Provides a minimal `loadWindArrowsForBounds` implementation that currently
+// returns an empty array. Implement a real tile-scanning approach here if
+// needed later.
 export const windArrowService = {
-  setPmtilesUrl(url?: string): void {
-    if (!url) return;
-    if (url === currentPmtilesUrl) return;
-
-    try {
-      if (pmtilesInstance && (pmtilesInstance as any).close) {
-        try { (pmtilesInstance as any).close(); } catch {}
-      }
-    } catch {}
-
-    tileCache.clear();
-    pmtilesInstance = new PMTiles(url);
-    currentPmtilesUrl = url;
-    loadToken++; // invalidate in-flight ops
-  },
-
-  clear(): void {
-    try {
-      if (pmtilesInstance && (pmtilesInstance as any).close) {
-        try { (pmtilesInstance as any).close(); } catch {}
-      }
-    } catch {}
-    pmtilesInstance = null;
-    currentPmtilesUrl = null;
-    tileCache.clear();
-    loadToken++;
-  },
-
-  destroy(): void {
-    this.clear();
-    sharedCanvas = null;
-    sharedCtx = null;
-  },
-
-  async loadTileImageData(x: number, y: number, z: number): Promise<ImageData | null> {
-    return await _loadTileImageData(x, y, z);
-  },
-
-  async decodeTilesToPoints(
-    indices: { x: number; y: number; z: number }[],
-    step: number,
-    cfg: ArrowsConfig
-  ): Promise<WindArrowPoint[]> {
-    if (!pmtilesInstance) return [];
-    const myToken = ++loadToken;
-
-    const promises = indices.map(async (idx) => {
-      const imageData = await _loadTileImageData(idx.x, idx.y, idx.z);
-      if (!imageData) return [];
-      return decodeWindArrowPointsFromImageData(imageData, idx, step, cfg);
-    });
-
-    const results = await Promise.all(promises);
-
-    if (myToken !== loadToken) return [];
-
-    return results.flat();
-  },
-
-  async loadWindArrowsForBounds(bounds: { west: number; east: number; south: number; north: number }, zoom: number): Promise<WindArrowPoint[]> {
-    const providerCfg = providers[weatherProviderModel.getActiveProviderId()] as any;
-    const arrows = providerCfg?.arrows ?? null;
-    if (!arrows) return [];
-
-    const cfg: ArrowsConfig = {
-      lonMin: typeof arrows.lonMin === 'number' ? arrows.lonMin : (typeof arrows.LON_MIN === 'number' ? arrows.LON_MIN : -12.0),
-      latMax: typeof arrows.latMax === 'number' ? arrows.latMax : (typeof arrows.LAT_MAX === 'number' ? arrows.LAT_MAX : 55.4),
-      totalLonSpan: typeof arrows.totalLonSpan === 'number' ? arrows.totalLonSpan : (typeof arrows.TOTAL_LON_SPAN === 'number' ? arrows.TOTAL_LON_SPAN : 1136 * 0.025),
-      totalLatSpan: typeof arrows.totalLatSpan === 'number' ? arrows.totalLatSpan : (typeof arrows.TOTAL_LAT_SPAN === 'number' ? arrows.TOTAL_LAT_SPAN : 720 * 0.025),
-      baseLeafletZoom: typeof arrows.baseLeafletZoom === 'number' ? arrows.baseLeafletZoom : (typeof arrows.BASE_LEAFLET_ZOOM === 'number' ? arrows.BASE_LEAFLET_ZOOM : 8),
-      maxPmtilesZ: typeof arrows.maxPmtilesZ === 'number' ? arrows.maxPmtilesZ : (typeof arrows.MAX_PMTILES_Z === 'number' ? arrows.MAX_PMTILES_Z : 4)
-    };
-
-    const { pmZ, step } = getDensityConfigFromZoom(Math.floor(zoom), cfg);
-    if (step === 0) return [];
-
-    const visibleIndices = getVisibleTileIndicesFromBounds(bounds, pmZ, cfg);
-    if (visibleIndices.length === 0) return [];
-
-    return await this.decodeTilesToPoints(visibleIndices, step, cfg);
-  },
-
-  isReady(): boolean {
-    return pmtilesInstance !== null;
-  },
-
-  getCurrentPmtilesUrl(): string | null {
-    return currentPmtilesUrl;
+  async loadWindArrowsForBounds(_bounds: { west: number; east: number; south: number; north: number }, _zoom: number) {
+    logger.info('[windArrowService] loadWindArrowsForBounds called (fallback)');
+    return [] as Array<{ position: [number, number]; angle: number; speed: number }>;
   }
 };
-
-export default windArrowService;

@@ -1,194 +1,135 @@
 import { IconLayer } from '@deck.gl/layers';
+import { TileLayer } from '@deck.gl/geo-layers';
 import type { Map as LeafletMap } from 'leaflet';
 import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
-import { COORDINATE_SYSTEM } from '@deck.gl/core';
-import { logger } from '../utils/logger';
-import { uiStateModel } from '../models/uiStateModel';
+import { PMTiles } from 'pmtiles';
+import { getTilePoints } from '../services/windArrowService';
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { commonDataModel } from '../models/commonDataModel';
-import { updateWindArrowsAction } from '../controllers/updateWindArrowsAction';
-import { providers } from '../config';
-import { getTileBounds, getDensityConfigFromZoom, getVisibleTileIndicesFromBounds, WindArrowPoint } from '../utils/tile';
-import { windArrowService } from '../services/windArrowService';
-
-const WIND_ARROW_PANE_Z_INDEX = '510';
-const WIND_ARROW_CLASS = 'wind-arrow-deck-overlay';
-
-// `WindArrowPoint` type is imported from utils/tile
-
-const WIND_ARROW_ICON_URL =
-  'data:image/svg+xml;charset=utf-8,' +
-  encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
-      <defs>
-        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.65"/>
-        </filter>
-      </defs>
-      <path d="M36 8 L48 28 H40 V56 H32 V28 H24 Z" fill="white" filter="url(#shadow)"/>
-    </svg>
-  `);
+import { logger } from '../utils/logger';
 
 let overlayInstance: LeafletDeckOverlay | null = null;
-let cachedPoints: WindArrowPoint[] | null = null;
-let currentPmtilesUrl: string | null = null;
-let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-// tile utilities (getTileBounds, getDensityConfig, getVisibleTileIndices) are provided
-// by `src/utils/tile.ts` and imported above. They are stateless and accept an
-// optional arrows config when needed.
+function createTileLayer(pmUrl: string) {
+  const pm = new PMTiles(pmUrl);
 
-// decoding moved to utils/decode; view uses `decodeWindArrowPointsFromImageData` import
+  return new TileLayer({
+    // Feste ID beibehalten, damit deck.gl den Layer wiederverwendet
+    // und sanfte Übergänge ermöglicht
+    id: 'wind-arrow-tile-layer',
 
-// Tile loading, decoding and caching moved into `windArrowService`.
+    // WICHTIG: Signalisiert deck.gl, dass getTileData bei einer neuen pmUrl
+    // erneut ausgeführt und der Kachel-Cache invalidiert werden muss
+    updateTriggers: {
+      getTileData: [pmUrl]
+    },
 
-// view no longer performs tile decoding; controller action handles updates
+    minZoom: 0,
+    maxZoom: 8,
+    tileSize: 256,
+    zoomOffset: -4,
+    extent: [-180, -85.051129, 180, 85.051129],
 
-function pointsEqual(a: WindArrowPoint[] | null, b: WindArrowPoint[]): boolean {
-  if (a === b) return true;
-  if (!a) return false;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const pa = a[i]!;
-    const pb = b[i]!;
-    if (pa.angle !== pb.angle) return false;
-    if (pa.position[0] !== pb.position[0] || pa.position[1] !== pb.position[1]) return false;
-  }
-  return true;
-}
-
-function setIconLayerFromPoints(points: WindArrowPoint[]): void {
-  if (!overlayInstance) return;
-  if (pointsEqual(cachedPoints, points)) return;
-
-  const iconLayer = new IconLayer<WindArrowPoint>({
-    id: 'wind-arrow-layer',
-    data: points,
-    iconAtlas: WIND_ARROW_ICON_URL,
-    iconMapping: {
-      arrow: {
-        x: 0,
-        y: 0,
-        width: 72,
-        height: 72,
-        anchorX: 36,
-        anchorY: 36,
-        mask: false
+    getTileData: async ({ index: { x, y, z } }: any) => {
+      try {
+        logger.info('[windArrowOverlayView] getTileData (delegated)', { pmUrl, z, x, y });
+        return await getTilePoints(pmUrl, z, x, y);
+      } catch (err) {
+        console.error('[windArrowOverlayView] getTileData error', err);
+        return [];
       }
     },
-    getIcon: () => 'arrow',
-    getPosition: (d: WindArrowPoint) => d.position,
-    getAngle: (d: WindArrowPoint) => d.angle,
-    getSize: 26,
-    sizeScale: 1,
-    coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-    pickable: false
-  });
 
-  cachedPoints = points;
-  overlayInstance.setLayers([iconLayer]);
+    renderSubLayers: (props: any) => {
+      const { data } = props;
+
+      const arrowSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 80" width="40" height="80">
+          <defs>
+            <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+              <feComponentTransfer in="blur" result="boost">
+                <feFuncA type="linear" slope="3"/>
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="boost" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <g filter="url(#glow)">
+            <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
+          <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#1c1e22" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      `;
+      const iconUrl = `data:image/svg+xml;utf8,${encodeURIComponent(arrowSvg)}`;
+
+      return new IconLayer(props, {
+        data,
+        iconAtlas: iconUrl,
+        iconMapping: { arrow: { x: 0, y: 0, width: 40, height: 80, mask: false } },
+        getIcon: () => 'arrow',
+        getPosition: (d: any) => d.position,
+        getAngle: (d: any) => 180 - d.angle,
+        getSize: (d: any) => Math.min(Math.max(d.speed * 2.5, 16), 60),
+
+        // Update-Triggers für den Sublayer, wenn sich die Daten verändern
+        updateTriggers: {
+          getPosition: [pmUrl],
+          getAngle: [pmUrl],
+          getSize: [pmUrl]
+        },
+
+        // Optionale softe Animation der Pfeile bei Änderungen (in ms)
+        transitions: {
+          getAngle: 300,
+          getSize: 300
+        },
+
+        sizeScale: 1,
+        sizeUnits: 'pixels',
+        billboard: false,
+        pickable: false
+      });
+    }
+  });
 }
 
 export interface IWindArrowOverlayView {
   init: (map: LeafletMap) => void;
-  setPmtilesUrl?: (overlayUrl: string) => void;
+  setPmtilesUrl?: (pmUrl: string) => void;
 }
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
-  init: (map: LeafletMap): void => {
+  init(map: LeafletMap) {
     if (!overlayInstance) {
-      overlayInstance = new LeafletDeckOverlay({ className: WIND_ARROW_CLASS, zIndex: WIND_ARROW_PANE_Z_INDEX });
+      overlayInstance = new LeafletDeckOverlay({ className: 'wind-arrow-deck-overlay', zIndex: '510' });
       overlayInstance.addTo(map);
 
-      // Do not initialize a default PMTiles here — wait for model timestamps/provider
+      weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
+        // if the active provider does not support PMTiles, clear any existing arrows
+        if (!weatherProviderModel.supportsArrowOverlay && overlayInstance) {
+          logger.info('[windArrowOverlayView] active provider does not support PMTiles; clearing layers');
+          try { overlayInstance.setLayers([]); } catch (e) { /* ignore */ }
+          return;
+        }
 
-      // map movement handled centrally by mapController; view only renders model updates
+        const ts = weatherProviderModel.activeTimestamp;
+        if (!ts) return;
+        const pmUrl = `/output/${ts}Z_dir.pmtiles`;
+        logger.info('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: pmUrl });
+        windArrowOverlayView.setPmtilesUrl?.(pmUrl);
+      });
+
     }
+  },
 
-    // Render when model updates wind arrows
-    commonDataModel.addEventListener('model:wind-arrows-updated', () => {
-      const pts = commonDataModel.windArrows ?? [];
-      setIconLayerFromPoints(pts);
-    });
+  setPmtilesUrl(pmUrl: string) {
+    if (!pmUrl || !overlayInstance) return;
 
-    // React to overlay URL updates by deriving PMTiles URL from model + config
-    uiStateModel.addEventListener('ui:overlay-url-updated', () => {
-      const ts = weatherProviderModel.activeTimestamp;
-      const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
-      // If the active provider does not expose arrow/overlay configuration,
-      // it does not provide PMTiles for wind arrows. Clean up any existing
-      // tiles/layers and skip initialization.
-      if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
-          try { windArrowService.clear(); } catch {}
-          currentPmtilesUrl = null;
-          cachedPoints = null;
-          try { commonDataModel.setWindArrows([]); } catch (e) { /* ignore */ }
-        return;
-      }
+    logger.info('[windArrowOverlayView] setPmtilesUrl', pmUrl);
 
-      const base = providerCfg.baseUrl.replace(/\/?$/, '/');
-      const pm = `${base}${ts}Z_dir.pmtiles`;
-      if (pm === currentPmtilesUrl) return;
-
-      try { windArrowService.setPmtilesUrl(pm); } catch (e) { /* ignore */ }
-      currentPmtilesUrl = pm;
-      // trigger an immediate update via controller action
-      try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
-    });
-    // Initialize PMTiles only when the model provides a timestamp/provider
-    const setupFromModel = () => {
-      const ts = weatherProviderModel.activeTimestamp;
-      const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
-      // Only initialize PMTiles when the provider actually supports arrows/overlays
-      if (!ts || !providerCfg?.baseUrl || !providerCfg?.arrows) {
-        try { windArrowService.clear(); } catch {}
-        currentPmtilesUrl = null;
-        cachedPoints = null;
-        try { commonDataModel.setWindArrows([]); } catch (e) { /* ignore */ }
-        return;
-      }
-
-      const base = providerCfg.baseUrl.replace(/\/?$/, '/');
-      const pm = `${base}${ts}Z_dir.pmtiles`;
-      if (pm === currentPmtilesUrl) return;
-
-      try { windArrowService.setPmtilesUrl(pm); } catch (e) { /* ignore */ }
-      currentPmtilesUrl = pm;
-      try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
-    };
-
-    // call once in case model already has timestamps
-    setupFromModel();
-
-    // re-run setup when timestamps or provider change
-    weatherProviderModel.addEventListener('model:timestamps-updated', setupFromModel);
-    weatherProviderModel.addEventListener('model:provider-changed', setupFromModel);
-
-    // initial trigger via controller action
-    try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
+    const tileLayer = createTileLayer(pmUrl);
+    overlayInstance.setLayers([tileLayer]);
   }
 };
-
-function setPmtilesUrlFromOverlayUrl(overlayUrl?: string): void {
-  if (!overlayUrl) return;
-
-  let pmurl = overlayUrl;
-
-  // If the URL doesn't already look like a _dir.pmtiles file, try to convert
-  if (!/_dir\.pmtiles$/i.test(pmurl)) {
-    pmurl = pmurl.replace(/\.webp(?:\?.*)?$/i, '_dir.pmtiles');
-  }
-
-  if (pmurl === currentPmtilesUrl) return;
-
-  // Guard: only allow manual PMTiles URL setting for providers that support overlays
-  const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
-  if (!providerCfg?.arrows) return;
-
-  try { windArrowService.setPmtilesUrl(pmurl); } catch (e) { /* ignore */ }
-  currentPmtilesUrl = pmurl;
-  try { const m = overlayInstance?.getMapInstance(); if (m) void updateWindArrowsAction(m); } catch (e) { /* ignore */ }
-}
-
-// expose the setter on the exported view
-windArrowOverlayView.setPmtilesUrl = (overlayUrl: string) => setPmtilesUrlFromOverlayUrl(overlayUrl);

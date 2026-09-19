@@ -9,6 +9,7 @@ type ProviderState = {
   modelGeneratedAt: string | null;
   modelCurrentHour: string | null;
   lastIndexSync: Date | null;
+  supportsArrowOverlay?: boolean;
   locationContext: { latLng: LatLng } | null;
   currentClusterData?: unknown | null;
   windData: { speed: number | null; gust: number | null; direction: number | null } | null;
@@ -34,6 +35,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
+        supportsArrowOverlay: false,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -49,6 +51,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
+        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -86,6 +89,7 @@ export class WeatherProviderModel extends EventTarget {
   get currentClusterData(): unknown | null { return this._getActiveModel().currentClusterData ?? null; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }
+  get supportsArrowOverlay(): boolean { return !!this._getActiveModel().supportsArrowOverlay; }
 
   setLastIndexSync(date: Date | null): void {
     this._getActiveModel().lastIndexSync = date;

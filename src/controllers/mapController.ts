@@ -8,7 +8,6 @@ import { loadWeatherDataForLocationAction } from './actions';
 import { stationView } from '../views/stationView';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
-import { updateWindArrowsAction } from './updateWindArrowsAction';
 import { logger } from '../utils/logger';
 import { shareCurrentLocation } from '../utils/share';
 import type { Map as LeafletMap, LatLngExpression, LeafletMouseEvent, LocationEvent, ErrorEvent } from 'leaflet';
@@ -107,12 +106,6 @@ export async function initMapController(map: LeafletMap): Promise<void> {
       logger.error('Error updating special data on moveend:', e);
     }
 
-    try {
-      await updateWindArrowsAction(map);
-    } catch (e: unknown) {
-      logger.error('Error updating wind arrows on moveend:', e);
-    }
-
     const center = map.getCenter();
     storage.saveMapState({
       lat: center.lat,
@@ -126,7 +119,6 @@ export async function initMapController(map: LeafletMap): Promise<void> {
   map.on('locationerror', handleLocationError);
   map.on('popupclose', handlePopupClose);
   map.on('moveend', handleMoveEnd);
-  map.on('zoomend resize', () => { void updateWindArrowsAction(map); });
   map.getContainer().addEventListener('click', handleMapContainerClick);
 
   uiStateModel.addEventListener('ui:wind-measurements-visibility-changed', async () => {
