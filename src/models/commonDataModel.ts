@@ -1,11 +1,9 @@
 import type { Station } from '../types';
-import type { WindArrowPoint } from '../utils/tile';
 
 export class CommonDataModel extends EventTarget {
     private _allStations: Station[] = [];
     private _visibleStations: Station[] = [];
     private _specialDataSummary: string | null = null;
-    private _windArrows: WindArrowPoint[] | null = null;
     constructor() {
         super();
     }
@@ -28,19 +26,11 @@ export class CommonDataModel extends EventTarget {
         this._emit('model:visible-stations-updated');
     }
 
-    get specialDataSummary(): string | null { return this._specialDataSummary; }
-
-    get windArrows(): WindArrowPoint[] | null { return this._windArrows; }
-    
+    get specialDataSummary(): string | null { return this._specialDataSummary; }    
 
     setSpecialDataSummary(summary: string | null): void {
         this._specialDataSummary = summary ?? null;
         this._emit('model:special-data-updated');
-    }
-
-    setWindArrows(points: WindArrowPoint[] | unknown): void {
-        this._windArrows = Array.isArray(points) ? (points as WindArrowPoint[]) : null;
-        this._emit('model:wind-arrows-updated');
     }
 }
 
