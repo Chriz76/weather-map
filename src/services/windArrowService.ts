@@ -80,49 +80,99 @@ function toArrayBufferFromTileData(d: unknown): ArrayBuffer | null {
   return null;
 }
 
-export async function getTilePoints(pmUrl: string, z: number, x: number, y: number): Promise<Array<{ position: [number, number]; angle: number; speed: number }>> {
-  try {
-    const pm = getPm(pmUrl);
-    const tileRes = await pm.getZxy(z, x, y);
-    if (!tileRes || tileRes.data == null) return [];
+export async function getTilePoints(
+  pmUrl: string,
+  z: number,
+  x: number,
+  y: number,
+  signal?: AbortSignal
+): Promise<Array<{ position: [number, number]; angle: number; speed: number }> | null> {
+  const resolved = resolvePmUrl(pmUrl);
+  const key = urlWithCacheBuster(resolved);
 
-    const buffer = toArrayBufferFromTileData(tileRes.data);
-    if (!buffer) return [];
+  const maxAttempts = 2; // initial try + 1 retry
+  const backoffMs = 300;
 
-    if (buffer.byteLength < 24) return [];
+  const isNetworkError = (e: unknown) => {
+    if (!e) return false;
+    const anyE = e as any;
+    if (anyE instanceof TypeError) return true;
+    const msg = typeof anyE.message === 'string' ? anyE.message : '';
+    return /failed to fetch|networkerror|network error|timeout/i.test(msg);
+  };
 
-    const header = new Float32Array(buffer, 0, 6);
-    const originLng = header[0]!;
-    const originLat = header[1]!;
-    const deltaLng = header[2]!;
-    const deltaLat = header[3]!;
-    const rows = Math.round(header[4]!);
-    const cols = Math.round(header[5]!);
+  const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-    const uv = new Float32Array(buffer, 24);
-    const points: { position: [number, number]; angle: number; speed: number }[] = [];
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (signal?.aborted) return null;
+    let pm: PmWithClose | undefined;
+    try {
+      pm = getPm(pmUrl);
+      const tileRes = await pm.getZxy(z, x, y);
+      if (signal?.aborted) return null;
+      if (!tileRes || tileRes.data == null) return [];
 
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const idx = (r * cols + c) * 2;
-        const u = uv[idx]!;
-        const v = uv[idx + 1]!;
-        if (!Number.isFinite(u) || !Number.isFinite(v)) continue;
+      const buffer = toArrayBufferFromTileData(tileRes.data);
+      if (!buffer) return [];
 
-        const lng = originLng + c * deltaLng;
-        const lat = originLat - r * deltaLat;
-        const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
-        const speed = Math.sqrt(u * u + v * v);
+      if (buffer.byteLength < 24) return [];
 
-        points.push({ position: [lng, lat], angle, speed });
+      const header = new Float32Array(buffer, 0, 6);
+      const originLng = header[0]!;
+      const originLat = header[1]!;
+      const deltaLng = header[2]!;
+      const deltaLat = header[3]!;
+      const rows = Math.round(header[4]!);
+      const cols = Math.round(header[5]!);
+
+      const uv = new Float32Array(buffer, 24);
+      const points: { position: [number, number]; angle: number; speed: number }[] = [];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const idx = (r * cols + c) * 2;
+          const u = uv[idx]!;
+          const v = uv[idx + 1]!;
+          if (!Number.isFinite(u) || !Number.isFinite(v)) continue;
+
+          const lng = originLng + c * deltaLng;
+          const lat = originLat - r * deltaLat;
+          const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
+          const speed = Math.sqrt(u * u + v * v);
+
+          points.push({ position: [lng, lat], angle, speed });
+        }
       }
-    }
 
-    return points;
-  } catch (err: unknown) {
-    logger.error('[windArrowService] getTilePoints error', err);
-    return [];
+      return points;
+    } catch (err: unknown) {
+      logger.error('[windArrowService] getTilePoints error', { err, attempt, z, x, y, url: resolved });
+
+      // If aborted, stop and return null so TileLayer won't cache
+      if (signal?.aborted) return null;
+
+      // On network-like errors, attempt retry after closing and removing cached pm
+      if (isNetworkError(err)) {
+        try {
+          if (pm && typeof pm.close === 'function') pm.close();
+        } catch (e) { /* ignore close errors */ }
+        pmCache.delete(key);
+        const idx = USAGE_ORDER.indexOf(key);
+        if (idx >= 0) USAGE_ORDER.splice(idx, 1);
+
+        if (attempt < maxAttempts) {
+          // small backoff before retry
+          await sleep(backoffMs);
+          continue;
+        }
+      }
+
+      // For non-network errors or exhausted retries, return empty array so layer can continue
+      return [];
+    }
   }
+
+  return [];
 }
 
 export function disposePmtiles(pmUrl: string): void {
@@ -147,14 +197,3 @@ export function clearPmCache(): void {
   pmCache.clear();
   USAGE_ORDER.length = 0;
 }
-
-// Compatibility wrapper for existing callers that import `windArrowService`.
-// Provides a minimal `loadWindArrowsForBounds` implementation that currently
-// returns an empty array. Implement a real tile-scanning approach here if
-// needed later.
-export const windArrowService = {
-  async loadWindArrowsForBounds(_bounds: { west: number; east: number; south: number; north: number }, _zoom: number): Promise<Array<{ position: [number, number]; angle: number; speed: number }>> {
-    logger.info('[windArrowService] loadWindArrowsForBounds called (fallback)');
-    return [] as Array<{ position: [number, number]; angle: number; speed: number }>;
-  }
-};

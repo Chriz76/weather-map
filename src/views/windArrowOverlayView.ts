@@ -10,8 +10,6 @@ import { logger } from '../utils/logger';
 let overlayInstance: LeafletDeckOverlay | null = null;
 
 function createTileLayer(pmUrl: string) {
-  const pm = new PMTiles(pmUrl);
-
   return new TileLayer({
     // Feste ID beibehalten, damit deck.gl den Layer wiederverwendet
     // und sanfte Übergänge ermöglicht
@@ -28,11 +26,15 @@ function createTileLayer(pmUrl: string) {
     tileSize: 256,
     zoomOffset: -4,
     extent: [-180, -85.051129, 180, 85.051129],
+    // Reduce burst of parallel requests during fast interactions
+    maxRequests: 6,
+    debounceTime: 80,
+    refinementStrategy: 'best-available',
 
-    getTileData: async ({ index: { x, y, z } }: { index: { x: number; y: number; z: number } }) => {
+    getTileData: async ({ index: { x, y, z }, signal }: { index: { x: number; y: number; z: number }; signal?: AbortSignal }) => {
       try {
         logger.debug('[windArrowOverlayView] getTileData (delegated)', { pmUrl, z, x, y });
-        return await getTilePoints(pmUrl, z, x, y);
+        return await getTilePoints(pmUrl, z, x, y, signal);
       } catch (err) {
         logger.error('[windArrowOverlayView] getTileData error', err);
         return [];
