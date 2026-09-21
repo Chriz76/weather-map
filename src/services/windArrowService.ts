@@ -5,6 +5,15 @@ import { weatherProviderModel } from '../models/weatherProviderModel';
 
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
+function getGeneratedTag(): string {
+  try {
+    const gen = weatherProviderModel.modelGeneratedAt;
+    return encodeURIComponent(gen ?? String(Date.now()));
+  } catch (e) {
+    return String(Date.now());
+  }
+}
+
 type PmWithClose = PMTiles & { close?: () => void };
 type BufferLike = { buffer: ArrayBuffer; byteOffset?: number; byteLength?: number };
 const pmCache = new Map<string, PmWithClose>();
@@ -12,7 +21,10 @@ const USAGE_ORDER: string[] = [];
 const CACHE_LIMIT = 20;
 
 function urlWithCacheBuster(pmUrl: string): string {
-  return pmUrl.includes('?') ? `${pmUrl}&${CACHE_BUSTER}` : `${pmUrl}?${CACHE_BUSTER}`;
+  const g = `g=${getGeneratedTag()}`;
+  const cb = `${CACHE_BUSTER}`;
+  if (pmUrl.includes('?')) return `${pmUrl}&${g}&${cb}`;
+  return `${pmUrl}?${g}&${cb}`;
 }
 
 function resolvePmUrl(pmUrl: string): string {
