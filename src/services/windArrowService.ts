@@ -105,12 +105,13 @@ export async function getTilePoints(
   const maxAttempts = 2; // initial try + 1 retry
   const backoffMs = 300;
 
-  const isNetworkError = (e: unknown) => {
+  const isNetworkError = (e: unknown): boolean => {
     if (!e) return false;
-    const anyE = e as any;
-    if (anyE instanceof TypeError) return true;
-    const msg = typeof anyE.message === 'string' ? anyE.message : '';
-    return /failed to fetch|networkerror|network error|timeout/i.test(msg);
+    if (e instanceof TypeError) return true;
+    if (e instanceof Error && typeof e.message === 'string') {
+      return /failed to fetch|networkerror|network error|timeout/i.test(e.message);
+    }
+    return false;
   };
 
   const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
