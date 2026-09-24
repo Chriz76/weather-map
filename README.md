@@ -84,4 +84,15 @@ This web app is hosted as a static site on GitHub Pages (Service Provider: GitHu
 ### 2. Security & Content Delivery Network via Cloudflare
 Additionally, we use the Content Delivery Network (CDN) provided by Cloudflare (Service Provider: Cloudflare Inc., 101 Townsend St, San Francisco, CA 94107, USA). Cloudflare acts as a security shield between our host server and your browser. During this process, your IP address is briefly processed to block malicious traffic (e.g., DDoS attacks) and to optimize page loading speeds globally. Cloudflare may set technically necessary cookies for security purposes, which do not create user profiles. Cloudflare is also certified under the EU-US Data Privacy Framework.
 
+### 3. Error Tracking & Application Stability via Sentry
+To ensure technical stability, identify code bugs, and prevent app crashes, we use the error-tracking service Sentry (Functional Software, Inc., 45 Fremont Street, 8th Floor, San Francisco, CA 94105, USA). 
+
+When a technical error occurs, an anonymized error report is automatically transmitted to Sentry. This includes minimal technical details such as the timestamp, browser version, operating system, and the specific line of code that triggered the error. Sentry is configured to run without setting tracking cookies and immediately anonymizes IP addresses. Functional Software, Inc. is certified under the EU-US Data Privacy Framework.
+
+### 4. Privacy-Friendly Analytics via Umami
+To understand basic usage trends (such as daily visitor counts or model preferences) and improve the user experience, we use the privacy-focused analytics tool Umami. 
+
+Umami does not use cookies, does not store any personal data, does not track users across different websites, and does not generate unique persistent IDs. All analytics data is aggregated and completely anonymized.
+
+
 **Legal Basis:** The use of these third-party services is based on our legitimate interest (Art. 6 Abs. 1 lit. f GDPR) to offer this hobby project in a secure, high-performing, and reliable manner on the internet.
