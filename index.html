@@ -4,6 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>ICON-D2 RUC & Arome PI | Hourly Forecasts</title>
+<!-- 1. Das Sentry Loader Script (deine persönliche URL aus Sentry) -->
+<script
+  src="https://js-de.sentry-cdn.com/42050bcde7224901aca1b006cde17a71.min.js"
+  crossorigin="anonymous"
+></script>
+
+<!-- 2. Die datenschutz- und performance-optimierte Konfiguration -->
+<script>
+  Sentry.onLoad(function() {
+    Sentry.init({
+      // Verhindert das Miterfassen von IP-Adressen/Nutzerdaten
+      sendDefaultPii: false,
+      dataCollection: {
+        userInfo: false
+      },
+
+      // Verhindert Session-Tracking & Cookies
+      autoSessionTracking: false,
+
+      // Schont Performance & Datenvolumen am Beach
+      tracesSampleRate: 0,
+      replaysSessionSampleRate: 0,
+      replaysOnErrorSampleRate: 0,
+
+      // Unterscheidet Preview-URL von der Live-App
+      environment: window.location.hostname.includes("preview") ? "preview" : "production"
+    });
+  });
+</script>
+
+    
     <script>
       window.WEATHER_DEBUG = new URLSearchParams(window.location.search).get('debug') === 'true';
 
