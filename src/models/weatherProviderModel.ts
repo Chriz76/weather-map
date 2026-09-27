@@ -35,7 +35,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
-        supportsArrowOverlay: false,
+        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
