@@ -29,10 +29,15 @@ export interface Cluster {
 }
 
 export interface Station {
+  id?: string | number;
+  station_id?: string | number;
   station_name?: string;
   name?: string;
   lat?: number;
   lon?: number;
+  latitude?: number;
+  longitude?: number;
+  priority?: number;
   windData?: WindData | null;
   [key: string]: unknown;
 }

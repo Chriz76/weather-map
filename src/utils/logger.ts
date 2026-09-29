@@ -1,4 +1,4 @@
-const isDebugEnabled = (window as unknown as Record<string, unknown>).WEATHER_DEBUG === true;
+const isDebugEnabled = window.WEATHER_DEBUG === true;
 const prefix = '[Weather]';
 
 const pad = (value: number | string, length = 2): string => String(value).padStart(length, '0');

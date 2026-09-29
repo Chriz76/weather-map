@@ -3,6 +3,8 @@ import 'leaflet';
 declare global {
   interface Window {
     L?: typeof import('leaflet');
+    // Enables verbose logger.debug output when set to `true` before app start.
+    WEATHER_DEBUG?: boolean;
   }
 }
 

@@ -49,8 +49,7 @@ export const stationView = (() => {
     const nextStationKeys = new Set<string>();
 
     stations.forEach((station) => {
-      const sRec = station as Record<string, unknown>;
-      const idRaw = sRec['id'] ?? sRec['station_id'];
+      const idRaw = station.id ?? station.station_id;
       const stationKey = typeof idRaw === 'string' ? idRaw : (typeof idRaw === 'number' ? String(idRaw) : `${station.lat}-${station.lon}`);
       nextStationKeys.add(stationKey);
       const lat = Number(station.lat ?? 0);

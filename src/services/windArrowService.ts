@@ -73,10 +73,9 @@ function toArrayBufferFromTileData(d: unknown): ArrayBuffer | null {
   if (d instanceof ArrayBuffer) return d;
 
   if (ArrayBuffer.isView(d)) {
-    const view = d as unknown as BufferLike;
-    const byteOffset = typeof view.byteOffset === 'number' ? view.byteOffset : 0;
-    const byteLength = typeof view.byteLength === 'number' ? view.byteLength : view.buffer.byteLength - byteOffset;
-    return new Uint8Array(view.buffer, byteOffset, byteLength).slice().buffer;
+    // `ArrayBuffer.isView` narrows `d` to `ArrayBufferView`, which already exposes
+    // buffer/byteOffset/byteLength. Only the SharedArrayBuffer case needs a narrow cast.
+    return new Uint8Array(d.buffer as ArrayBuffer, d.byteOffset, d.byteLength).slice().buffer;
   }
 
   if (d && typeof d === 'object') {

@@ -53,7 +53,7 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
         try {
         return bounds.contains(L.latLng(lat, lon));
       } catch (error) {
-        logger.warn('Skipping station with invalid map bounds payload:', (station as unknown as Record<string, unknown>)['id'], error);
+        logger.warn('Skipping station with invalid map bounds payload:', station.id, error);
         return false;
       }
     });
@@ -61,8 +61,8 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
     const center = bounds.getCenter();
     if (center && typeof center.distanceTo === 'function') {
       stationsInView.sort((a, b) => {
-        const apr = Number((a as Record<string, unknown>)['priority'] ?? 0);
-        const bpr = Number((b as Record<string, unknown>)['priority'] ?? 0);
+        const apr = a.priority ?? 0;
+        const bpr = b.priority ?? 0;
         const pr = apr - bpr;
         if (pr !== 0) return pr;
 
@@ -85,22 +85,21 @@ export async function updateStationsOnMapAction(bounds: LatLngBounds | null = nu
     const fetched: Record<string, import('../types').WindData | null> = {};
     const fetchPromises = topStations.map(async (station) => {
       try {
-        const stationIdRaw = (station as unknown as Record<string, unknown>)['id'] ?? (station as unknown as Record<string, unknown>)['station_id'];
+        const stationIdRaw = station.id ?? station.station_id;
         const stationId = stationIdRaw ? String(stationIdRaw) : undefined;
         if (stationId) {
           const data = await fetchWindDataForStation(stationId);
           if (data && stationId) fetched[stationId] = data;
         }
       } catch (err: unknown) {
-        logger.error('Error fetching wind for station', (station as unknown as Record<string, unknown>)['id'], err);
+        logger.error('Error fetching wind for station', station.id, err);
       }
     });
 
   await Promise.all(fetchPromises);
 
   const stationsWithFinalData = topStations.map((station) => {
-    const sRec = station as Record<string, unknown>;
-    const idRaw = sRec['id'] ?? sRec['station_id'];
+    const idRaw = station.id ?? station.station_id;
     let stationId: string | undefined;
     if (typeof idRaw === 'string') stationId = idRaw;
     else if (typeof idRaw === 'number') stationId = String(idRaw);

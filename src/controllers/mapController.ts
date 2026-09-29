@@ -71,9 +71,8 @@ export async function initMapController(map: LeafletMap): Promise<void> {
   }
 
   function handleLocationError(e: ErrorEvent) {
-    const fallback = String(e);
-    const maybeMsg = (e as unknown as { message?: unknown }).message;
-    const message = typeof maybeMsg === 'string' ? maybeMsg : fallback;
+    // Leaflet's `ErrorEvent` already exposes `message` as a string.
+    const message = e.message || String(e);
     toastController.showToast({ message: 'Error processing GPS location: ' + message }, 5000);
     uiStateModel.setIsLocating(false);
   }

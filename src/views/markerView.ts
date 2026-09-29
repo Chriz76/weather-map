@@ -169,7 +169,8 @@ export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: numbe
 
 export function clearMarker(map: LeafletMap): void {
   if (activeSpotMarker) {
-    map.removeLayer(activeSpotMarker as unknown as import('leaflet').Layer);
+    // `Marker` and `CircleMarker` both extend `Layer`, so no cast is required.
+    map.removeLayer(activeSpotMarker);
     activeSpotMarker = null;
   }
 }

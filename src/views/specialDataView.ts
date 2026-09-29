@@ -2,9 +2,8 @@ import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
 import type { Map as LeafletMap, LayerGroup, Marker, LatLngExpression, DivIcon } from 'leaflet';
 import * as L from 'leaflet';
-const $L: typeof L = (typeof window !== 'undefined' && (window as unknown as { L?: typeof L }).L)
-  ? (window as unknown as { L: typeof L }).L
-  : L;
+// Prefer a Leaflet instance exposed globally (e.g. by another bundle) and fall back to the import.
+const $L: typeof L = (typeof window !== 'undefined' ? window.L : undefined) ?? L;
 const TARGET_LAT = 47.6506;
 const TARGET_LNG = 11.3365;
 const MIN_ZOOM = 7;
