@@ -9,13 +9,24 @@ declare global {
 }
 
 declare module 'leaflet' {
-  // Allow dynamic properties on Control and control factory to support runtime-extended controls
-  interface Control {
-    [key: string]: unknown;
+  /**
+   * The app attaches its registered controls to the map instance at runtime (see the
+   * `register*View` functions in src/views/). Declaring them here keeps those assignments
+   * type-safe instead of falling back to `map as unknown as Record<string, unknown>`.
+   */
+  interface Map {
+    forecastViewControl?: Control;
+    legendViewControl?: Control;
+    logoViewControl?: Control;
+    timelineViewControl?: Control;
   }
 
-  // Cast control namespace to accept dynamic entries like forecastView
-  // Provide a loose-typed control namespace to allow runtime-extended controls
-  export const control: Record<string, unknown>;
+  /**
+   * App-specific control factory added at runtime by src/views/forecastView.ts.
+   * Leaflet's own factories (zoom, attribution, layers, scale) live in the same namespace.
+   */
+  namespace control {
+    function forecastView(options?: ControlOptions): Control;
+  }
 }
 

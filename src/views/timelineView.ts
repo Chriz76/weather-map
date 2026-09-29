@@ -104,5 +104,5 @@ export function registerTimelineView(mapInstance: LeafletMap): void {
 
   const control = new TimelineControl();
   control.addTo(mapInstance);
-  (mapInstance as unknown as Record<string, unknown>)['timelineViewControl'] = control;
+  mapInstance.timelineViewControl = control;
 }

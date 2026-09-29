@@ -146,11 +146,10 @@ export function registerForecastView(map: LeafletMap): void {
     }
   });
 
-  // expose a factory on L.control.forecastView and attach the control instance to the map
-  const controlRecord = L.control as unknown as Record<string, unknown>;
+  // Expose a factory on L.control.forecastView (typed in src/types/leaflet-extensions.d.ts)
+  // and attach the control instance to the map.
   type ForecastViewCtor = new (options?: L.ControlOptions) => L.Control & ForecastControl;
   const ForecastViewCtor = ForecastViewClass as unknown as ForecastViewCtor;
-  controlRecord['forecastView'] = function (options?: L.ControlOptions) { return new ForecastViewCtor(options); };
-  const mapRecord = map as unknown as Record<string, unknown>;
-  mapRecord['forecastViewControl'] = (controlRecord['forecastView'] as (o?: L.ControlOptions) => L.Control)().addTo(map);
+  L.control.forecastView = (options?: L.ControlOptions) => new ForecastViewCtor(options);
+  map.forecastViewControl = L.control.forecastView().addTo(map);
 }
