@@ -1,12 +1,10 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { uiStateModel } from '../models/uiStateModel';
+import { SPECIAL_DATA_TARGET, isSpecialDataTargetVisible } from '../utils/specialDataTarget';
 import type { Map as LeafletMap, LayerGroup, Marker, LatLngExpression, DivIcon } from 'leaflet';
 import * as L from 'leaflet';
 // Prefer a Leaflet instance exposed globally (e.g. by another bundle) and fall back to the import.
 const $L: typeof L = (typeof window !== 'undefined' ? window.L : undefined) ?? L;
-const TARGET_LAT = 47.6506;
-const TARGET_LNG = 11.3365;
-const MIN_ZOOM = 7;
 const EXTERNAL_URL = 'https://christian-fey.github.io/Koechelt_der_Kochel/';
 
 export const specialDataView = (() => {
@@ -29,16 +27,7 @@ export const specialDataView = (() => {
 
   function shouldShowBadge(): boolean {
     if (!map || !uiStateModel.showWindMeasurements || !commonDataModel.specialDataSummary) return false;
-    if (map.getZoom() < MIN_ZOOM) return false;
-
-    const bounds = map.getBounds();
-    if (!bounds || typeof bounds.contains !== 'function') return false;
-
-    try {
-      return bounds.contains($L.latLng(TARGET_LAT, TARGET_LNG));
-    } catch (e) {
-      return false;
-    }
+    return isSpecialDataTargetVisible(map);
   }
 
   function renderBadge() {
@@ -51,7 +40,7 @@ export const specialDataView = (() => {
 
     if (!marker && map) {
       const summary = typeof commonDataModel.specialDataSummary === 'string' ? commonDataModel.specialDataSummary : String(commonDataModel.specialDataSummary ?? '');
-      marker = $L.marker([TARGET_LAT, TARGET_LNG] as LatLngExpression, { icon: createIcon(summary), pane: 'topBadgesPane' }) as Marker;
+      marker = $L.marker([SPECIAL_DATA_TARGET.lat, SPECIAL_DATA_TARGET.lng] as LatLngExpression, { icon: createIcon(summary), pane: 'topBadgesPane' }) as Marker;
       marker.on('click', () => window.open(EXTERNAL_URL, '_blank', 'noopener,noreferrer'));
       if (layerGroup) layerGroup.addLayer(marker);
     }
@@ -59,7 +48,7 @@ export const specialDataView = (() => {
     if (marker) {
       const summary = typeof commonDataModel.specialDataSummary === 'string' ? commonDataModel.specialDataSummary : String(commonDataModel.specialDataSummary ?? '');
       marker.setIcon(createIcon(summary));
-      marker.setLatLng([TARGET_LAT, TARGET_LNG] as LatLngExpression);
+      marker.setLatLng([SPECIAL_DATA_TARGET.lat, SPECIAL_DATA_TARGET.lng] as LatLngExpression);
     }
   }
 

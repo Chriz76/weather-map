@@ -1,11 +1,8 @@
 import { commonDataModel } from '../models/commonDataModel';
 import { fetchSpecialData, selectForecastEntries, buildSpecialDataSummary } from '../services/specialDataService';
 import { logger } from '../utils/logger';
+import { isSpecialDataTargetVisible } from '../utils/specialDataTarget';
 import type { Map as LeafletMap } from 'leaflet';
-
-const SPECIAL_DATA_TARGET_LAT = 47.6506;
-const SPECIAL_DATA_TARGET_LNG = 11.3365;
-const SPECIAL_DATA_MIN_ZOOM = 7;
 
 function getReferenceDay(): string {
   const today = new Date();
@@ -16,27 +13,9 @@ function getReferenceDay(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function shouldShowSpecialData(map: LeafletMap | null): boolean {
-  if (!map || typeof map.getZoom !== 'function' || typeof map.getBounds !== 'function') return false;
-  if (map.getZoom() < SPECIAL_DATA_MIN_ZOOM) return false;
-  const bounds = map.getBounds();
-  if (!bounds || typeof bounds.contains !== 'function') return false;
-  try {
-    const win = window as unknown as Record<string, unknown>;
-    const Lobj = win['L'];
-    if (Lobj && typeof (Lobj as Record<string, unknown>)['latLng'] === 'function') {
-      const latLngFn = (Lobj as Record<string, unknown>)['latLng'] as (a: number, b: number) => unknown;
-      const latlng = latLngFn(SPECIAL_DATA_TARGET_LAT, SPECIAL_DATA_TARGET_LNG);
-      return bounds.contains(latlng as unknown as import('leaflet').LatLngExpression);
-    }
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
 export async function updateSpecialDataOnMapAction(map: LeafletMap | null = null): Promise<void> {
-  if (!shouldShowSpecialData(map)) return;
+  // The badge is only relevant when the target village (Köchelt) is inside the current viewport.
+  if (!map || !isSpecialDataTargetVisible(map)) return;
 
   try {
     const entries = await fetchSpecialData();

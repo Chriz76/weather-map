@@ -8,11 +8,34 @@ export interface ILeafletDeckOverlayOptions {
   zIndex?: string | number;
 }
 
+/**
+ * deck.gl keeps an internal `_animate` prop that is deliberately absent from the public
+ * `DeckProps`. All knowledge about that prop lives in the two helpers below, so the
+ * unavoidable assertion stays in one documented place instead of being repeated per call site.
+ */
+type DeckInternalProps = { props?: { _animate?: boolean } };
+
+/** Reads deck.gl's internal `_animate` prop. */
+function readDeckAnimate(deck: Deck<MapView>): boolean {
+  return (deck as unknown as DeckInternalProps).props?._animate === true;
+}
+
+/** Writes deck.gl's internal `_animate` prop. */
+function setDeckAnimate(deck: Deck<MapView>, animate: boolean): void {
+  deck.setProps({ _animate: animate } as unknown as Partial<DeckProps<MapView>>);
+}
+
+/**
+ * Layer set accepted by {@link LeafletDeckOverlay.setLayers}. `undefined` is removed so the
+ * value can be handed to `Deck.setProps` under `exactOptionalPropertyTypes`.
+ */
+export type DeckLayers = NonNullable<DeckProps<MapView>['layers']>;
+
 export class LeafletDeckOverlay extends L.Layer {
   private mapInstance: LeafletMap | null = null;
   private container: HTMLDivElement | null = null;
   private deck: Deck<MapView> | null = null;
-  private pendingLayers: DeckProps['layers'] | null = null;
+  private pendingLayers: DeckLayers | null = null;
   private className: string;
   private zIndex: string | number | undefined;
   private animateBackup: boolean | undefined;
@@ -26,8 +49,7 @@ export class LeafletDeckOverlay extends L.Layer {
   public override onAdd(map: LeafletMap): this {
     this.mapInstance = map;
 
-    // Verwende den mapPane oder den Map Container direkt, damit Leaflet-Transformationen 
-    // das Canvas nicht doppelt verschieben.
+    // Use the map container directly so Leaflet's own transform does not shift the canvas twice.
     const container = map.getContainer();
 
     this.container = L.DomUtil.create('div', this.className, container) as HTMLDivElement;
@@ -58,7 +80,7 @@ export class LeafletDeckOverlay extends L.Layer {
       this.pendingLayers = null;
     }
 
-    // Höre auf alle relevanten Events von Leaflet
+    // Subscribe to all Leaflet events that can change the projected view.
     map.on('move viewreset resize', this.syncViewState, this);
     map.on('movestart', this.onMoveStart, this);
     map.on('moveend', this.onMoveEnd, this);
@@ -93,16 +115,22 @@ export class LeafletDeckOverlay extends L.Layer {
     return this;
   }
 
-  public setLayers(layers: DeckProps['layers']): void {
+  /**
+   * Applies the deck.gl layers. Before the overlay is added to a map the layers are buffered
+   * and flushed by {@link onAdd}.
+   * @param layers Layers to render.
+   */
+  public setLayers(layers: DeckLayers): void {
     if (!this.deck) {
       this.pendingLayers = layers;
       return;
     }
 
     try {
-      this.deck.setProps({ layers } as unknown as Partial<DeckProps<MapView>>);
-    } catch (e) {
-      // Fehlerbehandlung
+      this.deck.setProps({ layers });
+    } catch {
+      // deck.gl rejects layer updates while it is tearing down. Ignoring is safe because the
+      // next setLayers call re-applies the current layers.
     }
   }
 
@@ -115,9 +143,8 @@ export class LeafletDeckOverlay extends L.Layer {
     return {
       longitude: center.lng,
       latitude: center.lat,
-      // Beibehalten des -1 Offsets: dies kompensiert die Deck.gl/Leaflet
-      // Zoom-Referenzdifferenz (Tile/scale difference) und verhindert
-      // Positionsverschiebungen beim Panning.
+      // Keep the -1 offset: it compensates the deck.gl/Leaflet zoom reference difference
+      // (tile vs. scale) and prevents position drift while panning.
       zoom: zoom - 1,
       pitch: 0,
       bearing: 0
@@ -126,9 +153,9 @@ export class LeafletDeckOverlay extends L.Layer {
 
   private syncViewState(): void {
     if (!this.deck || !this.mapInstance || !this.container) return;
-    // Wenn Leaflet gerade einen animierten Zoom ausführt, überspringe das Setzen
-    // der Deck-ViewProps: während der Zoomanimation wird der Container per CSS
-    // transform skaliert (siehe onZoomAnim/updateTransform).
+
+    // While Leaflet runs an animated zoom the container is scaled via CSS transform
+    // (see onZoomAnim/updateTransform), so deck's view props must be left untouched.
     if (LeafletDeckOverlay.isMapAnimatingZoom(this.mapInstance)) return;
 
     const size = this.mapInstance.getSize();
@@ -143,21 +170,17 @@ export class LeafletDeckOverlay extends L.Layer {
   private pauseAnimation(): void {
     if (!this.deck) return;
 
-    // _animate ist ein internes prop; wir greifen nur lesend zu und setzen
-    // beim Setzen einen schmalen Partial-Cast, um die Typen sauber zu halten.
-    const props = (this.deck as unknown as { props?: { _animate?: boolean } }).props;
-    if (props && typeof props._animate === 'boolean' && props._animate) {
-      this.animateBackup = props._animate;
-      this.deck.setProps({ _animate: false } as unknown as Partial<DeckProps<MapView>>);
+    if (readDeckAnimate(this.deck)) {
+      this.animateBackup = true;
+      setDeckAnimate(this.deck, false);
     }
   }
 
   private unpauseAnimation(): void {
-    if (!this.deck) return;
-    if (this.animateBackup) {
-      this.deck.setProps({ _animate: this.animateBackup } as unknown as Partial<DeckProps<MapView>>);
-      this.animateBackup = undefined;
-    }
+    if (!this.deck || !this.animateBackup) return;
+
+    setDeckAnimate(this.deck, this.animateBackup);
+    this.animateBackup = undefined;
   }
 
   private onMoveStart = (): void => {
@@ -213,10 +236,13 @@ export class LeafletDeckOverlay extends L.Layer {
     });
   };
 
+  /**
+   * Leaflet keeps `_animatingZoom` private, yet its value decides whether deck.gl may receive
+   * new view props. This is the only place that reads that private field.
+   */
   private static isMapAnimatingZoom(map: LeafletMap | null): boolean {
     if (!map) return false;
-    const maybe = map as unknown as { _animatingZoom?: boolean };
-    return Boolean(maybe._animatingZoom);
+    return Boolean((map as unknown as { _animatingZoom?: boolean })._animatingZoom);
   }
 
   public getMapInstance(): LeafletMap | null {
