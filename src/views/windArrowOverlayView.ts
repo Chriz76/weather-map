@@ -9,6 +9,22 @@ import { logger } from '../utils/logger';
 
 let overlayInstance: LeafletDeckOverlay | null = null;
 
+/**
+ * Removes all currently rendered arrow layers so no stale arrows remain visible.
+ * Emptying the layer set makes deck.gl finalize the previous tile layer, so the next
+ * `setPmtilesUrl` call builds a fresh layer with a clean tile cache.
+ * @param reason Short description used for diagnostic logging.
+ */
+function clearArrows(reason: string): void {
+  if (!overlayInstance) return;
+  logger.debug('[windArrowOverlayView] clearing arrow layers', { reason });
+  try {
+    overlayInstance.setLayers([]);
+  } catch {
+    // deck.gl rejects layer updates while it is tearing down; the next setLayers call re-applies.
+  }
+}
+
 function createTileLayer(pmUrl: string) {
   return new TileLayer({
     // Feste ID beibehalten, damit deck.gl den Layer wiederverwendet
@@ -126,9 +142,8 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
 
       weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
         // if the active provider does not support PMTiles, clear any existing arrows
-        if (!weatherProviderModel.supportsArrowOverlay && overlayInstance) {
-          logger.debug('[windArrowOverlayView] active provider does not support PMTiles; clearing layers');
-          try { overlayInstance.setLayers([]); } catch (e) { /* ignore */ }
+        if (!weatherProviderModel.supportsArrowOverlay) {
+          clearArrows('provider does not support arrow overlay');
           return;
         }
 
@@ -137,6 +152,12 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
         const pmUrl = `/${ts}Z_dir.pmtiles`;
         logger.debug('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: pmUrl });
         windArrowOverlayView.setPmtilesUrl?.(pmUrl);
+      });
+
+      // On provider switch, drop the arrows of the previous provider. They stay hidden until
+      // the new provider's tiles are loaded and `model:timestamp-index-updated` fires again.
+      weatherProviderModel.addEventListener('model:provider-changed', () => {
+        clearArrows('provider changed');
       });
 
     }
