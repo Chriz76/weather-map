@@ -2,6 +2,7 @@ import { Deck, MapView } from '@deck.gl/core';
 import type { DeckProps } from '@deck.gl/core';
 import type { Map as LeafletMap } from 'leaflet';
 import * as L from 'leaflet';
+import { logger } from './logger';
 
 export interface ILeafletDeckOverlayOptions {
   className?: string;
@@ -122,18 +123,21 @@ export class LeafletDeckOverlay extends L.Layer {
    * Applies the deck.gl layers. Before the overlay is added to a map the layers are buffered
    * and flushed by {@link onAdd}.
    * @param layers Layers to render.
+   * @returns True when deck.gl accepted the update, false when it was rejected (it rejects
+   * updates while it is tearing down); the caller can retry in that case.
    */
-  public setLayers(layers: DeckLayers): void {
+  public setLayers(layers: DeckLayers): boolean {
     if (!this.deck) {
       this.pendingLayers = layers;
-      return;
+      return false;
     }
 
     try {
       this.deck.setProps({ layers });
-    } catch {
-      // deck.gl rejects layer updates while it is tearing down. Ignoring is safe because the
-      // next setLayers call re-applies the current layers.
+      return true;
+    } catch (error) {
+      logger.debug('[leafletDeckOverlay] layer update rejected', error);
+      return false;
     }
   }
 

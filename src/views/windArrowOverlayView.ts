@@ -8,21 +8,23 @@ import type { Device, Texture } from '@luma.gl/core';
 import type { ShaderModule } from '@luma.gl/shadertools';
 import type { Map as LeafletMap } from 'leaflet';
 import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
-import { getTileGrid, getTilePoints } from '../services/windArrowService';
-import type { WindTileGrid } from '../services/windArrowService';
+import { providers } from '../config';
+import { getTileGrid, gridToPoints } from '../services/windArrowService';
+import type { WindGridAnchor, WindTileGrid, WindTilePoint } from '../services/windArrowService';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { logger } from '../utils/logger';
 
 let overlayInstance: LeafletDeckOverlay | null = null;
 
 /* ---------------------------------------------------------------------------
- *  Tile settings shared by both layers
+ *  Tile settings
  *
- *  The field and the arrows read the same archive, so they must ask for exactly
- *  the same tiles: tile zoom = round(deckZoom + log2(512 / tileSize) + zoomOffset).
+ *  Field and arrows share one tile layer, so there is only one data level:
+ *  tile zoom = round(deckZoom + log2(512 / tileSize) + zoomOffset) = round(leaflet zoom),
+ *  i.e. the resolution the map currently shows.
  * ------------------------------------------------------------------------- */
 const TILE_SIZE = 256;
-const TILE_ZOOM_OFFSET = -4;
+const TILE_ZOOM_OFFSET = 0;
 const TILE_MIN_ZOOM = 0;
 const TILE_MAX_ZOOM = 8;
 const TILE_MAX_REQUESTS = 6;
@@ -30,27 +32,132 @@ const TILE_DEBOUNCE_MS = 80;
 const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 
 /**
- * The arrows use TILE_ZOOM_OFFSET (four levels coarser than the map) on purpose: they only
- * need one arrow per grid node. The field must not do that - at a coarse data level a single
- * tile stretches a handful of nodes over the whole viewport, which looks patchy. It therefore
- * tracks the map resolution instead: tile zoom = round(leaflet zoom).
+ * Zoom offset of the level the arrows used to read their own (coarser) tiles from.
+ * Kept as an offset so the arrows keep their former spacing and screen density.
  */
-const FIELD_TILE_ZOOM_OFFSET = 0;
+const ARROW_ZOOM_OFFSET = 4;
 
 /**
- * Removes all currently rendered arrow layers so no stale arrows remain visible.
+ * Smallest node step: one stored node.
+ *
+ * The archives double their nodes per level, so a coarser step is just a larger stride, and below
+ * one node there is nothing left to show: the samples would sit between stored nodes and the
+ * arrows would stop showing a measured value.
+ */
+const ARROW_MIN_STRIDE = 1;
+
+/** Leaflet map, kept to derive the arrow density from the current zoom. */
+let overlayMap: LeafletMap | null = null;
+
+/** Archive of the active timestamp; kept so the arrows can be re-rendered on a zoom change. */
+let currentPmUrl: string | null = null;
+
+/**
+ * Arrow zoom the arrows are generated with, or null while no arrows are shown.
+ *
+ * It deliberately lives outside the layer instance: deck.gl caches the sub layers of every tile,
+ * so tiles that load later - and tiles deck.gl re-renders - must use the density of the current
+ * map zoom. A density baked into the layer's `renderSubLayers` closure would keep whatever zoom
+ * the tile was rendered with first, which is what left the arrows behind while zooming out.
+ */
+let currentArrowZoom: number | null = null;
+
+/** Arrow zoom the tiles were last re-rendered for, null while the render state is unknown. */
+let renderedArrowZoom: number | null = null;
+
+/**
+ * Lattice anchor of the active archive: the model grid starts at the south-west corner of the
+ * provider's data area, so every node is `anchor + k * deltaLat/Lng`. Every tile payload is
+ * padded by one node, which makes its origin a lattice node as well, and every archive level
+ * uses a subset of that lattice (the nodes double per level). Anchoring the stride there makes
+ * the arrows land exactly on stored nodes and keeps them evenly spaced over tile borders.
+ * @returns Anchor in degrees, or 0/0 when the provider has no bounds configured.
+ */
+function getGridAnchor(): WindGridAnchor {
+  const bounds = providers[weatherProviderModel.getActiveProviderId()]?.imageBounds;
+  if (!Array.isArray(bounds) || bounds.length === 0) return { lng: 0, lat: 0 };
+
+  const southWest = bounds[0];
+  if (!Array.isArray(southWest) || southWest.length < 2) return { lng: 0, lat: 0 };
+
+  const [lat, lng] = southWest;
+  return typeof lat === 'number' && typeof lng === 'number' ? { lng, lat } : { lng: 0, lat: 0 };
+}
+
+/**
+ * Arrow zoom of the current map view: the map zoom minus {@link ARROW_ZOOM_OFFSET}. The tile
+ * level stops at the archive's finest level, deeper zooms keep reading that level, so the arrow
+ * step is derived from this value instead of from the tile level alone.
+ */
+function arrowZoomForMap(): number {
+  const mapZoom = Math.round(overlayMap?.getZoom() ?? TILE_MAX_ZOOM);
+  return Math.max(TILE_MIN_ZOOM, mapZoom - ARROW_ZOOM_OFFSET);
+}
+
+/**
+ * Node step of a tile of the given zoom.
+ *
+ * The archive doubles the nodes per row with every level and each level's nodes are a subset of
+ * the finer one, so a coarser step is just a larger stride in the same payload. The arrows used
+ * to read the level four zooms coarser (stride 16 there), so the ladder is
+ * 16 (map zoom 7 and 8, level 7 resp. 8), 8 (zoom 9), 4 (zoom 10), 2 (zoom 11) and 1 (zoom 12),
+ * all read from level 8. Deeper than zoom 12 no coarser stride is left, so the arrows keep the
+ * node step of level 8 and simply sit further apart on screen.
+ * @param tileZoom Zoom of the tile the arrows are derived from.
+ * @param arrowZoom Arrow zoom of the current map view; see {@link arrowZoomForMap}.
+ * @returns Node step on both axes, at least ARROW_MIN_STRIDE.
+ */
+function arrowStride(tileZoom: number, arrowZoom: number): number {
+  return Math.max(ARROW_MIN_STRIDE, Math.pow(2, tileZoom - arrowZoom));
+}
+
+/**
+ * Removes the current wind layer so no stale field or arrows remain visible.
  * Emptying the layer set makes deck.gl finalize the previous tile layer, so the next
  * `setPmtilesUrl` call builds a fresh layer with a clean tile cache.
  * @param reason Short description used for diagnostic logging.
  */
-function clearArrows(reason: string): void {
+function clearWindLayers(reason: string): void {
+  currentPmUrl = null;
+  currentArrowZoom = null;
+  renderedArrowZoom = null;
   if (!overlayInstance) return;
-  logger.debug('[windArrowOverlayView] clearing arrow layers', { reason });
+  logger.debug('[windArrowOverlayView] clearing wind layers', { reason });
   try {
     overlayInstance.setLayers([]);
   } catch {
     // deck.gl rejects layer updates while it is tearing down; the next setLayers call re-applies.
   }
+}
+
+/**
+ * Builds the wind tile layer for the current archive and arrow zoom and applies it.
+ *
+ * The layer id stays the same, so deck.gl matches the new instance with the previous one and
+ * keeps the decoded tiles; only the render props change (see {@link createWindTileLayer}).
+ * @returns True when deck.gl accepted the layer update.
+ */
+function applyWindTileLayer(): boolean {
+  if (!overlayInstance || !currentPmUrl) return false;
+  const arrowZoom = arrowZoomForMap();
+  currentArrowZoom = arrowZoom;
+  logger.debug('[windArrowOverlayView] applying wind tile layer', { arrowZoom });
+  const applied = overlayInstance.setLayers([createWindTileLayer(currentPmUrl, arrowZoom)]);
+  if (applied) renderedArrowZoom = arrowZoom;
+  return applied;
+}
+
+/**
+ * Rebuilds the arrows when the zoom changed their node step.
+ *
+ * Hooked to `zoomend` and - as a safety net - to `moveend`, which Leaflet also fires after a
+ * zoom: a layer update deck.gl rejected is retried instead of leaving the arrows at the density
+ * of the previous zoom.
+ */
+function refreshArrowDensity(): void {
+  if (!overlayInstance || !currentPmUrl) return;
+  if (arrowZoomForMap() === renderedArrowZoom) return;
+  applyWindTileLayer();
 }
 
 /* -------------------------------------------------------------------------
@@ -440,22 +547,33 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
 }
 
 /**
- * Builds the tile layer of the wind field (the coloured bands below the arrows).
+ * Builds the tile layer that renders the wind field with the arrows on top of it.
+ *
+ * Both come from a single decode of the same tile: the field uploads the grid as a texture,
+ * the arrows take every stride-th node of that grid (see {@link arrowStride}). This replaces
+ * the former second tile layer, which read a coarser level of the same archive.
  * @param pmUrl Archive URL of the active timestamp.
+ * @param arrowZoom Arrow zoom of the current map view; see {@link arrowZoomForMap}.
  */
-function createFieldTileLayer(pmUrl: string) {
+function createWindTileLayer(pmUrl: string, arrowZoom: number) {
   return new TileLayer<WindTileGrid | null>({
-    id: 'wind-field-tile-layer',
+    id: 'wind-tile-layer',
 
-    // Rebuilds the tile cache when a new archive (timestamp) is selected.
+    // `getTileData` reloads the tiles when a new archive (timestamp) is selected.
+    // `windArrowZoom` only regenerates the sub layers of the tiles that are already loaded:
+    // TileLayer treats any trigger other than `all` and `getTileData` as "render options
+    // changed" (its updateState drops the cached sub layers of every tile). Without that change
+    // deck.gl keeps the arrow layer of a tile it rendered before, i.e. the arrows would not
+    // follow the zoom.
     updateTriggers: {
-      getTileData: [pmUrl]
+      getTileData: [pmUrl],
+      windArrowZoom: [arrowZoom]
     },
 
     minZoom: TILE_MIN_ZOOM,
     maxZoom: TILE_MAX_ZOOM,
     tileSize: TILE_SIZE,
-    zoomOffset: FIELD_TILE_ZOOM_OFFSET,
+    zoomOffset: TILE_ZOOM_OFFSET,
     extent: TILE_EXTENT,
     maxRequests: TILE_MAX_REQUESTS,
     debounceTime: TILE_DEBOUNCE_MS,
@@ -465,7 +583,7 @@ function createFieldTileLayer(pmUrl: string) {
       try {
         return await getTileGrid(pmUrl, z, x, y, signal);
       } catch (err) {
-        logger.error('[windArrowOverlayView] field getTileData error', err);
+        logger.error('[windArrowOverlayView] getTileData error', err);
         return null;
       }
     },
@@ -497,78 +615,49 @@ function createFieldTileLayer(pmUrl: string) {
         grid.originLat - j0 * grid.deltaLat
       ];
 
-      return new WindTileLayer({
-        id: props.id,
-        data: grid,
-        bounds,
-        ciMin: [i0, j0],
-        ciMax: [i1, j1],
-        fieldOpacity: FIELD_OPACITY,
-        // Straight alpha blending; the field is drawn below the arrows and has no depth.
-        parameters: {
-          blend: true,
-          blendColorOperation: 'add',
-          blendColorSrcFactor: 'src-alpha',
-          blendColorDstFactor: 'one-minus-src-alpha',
-          blendAlphaOperation: 'add',
-          blendAlphaSrcFactor: 'one',
-          blendAlphaDstFactor: 'one-minus-src-alpha',
-          depthWriteEnabled: false,
-          depthCompare: 'always',
-          cullMode: 'none'
-        }
+      // Density of the current map zoom, not the one this layer was created with: every tile is
+      // kept in deck.gl's cache and may be re-rendered long after a zoom change.
+      const densityZoom = currentArrowZoom ?? arrowZoom;
+      const stride = arrowStride(index.z, densityZoom);
+      const arrowPoints = gridToPoints(grid, stride, getGridAnchor(), {
+        colMin: i0,
+        colMax: i1,
+        rowMin: j0,
+        rowMax: j1
       });
+
+      return [
+        new WindTileLayer({
+          id: `${props.id}-field`,
+          data: grid,
+          bounds,
+          ciMin: [i0, j0],
+          ciMax: [i1, j1],
+          fieldOpacity: FIELD_OPACITY,
+          // Straight alpha blending; the field is drawn below the arrows and has no depth.
+          parameters: {
+            blend: true,
+            blendColorOperation: 'add',
+            blendColorSrcFactor: 'src-alpha',
+            blendColorDstFactor: 'one-minus-src-alpha',
+            blendAlphaOperation: 'add',
+            blendAlphaSrcFactor: 'one',
+            blendAlphaDstFactor: 'one-minus-src-alpha',
+            depthWriteEnabled: false,
+            depthCompare: 'always',
+            cullMode: 'none'
+          }
+        }),
+        // The density is part of the id, so a zoom change always builds fresh arrow layers
+        // instead of updating the attributes of a layer deck.gl matched by name.
+        createArrowLayer(arrowPoints, `${props.id}-arrows-${densityZoom}`, pmUrl)
+      ];
     }
   });
 }
 
-function createTileLayer(pmUrl: string) {
-  return new TileLayer({
-    // Feste ID beibehalten, damit deck.gl den Layer wiederverwendet
-    // und sanfte Übergänge ermöglicht
-    id: 'wind-arrow-tile-layer',
-
-    // WICHTIG: Signalisiert deck.gl, dass getTileData bei einer neuen pmUrl
-    // erneut ausgeführt und der Kachel-Cache invalidiert werden muss
-    updateTriggers: {
-      getTileData: [pmUrl]
-    },
-
-    minZoom: TILE_MIN_ZOOM,
-    maxZoom: TILE_MAX_ZOOM,
-    tileSize: TILE_SIZE,
-    zoomOffset: TILE_ZOOM_OFFSET,
-    extent: TILE_EXTENT,
-    // Reduce burst of parallel requests during fast interactions
-    maxRequests: TILE_MAX_REQUESTS,
-    debounceTime: TILE_DEBOUNCE_MS,
-    refinementStrategy: 'best-available',
-
-    getTileData: async ({ index: { x, y, z }, signal }: { index: { x: number; y: number; z: number }; signal?: AbortSignal }) => {
-      try {
-        logger.debug('[windArrowOverlayView] getTileData (delegated)', { pmUrl, z, x, y });
-        return await getTilePoints(pmUrl, z, x, y, signal);
-      } catch (err) {
-        logger.error('[windArrowOverlayView] getTileData error', err);
-        return [];
-      }
-    },
-
-    renderSubLayers: (props: unknown) => {
-      const maybe = props as { data?: unknown };
-      const rawData = maybe.data;
-
-      type WindPoint = { position: [number, number]; angle: number; speed: number };
-      const isWindPoint = (v: unknown): v is WindPoint => {
-        if (typeof v !== 'object' || v === null) return false;
-        const obj = v as Record<string, unknown>;
-        const pos = obj.position;
-        return Array.isArray(pos) && pos.length === 2 && typeof pos[0] === 'number' && typeof pos[1] === 'number' && typeof obj.angle === 'number' && typeof obj.speed === 'number';
-      };
-
-      const data: WindPoint[] = Array.isArray(rawData) ? rawData.filter(isWindPoint) : [];
-
-      const arrowSvg = `
+/** Arrow icon; built once and shared by every tile sublayer. */
+const ARROW_ICON_URL = `data:image/svg+xml;utf8,${encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 80" width="40" height="80">
           <defs>
             <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
@@ -587,42 +676,43 @@ function createTileLayer(pmUrl: string) {
           </g>
           <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#1c1e22" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-      `;
-      const iconUrl = `data:image/svg+xml;utf8,${encodeURIComponent(arrowSvg)}`;
+      `)}`;
 
-      const iconLayerProps = props as ConstructorParameters<typeof IconLayer>[0];
+/**
+ * Icon layer with the wind arrows of one tile.
+ * @param points Wind points derived from the tile grid.
+ * @param id Layer id.
+ * @param pmUrl Archive URL, used as update trigger.
+ */
+function createArrowLayer(points: WindTilePoint[], id: string, pmUrl: string): IconLayer<WindTilePoint> {
+  return new IconLayer<WindTilePoint>({
+    id,
+    data: points,
+    iconAtlas: ARROW_ICON_URL,
+    iconMapping: { arrow: { x: 0, y: 0, width: 40, height: 80, mask: false } },
+    getIcon: () => 'arrow',
+    getPosition: (point: WindTilePoint) => point.position,
+    getAngle: (point: WindTilePoint) => 180 - point.angle,
+    getSize: (point: WindTilePoint) =>
+      Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, point.speed * 1.94384 - 3)) * 4.8), 30),
 
-      return new IconLayer(iconLayerProps, {
-        data,
-        iconAtlas: iconUrl,
-        iconMapping: { arrow: { x: 0, y: 0, width: 40, height: 80, mask: false } },
-        getIcon: () => 'arrow',
-        getPosition: (obj: unknown) => (obj as WindPoint).position,
-        getAngle: (obj: unknown) => 180 - (obj as WindPoint).angle,
-        getSize: (obj: unknown) => {
-          const p = obj as WindPoint;
-          return Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, p.speed * 1.94384 - 3)) * 4.8), 30);
-        },
+    // Triggers keep the arrows in sync when a new archive (timestamp) is selected.
+    updateTriggers: {
+      getPosition: [pmUrl],
+      getAngle: [pmUrl],
+      getSize: [pmUrl]
+    },
 
-        // Update-Triggers für den Sublayer, wenn sich die Daten verändern
-        updateTriggers: {
-          getPosition: [pmUrl],
-          getAngle: [pmUrl],
-          getSize: [pmUrl]
-        },
+    // Soft animation of the arrows on data changes (in ms).
+    transitions: {
+      getAngle: 300,
+      getSize: 300
+    },
 
-        // Optionale softe Animation der Pfeile bei Änderungen (in ms)
-        transitions: {
-          getAngle: 300,
-          getSize: 300
-        },
-
-        sizeScale: 1,
-        sizeUnits: 'pixels',
-        billboard: false,
-        pickable: false
-      });
-    }
+    sizeScale: 1,
+    sizeUnits: 'pixels',
+    billboard: false,
+    pickable: false
   });
 }
 
@@ -633,14 +723,15 @@ export interface IWindArrowOverlayView {
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
   init(map: LeafletMap) {
+    overlayMap = map;
     if (!overlayInstance) {
       overlayInstance = new LeafletDeckOverlay({ className: 'wind-arrow-deck-overlay', zIndex: '510' });
       overlayInstance.addTo(map);
 
       weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
-        // if the active provider does not support PMTiles, clear any existing arrows
+        // if the active provider does not support PMTiles, clear any existing wind layers
         if (!weatherProviderModel.supportsArrowOverlay) {
-          clearArrows('provider does not support arrow overlay');
+          clearWindLayers('provider does not support wind overlay');
           return;
         }
 
@@ -651,11 +742,17 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
         windArrowOverlayView.setPmtilesUrl?.(pmUrl);
       });
 
-      // On provider switch, drop the arrows of the previous provider. They stay hidden until
-      // the new provider's tiles are loaded and `model:timestamp-index-updated` fires again.
+      // On provider switch, drop the wind layers of the previous provider. They stay hidden
+      // until the new provider's tiles are loaded and `model:timestamp-index-updated` fires again.
       weatherProviderModel.addEventListener('model:provider-changed', () => {
-        clearArrows('provider changed');
+        clearWindLayers('provider changed');
       });
+
+      // deck.gl caches the sub layers of every tile, so the arrow step has to be re-applied
+      // whenever the map zoom changed it (`moveend` also fires after a zoom and retries when
+      // deck.gl rejected the first update).
+      map.on('zoomend', refreshArrowDensity);
+      map.on('moveend', refreshArrowDensity);
 
     }
   },
@@ -664,10 +761,9 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     if (!pmUrl || !overlayInstance) return;
 
     logger.debug('[windArrowOverlayView] setPmtilesUrl', pmUrl);
+    currentPmUrl = pmUrl;
 
-    // Field first so the arrows end up on top of it (deck.gl draws in array order).
-    const fieldLayer = createFieldTileLayer(pmUrl);
-    const arrowLayer = createTileLayer(pmUrl);
-    overlayInstance.setLayers([fieldLayer, arrowLayer]);
+    // One tile layer; it renders the field and its arrows as sub layers.
+    applyWindTileLayer();
   }
 };

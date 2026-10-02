@@ -112,8 +112,8 @@ const MAX_GRID_POINTS = 4e6;
 
 /**
  * Reads and decodes one tile of a wind archive (24 byte header plus u/v pairs).
- * Loading, retrying and caching are shared with {@link getTilePoints}: both use the same
- * cached PMTiles instance, so requesting the same tile twice hits the PMTiles tile cache.
+ * This is the only tile read of the wind overlay: the field uploads the grid as a texture and
+ * the arrows are derived from the very same grid (see {@link gridToPoints}).
  * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
  * @param z Tile zoom of the archive.
  * @param x Tile column.
@@ -217,48 +217,86 @@ export async function getTileGrid(
 }
 
 /**
- * Decodes one tile of a wind archive into individual wind points (arrow overlay).
- * @param pmUrl Archive URL as used by the views.
- * @param z Tile zoom of the archive.
- * @param x Tile column.
- * @param y Tile row.
- * @param signal Abort signal of the tile request.
- * @returns Points, an empty array when the tile carries no data, or null when the request was
- * aborted (returning null keeps deck.gl from caching an empty tile).
+ * Lattice anchor of an archive: every grid node sits at `anchor + k * delta` (in degrees).
+ * Both archives anchor on the south-west corner of the model area (`imageBounds[0]`), so one
+ * anchor serves every level: level `z` stores the nodes at `delta * 2^(8 - z)` and its nodes are
+ * therefore a subset of the finest level's lattice.
  */
-export async function getTilePoints(
-  pmUrl: string,
-  z: number,
-  x: number,
-  y: number,
-  signal?: AbortSignal
-): Promise<WindTilePoint[] | null> {
-  const grid = await getTileGrid(pmUrl, z, x, y, signal);
+export type WindGridAnchor = { lng: number; lat: number };
 
-  if (signal?.aborted) return null;
-  if (!grid) return [];
+/**
+ * Payload index range a tile's data quad covers, in payload nodes (fractional, inclusive).
+ * It is the tile bbox clamped to what the padded payload really contains.
+ */
+export type WindNodeWindow = { colMin: number; colMax: number; rowMin: number; rowMax: number };
 
-  return gridToPoints(grid);
-}
+/**
+ * Tolerance when clipping samples to a tile window. It sits far below one node, so it can only
+ * ever repeat the node exactly on a tile seam, never pick an off-lattice one - and a repeated
+ * node renders identically to its neighbour's arrow.
+ */
+const WINDOW_EPSILON = 1e-3;
 
-/** Maps a decoded grid onto geographic wind points (one point per grid node). */
-function gridToPoints(grid: WindTileGrid): WindTilePoint[] {
+/**
+ * Maps a decoded grid onto geographic wind points for the arrow overlay.
+ *
+ * The archives double the nodes per row with every level and pad each tile payload by one node,
+ * so the payload origin is a lattice node of the model grid and `stride` whole nodes is a step
+ * the archive really stores: 16 (up to map zoom 8), then 8/4/2/1 up to zoom 12. Nothing is
+ * interpolated - the arrows always show a measured value.
+ *
+ * Samples are placed on the model lattice (not on the payload origin), which keeps the arrow
+ * spacing even across tile borders, and they are clipped to the tile window so the padded border
+ * node stays with the neighbour that owns it. Sample positions use the payload's own origin and
+ * `delta`, so the arrows sit exactly on the nodes the field texture draws.
+ * @param grid Decoded tile grid.
+ * @param stride Node step on both axes as a whole number of nodes; values below 1 are clamped.
+ * @param anchor Lattice anchor of the archive (south-west corner of the model area).
+ * @param window Payload window of the tile's data quad.
+ */
+export function gridToPoints(
+  grid: WindTileGrid,
+  stride: number,
+  anchor: WindGridAnchor,
+  window: WindNodeWindow
+): WindTilePoint[] {
   const { originLng, originLat, deltaLng, deltaLat, rows, cols, uv } = grid;
   const points: WindTilePoint[] = [];
+  const step = Math.max(1, Math.round(stride));
+  if (!Number.isFinite(step)) return points;
 
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const idx = (r * cols + c) * 2;
+  // The padding makes the payload origin a lattice node: rounding its node index removes the
+  // drift of the float32 header `delta` (which reaches ~1e-5 of a node at high indices), so the
+  // samples land exactly on nodes instead of beside them.
+  const colOrigin = Math.round((originLng - anchor.lng) / deltaLng);
+  const rowOrigin = Math.round((originLat - anchor.lat) / deltaLat);
+
+  // Sample k sits `k * step` nodes from the anchor, i.e. at payload index
+  // `(k * step - colOrigin)` / `(rowOrigin - k * step)` (rows run to the south).
+  const firstCol = Math.ceil((colOrigin + window.colMin - WINDOW_EPSILON) / step);
+  const lastCol = Math.floor((colOrigin + window.colMax + WINDOW_EPSILON) / step);
+  const firstRow = Math.ceil((rowOrigin - window.rowMax - WINDOW_EPSILON) / step);
+  const lastRow = Math.floor((rowOrigin - window.rowMin + WINDOW_EPSILON) / step);
+
+  for (let rowSample = firstRow; rowSample <= lastRow; rowSample++) {
+    const gridRow = rowOrigin - rowSample * step;
+    if (gridRow < 0 || gridRow > rows - 1) continue;
+    const nodeRow = gridRow * cols;
+    const lat = originLat - gridRow * deltaLat;
+
+    for (let colSample = firstCol; colSample <= lastCol; colSample++) {
+      const gridCol = colSample * step - colOrigin;
+      if (gridCol < 0 || gridCol > cols - 1) continue;
+
+      const idx = (nodeRow + gridCol) * 2;
       const u = uv[idx];
       const v = uv[idx + 1];
+      // Masked nodes carry no wind and are left out.
       if (u === undefined || v === undefined || !Number.isFinite(u) || !Number.isFinite(v)) continue;
 
-      const lng = originLng + c * deltaLng;
-      const lat = originLat - r * deltaLat;
+      const lng = originLng + gridCol * deltaLng;
       const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
-      const speed = Math.sqrt(u * u + v * v);
-
-      points.push({ position: [lng, lat], angle, speed });
+      points.push({ position: [lng, lat], angle, speed: Math.sqrt(u * u + v * v) });
     }
   }
 
