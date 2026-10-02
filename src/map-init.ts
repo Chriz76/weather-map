@@ -1,9 +1,7 @@
 /* global L */
 // --- src/map-init.js ---
-import { CARTO_API_KEY, DEFAULT_MAP_VIEW, providers } from './config.ts';
-import { weatherProviderModel } from './models/weatherProviderModel';
+import { CARTO_API_KEY, DEFAULT_MAP_VIEW } from './config.ts';
 import { storage } from './utils/storage';
-import { D2 } from './weatherProvider/providerIds';
 import type * as Leaflet from 'leaflet';
 import * as L from 'leaflet';
 
@@ -108,14 +106,9 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         attribution: '&copy;<a href="https://www.openstreetmap.org/copyright">osm</a>|&copy;<a href="https://carto.com/attributions">carto</a>'
     }).addTo(mapInstance);
 
-    const providerId = weatherProviderModel.getActiveProviderId();
-    const imageBounds = providers[providerId]!.imageBounds;
-
-    // Weather graphic overlay in the middle
-    windOverlayInstance = L.imageOverlay('', imageBounds, {
-        opacity: 0.65,
-        zIndex: 10
-    }).addTo(mapInstance);
+    // The raster weather image overlay (...Z.webp) is disabled for now: the wind field is
+    // rendered from PMTiles by the deck.gl overlay in windArrowOverlayView.
+    // `windOverlayInstance` stays null, so registerMapOverlayView only maintains the marker.
 
     // Labels layer on top of everything (use synced label pane so labels stay aligned with map)
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`, {

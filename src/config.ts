@@ -23,7 +23,7 @@ export type ProviderConfig = {
  */
 export const providers: Record<string, ProviderConfig> = {
   [D2]: {
-    baseUrl: "https://chriz76.github.io/icond2ruc-data/",
+    baseUrl: "/output/",
     gridCellSize: 1.0,
     imageBounds: [
       [43.0440, -4.1616],

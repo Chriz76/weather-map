@@ -72,7 +72,10 @@ export class LeafletDeckOverlay extends L.Layer {
       style: { pointerEvents: 'none' },
       width: size.x,
       height: size.y,
-      viewState: this.getViewState()
+      viewState: this.getViewState(),
+      // The wind field layer ships GLSL shaders (see WindTileLayer in windArrowOverlayView).
+      // luma.gl would otherwise prefer a WebGPU device, which cannot run raw GLSL layers.
+      deviceProps: { type: 'webgl' }
     });
 
     if (this.pendingLayers) {

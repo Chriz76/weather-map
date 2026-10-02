@@ -91,13 +91,43 @@ function toArrayBufferFromTileData(d: unknown): ArrayBuffer | null {
   return null;
 }
 
-export async function getTilePoints(
+/** One decoded wind grid of a PMTiles tile: header values plus the row-major u/v pairs. */
+export type WindTileGrid = {
+  originLng: number;
+  /** Latitude of the northern edge. */
+  originLat: number;
+  deltaLng: number;
+  deltaLat: number;
+  rows: number;
+  cols: number;
+  /** u/v in m/s, row-major, first row is the northern edge. */
+  uv: Float32Array;
+};
+
+/** One wind grid point resolved to geographic coordinates. */
+export type WindTilePoint = { position: [number, number]; angle: number; speed: number };
+
+/** Sanity cap for corrupted headers (the byte length is validated as well). */
+const MAX_GRID_POINTS = 4e6;
+
+/**
+ * Reads and decodes one tile of a wind archive (24 byte header plus u/v pairs).
+ * Loading, retrying and caching are shared with {@link getTilePoints}: both use the same
+ * cached PMTiles instance, so requesting the same tile twice hits the PMTiles tile cache.
+ * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
+ * @param z Tile zoom of the archive.
+ * @param x Tile column.
+ * @param y Tile row.
+ * @param signal Abort signal of the tile request.
+ * @returns The decoded grid, or null when the tile is missing, malformed or aborted.
+ */
+export async function getTileGrid(
   pmUrl: string,
   z: number,
   x: number,
   y: number,
   signal?: AbortSignal
-): Promise<Array<{ position: [number, number]; angle: number; speed: number }> | null> {
+): Promise<WindTileGrid | null> {
   const resolved = resolvePmUrl(pmUrl);
   const key = urlWithCacheBuster(resolved);
 
@@ -122,12 +152,10 @@ export async function getTilePoints(
       pm = getPm(pmUrl);
       const tileRes = await pm.getZxy(z, x, y);
       if (signal?.aborted) return null;
-      if (!tileRes || tileRes.data == null) return [];
+      if (!tileRes || tileRes.data == null) return null;
 
       const buffer = toArrayBufferFromTileData(tileRes.data);
-      if (!buffer) return [];
-
-      if (buffer.byteLength < 24) return [];
+      if (!buffer || buffer.byteLength < 24) return null;
 
       const header = new Float32Array(buffer, 0, 6);
       const originLng = header[0]!;
@@ -137,28 +165,29 @@ export async function getTilePoints(
       const rows = Math.round(header[4]!);
       const cols = Math.round(header[5]!);
 
-      const uv = new Float32Array(buffer, 24);
-      const points: { position: [number, number]; angle: number; speed: number }[] = [];
+      if (!(rows >= 1 && cols >= 1) || rows * cols > MAX_GRID_POINTS) return null;
+      if (!Number.isFinite(deltaLng) || !Number.isFinite(deltaLat) || deltaLng === 0 || deltaLat === 0) return null;
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const idx = (r * cols + c) * 2;
-          const u = uv[idx]!;
-          const v = uv[idx + 1]!;
-          if (!Number.isFinite(u) || !Number.isFinite(v)) continue;
-
-          const lng = originLng + c * deltaLng;
-          const lat = originLat - r * deltaLat;
-          const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
-          const speed = Math.sqrt(u * u + v * v);
-
-          points.push({ position: [lng, lat], angle, speed });
-        }
+      // Exact length check: also catches payloads the PMTiles library did not unpack.
+      const need = 24 + rows * cols * 8;
+      if (buffer.byteLength < need) {
+        logger.error('[windArrowService] tile payload too short', {
+          z, x, y, url: resolved, have: buffer.byteLength, need, rows, cols
+        });
+        return null;
       }
 
-      return points;
+      return {
+        originLng,
+        originLat,
+        deltaLng,
+        deltaLat,
+        rows,
+        cols,
+        uv: new Float32Array(buffer, 24, rows * cols * 2)
+      };
     } catch (err: unknown) {
-      logger.error('[windArrowService] getTilePoints error', { err, attempt, z, x, y, url: resolved });
+      logger.error('[windArrowService] getTileGrid error', { err, attempt, z, x, y, url: resolved });
 
       // If aborted, stop and return null so TileLayer won't cache
       if (signal?.aborted) return null;
@@ -179,12 +208,61 @@ export async function getTilePoints(
         }
       }
 
-      // For non-network errors or exhausted retries, return empty array so layer can continue
-      return [];
+      // For non-network errors or exhausted retries, return null so the layer can continue
+      return null;
     }
   }
 
-  return [];
+  return null;
+}
+
+/**
+ * Decodes one tile of a wind archive into individual wind points (arrow overlay).
+ * @param pmUrl Archive URL as used by the views.
+ * @param z Tile zoom of the archive.
+ * @param x Tile column.
+ * @param y Tile row.
+ * @param signal Abort signal of the tile request.
+ * @returns Points, an empty array when the tile carries no data, or null when the request was
+ * aborted (returning null keeps deck.gl from caching an empty tile).
+ */
+export async function getTilePoints(
+  pmUrl: string,
+  z: number,
+  x: number,
+  y: number,
+  signal?: AbortSignal
+): Promise<WindTilePoint[] | null> {
+  const grid = await getTileGrid(pmUrl, z, x, y, signal);
+
+  if (signal?.aborted) return null;
+  if (!grid) return [];
+
+  return gridToPoints(grid);
+}
+
+/** Maps a decoded grid onto geographic wind points (one point per grid node). */
+function gridToPoints(grid: WindTileGrid): WindTilePoint[] {
+  const { originLng, originLat, deltaLng, deltaLat, rows, cols, uv } = grid;
+  const points: WindTilePoint[] = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx = (r * cols + c) * 2;
+      const u = uv[idx];
+      const v = uv[idx + 1];
+      if (u === undefined || v === undefined || !Number.isFinite(u) || !Number.isFinite(v)) continue;
+
+      const lng = originLng + c * deltaLng;
+      const lat = originLat - r * deltaLat;
+      const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
+      const speed = Math.sqrt(u * u + v * v);
+
+      points.push({ position: [lng, lat], angle, speed });
+    }
+  }
+
+  return points;
 }
 
 export function disposePmtiles(pmUrl: string): void {
