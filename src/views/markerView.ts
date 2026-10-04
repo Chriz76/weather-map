@@ -66,12 +66,14 @@ function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: s
     color: '#ffffff',
     fillColor: '#0077a4',
     fillOpacity: 1,
-    weight: 2
+    weight: 2,
+    pane: 'topPopupPane'
   }).addTo(map);
 
   // Ensure popup is kept in view and avoid UI controls overlapping it.
   if (activeSpotMarker) {
     activeSpotMarker.bindPopup(popupContent, {
+      pane: 'topPopupPane',
       offset: [0, -10],
       keepInView: true,
       // give extra padding so popups near the bottom/right don't overlap controls
@@ -167,7 +169,8 @@ export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: numbe
 
 export function clearMarker(map: LeafletMap): void {
   if (activeSpotMarker) {
-    map.removeLayer(activeSpotMarker as unknown as import('leaflet').Layer);
+    // `Marker` and `CircleMarker` both extend `Layer`, so no cast is required.
+    map.removeLayer(activeSpotMarker);
     activeSpotMarker = null;
   }
 }

@@ -65,5 +65,5 @@ export function registerLogoView(map: LeafletMap): void {
 
   const control = new LogoControl();
   control.addTo(map);
-  (map as unknown as Record<string, unknown>)['logoViewControl'] = control;
+  map.logoViewControl = control;
 }

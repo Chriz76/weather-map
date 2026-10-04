@@ -29,10 +29,15 @@ export interface Cluster {
 }
 
 export interface Station {
+  id?: string | number;
+  station_id?: string | number;
   station_name?: string;
   name?: string;
   lat?: number;
   lon?: number;
+  latitude?: number;
+  longitude?: number;
+  priority?: number;
   windData?: WindData | null;
   [key: string]: unknown;
 }
@@ -53,5 +58,4 @@ export interface Provider {
   id: ProviderId;
   fetchIndex(config: Record<string, unknown>): Promise<IndexData>;
   fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null>;
-  fetchWeatherImageBlob(timestamp: string, config: Record<string, unknown>): Promise<Blob>;
 }

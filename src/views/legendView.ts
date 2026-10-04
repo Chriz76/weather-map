@@ -53,5 +53,5 @@ export function registerLegendView(map: LeafletMap): void {
 
   const control = new LegendControl();
   control.addTo(map);
-  (map as unknown as Record<string, unknown>)['legendViewControl'] = control;
+  map.legendViewControl = control;
 }

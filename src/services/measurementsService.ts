@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger';
+import * as parsing from '../utils/parsing';
 import type { WindData } from '../types';
 
 const CACHE_BUSTER = `cb=${Date.now()}`;
@@ -8,31 +9,22 @@ type CacheEntry = { data: WindData | null; ts: number };
 const windCache: Record<string, CacheEntry> = {};
 const inflight: Record<string, Promise<WindData | null> | undefined> = {};
 
-function isObject(v: unknown): v is Record<string, unknown> {
-  return v !== null && typeof v === 'object';
-}
-
-function toFiniteNumber(v: unknown): number | null {
-  if (v === null || v === undefined) return null;
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
 async function fetchFromBrightSky(dwdStationId: string): Promise<WindData | null> {
   const url = `https://api.brightsky.dev/current_weather?dwd_station_id=${dwdStationId}&${CACHE_BUSTER}`;
   const response = await fetch(url, { cache: 'no-cache' });
   if (!response.ok) throw new Error(`API-Error: ${response.status}`);
   const data: unknown = await response.json();
-  if (!isObject(data)) return null;
-  const current = isObject(data.weather) ? (data.weather as Record<string, unknown>) : null;
-  if (!current) return null;
+  if (!parsing.isObject(data)) return null;
 
-  const speedKmh = toFiniteNumber(current['wind_speed_10']);
-  const direction = toFiniteNumber(current['wind_direction_10']);
-  const gustKmh = toFiniteNumber(current['wind_gust_speed_10']);
-  const temperature = toFiniteNumber(current['temperature']);
-  const timestamp = typeof current['timestamp'] === 'string' ? current['timestamp'] as string : null;
+  const current = data.weather;
+  if (!parsing.isObject(current)) return null;
+
+  const speedKmh = parsing.toFiniteNumber(current['wind_speed_10']);
+  const direction = parsing.toFiniteNumber(current['wind_direction_10']);
+  const gustKmh = parsing.toFiniteNumber(current['wind_gust_speed_10']);
+  const temperature = parsing.toFiniteNumber(current['temperature']);
+  const timestampRaw = current['timestamp'];
+  const timestamp = parsing.isString(timestampRaw) ? timestampRaw : null;
 
   if (speedKmh === null) {
     logger.debug(`BrightSky: missing wind_speed_10 for station ${dwdStationId}`);

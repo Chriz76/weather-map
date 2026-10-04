@@ -49,15 +49,14 @@ export const stationView = (() => {
     const nextStationKeys = new Set<string>();
 
     stations.forEach((station) => {
-      const sRec = station as Record<string, unknown>;
-      const idRaw = sRec['id'] ?? sRec['station_id'];
+      const idRaw = station.id ?? station.station_id;
       const stationKey = typeof idRaw === 'string' ? idRaw : (typeof idRaw === 'number' ? String(idRaw) : `${station.lat}-${station.lon}`);
       nextStationKeys.add(stationKey);
       const lat = Number(station.lat ?? 0);
       const lon = Number(station.lon ?? 0);
 
       const existingMarker = stationMarkerMap.get(stationKey) as Marker | undefined;
-      const marker = existingMarker || L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station) }) as Marker;
+      const marker = existingMarker || L.marker([lat, lon] as LatLngExpression, { icon: createIcon(station), pane: 'topBadgesPane' }) as Marker;
 
       marker.setIcon(createIcon(station));
       marker.setLatLng([lat, lon] as LatLngExpression);

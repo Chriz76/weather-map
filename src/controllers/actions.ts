@@ -1,7 +1,7 @@
 import { EXPECTED_API_VERSION } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
-import { providerManager } from '../weatherProvider/providerManager';
+import { weatherService } from '../services/weatherService';
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { logger } from '../utils/logger';
 import type { IndexData, LatLng, ForecastItem } from '../types';
@@ -46,7 +46,7 @@ let currentOverlayBlobUrl: string | null = null;
 
 async function fetchWeatherOverlayUrl(timestamp: string | null): Promise<string | null> {
   if (!timestamp) return null;
-  const imageBlob = await providerManager.fetchWeatherImageBlob(timestamp);
+  const imageBlob = await weatherService.fetchWeatherImageBlob(timestamp);
   if (currentOverlayBlobUrl) {
     URL.revokeObjectURL(currentOverlayBlobUrl);
   }
@@ -80,7 +80,7 @@ export async function loadWeatherDataForLocationAction(latlng: LatLng): Promise<
   try {
     let forecast: ForecastItem[] | null = null;
     await loadingSpinnerController.track(async () => {
-      forecast = await providerManager.fetchForecast(latlng);
+      forecast = await weatherService.fetchForecast(latlng);
     });
 
     weatherProviderModel.setPointData(latlng, Array.isArray(forecast) ? forecast : null);
@@ -95,7 +95,7 @@ export async function syncAppWithServerAction(background = true, force = false, 
   async function doSync() {
     let indexData: IndexData;
     try {
-      indexData = await providerManager.fetchIndex();
+      indexData = await weatherService.fetchIndex();
     } catch (fetchErr: unknown) {
       const fetchErrMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
       throw new IndexLoadError(fetchErrMsg);

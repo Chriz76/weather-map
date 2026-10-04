@@ -3,7 +3,9 @@ import { uiStateModel } from '../models/uiStateModel';
 
 class LoadingSpinnerController {
     private delayMs: number;
-    private timeout: ReturnType<typeof setTimeout> | null = null;
+    // `window.setTimeout` returns a numeric handle in the browser. The global `setTimeout`
+    // resolves to `NodeJS.Timeout` here because @types/node is present.
+    private timeout: number | null = null;
     private activeTracks: number = 0; // Zähler, falls mal zwei User-Aktionen parallel laufen
     private _modalActive: boolean = false;
 
@@ -23,9 +25,9 @@ class LoadingSpinnerController {
         }
         if (this.activeTracks === 1) {
             if (this.timeout !== null) {
-                clearTimeout(this.timeout as unknown as number);
+                window.clearTimeout(this.timeout);
             }
-            this.timeout = setTimeout(() => {
+            this.timeout = window.setTimeout(() => {
                 uiStateModel.setIsActiveLoading(true, this._modalActive);
             }, this.delayMs);
         }
@@ -38,7 +40,7 @@ class LoadingSpinnerController {
         this.activeTracks = Math.max(0, this.activeTracks - 1);
         if (this.activeTracks === 0) {
             if (this.timeout !== null) {
-                clearTimeout(this.timeout as unknown as number);
+                window.clearTimeout(this.timeout);
             }
             uiStateModel.setIsActiveLoading(false, false);
             this._modalActive = false;

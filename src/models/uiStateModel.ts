@@ -10,9 +10,7 @@ export class UiStateModel extends EventTarget {
         toast: string | ToastPayload | null;
         showWindMeasurements: boolean;
     };
-    private _dispatchEventCallback: ((eventName: string, detail: unknown) => void) | null = null;
-
-    constructor(dispatchEventCallback?: (eventName: string, detail: unknown) => void) {
+    constructor() {
         super();
         this._ui = {
             activeOverlayUrl: null,
@@ -22,13 +20,11 @@ export class UiStateModel extends EventTarget {
             toast: null,
             showWindMeasurements: true
         };
-        this._dispatchEventCallback = typeof dispatchEventCallback === 'function' ? dispatchEventCallback : null;
     }
 
-    private _emit(eventName: string, detail?: unknown): void {
+    private _emit(eventName: string): void {
         const event = new CustomEvent(eventName);
         super.dispatchEvent(event);
-        if (this._dispatchEventCallback) this._dispatchEventCallback(eventName, detail);
     }
 
     get activeOverlayUrl(): string | null { return this._ui.activeOverlayUrl; }
@@ -40,7 +36,7 @@ export class UiStateModel extends EventTarget {
 
     setToast(payload: string | ToastPayload | null): void {
         this._ui.toast = payload;
-        this._emit('ui:toast-changed', payload);
+        this._emit('ui:toast-changed');
     }
 
     setIsActiveLoading(isLoading: boolean, modal = false): void {
@@ -48,22 +44,22 @@ export class UiStateModel extends EventTarget {
         const modalBool = !!modal;
         this._ui.isActiveLoading = isLoadingBool;
         this._ui.isLoadingModal = modalBool;
-        this._emit('ui:loading-changed', { isLoading: isLoadingBool, modal: modalBool });
+        this._emit('ui:loading-changed');
     }
 
     setIsLocating(value: boolean): void {
         this._ui.isLocating = value;
-        this._emit('ui:locating-changed', value);
+        this._emit('ui:locating-changed');
     }
 
     setActiveOverlayUrl(url: string | null): void {
         this._ui.activeOverlayUrl = url;
-        this._emit('ui:overlay-url-updated', url);
+        this._emit('ui:overlay-url-updated');
     }
 
     setShowWindMeasurements(value: boolean): void {
         this._ui.showWindMeasurements = !!value;
-        this._emit('ui:wind-measurements-visibility-changed', this._ui.showWindMeasurements);
+        this._emit('ui:wind-measurements-visibility-changed');
     }
 }
 

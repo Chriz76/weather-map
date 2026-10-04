@@ -12,7 +12,8 @@ class ToastController {
 
     private clearTimeout(): void {
         if (this.timeoutId !== null) {
-            window.clearTimeout(this.timeoutId as unknown as number);
+            // `window.setTimeout` returns a numeric handle, matching `timeoutId`.
+            window.clearTimeout(this.timeoutId);
             this.timeoutId = null;
         }
     }
@@ -46,7 +47,7 @@ class ToastController {
             this.timeoutId = window.setTimeout(() => {
                 this.timeoutId = null;
                 uiStateModel.setToast(null);
-            }, effectiveTimeout) as unknown as number;
+            }, effectiveTimeout);
         }
     }
 }

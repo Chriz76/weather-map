@@ -44,6 +44,10 @@
     "vitest": "^1.0.0"
   },
   "dependencies": {
-    "leaflet": "^1.9.4"
+    "@deck.gl/core": "^9.3.10",
+    "@deck.gl/geo-layers": "^9.3.10",
+    "@deck.gl/layers": "^9.3.10",
+    "leaflet": "^1.9.4",
+    "pmtiles": "^4.5.0"
   }
 }

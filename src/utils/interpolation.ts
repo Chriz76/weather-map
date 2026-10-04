@@ -1,16 +1,41 @@
 import { formatModelTimestampToTime } from './time';
 import { logger } from './logger';
+import type { Cluster, ForecastItem, LatLng } from '../types';
 
-type LatLng = { lat: number; lng: number };
-type TimelineEntry = { speeds?: Array<number | undefined>; dirs?: Array<number | null | undefined>; gusts?: Array<number | undefined> };
-type Cluster = { lats: number[]; lons: number[]; timeline: Record<string, TimelineEntry> };
+/** Interpolated wind values for a single timestamp. */
+export type InterpolatedWindData = { speed: number | null; gust: number | null; direction: number | null };
 
-function getDisplayHour(tKey: string) {
+/** Result returned when a concrete `timestamp` is requested. */
+export type InterpolatedForecastResult = {
+    forecast: ForecastItem[] | null;
+    windData: InterpolatedWindData | null;
+};
+
+function getDisplayHour(tKey: string): string {
     const parts = formatModelTimestampToTime(tKey).split(':');
     return parts[0] ?? '';
 }
 
-export function calculatewindSpeeds(latlng: LatLng | null, cluster: Cluster | null, timestamp?: string): { forecast: { hour: string; wind: number; gust: number; direction: number | null; fullKey: string }[] | null; windData: { speed: number | null; gust: number | null; direction: number | null } | null } | { hour: string; wind: number; gust: number; direction: number | null; fullKey: string }[] | null {
+/**
+ * Interpolates wind speeds from the three nearest cluster points.
+ * @param latlng Clicked position.
+ * @param cluster Cluster payload.
+ * @returns The forecast array, or `null` when the payload is unusable.
+ */
+export function calculatewindSpeeds(latlng: LatLng | null, cluster: Cluster | null): ForecastItem[] | null;
+/**
+ * Interpolates wind speeds and resolves the entry matching `timestamp`.
+ * @param latlng Clicked position.
+ * @param cluster Cluster payload.
+ * @param timestamp Timestamp key to resolve the wind data for.
+ * @returns The forecast array plus the matching wind data, or `null` when the payload is unusable.
+ */
+export function calculatewindSpeeds(latlng: LatLng | null, cluster: Cluster | null, timestamp: string | null): InterpolatedForecastResult | null;
+export function calculatewindSpeeds(
+    latlng: LatLng | null,
+    cluster: Cluster | null,
+    timestamp?: string | null
+): ForecastItem[] | InterpolatedForecastResult | null {
     try {
         if (!latlng || !cluster || !cluster.timeline) {
             if (timestamp !== undefined) return { forecast: null, windData: null };
@@ -86,7 +111,7 @@ export function calculatewindSpeeds(latlng: LatLng | null, cluster: Cluster | nu
         };
 
         const len = timelineKeys.length;
-        const dynamicForecastArray = new Array<{ hour: string; wind: number; gust: number; direction: number | null; fullKey: string }>(len);
+        const dynamicForecastArray = new Array<ForecastItem>(len);
 
         for (let k = 0; k < len; k++) {
             const tKey = timelineKeys[k]!;
@@ -107,7 +132,7 @@ export function calculatewindSpeeds(latlng: LatLng | null, cluster: Cluster | nu
 
         if (timestamp !== undefined) {
             // if a concrete timestamp string was provided, try to find matching entry
-            let windData = null;
+            let windData: InterpolatedWindData | null = null;
             if (typeof timestamp === 'string') {
                 const entry = dynamicForecastArray.find(e => e.fullKey === timestamp) || dynamicForecastArray[0] || null;
                 windData = entry ? { speed: entry.wind, gust: entry.gust, direction: entry.direction ?? null } : null;

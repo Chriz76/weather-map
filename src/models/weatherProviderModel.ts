@@ -2,15 +2,16 @@ import * as timeUtils from '../utils/time';
 import { logger } from '../utils/logger';
 import { D2, AROME } from '../weatherProvider/providerIds';
 import { calculatewindSpeeds } from '../utils/interpolation';
-import type { LatLng, ForecastItem } from '../types';
+import type { Cluster, ForecastItem, IndexData, LatLng } from '../types';
 
 type ProviderState = {
   availableTimestamps: string[];
   modelGeneratedAt: string | null;
   modelCurrentHour: string | null;
   lastIndexSync: Date | null;
+  supportsArrowOverlay?: boolean;
   locationContext: { latLng: LatLng } | null;
-  currentClusterData?: unknown | null;
+  currentClusterData?: Cluster | null;
   windData: { speed: number | null; gust: number | null; direction: number | null } | null;
   forecast: ForecastItem[] | null;
   indexLoadError: string | null;
@@ -18,7 +19,6 @@ type ProviderState = {
   pointDataLoadError: string | null;
   apiMismatchError: string | null;
   startupError: string | null;
-  specialDataSummary?: string | null;
   activeTimestampIndex: number;
 };
 
@@ -35,6 +35,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
+        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -50,6 +51,7 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
+        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -71,7 +73,8 @@ export class WeatherProviderModel extends EventTarget {
     if (this.activeProviderId === id || !this.providerModels[id]) return;
     this.activeProviderId = id;
     this.removePointData(false);
-    this.dispatchEvent(new CustomEvent('model:provider-changed', { detail: { providerId: id } }));
+    // Payload-free notification: views read the active provider from the model (see MVC guideline).
+    this.dispatchEvent(new CustomEvent('model:provider-changed'));
   }
 
   private _getActiveModel(): ProviderState { return this.providerModels[this.activeProviderId]!; }
@@ -84,9 +87,10 @@ export class WeatherProviderModel extends EventTarget {
   get windDirection(): number | null { return this._getActiveModel().windData?.direction ?? null; }
   get windGust(): number | null { return this._getActiveModel().windData?.gust ?? null; }
   get forecast(): ForecastItem[] | null { return this._getActiveModel().forecast; }
-  get currentClusterData(): unknown | null { return this._getActiveModel().currentClusterData ?? null; }
+  get currentClusterData(): Cluster | null { return this._getActiveModel().currentClusterData ?? null; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }
+  get supportsArrowOverlay(): boolean { return !!this._getActiveModel().supportsArrowOverlay; }
 
   setLastIndexSync(date: Date | null): void {
     this._getActiveModel().lastIndexSync = date;
@@ -178,7 +182,7 @@ export class WeatherProviderModel extends EventTarget {
     }
   }
 
-  setIndexMetadata(indexData: import('../types').IndexData, prevActiveTimestamp: string | null = null): void {
+  setIndexMetadata(indexData: IndexData, prevActiveTimestamp: string | null = null): void {
     const sortedTimestamps = (indexData.available_timestamps || []).sort();
     const reference = prevActiveTimestamp || this.activeTimestamp;
     const activeIndex = timeUtils.determineActiveIndex(sortedTimestamps, reference);
@@ -201,23 +205,27 @@ export class WeatherProviderModel extends EventTarget {
     }
   }
 
-  setPointData(latlng: LatLng, forecast: import('../types').ForecastItem[] | unknown | null): void {
+  /**
+   * Stores point data for a clicked location.
+   * Accepts either a precomputed forecast or a raw cluster payload, which is interpolated
+   * into a forecast by {@link calculatewindSpeeds}.
+   * @param latlng Clicked position.
+   * @param forecast Precomputed forecast items or a raw cluster payload.
+   */
+  setPointData(latlng: LatLng, forecast: ForecastItem[] | Cluster | null): void {
     this._getActiveModel().locationContext = { latLng: latlng };
     this._globalLastClickedLatLng = latlng;
     this.setPointDataLoadError(null);
 
-    // Support passing either a precomputed ForecastItem[] or a raw cluster structure
     if (Array.isArray(forecast)) {
-      this._getActiveModel().forecast = forecast as ForecastItem[];
+      this._getActiveModel().forecast = forecast;
       this._getActiveModel().currentClusterData = null;
-    } else if (forecast && typeof forecast === 'object') {
-      // store raw cluster for callers/tests that rely on it
-      this._getActiveModel().currentClusterData = forecast as unknown;
-      // attempt to compute forecast from cluster if possible
+    } else if (forecast) {
+      // Keep the raw cluster for callers/tests that rely on it, then interpolate a forecast.
+      this._getActiveModel().currentClusterData = forecast;
       try {
-        const computed = calculatewindSpeeds(latlng as LatLng, forecast as unknown as import('../types').Cluster) as ForecastItem[] | null;
-        this._getActiveModel().forecast = Array.isArray(computed) ? computed : null;
-      } catch (e) {
+        this._getActiveModel().forecast = calculatewindSpeeds(latlng, forecast);
+      } catch {
         this._getActiveModel().forecast = null;
       }
     } else {
@@ -240,12 +248,6 @@ export class WeatherProviderModel extends EventTarget {
     this.dispatchEvent(new CustomEvent('model:location-updated'));
     this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));
     this.dispatchEvent(new CustomEvent('model:windspeed-updated'));
-  }
-
-  get specialDataSummary(): string | null { return this._getActiveModel().specialDataSummary ?? null; }
-  setSpecialDataSummary(value: string | null): void {
-    this._getActiveModel().specialDataSummary = value;
-    this.dispatchEvent(new CustomEvent('model:special-data-summary-changed'));
   }
 }
 

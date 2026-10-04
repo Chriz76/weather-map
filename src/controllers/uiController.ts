@@ -22,7 +22,7 @@ function handleTimelineChange(e: Event) {
   weatherProviderModel.setActiveTimestampIndex(idx);
 
   if (timelineDebounceTimer !== null) {
-    clearTimeout(timelineDebounceTimer);
+    window.clearTimeout(timelineDebounceTimer);
   }
 
   timelineDebounceTimer = window.setTimeout(async () => {
@@ -40,7 +40,7 @@ function handleTimelineChange(e: Event) {
       logger.error('❌ Overlay fetch failed during timeline change:', errMsg);
       weatherProviderModel.setOverlayLoadError(errMsg);
     }
-  }, SLIDER_DEBOUNCE_MS) as unknown as number;
+  }, SLIDER_DEBOUNCE_MS);
 }
 
 function handleModelInfoClicked() {
