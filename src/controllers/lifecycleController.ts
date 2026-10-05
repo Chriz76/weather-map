@@ -1,7 +1,7 @@
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError, updateOverlayForTimestampAction, loadWeatherDataForLocationAction } from './actions';
+import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, OverlayLoadError } from './actions';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
 import { logger } from '../utils/logger';
@@ -69,14 +69,6 @@ async function safeSyncApp(isInitial = false, forceArg = false, prevActiveTimest
     if (isApiMismatch) {
       const version = (error as ApiMismatchError).version || '';
       weatherProviderModel.setApiMismatchError(`A new App version is available (v${version}).\n\nPlease reload the page to use the application as usual.`);
-    } else if (error instanceof LocationLoadError) {
-      // The selected point cannot be served by the active provider, e.g. because it lies outside
-      // the provider's data area after a provider switch. Both sync attempts already ran, so the
-      // selection is dropped instead of storing a permanent load error: that error would force a
-      // full re-sync on every poll and keep the error notification alive forever.
-      logger.warn('Location load failed on both attempts, clearing selected point:', errMsg);
-      weatherProviderModel.removePointData();
-      toastController.showToast({ message: 'Selected location could not be loaded or is outside the model area.' }, 5000);
     } else {
       if (error instanceof IndexLoadError) {
         weatherProviderModel.setIndexLoadError((error as IndexLoadError).detail ?? errMsg);
