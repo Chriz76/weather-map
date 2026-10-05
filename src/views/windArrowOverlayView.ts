@@ -24,10 +24,16 @@ let overlayInstance: LeafletDeckOverlay | null = null;
  *  i.e. the resolution the map currently shows.
  * ------------------------------------------------------------------------- */
 const TILE_SIZE = 256;
-const TILE_ZOOM_OFFSET = 0;
+const TILE_ZOOM_OFFSET = -1;
 const TILE_MIN_ZOOM = 0;
 const TILE_MAX_ZOOM = 8;
-const TILE_MAX_REQUESTS = 6;
+
+/**
+ * Tile requests allowed in flight. Every tile is one HTTP range request, so this bounds how fast
+ * a new timestep fills in: the dev server is HTTP/1.1 (six parallel connections per host), the
+ * remote Arome archive is served over HTTP/2, where more requests really run in parallel.
+ */
+const TILE_MAX_REQUESTS = 12;
 const TILE_DEBOUNCE_MS = 80;
 const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 

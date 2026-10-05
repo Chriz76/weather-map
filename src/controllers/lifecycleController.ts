@@ -1,7 +1,7 @@
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError, updateOverlayForTimestampAction, loadWeatherDataForLocationAction } from './actions';
+import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, LocationLoadError, OverlayLoadError, loadWeatherDataForLocationAction } from './actions';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
 import { logger } from '../utils/logger';

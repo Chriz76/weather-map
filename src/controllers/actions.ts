@@ -1,6 +1,5 @@
 import { EXPECTED_API_VERSION } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { uiStateModel } from '../models/uiStateModel';
 import { weatherService } from '../services/weatherService';
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { logger } from '../utils/logger';
@@ -39,40 +38,6 @@ export class OverlayLoadError extends Error {
     super(`OVERLAY_FETCH_FAILED: ${message}`);
     this.name = 'OverlayLoadError';
     this.detail = message;
-  }
-}
-
-let currentOverlayBlobUrl: string | null = null;
-
-async function fetchWeatherOverlayUrl(timestamp: string | null): Promise<string | null> {
-  if (!timestamp) return null;
-  const imageBlob = await weatherService.fetchWeatherImageBlob(timestamp);
-  if (currentOverlayBlobUrl) {
-    URL.revokeObjectURL(currentOverlayBlobUrl);
-  }
-  currentOverlayBlobUrl = URL.createObjectURL(imageBlob);
-  return currentOverlayBlobUrl;
-}
-
-export async function updateOverlayForTimestampAction(timestamp: string | null): Promise<void> {
-  if (!timestamp) return;
-
-  try {
-    const overlayUrl = await fetchWeatherOverlayUrl(timestamp);
-    uiStateModel.setActiveOverlayUrl(overlayUrl);
-    } catch (e: unknown) {
-      const errMsg = e instanceof Error ? e.message : String(e);
-    logger.error('❌ Error fetching overlay (first attempt):', errMsg);
-
-    try {
-      logger.info('🔁 Retrying overlay fetch immediately for', timestamp);
-      const overlayUrl = await fetchWeatherOverlayUrl(timestamp);
-      uiStateModel.setActiveOverlayUrl(overlayUrl);
-    } catch (retryErr: unknown) {
-      const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-      logger.error('❌ Overlay retry failed:', retryMsg);
-      throw new OverlayLoadError(retryMsg);
-    }
   }
 }
 
@@ -133,8 +98,6 @@ export async function syncAppWithServerAction(background = true, force = false, 
     } else {
       weatherProviderModel.setIndexMetadata(indexData, prevActiveTimestamp);
     }
-
-    await updateOverlayForTimestampAction(weatherProviderModel.activeTimestamp);
   }
 
   try {

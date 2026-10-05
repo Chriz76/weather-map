@@ -1,17 +1,18 @@
-import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
 import { retryStartupSync } from './lifecycleController';
-import { updateOverlayForTimestampAction } from './actions';
 import { formatToDateTime, formatModelTimestampToDateTime } from '../utils/time';
 import { logger } from '../utils/logger';
 
-const SLIDER_DEBOUNCE_MS = 50;
-
-let timelineDebounceTimer: number | null = null;
-let lastTimelineTimestampToken: string | null = null;
-
+/**
+ * Timeline slider moved: hand the new index to the model.
+ *
+ * The model emits `model:timestamp-index-updated`, which is what makes the wind overlay load the
+ * new archive (see windArrowOverlayView) - there is no raster image to fetch any more, and
+ * awaiting one here only delayed the switch.
+ * @param e `ui:timeline-change` event with the new index.
+ */
 function handleTimelineChange(e: Event) {
   const customEvent = e as CustomEvent<{ index: number }>;
   const idx = customEvent && customEvent.detail && typeof customEvent.detail.index === 'number'
@@ -20,27 +21,6 @@ function handleTimelineChange(e: Event) {
   if (idx === null) return;
 
   weatherProviderModel.setActiveTimestampIndex(idx);
-
-  if (timelineDebounceTimer !== null) {
-    window.clearTimeout(timelineDebounceTimer);
-  }
-
-  timelineDebounceTimer = window.setTimeout(async () => {
-    const targetTimestamp = weatherProviderModel.activeTimestamp;
-    if (!targetTimestamp) return;
-
-    lastTimelineTimestampToken = targetTimestamp;
-
-    try {
-      await loadingSpinnerController.track(async () => {
-        await updateOverlayForTimestampAction(targetTimestamp);
-      });
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      logger.error('❌ Overlay fetch failed during timeline change:', errMsg);
-      weatherProviderModel.setOverlayLoadError(errMsg);
-    }
-  }, SLIDER_DEBOUNCE_MS);
 }
 
 function handleModelInfoClicked() {
