@@ -15,6 +15,15 @@ export type ProviderConfig = {
   baseUrl: string;
   gridCellSize: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
+  /**
+   * South-west corner of the wind archive lattice in degrees.
+   *
+   * Every node of a wind archive sits at `anchor + k * deltaLat/Lng`; the arrows are sampled on
+   * that lattice so their phase stays uniform across tile borders. Set this when the archive
+   * covers a different area than `imageBounds` (e.g. the HRRR window served through the d2
+   * provider). Defaults to `imageBounds[0]`.
+   */
+  windAnchor?: { lat: number; lng: number };
 };
 
 /**
@@ -28,7 +37,11 @@ export const providers: Record<string, ProviderConfig> = {
     imageBounds: [
       [43.0440, -4.1616],
       [58.1647, 20.5444]
-    ]
+    ],
+    // South-west corner of the HRRR window used by the "..._dir.pmtiles" archives of that area
+    // (HrrrWindProcessor._hrrr_geographic_bounds()). `imageBounds` deliberately stays the d2
+    // point-forecast grid: it is the basis for the `grid_cluster/cluster_<col>_<row>.json` URLs.
+    windAnchor: { lat: 21.138, lng: -134.096114 }
   },
   [AROME]: {
     baseUrl: "https://chriz76.github.io/weather-data/",

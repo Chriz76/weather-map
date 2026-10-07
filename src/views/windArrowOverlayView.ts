@@ -23,10 +23,10 @@ let overlayInstance: LeafletDeckOverlay | null = null;
  *  tile zoom = round(deckZoom + log2(512 / tileSize) + zoomOffset) = round(leaflet zoom),
  *  i.e. the resolution the map currently shows.
  * ------------------------------------------------------------------------- */
-const TILE_SIZE = 256;
+const TILE_SIZE = 512;
 const TILE_ZOOM_OFFSET = -1;
 const TILE_MIN_ZOOM = 0;
-const TILE_MAX_ZOOM = 8;
+const TILE_MAX_ZOOM = 7;
 
 /**
  * Tile requests allowed in flight. Every tile is one HTTP range request, so this bounds how fast
@@ -41,7 +41,7 @@ const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85
  * Zoom offset of the level the arrows used to read their own (coarser) tiles from.
  * Kept as an offset so the arrows keep their former spacing and screen density.
  */
-const ARROW_ZOOM_OFFSET = 4;
+const ARROW_ZOOM_OFFSET = 5;
 
 /**
  * Smallest node step: one stored node.
@@ -72,15 +72,21 @@ let currentArrowZoom: number | null = null;
 let renderedArrowZoom: number | null = null;
 
 /**
- * Lattice anchor of the active archive: the model grid starts at the south-west corner of the
- * provider's data area, so every node is `anchor + k * deltaLat/Lng`. Every tile payload is
- * padded by one node, which makes its origin a lattice node as well, and every archive level
- * uses a subset of that lattice (the nodes double per level). Anchoring the stride there makes
- * the arrows land exactly on stored nodes and keeps them evenly spaced over tile borders.
- * @returns Anchor in degrees, or 0/0 when the provider has no bounds configured.
+ * Lattice anchor of the active archive: every node of a wind archive sits at
+ * `anchor + k * deltaLat/Lng`, and every archive level uses a subset of that lattice (the nodes
+ * double per level). Anchoring the stride there makes the arrows land exactly on stored nodes
+ * and keeps them evenly spaced over tile borders.
+ *
+ * The anchor is the south-west corner of the model area. `windAnchor` wins over `imageBounds`
+ * so an archive that covers a different area than the provider's point-forecast grid (e.g. the
+ * HRRR window) can still be sampled on its own lattice.
+ * @returns Anchor in degrees, or 0/0 when the provider has neither configured.
  */
 function getGridAnchor(): WindGridAnchor {
-  const bounds = providers[weatherProviderModel.getActiveProviderId()]?.imageBounds;
+  const cfg = providers[weatherProviderModel.getActiveProviderId()];
+  if (cfg?.windAnchor) return { lng: cfg.windAnchor.lng, lat: cfg.windAnchor.lat };
+
+  const bounds = cfg?.imageBounds;
   if (!Array.isArray(bounds) || bounds.length === 0) return { lng: 0, lat: 0 };
 
   const southWest = bounds[0];

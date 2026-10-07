@@ -110,10 +110,50 @@ export type WindTilePoint = { position: [number, number]; angle: number; speed: 
 /** Sanity cap for corrupted headers (the byte length is validated as well). */
 const MAX_GRID_POINTS = 4e6;
 
+/** Bytes of a tile's geo header (6 x float32). */
+const HEADER_BYTES = 24;
+/** Bytes before the first int16 stream: geo header plus the two uint32 field lengths. */
+const PAYLOAD_BYTES = HEADER_BYTES + 8;
+/** Scale of the int16 predictor stream: metres per second per step. */
+const PRED_SCALE = 0.01;
+/** Sentinel of the predictor stream that marks an invalid (nan) node. */
+const PRED_SENTINEL = -20000;
+
 /**
- * Reads and decodes one tile of a wind archive (24 byte header plus u/v pairs).
- * This is the only tile read of the wind overlay: the field uploads the grid as a texture and
- * the arrows are derived from the very same grid (see {@link gridToPoints}).
+ * Decodes one row-wise int16 delta stream into the interleaved u/v grid.
+ *
+ * The encoder differences every row horizontally and keeps the first column of each row
+ * absolute, so the accumulator restarts with that anchor value on every row. An invalid node is
+ * stored as {@link PRED_SENTINEL} and survives the accumulation unchanged, because every delta
+ * is relative to the stored value of its left neighbour.
+ * @param stream Raw int16 deltas of one field, row-major, northern row first.
+ * @param rows Number of rows.
+ * @param cols Number of columns.
+ * @param out Interleaved u/v output of the whole tile.
+ * @param offset Component to write: 0 = u, 1 = v.
+ */
+function decodeDeltaField(stream: Int16Array, rows: number, cols: number, out: Float32Array, offset: number): void {
+  let dst = offset;
+  for (let row = 0; row < rows; row++) {
+    const rowStart = row * cols;
+    let acc = 0;
+    for (let col = 0; col < cols; col++) {
+      const delta = stream[rowStart + col]!;
+      acc = col === 0 ? delta : acc + delta;
+      out[dst] = acc === PRED_SENTINEL ? NaN : acc * PRED_SCALE;
+      dst += 2;
+    }
+  }
+}
+
+/**
+ * Reads and decodes one tile of a wind archive.
+ *
+ * Uncompressed payload layout (the PMTiles container is gzip and is unpacked by the library
+ * before this function sees the bytes):
+ * `[24 B geo header][u_len u32][v_len u32][u int16 deltas][v int16 deltas]`.
+ * The field uploads the grid as a texture and the arrows are derived from the very same grid
+ * (see {@link gridToPoints}).
  * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
  * @param z Tile zoom of the archive.
  * @param x Tile column.
@@ -155,7 +195,7 @@ export async function getTileGrid(
       if (!tileRes || tileRes.data == null) return null;
 
       const buffer = toArrayBufferFromTileData(tileRes.data);
-      if (!buffer || buffer.byteLength < 24) return null;
+      if (!buffer || buffer.byteLength < PAYLOAD_BYTES) return null;
 
       const header = new Float32Array(buffer, 0, 6);
       const originLng = header[0]!;
@@ -168,8 +208,23 @@ export async function getTileGrid(
       if (!(rows >= 1 && cols >= 1) || rows * cols > MAX_GRID_POINTS) return null;
       if (!Number.isFinite(deltaLng) || !Number.isFinite(deltaLat) || deltaLng === 0 || deltaLat === 0) return null;
 
+      // Payload: two int16 delta streams, each preceded by its byte length. The container
+      // decompression (tile_compression = gzip) already ran inside the pmtiles library.
+      const nodeCount = rows * cols;
+      const fieldBytes = nodeCount * 2;
+      const lengths = new Uint32Array(buffer, HEADER_BYTES, 2);
+      const uLength = lengths[0]!;
+      const vLength = lengths[1]!;
+
+      if (uLength !== fieldBytes || vLength !== fieldBytes) {
+        logger.error('[windArrowService] unexpected field length', {
+          z, x, y, url: resolved, uLength, vLength, fieldBytes, rows, cols
+        });
+        return null;
+      }
+
       // Exact length check: also catches payloads the PMTiles library did not unpack.
-      const need = 24 + rows * cols * 8;
+      const need = PAYLOAD_BYTES + uLength + vLength;
       if (buffer.byteLength < need) {
         logger.error('[windArrowService] tile payload too short', {
           z, x, y, url: resolved, have: buffer.byteLength, need, rows, cols
@@ -177,15 +232,11 @@ export async function getTileGrid(
         return null;
       }
 
-      return {
-        originLng,
-        originLat,
-        deltaLng,
-        deltaLat,
-        rows,
-        cols,
-        uv: new Float32Array(buffer, 24, rows * cols * 2)
-      };
+      const uv = new Float32Array(nodeCount * 2);
+      decodeDeltaField(new Int16Array(buffer, PAYLOAD_BYTES, nodeCount), rows, cols, uv, 0);
+      decodeDeltaField(new Int16Array(buffer, PAYLOAD_BYTES + uLength, nodeCount), rows, cols, uv, 1);
+
+      return { originLng, originLat, deltaLng, deltaLat, rows, cols, uv };
     } catch (err: unknown) {
       logger.error('[windArrowService] getTileGrid error', { err, attempt, z, x, y, url: resolved });
 
