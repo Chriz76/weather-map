@@ -17,6 +17,21 @@ let overlayInstance: LeafletDeckOverlay | null = null;
 const ARROW_SIZE_SCALE = 0.7;
 
 /**
+ * deck.gl v9 renders exclusively through WebGL2. On browsers without WebGL2 support the
+ * GPU device creation fails, so the overlay is skipped up front and the rest of the app
+ * keeps working without wind arrows.
+ * @returns `true` when a WebGL2 context can be created.
+ */
+function isWebGL2Supported(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return Boolean(canvas.getContext('webgl2'));
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Removes all currently rendered arrow layers so no stale arrows remain visible.
  * Emptying the layer set makes deck.gl finalize the previous tile layer, so the next
  * `setPmtilesUrl` call builds a fresh layer with a clean tile cache.
@@ -145,7 +160,16 @@ export interface IWindArrowOverlayView {
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
   init(map: LeafletMap) {
-    if (!overlayInstance) {
+    if (overlayInstance) return;
+
+    // Without WebGL2 deck.gl cannot create a GPU device. Skip the overlay entirely so the
+    // map and all other layers keep working and only the wind arrows are missing.
+    if (!isWebGL2Supported()) {
+      logger.warn('[windArrowOverlayView] WebGL2 not supported - wind arrow overlay disabled');
+      return;
+    }
+
+    try {
       overlayInstance = new LeafletDeckOverlay({ className: 'wind-arrow-deck-overlay', zIndex: '510' });
       overlayInstance.addTo(map);
 
@@ -168,7 +192,10 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       weatherProviderModel.addEventListener('model:provider-changed', () => {
         clearArrows('provider changed');
       });
-
+    } catch (err: unknown) {
+      // Graceful degradation: a missing GPU device must not break the rest of the app.
+      logger.warn('[windArrowOverlayView] deck overlay initialization failed - wind arrows disabled', err);
+      overlayInstance = null;
     }
   },
 
