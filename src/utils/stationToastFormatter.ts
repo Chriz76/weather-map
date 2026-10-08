@@ -11,6 +11,10 @@ export function formatStationToast(station: Station): string {
     const age = (typeof ts === 'string' || ts instanceof Date) ? formatMinutesAgo(ts) : '';
     const lat = typeof station.lat === 'number' ? station.lat.toFixed(4) : '--';
     const lon = typeof station.lon === 'number' ? station.lon.toFixed(4) : '--';
+    // Wind direction in degrees with a trailing degree symbol, e.g. "184°"
+    const windDirection = typeof windData?.direction === 'number'
+        ? `${Math.round(((windData.direction % 360) + 360) % 360)}°`
+        : '--';
 
-    return `${stationName}\n${age}\n${windSpeed} kts max ${windGust} kts\n${temperature}°C\nlat ${lat}, lon ${lon}`;
+    return `${stationName}\n${age}\n${windSpeed} kts max ${windGust} kts ${windDirection}\n${temperature}°C\nlat ${lat}, lon ${lon}`;
 }

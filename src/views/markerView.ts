@@ -35,6 +35,8 @@ function renderDirectionIcon(direction: number | null) {
 function createPopupHtml(formattedValue: string, formattedGust: string, direction: number | null, coordsDisplay: string) {
   const directionDataAttr = direction === null ? '' : String(direction);
   const directionIcon = renderDirectionIcon(direction);
+  // Wind direction in degrees with a trailing degree symbol, e.g. "184°"
+  const directionDegrees = direction === null ? '?' : `${Math.round(((direction % 360) + 360) % 360)}°`;
 
   return `
         <div class="marker-popup" data-direction="${directionDataAttr}" data-gust="${formattedGust}">
@@ -46,7 +48,7 @@ function createPopupHtml(formattedValue: string, formattedGust: string, directio
                                                 <span class="marker-popup__unit">kts</span>
                                         </div>
                                         <div class="marker-popup__gusts-row" style="font-size: 0.85em; opacity: 0.8; margin-top: 1px;">
-                                                max <strong class="marker-popup__gust-value">${formattedGust}</strong>
+                                                ${directionDegrees} max <strong class="marker-popup__gust-value">${formattedGust}</strong>
                                         </div>
                                 </div>
                         </div>

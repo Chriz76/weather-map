@@ -10,6 +10,13 @@ import { logger } from '../utils/logger';
 let overlayInstance: LeafletDeckOverlay | null = null;
 
 /**
+ * Uniform scale applied to the arrow icon. Values below 1 shrink the arrows
+ * proportionally (length and stroke thickness together) without touching the
+ * speed-based size curve in `getSize`.
+ */
+const ARROW_SIZE_SCALE = 0.7;
+
+/**
  * Removes all currently rendered arrow layers so no stale arrows remain visible.
  * Emptying the layer set makes deck.gl finalize the previous tile layer, so the next
  * `setPmtilesUrl` call builds a fresh layer with a clean tile cache.
@@ -40,7 +47,7 @@ function createTileLayer(pmUrl: string) {
     minZoom: 0,
     maxZoom: 8,
     tileSize: 256,
-    zoomOffset: -4,
+    zoomOffset: -3,
     extent: [-180, -85.051129, 180, 85.051129],
     // Reduce burst of parallel requests during fast interactions
     maxRequests: 6,
@@ -71,11 +78,13 @@ function createTileLayer(pmUrl: string) {
 
       const data: WindPoint[] = Array.isArray(rawData) ? rawData.filter(isWindPoint) : [];
 
+      // The icon length is controlled by ARROW_SIZE_SCALE; these stroke widths
+      // only control how slim the shaft and outline look at that length.
       const arrowSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 80" width="40" height="80">
           <defs>
             <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
               <feComponentTransfer in="blur" result="boost">
                 <feFuncA type="linear" slope="3"/>
               </feComponentTransfer>
@@ -86,9 +95,9 @@ function createTileLayer(pmUrl: string) {
             </filter>
           </defs>
           <g filter="url(#glow)">
-            <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
           </g>
-          <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#1c1e22" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M 7 22 L 20 8 L 33 22 M 20 8 L 20 72" fill="none" stroke="#1c1e22" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       `;
       const iconUrl = `data:image/svg+xml;utf8,${encodeURIComponent(arrowSvg)}`;
@@ -120,7 +129,7 @@ function createTileLayer(pmUrl: string) {
           getSize: 300
         },
 
-        sizeScale: 1,
+        sizeScale: ARROW_SIZE_SCALE,
         sizeUnits: 'pixels',
         billboard: false,
         pickable: false
