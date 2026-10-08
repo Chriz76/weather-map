@@ -484,7 +484,9 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
   override initializeState(): void {
     this.setState({
       model: this._createModel(),
-      texture: createTileTexture(this.context.device, this.props.data)
+      texture: createTileTexture(this.context.device, this.props.data),
+      // Remember what the texture was built from (see updateState).
+      textureData: this.props.data
     });
   }
 
@@ -492,10 +494,17 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
     const { props, oldProps } = params;
 
     // New data for a layer that deck.gl matched by id (e.g. after a timeline change).
-    if (props.data !== oldProps.data) {
+    //
+    // Comparing against `oldProps.data` alone is not enough: deck.gl runs the first `updateState`
+    // right after `initializeState` with the default props as `oldProps`, so that call looks like
+    // a data change and every tile built the very same texture a second time.
+    if (props.data !== oldProps.data && props.data !== this.state.textureData) {
       const previous = this.state.texture as Texture | undefined;
       previous?.destroy();
-      this.setState({ texture: createTileTexture(this.context.device, props.data) });
+      this.setState({
+        texture: createTileTexture(this.context.device, props.data),
+        textureData: props.data
+      });
     }
   }
 
