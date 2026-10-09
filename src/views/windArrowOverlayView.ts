@@ -24,9 +24,10 @@ let overlayInstance: LeafletDeckOverlay | null = null;
  *  i.e. the resolution the map currently shows.
  * ------------------------------------------------------------------------- */
 const TILE_SIZE = 512;
-const TILE_ZOOM_OFFSET = -1;
+const TILE_ZOOM_OFFSET = 0;
 const TILE_MIN_ZOOM = 0;
-const TILE_MAX_ZOOM = 7;
+/** Finest level the archives store (`PMTILES_MAX_ZOOM` of the HRRR `HrrrWindProcessor`). */
+const TILE_MAX_ZOOM = 8;
 
 /**
  * Tile requests allowed in flight. Every tile is one HTTP range request, so this bounds how fast
@@ -41,7 +42,7 @@ const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85
  * Zoom offset of the level the arrows used to read their own (coarser) tiles from.
  * Kept as an offset so the arrows keep their former spacing and screen density.
  */
-const ARROW_ZOOM_OFFSET = 5;
+const ARROW_ZOOM_OFFSET = 4;
 
 /**
  * Smallest node step: one stored node.

@@ -114,8 +114,12 @@ const MAX_GRID_POINTS = 4e6;
 const HEADER_BYTES = 24;
 /** Bytes before the first int16 stream: geo header plus the two uint32 field lengths. */
 const PAYLOAD_BYTES = HEADER_BYTES + 8;
-/** Scale of the int16 predictor stream: metres per second per step. */
-const PRED_SCALE = 0.01;
+/**
+ * Scale of the int16 predictor stream: metres per second per step.
+ * Must match `PRED_SCALE` of the `HrrrWindProcessor` producer that writes the archives,
+ * otherwise every decoded value is off by the ratio of the two scales.
+ */
+const PRED_SCALE = 0.05;
 /** Sentinel of the predictor stream that marks an invalid (nan) node. */
 const PRED_SENTINEL = -20000;
 

@@ -32,7 +32,7 @@ export type ProviderConfig = {
  */
 export const providers: Record<string, ProviderConfig> = {
   [D2]: {
-    baseUrl: "/output/",
+    baseUrl: "https://chriz76.github.io/hrrr-data/",
     gridCellSize: 1.0,
     imageBounds: [
       [43.0440, -4.1616],
