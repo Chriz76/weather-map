@@ -10,21 +10,20 @@ import type { Map as LeafletMap } from 'leaflet';
 import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
 import { providers } from '../config';
 import { getTileGrid, gridToPoints } from '../services/windArrowService';
-import type { WindGridAnchor, WindTileGrid, WindTilePoint } from '../services/windArrowService';
+import type { WindGridAnchor, WindNodeWindow, WindTileGrid, WindTilePoint } from '../services/windArrowService';
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { logger } from '../utils/logger';
+import { isDebugEnabled, logger } from '../utils/logger';
 
 let overlayInstance: LeafletDeckOverlay | null = null;
 
 /* ---------------------------------------------------------------------------
  *  Tile settings
  *
- *  Field and arrows share one tile layer, so there is only one data level:
- *  tile zoom = round(deckZoom + log2(512 / tileSize) + zoomOffset) = round(leaflet zoom),
- *  i.e. the resolution the map currently shows.
+ *  Field and arrows are two tile layers over the same archive, each reading its own level:
+ *  tile zoom = round(deckZoom + log2(512 / tileSize) + zoomOffset),
+ *  so the level of a layer follows from the offset it is given (see ARROW_ZOOM_OFFSET).
  * ------------------------------------------------------------------------- */
 const TILE_SIZE = 512;
-const TILE_ZOOM_OFFSET = 0;
 const TILE_MIN_ZOOM = 0;
 /** Finest level the archives store (`PMTILES_MAX_ZOOM` of the HRRR `HrrrWindProcessor`). */
 const TILE_MAX_ZOOM = 8;
@@ -39,38 +38,30 @@ const TILE_DEBOUNCE_MS = 80;
 const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 
 /**
- * Zoom offset of the level the arrows used to read their own (coarser) tiles from.
- * Kept as an offset so the arrows keep their former spacing and screen density.
+ * Level offset of the arrow layer - the whole reason the arrows have a layer of their own.
+ *
+ * Every archive level keeps ~57 nodes across a 512 px tile (the pipeline subsamples a 0.025 deg
+ * lattice by `2^(PMTILES_MAX_ZOOM - z)`, see `hrrr-data/pipeline/src/process.py`), and the level
+ * distance is what sets the arrow spacing on screen: `-2` reads at `map zoom - 3`, two levels below
+ * the field, whose tiles cover 2048 px and therefore put the arrows ~36 px apart - the spacing the
+ * former 256 px arrow layer with `zoomOffset: -3` produced. It holds at EVERY map zoom up to 11,
+ * because the level moves with the zoom and is only clamped at the finest archive level (from map
+ * zoom 12 the arrows spread apart). The density therefore follows the tile level, which the tileset
+ * changes on its own: no update trigger, no rebuild of cached tiles, no module state.
  */
-const ARROW_ZOOM_OFFSET = 4;
+const ARROW_ZOOM_OFFSET = -2;
 
 /**
- * Smallest node step: one stored node.
+ * Node step of the arrows: one stored node of the arrow level.
  *
- * The archives double their nodes per level, so a coarser step is just a larger stride, and below
- * one node there is nothing left to show: the samples would sit between stored nodes and the
- * arrows would stop showing a measured value.
+ * The level already carries the spacing above, and one stored node is the finest sample the archive
+ * really has - a smaller step would sit between stored nodes and the arrows would stop showing a
+ * measured value.
  */
-const ARROW_MIN_STRIDE = 1;
+const ARROW_STRIDE = 1;
 
-/** Leaflet map, kept to derive the arrow density from the current zoom. */
-let overlayMap: LeafletMap | null = null;
-
-/** Archive of the active timestamp; kept so the arrows can be re-rendered on a zoom change. */
+/** Archive of the active timestamp; kept so a new archive can replace the layers. */
 let currentPmUrl: string | null = null;
-
-/**
- * Arrow zoom the arrows are generated with, or null while no arrows are shown.
- *
- * It deliberately lives outside the layer instance: deck.gl caches the sub layers of every tile,
- * so tiles that load later - and tiles deck.gl re-renders - must use the density of the current
- * map zoom. A density baked into the layer's `renderSubLayers` closure would keep whatever zoom
- * the tile was rendered with first, which is what left the arrows behind while zooming out.
- */
-let currentArrowZoom: number | null = null;
-
-/** Arrow zoom the tiles were last re-rendered for, null while the render state is unknown. */
-let renderedArrowZoom: number | null = null;
 
 /**
  * Lattice anchor of the active archive: every node of a wind archive sits at
@@ -98,42 +89,13 @@ function getGridAnchor(): WindGridAnchor {
 }
 
 /**
- * Arrow zoom of the current map view: the map zoom minus {@link ARROW_ZOOM_OFFSET}. The tile
- * level stops at the archive's finest level, deeper zooms keep reading that level, so the arrow
- * step is derived from this value instead of from the tile level alone.
- */
-function arrowZoomForMap(): number {
-  const mapZoom = Math.round(overlayMap?.getZoom() ?? TILE_MAX_ZOOM);
-  return Math.max(TILE_MIN_ZOOM, mapZoom - ARROW_ZOOM_OFFSET);
-}
-
-/**
- * Node step of a tile of the given zoom.
- *
- * The archive doubles the nodes per row with every level and each level's nodes are a subset of
- * the finer one, so a coarser step is just a larger stride in the same payload. The arrows used
- * to read the level four zooms coarser (stride 16 there), so the ladder is
- * 16 (map zoom 7 and 8, level 7 resp. 8), 8 (zoom 9), 4 (zoom 10), 2 (zoom 11) and 1 (zoom 12),
- * all read from level 8. Deeper than zoom 12 no coarser stride is left, so the arrows keep the
- * node step of level 8 and simply sit further apart on screen.
- * @param tileZoom Zoom of the tile the arrows are derived from.
- * @param arrowZoom Arrow zoom of the current map view; see {@link arrowZoomForMap}.
- * @returns Node step on both axes, at least ARROW_MIN_STRIDE.
- */
-function arrowStride(tileZoom: number, arrowZoom: number): number {
-  return Math.max(ARROW_MIN_STRIDE, Math.pow(2, tileZoom - arrowZoom));
-}
-
-/**
- * Removes the current wind layer so no stale field or arrows remain visible.
- * Emptying the layer set makes deck.gl finalize the previous tile layer, so the next
- * `setPmtilesUrl` call builds a fresh layer with a clean tile cache.
+ * Removes the current wind layers so no stale field or arrows remain visible.
+ * Emptying the layer set makes deck.gl finalize the previous tile layers, so the next
+ * `setPmtilesUrl` call builds fresh layers with a clean tile cache.
  * @param reason Short description used for diagnostic logging.
  */
 function clearWindLayers(reason: string): void {
   currentPmUrl = null;
-  currentArrowZoom = null;
-  renderedArrowZoom = null;
   if (!overlayInstance) return;
   logger.debug('[windArrowOverlayView] clearing wind layers', { reason });
   try {
@@ -144,33 +106,19 @@ function clearWindLayers(reason: string): void {
 }
 
 /**
- * Builds the wind tile layer for the current archive and arrow zoom and applies it.
+ * Builds both tile layers for the current archive and applies them.
  *
- * The layer id stays the same, so deck.gl matches the new instance with the previous one and
- * keeps the decoded tiles; only the render props change (see {@link createWindTileLayer}).
+ * The layer ids stay the same, so deck.gl matches the new instances with the previous ones and
+ * keeps the decoded tiles; the field is drawn first, the arrows on top of it.
  * @returns True when deck.gl accepted the layer update.
  */
-function applyWindTileLayer(): boolean {
+function applyWindLayers(): boolean {
   if (!overlayInstance || !currentPmUrl) return false;
-  const arrowZoom = arrowZoomForMap();
-  currentArrowZoom = arrowZoom;
-  logger.debug('[windArrowOverlayView] applying wind tile layer', { arrowZoom });
-  const applied = overlayInstance.setLayers([createWindTileLayer(currentPmUrl, arrowZoom)]);
-  if (applied) renderedArrowZoom = arrowZoom;
-  return applied;
-}
-
-/**
- * Rebuilds the arrows when the zoom changed their node step.
- *
- * Hooked to `zoomend` and - as a safety net - to `moveend`, which Leaflet also fires after a
- * zoom: a layer update deck.gl rejected is retried instead of leaving the arrows at the density
- * of the previous zoom.
- */
-function refreshArrowDensity(): void {
-  if (!overlayInstance || !currentPmUrl) return;
-  if (arrowZoomForMap() === renderedArrowZoom) return;
-  applyWindTileLayer();
+  logger.debug('[windArrowOverlayView] applying wind tile layers', currentPmUrl);
+  return overlayInstance.setLayers([
+    createFieldTileLayer(currentPmUrl),
+    createArrowTileLayer(currentPmUrl)
+  ]);
 }
 
 /* -------------------------------------------------------------------------
@@ -569,111 +517,303 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
 }
 
 /**
- * Builds the tile layer that renders the wind field with the arrows on top of it.
+ * Loop statistics of the arrow generation, active with `?debug=true` only.
  *
- * Both come from a single decode of the same tile: the field uploads the grid as a texture,
- * the arrows take every stride-th node of that grid (see {@link arrowStride}). This replaces
- * the former second tile layer, which read a coarser level of the same archive.
- * @param pmUrl Archive URL of the active timestamp.
- * @param arrowZoom Arrow zoom of the current map view; see {@link arrowZoomForMap}.
+ * The frame probe can name `gridToPoints` as the hot function but not why it is hot: it shows
+ * neither the number of tiles that were rendered nor the window the loop was asked for. These
+ * counters answer both, so a slow frame can be told apart from a slow loop.
  */
-function createWindTileLayer(pmUrl: string, arrowZoom: number) {
-  return new TileLayer<WindTileGrid | null>({
-    id: 'wind-tile-layer',
+type LoopStats = {
+  /** `renderSubLayers` invocations, including the ones that bail out before the loop. */
+  tiles: number;
+  /** Calls that reached `gridToPoints`. */
+  calls: number;
+  /** Wind points the loop produced in total. */
+  points: number;
+  /** Time spent inside `gridToPoints` in total. */
+  loopMs: number;
+  /** Longest single call of the interval. */
+  maxMs: number;
+  /** Tile, payload and window of that longest call. */
+  maxCall: string;
+  /** `performance.now()` of the last report. */
+  reportedAt: number;
+};
 
-    // `getTileData` reloads the tiles when a new archive (timestamp) is selected.
-    // `windArrowZoom` only regenerates the sub layers of the tiles that are already loaded:
-    // TileLayer treats any trigger other than `all` and `getTileData` as "render options
-    // changed" (its updateState drops the cached sub layers of every tile). Without that change
-    // deck.gl keeps the arrow layer of a tile it rendered before, i.e. the arrows would not
-    // follow the zoom.
-    updateTriggers: {
-      getTileData: [pmUrl],
-      windArrowZoom: [arrowZoom]
-    },
+/** Interval the loop statistics are written with, in ms. */
+const LOOP_REPORT_INTERVAL_MS = 1000;
 
+const loopStats: LoopStats = {
+  tiles: 0,
+  calls: 0,
+  points: 0,
+  loopMs: 0,
+  maxMs: 0,
+  maxCall: '',
+  reportedAt: 0
+};
+
+/**
+ * One-line description of a `gridToPoints` call.
+ *
+ * It carries the payload size and the window, because a window that does not fit the payload is
+ * the one way the loop can get large without large data - the very thing the point count alone
+ * cannot distinguish.
+ * @param z Tile zoom the arrows were derived from.
+ * @param grid Decoded grid of the tile.
+ * @param stride Node step the loop was called with.
+ * @param nodeWindow Payload window the loop was called with.
+ */
+function describeCall(z: number, grid: WindTileGrid, stride: number, nodeWindow: WindNodeWindow): string {
+  return `z${z} ${grid.cols}x${grid.rows} ` +
+    `i${nodeWindow.colMin.toFixed(1)}..${nodeWindow.colMax.toFixed(1)} ` +
+    `j${nodeWindow.rowMin.toFixed(1)}..${nodeWindow.rowMax.toFixed(1)} ` +
+    `stride ${stride}`;
+}
+
+/**
+ * Records one `gridToPoints` call and writes the summary once per interval.
+ * @param z Tile zoom the arrows were derived from.
+ * @param grid Decoded grid of the tile.
+ * @param stride Node step the loop was called with.
+ * @param nodeWindow Payload window the loop was called with.
+ * @param points Points the loop produced.
+ * @param ms Time the loop took.
+ */
+function reportLoopCall(
+  z: number,
+  grid: WindTileGrid,
+  stride: number,
+  nodeWindow: WindNodeWindow,
+  points: number,
+  ms: number
+): void {
+  const stats = loopStats;
+  stats.calls += 1;
+  stats.points += points;
+  stats.loopMs += ms;
+
+  if (ms > stats.maxMs) {
+    stats.maxMs = ms;
+    stats.maxCall = describeCall(z, grid, stride, nodeWindow);
+  }
+
+  const now = window.performance.now();
+  if (now - stats.reportedAt < LOOP_REPORT_INTERVAL_MS) return;
+
+  logger.debug(
+    '[windArrowOverlayView] gridToPoints:',
+    `tiles ${stats.tiles}, calls ${stats.calls}, points ${stats.points}, ` +
+    `loop ${stats.loopMs.toFixed(1)}ms ` +
+    `(${(stats.loopMs / Math.max(1, stats.calls)).toFixed(2)}ms/call), ` +
+    `slowest ${stats.maxMs.toFixed(2)}ms ${stats.maxCall}`
+  );
+
+  stats.tiles = 0;
+  stats.calls = 0;
+  stats.points = 0;
+  stats.loopMs = 0;
+  stats.maxMs = 0;
+  stats.maxCall = '';
+  stats.reportedAt = now;
+}
+
+/**
+ * Generates the wind points of one tile and records the loop statistics.
+ * @param grid Decoded grid of the tile.
+ * @param z Tile zoom the arrows are derived from.
+ * @param stride Node step on both axes; see {@link arrowStride}.
+ * @param nodeWindow Payload window of the tile's data quad.
+ * @returns Wind points of the tile.
+ */
+function generateArrowPoints(
+  grid: WindTileGrid,
+  z: number,
+  stride: number,
+  nodeWindow: WindNodeWindow
+): WindTilePoint[] {
+  if (!isDebugEnabled) return gridToPoints(grid, stride, getGridAnchor(), nodeWindow);
+
+  const started = window.performance.now();
+  const points = gridToPoints(grid, stride, getGridAnchor(), nodeWindow);
+  reportLoopCall(z, grid, stride, nodeWindow, points.length, window.performance.now() - started);
+  return points;
+}
+
+/** XYZ index of a tileset tile. */
+type TileIndex = { x: number; y: number; z: number };
+
+/** Decoded payload of a tile and the window of it the tile's quad covers. */
+type TileQuad = {
+  grid: WindTileGrid;
+  /** Payload window of the quad (payload indices). */
+  i0: number;
+  i1: number;
+  j0: number;
+  j1: number;
+  /** Quad extent as [west, south, east, north]. */
+  bounds: [number, number, number, number];
+};
+
+/**
+ * Narrows `props.tile.bbox` to the WGS84 form.
+ *
+ * deck.gl hands either that one or a `left/top/right/bottom` box, depending on the indexing scheme
+ * of the tileset, so the bbox has to be told apart instead of assumed.
+ * @param bbox Value of `props.tile.bbox`.
+ * @returns True when the box uses west/south/east/north.
+ */
+function isGeoBox(bbox: unknown): bbox is GeoBox {
+  return typeof bbox === 'object' && bbox !== null && 'west' in bbox;
+}
+
+/**
+ * Resolves the part of a tile's payload that its quad covers.
+ *
+ * The requested tile defines the quad; the payload origin/delta define which part of the grid it
+ * covers. Both are clamped to what the payload really contains, so padded archives draw up to the
+ * tile edge and unpadded ones keep one cell of allowance.
+ * @param grid Decoded grid of the tile, or null when the archive has no data there.
+ * @param tile Tile the sub layers are being built for.
+ * @returns Window, extent and grid, or null when there is nothing to draw for this tile.
+ */
+function resolveTileQuad(
+  grid: WindTileGrid | null,
+  tile: { index: TileIndex; bbox?: unknown }
+): TileQuad | null {
+  if (!grid) return null;                           // tile does not exist in the archive
+
+  const bb: GeoBox = isGeoBox(tile.bbox) ? tile.bbox : tileBBoxFromIndex(tile.index);
+
+  const i0 = clamp((bb.west - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
+  const i1 = clamp((bb.east - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
+  const j0 = clamp((grid.originLat - bb.north) / grid.deltaLat, 0, grid.rows - 1);
+  const j1 = clamp((grid.originLat - bb.south) / grid.deltaLat, 0, grid.rows - 1);
+  if (i1 <= i0 || j1 <= j0) return null;            // no data here
+
+  return {
+    grid,
+    i0,
+    i1,
+    j0,
+    j1,
+    bounds: [
+      grid.originLng + i0 * grid.deltaLng,
+      grid.originLat - j1 * grid.deltaLat,
+      grid.originLng + i1 * grid.deltaLng,
+      grid.originLat - j0 * grid.deltaLat
+    ]
+  };
+}
+
+/**
+ * Tile loader of an archive. Both layers read their own level of the same URL, so they share it.
+ * @param pmUrl Archive URL of the active timestamp.
+ */
+function createTileLoader(pmUrl: string) {
+  return async (tile: { index: TileIndex; signal?: AbortSignal }): Promise<WindTileGrid | null> => {
+    try {
+      return await getTileGrid(pmUrl, tile.index.z, tile.index.x, tile.index.y, tile.signal);
+    } catch (err) {
+      logger.error('[windArrowOverlayView] getTileData error', err);
+      return null;
+    }
+  };
+}
+
+/**
+ * Props both layers share.
+ *
+ * `getTileData` is the ONLY update trigger: a new archive (timestamp) reloads the tiles, and
+ * nothing else ever invalidates one that is already in the cache. That is what keeps a zoom free
+ * of rebuilds - the tileset selects the new level and builds those tiles, while the cached ones
+ * keep their sub layers.
+ * @param pmUrl Archive URL of the active timestamp.
+ */
+function baseTileLayerProps(pmUrl: string) {
+  return {
+    updateTriggers: { getTileData: [pmUrl] },
     minZoom: TILE_MIN_ZOOM,
     maxZoom: TILE_MAX_ZOOM,
     tileSize: TILE_SIZE,
-    zoomOffset: TILE_ZOOM_OFFSET,
     extent: TILE_EXTENT,
     maxRequests: TILE_MAX_REQUESTS,
     debounceTime: TILE_DEBOUNCE_MS,
-    refinementStrategy: 'best-available',
+    refinementStrategy: 'best-available' as const,
+    getTileData: createTileLoader(pmUrl)
+  };
+}
 
-    getTileData: async ({ index: { x, y, z }, signal }): Promise<WindTileGrid | null> => {
-      try {
-        return await getTileGrid(pmUrl, z, x, y, signal);
-      } catch (err) {
-        logger.error('[windArrowOverlayView] getTileData error', err);
-        return null;
-      }
-    },
+/**
+ * Tile layer of the wind field: one textured quad per tile, read from the level that matches the map
+ * resolution.
+ * @param pmUrl Archive URL of the active timestamp.
+ */
+function createFieldTileLayer(pmUrl: string) {
+  return new TileLayer<WindTileGrid | null>({
+    ...baseTileLayerProps(pmUrl),
+    id: 'wind-field-tile-layer',
 
     renderSubLayers: (props) => {
-      const grid = props.data;
-      if (!grid) return null;                       // tile does not exist in the archive
+      const quad = resolveTileQuad(props.data, props.tile);
+      if (!quad) return null;
 
-      const index = props.tile.index;
+      return new WindTileLayer({
+        id: `${props.id}-field`,
+        data: quad.grid,
+        bounds: quad.bounds,
+        ciMin: [quad.i0, quad.j0],
+        ciMax: [quad.i1, quad.j1],
+        fieldOpacity: FIELD_OPACITY,
+        // Straight alpha blending; the field is drawn below the arrows and has no depth.
+        parameters: {
+          blend: true,
+          blendColorOperation: 'add',
+          blendColorSrcFactor: 'src-alpha',
+          blendColorDstFactor: 'one-minus-src-alpha',
+          blendAlphaOperation: 'add',
+          blendAlphaSrcFactor: 'one',
+          blendAlphaDstFactor: 'one-minus-src-alpha',
+          depthWriteEnabled: false,
+          depthCompare: 'always',
+          cullMode: 'none'
+        }
+      });
+    }
+  });
+}
 
-      // The requested tile defines the quad; the payload origin/delta define which part of
-      // the grid it covers. Both are clamped to what the payload really contains, so padded
-      // archives draw up to the tile edge and unpadded ones keep one cell of allowance.
-      const deckBBox = props.tile.bbox;
-      const bb: GeoBox = deckBBox && 'west' in deckBBox
-        ? { west: deckBBox.west, south: deckBBox.south, east: deckBBox.east, north: deckBBox.north }
-        : tileBBoxFromIndex(index);
+/**
+ * Tile layer of the wind arrows.
+ *
+ * It reads a coarser level of the same archive (see {@link ARROW_ZOOM_OFFSET}), so its tiles are
+ * few and large: one covers ~4096 px on screen, which is most of the viewport, and every stored
+ * node of it carries an arrow. The arrow density is therefore a property of the level, and the
+ * tileset changes that level on its own while zooming - no trigger, no rebuild, no module state.
+ * @param pmUrl Archive URL of the active timestamp.
+ */
+function createArrowTileLayer(pmUrl: string) {
+  return new TileLayer<WindTileGrid | null>({
+    ...baseTileLayerProps(pmUrl),
+    id: 'wind-arrow-tile-layer',
+    zoomOffset: ARROW_ZOOM_OFFSET,
 
-      const i0 = clamp((bb.west - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
-      const i1 = clamp((bb.east - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
-      const j0 = clamp((grid.originLat - bb.north) / grid.deltaLat, 0, grid.rows - 1);
-      const j1 = clamp((grid.originLat - bb.south) / grid.deltaLat, 0, grid.rows - 1);
-      if (i1 <= i0 || j1 <= j0) return null;        // no data here
+    renderSubLayers: (props) => {
+      if (isDebugEnabled) loopStats.tiles += 1;
 
-      const bounds: [number, number, number, number] = [
-        grid.originLng + i0 * grid.deltaLng,
-        grid.originLat - j1 * grid.deltaLat,
-        grid.originLng + i1 * grid.deltaLng,
-        grid.originLat - j0 * grid.deltaLat
-      ];
+      const quad = resolveTileQuad(props.data, props.tile);
+      if (!quad) return null;
 
-      // Density of the current map zoom, not the one this layer was created with: every tile is
-      // kept in deck.gl's cache and may be re-rendered long after a zoom change.
-      const densityZoom = currentArrowZoom ?? arrowZoom;
-      const stride = arrowStride(index.z, densityZoom);
-      const arrowPoints = gridToPoints(grid, stride, getGridAnchor(), {
-        colMin: i0,
-        colMax: i1,
-        rowMin: j0,
-        rowMax: j1
+      const points = generateArrowPoints(quad.grid, props.tile.index.z, ARROW_STRIDE, {
+        colMin: quad.i0,
+        colMax: quad.i1,
+        rowMin: quad.j0,
+        rowMax: quad.j1
       });
 
-      return [
-        new WindTileLayer({
-          id: `${props.id}-field`,
-          data: grid,
-          bounds,
-          ciMin: [i0, j0],
-          ciMax: [i1, j1],
-          fieldOpacity: FIELD_OPACITY,
-          // Straight alpha blending; the field is drawn below the arrows and has no depth.
-          parameters: {
-            blend: true,
-            blendColorOperation: 'add',
-            blendColorSrcFactor: 'src-alpha',
-            blendColorDstFactor: 'one-minus-src-alpha',
-            blendAlphaOperation: 'add',
-            blendAlphaSrcFactor: 'one',
-            blendAlphaDstFactor: 'one-minus-src-alpha',
-            depthWriteEnabled: false,
-            depthCompare: 'always',
-            cullMode: 'none'
-          }
-        }),
-        // The density is part of the id, so a zoom change always builds fresh arrow layers
-        // instead of updating the attributes of a layer deck.gl matched by name.
-        createArrowLayer(arrowPoints, `${props.id}-arrows-${densityZoom}`, pmUrl)
-      ];
+      // A stable id: the arrows of a tile are only ever built from its decoded payload, so deck.gl
+      // matches the layer and updates its attributes instead of building a new one.
+      return createArrowLayer(points, `${props.id}-arrows`, pmUrl);
     }
   });
 }
@@ -745,7 +885,6 @@ export interface IWindArrowOverlayView {
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
   init(map: LeafletMap) {
-    overlayMap = map;
     if (!overlayInstance) {
       overlayInstance = new LeafletDeckOverlay({ className: 'wind-arrow-deck-overlay', zIndex: '510' });
       overlayInstance.addTo(map);
@@ -770,12 +909,8 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
         clearWindLayers('provider changed');
       });
 
-      // deck.gl caches the sub layers of every tile, so the arrow step has to be re-applied
-      // whenever the map zoom changed it (`moveend` also fires after a zoom and retries when
-      // deck.gl rejected the first update).
-      map.on('zoomend', refreshArrowDensity);
-      map.on('moveend', refreshArrowDensity);
-
+      // No zoom listener: both layers follow a zoom through their tileset alone (see
+      // ARROW_ZOOM_OFFSET and baseTileLayerProps).
     }
   },
 
@@ -785,7 +920,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     logger.debug('[windArrowOverlayView] setPmtilesUrl', pmUrl);
     currentPmUrl = pmUrl;
 
-    // One tile layer; it renders the field and its arrows as sub layers.
-    applyWindTileLayer();
+    // Field and arrows: two layers over the same archive.
+    applyWindLayers();
   }
 };

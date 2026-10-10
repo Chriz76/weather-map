@@ -5,6 +5,9 @@ declare global {
     L?: typeof import('leaflet');
     // Enables verbose logger.debug output when set to `true` before app start.
     WEATHER_DEBUG?: boolean;
+    // Enables the measurement output of the perf paths without the debug console. Implied by
+    // `?debug=true` and set on its own by `?perf=true`; see index.html.
+    WEATHER_PERF?: boolean;
   }
 }
 

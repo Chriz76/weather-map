@@ -10,6 +10,14 @@ export interface ILeafletDeckOverlayOptions {
 }
 
 /**
+ * Difference between Leaflet's zoom and deck.gl's zoom reference (tile vs. scale).
+ *
+ * Every view handed to deck.gl is one zoom lower than the map, so the tile level
+ * `Tileset2D.getTileIndices` selects is `mapZoom - DECK_ZOOM_OFFSET` as well.
+ */
+const DECK_ZOOM_OFFSET = 1;
+
+/**
  * deck.gl keeps an internal `_animate` prop that is deliberately absent from the public
  * `DeckProps`. All knowledge about that prop lives in the two helpers below, so the
  * unavoidable assertion stays in one documented place instead of being repeated per call site.
@@ -150,9 +158,9 @@ export class LeafletDeckOverlay extends L.Layer {
     return {
       longitude: center.lng,
       latitude: center.lat,
-      // Keep the -1 offset: it compensates the deck.gl/Leaflet zoom reference difference
+      // Keep the offset: it compensates the deck.gl/Leaflet zoom reference difference
       // (tile vs. scale) and prevents position drift while panning.
-      zoom: zoom - 1,
+      zoom: zoom - DECK_ZOOM_OFFSET,
       pitch: 0,
       bearing: 0
     };

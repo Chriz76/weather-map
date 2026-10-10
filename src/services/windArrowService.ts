@@ -1,16 +1,23 @@
-import { PMTiles } from 'pmtiles';
+import { FetchSource, PMTiles } from 'pmtiles';
 import { logger } from '../utils/logger';
 import { providers as providerConfig } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 
-const CACHE_BUSTER = `cb=${Date.now()}`;
-
-function getGeneratedTag(): string {
+/**
+ * Version tag of the active archive, appended to its URL as `g=`.
+ *
+ * The tag is the model's generation timestamp, so the URL stays identical - and therefore served
+ * from the browser HTTP cache - while the archive content does not change, and changes exactly when
+ * a new model run replaces it. A per-page-load buster (the former `cb=${Date.now()}`) is
+ * deliberately NOT used: it gave every page load a brand-new URL and defeated the HTTP cache
+ * entirely, so a reload could never reuse anything that was already downloaded.
+ * @returns URI-encoded generation timestamp, or an empty string while it is not known yet.
+ */
+function getVersionTag(): string {
   try {
-    const gen = weatherProviderModel.modelGeneratedAt;
-    return encodeURIComponent(gen ?? String(Date.now()));
-  } catch (e) {
-    return String(Date.now());
+    return encodeURIComponent(weatherProviderModel.modelGeneratedAt ?? '');
+  } catch {
+    return '';
   }
 }
 
@@ -20,11 +27,17 @@ const pmCache = new Map<string, PmWithClose>();
 const USAGE_ORDER: string[] = [];
 const CACHE_LIMIT = 20;
 
-function urlWithCacheBuster(pmUrl: string): string {
-  const g = `g=${getGeneratedTag()}`;
-  const cb = `${CACHE_BUSTER}`;
-  if (pmUrl.includes('?')) return `${pmUrl}&${g}&${cb}`;
-  return `${pmUrl}?${g}&${cb}`;
+/**
+ * Appends the archive's version tag to its URL, keeping the URL stable (and cacheable) as long as
+ * the archive content does not change.
+ * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
+ * @returns URL with the version tag, or the URL unchanged while the version is unknown.
+ */
+function urlWithVersionTag(pmUrl: string): string {
+  const tag = getVersionTag();
+  if (!tag) return pmUrl;
+  const param = `g=${tag}`;
+  return pmUrl.includes('?') ? `${pmUrl}&${param}` : `${pmUrl}?${param}`;
 }
 
 function resolvePmUrl(pmUrl: string): string {
@@ -44,12 +57,26 @@ function resolvePmUrl(pmUrl: string): string {
   return baseUrl.endsWith('/') ? baseUrl + pmUrl : baseUrl + '/' + pmUrl;
 }
 
+/**
+ * Returns the cached PMTiles instance of an archive URL, creating it on first use.
+ *
+ * The instance is built from an explicit {@link FetchSource} instead of a plain URL string so the
+ * browser HTTP cache can be re-enabled. `pmtiles` forces `cache: 'no-store'` on Windows Chromium
+ * (`chromeWindowsNoCache`) to work around a Chromium bug that resolves a byte range against a
+ * partially cached entry incorrectly. We deliberately opt out of that workaround and accept the
+ * remote risk, because the workaround disables the disk cache entirely - every range request then
+ * hits the network, even for a reload of an unchanged archive.
+ * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
+ */
 function getPm(pmUrl: string) {
   const resolvedUrl = resolvePmUrl(pmUrl);
-  const key = urlWithCacheBuster(resolvedUrl);
+  const key = urlWithVersionTag(resolvedUrl);
   let pm = pmCache.get(key);
   if (!pm) {
-    pm = new PMTiles(key);
+    const source = new FetchSource(key);
+    // Opt out of the Chromium/Windows workaround so range responses land in the disk cache again.
+    source.chromeWindowsNoCache = false;
+    pm = new PMTiles(source);
     pmCache.set(key, pm);
   }
 
@@ -173,7 +200,7 @@ export async function getTileGrid(
   signal?: AbortSignal
 ): Promise<WindTileGrid | null> {
   const resolved = resolvePmUrl(pmUrl);
-  const key = urlWithCacheBuster(resolved);
+  const key = urlWithVersionTag(resolved);
 
   const maxAttempts = 2; // initial try + 1 retry
   const backoffMs = 300;
@@ -359,7 +386,7 @@ export function gridToPoints(
 }
 
 export function disposePmtiles(pmUrl: string): void {
-  const key = urlWithCacheBuster(pmUrl);
+  const key = urlWithVersionTag(pmUrl);
   const pm = pmCache.get(key);
   if (pm) {
     if (typeof pm.close === 'function') {
