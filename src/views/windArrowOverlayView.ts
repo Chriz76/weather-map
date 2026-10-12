@@ -19,46 +19,51 @@ let overlayInstance: LeafletDeckOverlay | null = null;
 /* ---------------------------------------------------------------------------
  *  Tile settings
  *
- *  Field and arrows are two tile layers over the same archive, each reading its own level:
- *  tile zoom = round(deckZoom + log2(512 / tileSize) + zoomOffset),
- *  so the level of a layer follows from the offset it is given (see ARROW_ZOOM_OFFSET).
+ *  One tile layer carries both sub layers - the field texture and the arrows - from a single
+ *  decoded grid. The tileset may ask for levels finer than the archive stores: above
+ *  ARCHIVE_MAX_ZOOM the loader re-reads the finest level and each sub layer draws its part of it
+ *  (see createTileLoader and resolveTileQuad). The arrow density is a plain function of the tile
+ *  zoom (see arrowStride), so nothing has to be tracked outside the layers.
  * ------------------------------------------------------------------------- */
 const TILE_SIZE = 512;
 const TILE_MIN_ZOOM = 0;
+/** Highest tile zoom the tileset asks for; may lie above the archive's finest level. */
+const TILE_MAX_ZOOM = 10;
 /** Finest level the archives store (`PMTILES_MAX_ZOOM` of the HRRR `HrrrWindProcessor`). */
-const TILE_MAX_ZOOM = 8;
+const ARCHIVE_MAX_ZOOM = 8;
 
 /**
  * Tile requests allowed in flight. Every tile is one HTTP range request, so this bounds how fast
  * a new timestep fills in: the dev server is HTTP/1.1 (six parallel connections per host), the
  * remote Arome archive is served over HTTP/2, where more requests really run in parallel.
  */
-const TILE_MAX_REQUESTS = 12;
-const TILE_DEBOUNCE_MS = 80;
+const TILE_MAX_REQUESTS = 6;
+const TILE_DEBOUNCE_MS = 0;
 const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 
 /**
- * Level offset of the arrow layer - the whole reason the arrows have a layer of their own.
+ * Node step of the arrows on the levels the archive really stores (tile zoom <= ARCHIVE_MAX_ZOOM).
  *
- * Every archive level keeps ~57 nodes across a 512 px tile (the pipeline subsamples a 0.025 deg
- * lattice by `2^(PMTILES_MAX_ZOOM - z)`, see `hrrr-data/pipeline/src/process.py`), and the level
- * distance is what sets the arrow spacing on screen: `-2` reads at `map zoom - 3`, two levels below
- * the field, whose tiles cover 2048 px and therefore put the arrows ~36 px apart - the spacing the
- * former 256 px arrow layer with `zoomOffset: -3` produced. It holds at EVERY map zoom up to 11,
- * because the level moves with the zoom and is only clamped at the finest archive level (from map
- * zoom 12 the arrows spread apart). The density therefore follows the tile level, which the tileset
- * changes on its own: no update trigger, no rebuild of cached tiles, no module state.
+ * Every archive level keeps ~57 nodes across a 512 px tile and the levels are a lattice subset of
+ * one another (the nodes double per level, see `hrrr-data/pipeline/src/process.py`), so a constant
+ * node step keeps the on-screen spacing constant across those levels.
  */
-const ARROW_ZOOM_OFFSET = -2;
+const ARROW_STRIDE_BASE = 4;
 
 /**
- * Node step of the arrows: one stored node of the arrow level.
+ * Node step of the arrows for a tile of the given zoom.
  *
- * The level already carries the spacing above, and one stored node is the finest sample the archive
- * really has - a smaller step would sit between stored nodes and the arrows would stop showing a
- * measured value.
+ * Below the archive's finest level the payload is the real (coarser) level, so the step stays
+ * {@link ARROW_STRIDE_BASE}. Above it the payload stays at ARCHIVE_MAX_ZOOM and the step halves per
+ * level, which keeps the spacing constant on screen: 4 (z <= 8), 2 (z 9), 1 (z 10). Deeper zooms
+ * are clamped to TILE_MAX_ZOOM, so the arrows keep one node and simply spread apart.
+ * @param tileZoom Zoom of the tile the arrows are derived from.
+ * @returns Node step on both axes, at least one node.
  */
-const ARROW_STRIDE = 1;
+function arrowStride(tileZoom: number): number {
+  const finer = Math.max(0, tileZoom - ARCHIVE_MAX_ZOOM);
+  return Math.max(1, ARROW_STRIDE_BASE / Math.pow(2, finer));
+}
 
 /** Archive of the active timestamp; kept so a new archive can replace the layers. */
 let currentPmUrl: string | null = null;
@@ -106,19 +111,16 @@ function clearWindLayers(reason: string): void {
 }
 
 /**
- * Builds both tile layers for the current archive and applies them.
+ * Builds the wind tile layer for the current archive and applies it.
  *
- * The layer ids stay the same, so deck.gl matches the new instances with the previous ones and
- * keeps the decoded tiles; the field is drawn first, the arrows on top of it.
+ * The layer id stays the same, so deck.gl matches the new instance with the previous one and keeps
+ * the decoded tiles; the field is drawn first, the arrows on top of it.
  * @returns True when deck.gl accepted the layer update.
  */
 function applyWindLayers(): boolean {
   if (!overlayInstance || !currentPmUrl) return false;
-  logger.debug('[windArrowOverlayView] applying wind tile layers', currentPmUrl);
-  return overlayInstance.setLayers([
-    createFieldTileLayer(currentPmUrl),
-    createArrowTileLayer(currentPmUrl)
-  ]);
+  logger.debug('[windArrowOverlayView] applying wind tile layer', currentPmUrl);
+  return overlayInstance.setLayers([createWindTileLayer(currentPmUrl)]);
 }
 
 /* -------------------------------------------------------------------------
@@ -707,13 +709,20 @@ function resolveTileQuad(
 }
 
 /**
- * Tile loader of an archive. Both layers read their own level of the same URL, so they share it.
+ * Tile loader of an archive.
+ *
+ * Above the archive's finest level the tileset still subdivides (up to TILE_MAX_ZOOM), so the
+ * requested tile is mapped onto the finest stored level: the level difference shifts the index
+ * down with it, otherwise the wrong tile would be read. The sub layers then draw only the part of
+ * that payload their tile covers (see resolveTileQuad).
  * @param pmUrl Archive URL of the active timestamp.
  */
 function createTileLoader(pmUrl: string) {
   return async (tile: { index: TileIndex; signal?: AbortSignal }): Promise<WindTileGrid | null> => {
     try {
-      return await getTileGrid(pmUrl, tile.index.z, tile.index.x, tile.index.y, tile.signal);
+      const { z, x, y } = tile.index;
+      const dz = Math.max(0, z - ARCHIVE_MAX_ZOOM);
+      return await getTileGrid(pmUrl, z - dz, x >> dz, y >> dz, tile.signal);
     } catch (err) {
       logger.error('[windArrowOverlayView] getTileData error', err);
       return null;
@@ -722,7 +731,7 @@ function createTileLoader(pmUrl: string) {
 }
 
 /**
- * Props both layers share.
+ * Props of the wind tile layer.
  *
  * `getTileData` is the ONLY update trigger: a new archive (timestamp) reloads the tiles, and
  * nothing else ever invalidates one that is already in the cache. That is what keeps a zoom free
@@ -745,58 +754,47 @@ function baseTileLayerProps(pmUrl: string) {
 }
 
 /**
- * Tile layer of the wind field: one textured quad per tile, read from the level that matches the map
- * resolution.
- * @param pmUrl Archive URL of the active timestamp.
+ * Sub layer of the wind field: one textured quad over the part of the payload the tile covers.
+ * @param quad Window, extent and grid resolved from the tile payload.
+ * @param id Layer id.
  */
-function createFieldTileLayer(pmUrl: string) {
-  return new TileLayer<WindTileGrid | null>({
-    ...baseTileLayerProps(pmUrl),
-    id: 'wind-field-tile-layer',
-
-    renderSubLayers: (props) => {
-      const quad = resolveTileQuad(props.data, props.tile);
-      if (!quad) return null;
-
-      return new WindTileLayer({
-        id: `${props.id}-field`,
-        data: quad.grid,
-        bounds: quad.bounds,
-        ciMin: [quad.i0, quad.j0],
-        ciMax: [quad.i1, quad.j1],
-        fieldOpacity: FIELD_OPACITY,
-        // Straight alpha blending; the field is drawn below the arrows and has no depth.
-        parameters: {
-          blend: true,
-          blendColorOperation: 'add',
-          blendColorSrcFactor: 'src-alpha',
-          blendColorDstFactor: 'one-minus-src-alpha',
-          blendAlphaOperation: 'add',
-          blendAlphaSrcFactor: 'one',
-          blendAlphaDstFactor: 'one-minus-src-alpha',
-          depthWriteEnabled: false,
-          depthCompare: 'always',
-          cullMode: 'none'
-        }
-      });
+function createFieldLayer(quad: TileQuad, id: string): WindTileLayer {
+  return new WindTileLayer({
+    id,
+    data: quad.grid,
+    bounds: quad.bounds,
+    ciMin: [quad.i0, quad.j0],
+    ciMax: [quad.i1, quad.j1],
+    fieldOpacity: FIELD_OPACITY,
+    // Straight alpha blending; the field is drawn below the arrows and has no depth.
+    parameters: {
+      blend: true,
+      blendColorOperation: 'add',
+      blendColorSrcFactor: 'src-alpha',
+      blendColorDstFactor: 'one-minus-src-alpha',
+      blendAlphaOperation: 'add',
+      blendAlphaSrcFactor: 'one',
+      blendAlphaDstFactor: 'one-minus-src-alpha',
+      depthWriteEnabled: false,
+      depthCompare: 'always',
+      cullMode: 'none'
     }
   });
 }
 
 /**
- * Tile layer of the wind arrows.
+ * Tile layer that carries the wind field with the arrows on top of it.
  *
- * It reads a coarser level of the same archive (see {@link ARROW_ZOOM_OFFSET}), so its tiles are
- * few and large: one covers ~4096 px on screen, which is most of the viewport, and every stored
- * node of it carries an arrow. The arrow density is therefore a property of the level, and the
- * tileset changes that level on its own while zooming - no trigger, no rebuild, no module state.
+ * Both come from a single decode of the same tile: the field uploads the grid as a texture, the
+ * arrows take every `arrowStride`-th node of that grid. The tileset moves up to TILE_MAX_ZOOM, so a
+ * zoom change builds the next level's tiles and with them the next arrow density - no update
+ * trigger, no rebuild of the cached tiles, no module state.
  * @param pmUrl Archive URL of the active timestamp.
  */
-function createArrowTileLayer(pmUrl: string) {
+function createWindTileLayer(pmUrl: string) {
   return new TileLayer<WindTileGrid | null>({
     ...baseTileLayerProps(pmUrl),
-    id: 'wind-arrow-tile-layer',
-    zoomOffset: ARROW_ZOOM_OFFSET,
+    id: 'wind-tile-layer',
 
     renderSubLayers: (props) => {
       if (isDebugEnabled) loopStats.tiles += 1;
@@ -804,7 +802,8 @@ function createArrowTileLayer(pmUrl: string) {
       const quad = resolveTileQuad(props.data, props.tile);
       if (!quad) return null;
 
-      const points = generateArrowPoints(quad.grid, props.tile.index.z, ARROW_STRIDE, {
+      const tileZoom = props.tile.index.z;
+      const points = generateArrowPoints(quad.grid, tileZoom, arrowStride(tileZoom), {
         colMin: quad.i0,
         colMax: quad.i1,
         rowMin: quad.j0,
@@ -813,7 +812,10 @@ function createArrowTileLayer(pmUrl: string) {
 
       // A stable id: the arrows of a tile are only ever built from its decoded payload, so deck.gl
       // matches the layer and updates its attributes instead of building a new one.
-      return createArrowLayer(points, `${props.id}-arrows`, pmUrl);
+      return [
+        createFieldLayer(quad, `${props.id}-field`),
+        createArrowLayer(points, `${props.id}-arrows`, pmUrl)
+      ];
     }
   });
 }
@@ -866,10 +868,10 @@ function createArrowLayer(points: WindTilePoint[], id: string, pmUrl: string): I
     },
 
     // Soft animation of the arrows on data changes (in ms).
-    transitions: {
-      getAngle: 300,
-      getSize: 300
-    },
+    //transitions: {
+    //  getAngle: 300,
+    //  getSize: 300
+    //},
 
     sizeScale: 1,
     sizeUnits: 'pixels',
@@ -909,8 +911,8 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
         clearWindLayers('provider changed');
       });
 
-      // No zoom listener: both layers follow a zoom through their tileset alone (see
-      // ARROW_ZOOM_OFFSET and baseTileLayerProps).
+      // No zoom listener: the tile layer follows a zoom through its tileset alone (see
+      // TILE_MAX_ZOOM, ARCHIVE_MAX_ZOOM and arrowStride).
     }
   },
 
