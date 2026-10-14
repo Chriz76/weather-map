@@ -36,7 +36,13 @@
 
     
     <script>
-      window.WEATHER_DEBUG = new URLSearchParams(window.location.search).get('debug') === 'true';
+      const params = new URLSearchParams(window.location.search);
+
+      // `?debug=true` turns on the verbose logging and the in-page console (eruda, below).
+      // `?perf=true` turns on the measurement output only - a frame can then be measured without
+      // eruda rendering into it, which is what made the earlier frame numbers unusable.
+      window.WEATHER_DEBUG = params.get('debug') === 'true';
+      window.WEATHER_PERF = window.WEATHER_DEBUG || params.get('perf') === 'true';
 
       if (window.WEATHER_DEBUG) {
           // 1. Eruda Skript-Tag erstellen
