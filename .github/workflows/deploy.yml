@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-- name: Node.js & Python einrichten
+      - name: Node.js & Python einrichten
         uses: actions/setup-node@v4
         with:
           node-version: 20
