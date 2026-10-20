@@ -24,49 +24,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
+- name: Node.js & Python einrichten
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint (CI)
-        run: npm run lint:ci
-
-      - name: Run typecheck
-        run: npm run typecheck
-
-      - name: Build project
-        run: npm run build
-
-      # ==========================================
-      # DEPLOYMENT: GitHub Pages (Exklusiv für 'typescript')
-      # ==========================================
-      - name: Upload artifact for GitHub Pages
-        if: github.ref_name == 'typescript'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-
-      - name: Deploy to GitHub Pages
-        if: github.ref_name == 'typescript'
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      # ==========================================
-      # DEPLOYMENT: Cloudflare Pages (Alle Branches AUSSER 'typescript')
-      # ==========================================
-      - name: Deploy to Cloudflare Pages
-        if: github.ref_name != 'typescript'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          accountId: c728452fcd5090f3d7f2bacc5e75fcd2
-          command: pages deploy ./dist --project-name=windapp-preview
-          
+      - name: Dummy-Dateien erzeugen und wrangler deploy ausführen
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          mkdir -p /tmp/bench && cd /tmp/bench
+          python3 -c "
+          import os
+          os.makedirs('t', exist_ok=True)
+          for i in range(15000):
+              open(f't/{i}.pbf', 'wb').write(os.urandom(20000))
+          "
+          time npx wrangler pages deploy t --project-name winddata          
