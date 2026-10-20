@@ -32,6 +32,7 @@ jobs:
       - name: Dummy-Dateien erzeugen und wrangler deploy ausführen
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c728452fcd5090f3d7f2bacc5e75fcd2
         run: |
           mkdir -p /tmp/bench && cd /tmp/bench
           python3 -c "
