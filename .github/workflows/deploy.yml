@@ -2,25 +2,12 @@ name: Deploy Application
 
 on:
   push:
-    # Reagiert auf alle Branches
     branches:
       - '**'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: 'pages'
-  cancel-in-progress: true
-
 jobs:
   deploy:
-    environment:
-      name: ${{ github.ref_name == 'typescript' && 'github-pages' || 'cloudflare-pages' }}
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
@@ -29,16 +16,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Dummy-Dateien erzeugen und wrangler deploy ausführen
+      - name: Bunny CLI installieren
+        run: |
+          curl -sSL https://bunny.net/install-cli.sh | bash
+
+      - name: Dummy-Dateien erzeugen und zu Bunny Edge Storage hochladen
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: c728452fcd5090f3d7f2bacc5e75fcd2
+          BUNNY_STORAGE_ZONE: ${{ secrets.BUNNY_STORAGE_ZONE }}
+          BUNNY_STORAGE_PASSWORD: ${{ secrets.BUNNY_STORAGE_PASSWORD }}
         run: |
           mkdir -p /tmp/bench && cd /tmp/bench
+          
+          # 15.000 Testdateien à ~20 KB erzeugen
           python3 -c "
           import os
           os.makedirs('t', exist_ok=True)
           for i in range(15000):
               open(f't/{i}.pbf', 'wb').write(os.urandom(20000))
           "
-          time npx wrangler pages deploy t --project-name winddata          
+          
+          # Uploadzeit mit bunny-cli messen
+          time bunny storage upload ./t / \
+            --storage-zone "$BUNNY_STORAGE_ZONE" \
+            --access-key "$BUNNY_STORAGE_PASSWORD"
