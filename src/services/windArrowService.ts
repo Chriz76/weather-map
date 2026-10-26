@@ -1,124 +1,32 @@
-import { FetchSource, PMTiles } from 'pmtiles';
 import { logger } from '../utils/logger';
 import { providers as providerConfig } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 
 /**
- * Version tag of the active archive, appended to its URL as `g=`.
+ * Resolves a wind tile base URL to an absolute URL without a trailing slash.
  *
- * The tag is the model's generation timestamp, so the URL stays identical - and therefore served
- * from the browser HTTP cache - while the archive content does not change, and changes exactly when
- * a new model run replaces it. A per-page-load buster (the former `cb=${Date.now()}`) is
- * deliberately NOT used: it gave every page load a brand-new URL and defeated the HTTP cache
- * entirely, so a reload could never reuse anything that was already downloaded.
- * @returns URI-encoded generation timestamp, or an empty string while it is not known yet.
+ * The views pass the provider's `baseUrl`, which is already absolute, so this only matters for
+ * the relative form: the caller then does not have to know how the provider base URL is laid out.
+ * @param base Base URL as handed in by the caller.
+ * @returns Absolute base URL without a trailing slash.
  */
-function getVersionTag(): string {
-  try {
-    return encodeURIComponent(weatherProviderModel.modelGeneratedAt ?? '');
-  } catch {
-    return '';
-  }
-}
-
-type PmWithClose = PMTiles & { close?: () => void };
-type BufferLike = { buffer: ArrayBuffer; byteOffset?: number; byteLength?: number };
-const pmCache = new Map<string, PmWithClose>();
-const USAGE_ORDER: string[] = [];
-const CACHE_LIMIT = 20;
-
-/**
- * Appends the archive's version tag to its URL, keeping the URL stable (and cacheable) as long as
- * the archive content does not change.
- * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
- * @returns URL with the version tag, or the URL unchanged while the version is unknown.
- */
-function urlWithVersionTag(pmUrl: string): string {
-  const tag = getVersionTag();
-  if (!tag) return pmUrl;
-  const param = `g=${tag}`;
-  return pmUrl.includes('?') ? `${pmUrl}&${param}` : `${pmUrl}?${param}`;
-}
-
-function resolvePmUrl(pmUrl: string): string {
-  // If already absolute, return as-is
-  if (/^https?:\/\//i.test(pmUrl) || pmUrl.startsWith('//')) return pmUrl;
+function resolveBase(base: string): string {
+  const trimmed = base.replace(/\/+$/, '');
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('//')) return trimmed;
 
   const activeId = weatherProviderModel.getActiveProviderId();
   const cfg = providerConfig[activeId] as Record<string, unknown> | undefined;
   const baseUrl = cfg && typeof cfg.baseUrl === 'string' ? cfg.baseUrl : '';
 
-  if (!baseUrl) return pmUrl;
+  if (!baseUrl) return trimmed;
 
-  // Join baseUrl and pmUrl without duplicating slashes
-  if (pmUrl.startsWith('/')) {
-    return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) + pmUrl : baseUrl + pmUrl;
-  }
-  return baseUrl.endsWith('/') ? baseUrl + pmUrl : baseUrl + '/' + pmUrl;
+  const joined = trimmed.startsWith('/')
+    ? baseUrl.replace(/\/+$/, '') + trimmed
+    : `${baseUrl.replace(/\/+$/, '')}/${trimmed}`;
+  return joined.replace(/\/+$/, '');
 }
 
-/**
- * Returns the cached PMTiles instance of an archive URL, creating it on first use.
- *
- * The instance is built from an explicit {@link FetchSource} instead of a plain URL string so the
- * browser HTTP cache can be re-enabled. `pmtiles` forces `cache: 'no-store'` on Windows Chromium
- * (`chromeWindowsNoCache`) to work around a Chromium bug that resolves a byte range against a
- * partially cached entry incorrectly. We deliberately opt out of that workaround and accept the
- * remote risk, because the workaround disables the disk cache entirely - every range request then
- * hits the network, even for a reload of an unchanged archive.
- * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
- */
-function getPm(pmUrl: string) {
-  const resolvedUrl = resolvePmUrl(pmUrl);
-  const key = urlWithVersionTag(resolvedUrl);
-  let pm = pmCache.get(key);
-  if (!pm) {
-    const source = new FetchSource(key);
-    // Opt out of the Chromium/Windows workaround so range responses land in the disk cache again.
-    source.chromeWindowsNoCache = false;
-    pm = new PMTiles(source);
-    pmCache.set(key, pm);
-  }
-
-  const idx = USAGE_ORDER.indexOf(key);
-  if (idx >= 0) USAGE_ORDER.splice(idx, 1);
-  USAGE_ORDER.push(key);
-
-  while (USAGE_ORDER.length > CACHE_LIMIT) {
-    const oldest = USAGE_ORDER.shift()!;
-    const p = pmCache.get(oldest);
-    if (p && typeof p.close === 'function') {
-      try { p.close(); } catch (e) { /* ignore */ }
-    }
-    pmCache.delete(oldest);
-  }
-
-  return pm;
-}
-
-function toArrayBufferFromTileData(d: unknown): ArrayBuffer | null {
-  if (d instanceof ArrayBuffer) return d;
-
-  if (ArrayBuffer.isView(d)) {
-    // `ArrayBuffer.isView` narrows `d` to `ArrayBufferView`, which already exposes
-    // buffer/byteOffset/byteLength. Only the SharedArrayBuffer case needs a narrow cast.
-    return new Uint8Array(d.buffer as ArrayBuffer, d.byteOffset, d.byteLength).slice().buffer;
-  }
-
-  if (d && typeof d === 'object') {
-    const obj = d as Record<string, unknown>;
-    if (obj.buffer instanceof ArrayBuffer) {
-      const v = obj as BufferLike;
-      const byteOffset = typeof v.byteOffset === 'number' ? v.byteOffset : 0;
-      const byteLength = typeof v.byteLength === 'number' ? v.byteLength : v.buffer.byteLength - byteOffset;
-      return new Uint8Array(v.buffer, byteOffset, byteLength).slice().buffer;
-    }
-  }
-
-  return null;
-}
-
-/** One decoded wind grid of a PMTiles tile: header values plus the row-major u/v pairs. */
+/** One decoded wind grid of a wind tile: header values plus the row-major u/v pairs. */
 export type WindTileGrid = {
   originLng: number;
   /** Latitude of the northern edge. */
@@ -177,132 +85,148 @@ function decodeDeltaField(stream: Int16Array, rows: number, cols: number, out: F
   }
 }
 
+/** First two bytes of a gzip stream; the pipeline stores every tile compressed. */
+const GZIP_MAGIC_0 = 0x1f;
+const GZIP_MAGIC_1 = 0x8b;
+
 /**
- * Reads and decodes one tile of a wind archive.
+ * Returns a tile payload as raw bytes, unpacking it when the transport did not.
  *
- * Uncompressed payload layout (the PMTiles container is gzip and is unpacked by the library
- * before this function sees the bytes):
+ * The pipeline writes each tile gzip-compressed. A server that sends `Content-Encoding: gzip`
+ * makes `fetch` decode it, so the bytes arrive plain; one that does not (Cloudflare Pages serves
+ * `.bin` as `application/octet-stream`) hands the gzip stream itself over. The magic bytes tell
+ * the two cases apart, so a payload is never decoded twice nor left compressed to the parser.
+ * @param buffer Body of the tile response as `fetch` delivered it.
+ * @returns Uncompressed tile payload.
+ */
+async function unpackPayload(buffer: ArrayBuffer): Promise<ArrayBuffer> {
+  if (buffer.byteLength < 2) return buffer;
+
+  const head = new Uint8Array(buffer, 0, 2);
+  if (head[0] !== GZIP_MAGIC_0 || head[1] !== GZIP_MAGIC_1) return buffer;
+
+  logger.info("[windArrowService] tile is gzip, unpacking");
+
+  if (typeof DecompressionStream === 'undefined') {
+    logger.error('[windArrowService] tile is gzip but DecompressionStream is unavailable');
+    return buffer;
+  }
+
+  const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).arrayBuffer();
+}
+
+/**
+ * Reads and decodes one tile of a wind tile pyramid.
+ *
+ * One tile is one plain GET of `<tileBaseUrl>/<z>/<x>/<y>.bin` - there is no container to seek in
+ * and no range request. The server compresses the response (`Content-Encoding: gzip`) and `fetch`
+ * decodes it, so the bytes seen here are already the raw layout below:
  * `[24 B geo header][u_len u32][v_len u32][u int16 deltas][v int16 deltas]`.
  * The field uploads the grid as a texture and the arrows are derived from the very same grid
  * (see {@link gridToPoints}).
- * @param pmUrl Archive URL as used by the views (absolute or relative to the provider base).
- * @param z Tile zoom of the archive.
+ *
+ * A missing tile is not an error: the pyramid simply has no data there (outside the model area,
+ * or on a border tile of the model grid). Resolving to null - instead of throwing - is what makes
+ * deck.gl cache such a tile as empty instead of retrying it on every render.
+ * @param tileBaseUrl Base URL of the pyramid of the active timestamp, without a trailing slash.
+ * @param z Tile zoom of the pyramid.
  * @param x Tile column.
- * @param y Tile row.
+ * @param y Tile row, 0 = north (XYZ scheme, no TMS flip).
  * @param signal Abort signal of the tile request.
  * @returns The decoded grid, or null when the tile is missing, malformed or aborted.
  */
 export async function getTileGrid(
-  pmUrl: string,
+  tileBaseUrl: string,
   z: number,
   x: number,
   y: number,
   signal?: AbortSignal
 ): Promise<WindTileGrid | null> {
-  const resolved = resolvePmUrl(pmUrl);
-  const key = urlWithVersionTag(resolved);
+  const url = `${resolveBase(tileBaseUrl)}/${z}/${x}/${y}.bin`;
 
-  const maxAttempts = 2; // initial try + 1 retry
-  const backoffMs = 300;
-
-  const isNetworkError = (e: unknown): boolean => {
-    if (!e) return false;
-    if (e instanceof TypeError) return true;
-    if (e instanceof Error && typeof e.message === 'string') {
-      return /failed to fetch|networkerror|network error|timeout/i.test(e.message);
-    }
-    return false;
-  };
-
-  const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  let buffer: ArrayBuffer;
+  try {
+    const response = await fetch(url, { signal: signal ?? null });
     if (signal?.aborted) return null;
-    let pm: PmWithClose | undefined;
-    try {
-      pm = getPm(pmUrl);
-      const tileRes = await pm.getZxy(z, x, y);
-      if (signal?.aborted) return null;
-      if (!tileRes || tileRes.data == null) return null;
 
-      const buffer = toArrayBufferFromTileData(tileRes.data);
-      if (!buffer || buffer.byteLength < PAYLOAD_BYTES) return null;
-
-      const header = new Float32Array(buffer, 0, 6);
-      const originLng = header[0]!;
-      const originLat = header[1]!;
-      const deltaLng = header[2]!;
-      const deltaLat = header[3]!;
-      const rows = Math.round(header[4]!);
-      const cols = Math.round(header[5]!);
-
-      if (!(rows >= 1 && cols >= 1) || rows * cols > MAX_GRID_POINTS) return null;
-      if (!Number.isFinite(deltaLng) || !Number.isFinite(deltaLat) || deltaLng === 0 || deltaLat === 0) return null;
-
-      // Payload: two int16 delta streams, each preceded by its byte length. The container
-      // decompression (tile_compression = gzip) already ran inside the pmtiles library.
-      const nodeCount = rows * cols;
-      const fieldBytes = nodeCount * 2;
-      const lengths = new Uint32Array(buffer, HEADER_BYTES, 2);
-      const uLength = lengths[0]!;
-      const vLength = lengths[1]!;
-
-      if (uLength !== fieldBytes || vLength !== fieldBytes) {
-        logger.error('[windArrowService] unexpected field length', {
-          z, x, y, url: resolved, uLength, vLength, fieldBytes, rows, cols
-        });
-        return null;
+    if (!response.ok) {
+      // 404 is the normal answer outside the model area; any other status is worth a log line.
+      if (response.status !== 404) {
+        logger.warn('[windArrowService] tile request returned', { status: response.status, url });
       }
-
-      // Exact length check: also catches payloads the PMTiles library did not unpack.
-      const need = PAYLOAD_BYTES + uLength + vLength;
-      if (buffer.byteLength < need) {
-        logger.error('[windArrowService] tile payload too short', {
-          z, x, y, url: resolved, have: buffer.byteLength, need, rows, cols
-        });
-        return null;
-      }
-
-      const uv = new Float32Array(nodeCount * 2);
-      decodeDeltaField(new Int16Array(buffer, PAYLOAD_BYTES, nodeCount), rows, cols, uv, 0);
-      decodeDeltaField(new Int16Array(buffer, PAYLOAD_BYTES + uLength, nodeCount), rows, cols, uv, 1);
-
-      return { originLng, originLat, deltaLng, deltaLat, rows, cols, uv };
-    } catch (err: unknown) {
-      logger.error('[windArrowService] getTileGrid error', { err, attempt, z, x, y, url: resolved });
-
-      // If aborted, stop and return null so TileLayer won't cache
-      if (signal?.aborted) return null;
-
-      // On network-like errors, attempt retry after closing and removing cached pm
-      if (isNetworkError(err)) {
-        try {
-          if (pm && typeof pm.close === 'function') pm.close();
-        } catch (e) { /* ignore close errors */ }
-        pmCache.delete(key);
-        const idx = USAGE_ORDER.indexOf(key);
-        if (idx >= 0) USAGE_ORDER.splice(idx, 1);
-
-        if (attempt < maxAttempts) {
-          // small backoff before retry
-          await sleep(backoffMs);
-          continue;
-        }
-      }
-
-      // For non-network errors or exhausted retries, return null so the layer can continue
       return null;
     }
+
+    buffer = await response.arrayBuffer();
+  } catch (err: unknown) {
+    if (signal?.aborted) return null;
+    logger.error('[windArrowService] tile request failed', { err, z, x, y, url });
+    return null;
   }
 
-  return null;
+  if (signal?.aborted) return null;
+
+  try {
+    buffer = await unpackPayload(buffer);
+  } catch (err: unknown) {
+    logger.error('[windArrowService] tile unpack failed', { err, z, x, y, url, bytes: buffer.byteLength });
+    return null;
+  }
+
+  if (buffer.byteLength < PAYLOAD_BYTES) {
+    logger.warn('[windArrowService] tile too short', { z, x, y, url, bytes: buffer.byteLength });
+    return null;
+  }
+
+  try {
+    const header = new Float32Array(buffer, 0, 6);
+    const originLng = header[0]!;
+    const originLat = header[1]!;
+    const deltaLng = header[2]!;
+    const deltaLat = header[3]!;
+    const rows = Math.round(header[4]!);
+    const cols = Math.round(header[5]!);
+
+    if (!(rows >= 1 && cols >= 1) || rows * cols > MAX_GRID_POINTS) {
+      logger.warn('[windArrowService] implausible tile header', {
+        z, x, y, url, originLng, originLat, deltaLng, deltaLat, rows, cols, bytes: buffer.byteLength
+      });
+      return null;
+    }
+    if (!Number.isFinite(deltaLng) || !Number.isFinite(deltaLat) || deltaLng === 0 || deltaLat === 0) return null;
+
+    // Payload: two int16 delta streams, each preceded by its byte length.
+    const nodeCount = rows * cols;
+    const fieldBytes = nodeCount * 2;
+    const lengths = new Uint32Array(buffer, HEADER_BYTES, 2);
+    const uLength = lengths[0]!;
+    const vLength = lengths[1]!;
+    const need = PAYLOAD_BYTES + uLength + vLength;
+
+    if (uLength !== fieldBytes || vLength !== fieldBytes || buffer.byteLength < need) {
+      logger.error('[windArrowService] unexpected tile payload', {
+        z, x, y, url, uLength, vLength, fieldBytes, have: buffer.byteLength, need, rows, cols
+      });
+      return null;
+    }
+
+    const uv = new Float32Array(nodeCount * 2);
+    decodeDeltaField(new Int16Array(buffer, PAYLOAD_BYTES, nodeCount), rows, cols, uv, 0);
+    decodeDeltaField(new Int16Array(buffer, PAYLOAD_BYTES + uLength, nodeCount), rows, cols, uv, 1);
+
+    return { originLng, originLat, deltaLng, deltaLat, rows, cols, uv };
+  } catch (err: unknown) {
+    logger.error('[windArrowService] tile decode failed', { err, z, x, y, url });
+    return null;
+  }
 }
 
 /**
- * Lattice anchor of an archive: every grid node sits at `anchor + k * delta` (in degrees).
- * Both archives anchor on the south-west corner of the model area (`imageBounds[0]`), so one
- * anchor serves every level: level `z` stores the nodes at `delta * 2^(8 - z)` and its nodes are
- * therefore a subset of the finest level's lattice.
+ * Lattice anchor of a pyramid: every grid node sits at `anchor + k * delta` (in degrees).
+ *
+ * The anchor is the south-west corner of the model area, so one anchor serves every level: the
+ * nodes double per level, which makes each level's nodes a subset of the finest level's lattice.
  */
 export type WindGridAnchor = { lng: number; lat: number };
 
@@ -383,27 +307,4 @@ export function gridToPoints(
   }
 
   return points;
-}
-
-export function disposePmtiles(pmUrl: string): void {
-  const key = urlWithVersionTag(pmUrl);
-  const pm = pmCache.get(key);
-  if (pm) {
-    if (typeof pm.close === 'function') {
-      try { pm.close(); } catch (e) { /* ignore */ }
-    }
-    pmCache.delete(key);
-    const i = USAGE_ORDER.indexOf(key);
-    if (i >= 0) USAGE_ORDER.splice(i, 1);
-  }
-}
-
-export function clearPmCache(): void {
-  pmCache.forEach((p) => {
-    if (p && typeof p.close === 'function') {
-      try { p.close(); } catch (e) { /* ignore */ }
-    }
-  });
-  pmCache.clear();
-  USAGE_ORDER.length = 0;
 }

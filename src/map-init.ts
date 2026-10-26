@@ -107,7 +107,7 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     }).addTo(mapInstance);
 
     // The raster weather image overlay (...Z.webp) is disabled for now: the wind field is
-    // rendered from PMTiles by the deck.gl overlay in windArrowOverlayView.
+    // rendered from the static tile pyramid by the deck.gl overlay in windArrowOverlayView.
     // `windOverlayInstance` stays null, so registerMapOverlayView only maintains the marker.
 
     // Labels layer on top of everything (use synced label pane so labels stay aligned with map)

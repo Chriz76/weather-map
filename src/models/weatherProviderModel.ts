@@ -51,7 +51,9 @@ export class WeatherProviderModel extends EventTarget {
         modelGeneratedAt: null,
         modelCurrentHour: null,
         lastIndexSync: null,
-        supportsArrowOverlay: true,
+        // No tile pyramid on the Arome origin yet, and the old single-container archives use a
+        // different payload format. Flip back once the pipeline publishes a pyramid there.
+        supportsArrowOverlay: false,
         locationContext: null,
         windData: null,
         forecast: null,

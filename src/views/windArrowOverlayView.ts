@@ -20,43 +20,54 @@ let overlayInstance: LeafletDeckOverlay | null = null;
  *  Tile settings
  *
  *  One tile layer carries both sub layers - the field texture and the arrows - from a single
- *  decoded grid. The tileset may ask for levels finer than the archive stores: above
+ *  decoded grid. The tileset may ask for levels finer than the pyramid stores: above
  *  ARCHIVE_MAX_ZOOM the loader re-reads the finest level and each sub layer draws its part of it
  *  (see createTileLoader and resolveTileQuad). The arrow density is a plain function of the tile
  *  zoom (see arrowStride), so nothing has to be tracked outside the layers.
  * ------------------------------------------------------------------------- */
-const TILE_SIZE = 512;
+/**
+ * Pixel size of a tile as deck.gl requests it.
+ *
+ * A tile at zoom `z` covers 360 / 2^z degrees and is drawn this many pixels wide, so this value
+ * also fixes how many tiles a viewport needs. The pyramid carries four times the cells per tile
+ * of the former single-container archive (twice per axis) and stops one zoom level earlier, so a
+ * 1024 px tile shows exactly the detail a 512 px tile used to: same pixels per node, a quarter of
+ * the requests, and no duplicate downloads on the `dz` levels above ARCHIVE_MAX_ZOOM.
+ */
+const TILE_SIZE = 1024;
 const TILE_MIN_ZOOM = 0;
-/** Highest tile zoom the tileset asks for; may lie above the archive's finest level. */
-const TILE_MAX_ZOOM = 10;
-/** Finest level the archives store (`PMTILES_MAX_ZOOM` of the HRRR `HrrrWindProcessor`). */
-const ARCHIVE_MAX_ZOOM = 8;
+/**
+ * Highest tile zoom the tileset asks for; may lie above the pyramid's finest level.
+ * With TILE_SIZE at 1024 a tile zoom sits one level below the map zoom, so this is map zoom 10.
+ */
+const TILE_MAX_ZOOM = 9;
+/** Finest level the pyramid stores (`pyramid.max_zoom` of `meta/<timestamp>Z.json`). */
+const ARCHIVE_MAX_ZOOM = 7;
 
 /**
- * Tile requests allowed in flight. Every tile is one HTTP range request, so this bounds how fast
- * a new timestep fills in: the dev server is HTTP/1.1 (six parallel connections per host), the
- * remote Arome archive is served over HTTP/2, where more requests really run in parallel.
+ * Tile requests allowed in flight. Every tile is one HTTP request, so this bounds how fast a new
+ * timestep fills in. The pyramid is served over HTTP/2, which would allow far more parallel
+ * streams; 6 keeps a cold fill from starving the rest of the page.
  */
 const TILE_MAX_REQUESTS = 6;
 const TILE_DEBOUNCE_MS = 0;
 const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 
 /**
- * Node step of the arrows on the levels the archive really stores (tile zoom <= ARCHIVE_MAX_ZOOM).
+ * Node step of the arrows on the levels the pyramid really stores (tile zoom <= ARCHIVE_MAX_ZOOM).
  *
- * Every archive level keeps ~57 nodes across a 512 px tile and the levels are a lattice subset of
- * one another (the nodes double per level, see `hrrr-data/pipeline/src/process.py`), so a constant
- * node step keeps the on-screen spacing constant across those levels.
+ * At TILE_SIZE the finest level shows 1024 / ~114 = 8.98 px per node, exactly what the 512 / ~57
+ * of the former archive showed, so the step that keeps ~36 px between arrows is unchanged.
  */
 const ARROW_STRIDE_BASE = 4;
 
 /**
  * Node step of the arrows for a tile of the given zoom.
  *
- * Below the archive's finest level the payload is the real (coarser) level, so the step stays
+ * Below the pyramid's finest level the payload is the real (coarser) level, so the step stays
  * {@link ARROW_STRIDE_BASE}. Above it the payload stays at ARCHIVE_MAX_ZOOM and the step halves per
- * level, which keeps the spacing constant on screen: 4 (z <= 8), 2 (z 9), 1 (z 10). Deeper zooms
- * are clamped to TILE_MAX_ZOOM, so the arrows keep one node and simply spread apart.
+ * level, which keeps the spacing constant on screen: 4 (z <= 7), 2 (z 8), 1 (z >= 9).
+ * Deeper zooms are clamped to TILE_MAX_ZOOM, so the arrows keep one node and spread apart.
  * @param tileZoom Zoom of the tile the arrows are derived from.
  * @returns Node step on both axes, at least one node.
  */
@@ -65,8 +76,8 @@ function arrowStride(tileZoom: number): number {
   return Math.max(1, ARROW_STRIDE_BASE / Math.pow(2, finer));
 }
 
-/** Archive of the active timestamp; kept so a new archive can replace the layers. */
-let currentPmUrl: string | null = null;
+/** Tile pyramid of the active timestamp; kept so a new timestamp can replace the layers. */
+let currentTileBaseUrl: string | null = null;
 
 /**
  * Lattice anchor of the active archive: every node of a wind archive sits at
@@ -96,11 +107,11 @@ function getGridAnchor(): WindGridAnchor {
 /**
  * Removes the current wind layers so no stale field or arrows remain visible.
  * Emptying the layer set makes deck.gl finalize the previous tile layers, so the next
- * `setPmtilesUrl` call builds fresh layers with a clean tile cache.
+ * `setWindTilesUrl` call builds fresh layers with a clean tile cache.
  * @param reason Short description used for diagnostic logging.
  */
 function clearWindLayers(reason: string): void {
-  currentPmUrl = null;
+  currentTileBaseUrl = null;
   if (!overlayInstance) return;
   logger.debug('[windArrowOverlayView] clearing wind layers', { reason });
   try {
@@ -118,9 +129,9 @@ function clearWindLayers(reason: string): void {
  * @returns True when deck.gl accepted the layer update.
  */
 function applyWindLayers(): boolean {
-  if (!overlayInstance || !currentPmUrl) return false;
-  logger.debug('[windArrowOverlayView] applying wind tile layer', currentPmUrl);
-  return overlayInstance.setLayers([createWindTileLayer(currentPmUrl)]);
+  if (!overlayInstance || !currentTileBaseUrl) return false;
+  logger.debug('[windArrowOverlayView] applying wind tile layer', currentTileBaseUrl);
+  return overlayInstance.setLayers([createWindTileLayer(currentTileBaseUrl)]);
 }
 
 /* -------------------------------------------------------------------------
@@ -709,39 +720,34 @@ function resolveTileQuad(
 }
 
 /**
- * Tile loader of an archive.
+ * Tile loader of a wind tile pyramid.
  *
- * Above the archive's finest level the tileset still subdivides (up to TILE_MAX_ZOOM), so the
+ * Above the pyramid's finest level the tileset still subdivides (up to TILE_MAX_ZOOM), so the
  * requested tile is mapped onto the finest stored level: the level difference shifts the index
  * down with it, otherwise the wrong tile would be read. The sub layers then draw only the part of
  * that payload their tile covers (see resolveTileQuad).
- * @param pmUrl Archive URL of the active timestamp.
+ * @param tileBaseUrl Base URL of the pyramid of the active timestamp.
  */
-function createTileLoader(pmUrl: string) {
+function createTileLoader(tileBaseUrl: string) {
   return async (tile: { index: TileIndex; signal?: AbortSignal }): Promise<WindTileGrid | null> => {
-    try {
-      const { z, x, y } = tile.index;
-      const dz = Math.max(0, z - ARCHIVE_MAX_ZOOM);
-      return await getTileGrid(pmUrl, z - dz, x >> dz, y >> dz, tile.signal);
-    } catch (err) {
-      logger.error('[windArrowOverlayView] getTileData error', err);
-      return null;
-    }
+    const { z, x, y } = tile.index;
+    const dz = Math.max(0, z - ARCHIVE_MAX_ZOOM);
+    return getTileGrid(tileBaseUrl, z - dz, x >> dz, y >> dz, tile.signal);
   };
 }
 
 /**
  * Props of the wind tile layer.
  *
- * `getTileData` is the ONLY update trigger: a new archive (timestamp) reloads the tiles, and
+ * `getTileData` is the ONLY update trigger: a new timestamp reloads the tiles, and
  * nothing else ever invalidates one that is already in the cache. That is what keeps a zoom free
  * of rebuilds - the tileset selects the new level and builds those tiles, while the cached ones
  * keep their sub layers.
- * @param pmUrl Archive URL of the active timestamp.
+ * @param tileBaseUrl Base URL of the pyramid of the active timestamp.
  */
-function baseTileLayerProps(pmUrl: string) {
+function baseTileLayerProps(tileBaseUrl: string) {
   return {
-    updateTriggers: { getTileData: [pmUrl] },
+    updateTriggers: { getTileData: [tileBaseUrl] },
     minZoom: TILE_MIN_ZOOM,
     maxZoom: TILE_MAX_ZOOM,
     tileSize: TILE_SIZE,
@@ -749,7 +755,7 @@ function baseTileLayerProps(pmUrl: string) {
     maxRequests: TILE_MAX_REQUESTS,
     debounceTime: TILE_DEBOUNCE_MS,
     refinementStrategy: 'best-available' as const,
-    getTileData: createTileLoader(pmUrl)
+    getTileData: createTileLoader(tileBaseUrl)
   };
 }
 
@@ -789,11 +795,11 @@ function createFieldLayer(quad: TileQuad, id: string): WindTileLayer {
  * arrows take every `arrowStride`-th node of that grid. The tileset moves up to TILE_MAX_ZOOM, so a
  * zoom change builds the next level's tiles and with them the next arrow density - no update
  * trigger, no rebuild of the cached tiles, no module state.
- * @param pmUrl Archive URL of the active timestamp.
+ * @param tileBaseUrl Base URL of the pyramid of the active timestamp.
  */
-function createWindTileLayer(pmUrl: string) {
+function createWindTileLayer(tileBaseUrl: string) {
   return new TileLayer<WindTileGrid | null>({
-    ...baseTileLayerProps(pmUrl),
+    ...baseTileLayerProps(tileBaseUrl),
     id: 'wind-tile-layer',
 
     renderSubLayers: (props) => {
@@ -814,7 +820,7 @@ function createWindTileLayer(pmUrl: string) {
       // matches the layer and updates its attributes instead of building a new one.
       return [
         createFieldLayer(quad, `${props.id}-field`),
-        createArrowLayer(points, `${props.id}-arrows`, pmUrl)
+        createArrowLayer(points, `${props.id}-arrows`, tileBaseUrl)
       ];
     }
   });
@@ -846,9 +852,9 @@ const ARROW_ICON_URL = `data:image/svg+xml;utf8,${encodeURIComponent(`
  * Icon layer with the wind arrows of one tile.
  * @param points Wind points derived from the tile grid.
  * @param id Layer id.
- * @param pmUrl Archive URL, used as update trigger.
+ * @param tileBaseUrl Tile pyramid URL, used as update trigger.
  */
-function createArrowLayer(points: WindTilePoint[], id: string, pmUrl: string): IconLayer<WindTilePoint> {
+function createArrowLayer(points: WindTilePoint[], id: string, tileBaseUrl: string): IconLayer<WindTilePoint> {
   return new IconLayer<WindTilePoint>({
     id,
     data: points,
@@ -860,11 +866,11 @@ function createArrowLayer(points: WindTilePoint[], id: string, pmUrl: string): I
     getSize: (point: WindTilePoint) =>
       Math.min(Math.max(8, 8 + Math.sqrt(Math.max(0, point.speed * 1.94384 - 3)) * 4.8), 30),
 
-    // Triggers keep the arrows in sync when a new archive (timestamp) is selected.
+    // Triggers keep the arrows in sync when a new timestamp is selected.
     updateTriggers: {
-      getPosition: [pmUrl],
-      getAngle: [pmUrl],
-      getSize: [pmUrl]
+      getPosition: [tileBaseUrl],
+      getAngle: [tileBaseUrl],
+      getSize: [tileBaseUrl]
     },
 
     // Soft animation of the arrows on data changes (in ms).
@@ -882,7 +888,7 @@ function createArrowLayer(points: WindTilePoint[], id: string, pmUrl: string): I
 
 export interface IWindArrowOverlayView {
   init: (map: LeafletMap) => void;
-  setPmtilesUrl?: (pmUrl: string) => void;
+  setWindTilesUrl?: (tileBaseUrl: string) => void;
 }
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
@@ -892,7 +898,7 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       overlayInstance.addTo(map);
 
       weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
-        // if the active provider does not support PMTiles, clear any existing wind layers
+        // if the active provider does not support the wind overlay, clear any existing layers
         if (!weatherProviderModel.supportsArrowOverlay) {
           clearWindLayers('provider does not support wind overlay');
           return;
@@ -900,9 +906,14 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
 
         const ts = weatherProviderModel.activeTimestamp;
         if (!ts) return;
-        const pmUrl = `/${ts}Z_dir.pmtiles`;
-        logger.debug('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: pmUrl });
-        windArrowOverlayView.setPmtilesUrl?.(pmUrl);
+
+        // One base for index.json and the pyramid; the tile folders carry a `Z` suffix that the
+        // timestamps in index.json do not.
+        const baseUrl = providers[weatherProviderModel.getActiveProviderId()]?.baseUrl;
+        if (!baseUrl) return;
+        const tileBaseUrl = `${baseUrl.replace(/\/+$/, '')}/tiles/${ts}Z`;
+        logger.debug('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: tileBaseUrl });
+        windArrowOverlayView.setWindTilesUrl?.(tileBaseUrl);
       });
 
       // On provider switch, drop the wind layers of the previous provider. They stay hidden
@@ -916,13 +927,13 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     }
   },
 
-  setPmtilesUrl(pmUrl: string) {
-    if (!pmUrl || !overlayInstance) return;
+  setWindTilesUrl(tileBaseUrl: string) {
+    if (!tileBaseUrl || !overlayInstance) return;
 
-    logger.debug('[windArrowOverlayView] setPmtilesUrl', pmUrl);
-    currentPmUrl = pmUrl;
+    logger.debug('[windArrowOverlayView] setWindTilesUrl', tileBaseUrl);
+    currentTileBaseUrl = tileBaseUrl;
 
-    // Field and arrows: two layers over the same archive.
+    // Field and arrows: two layers over the same pyramid.
     applyWindLayers();
   }
 };

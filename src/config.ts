@@ -12,6 +12,13 @@ export const DEFAULT_MAP_VIEW = {
 } as const;
 
 export type ProviderConfig = {
+  /**
+   * Origin of the provider's data, with a trailing slash.
+   *
+   * One host serves both APIs: `<baseUrl>index.json` and the wind tile pyramid
+   * (`<baseUrl>tiles/<timestamp>Z/<z>/<x>/<y>.bin`). Keeping them on the same origin means the
+   * timestamps in the index are exactly the ones the pyramid really serves.
+   */
   baseUrl: string;
   gridCellSize: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
@@ -32,15 +39,18 @@ export type ProviderConfig = {
  */
 export const providers: Record<string, ProviderConfig> = {
   [D2]: {
-    baseUrl: "https://chriz76.github.io/hrrr-data/",
+    // TODO: `6db286e6` is a per-deploy preview hash, so this URL stops working after the next
+    // deploy. Replace it with the stable production alias (or a hostname of your own) as soon as
+    // the pipeline publishes there - the pipeline redeploys hourly.
+    baseUrl: "https://cba6da39.winddata.pages.dev/",
     gridCellSize: 1.0,
     imageBounds: [
       [43.0440, -4.1616],
       [58.1647, 20.5444]
     ],
-    // South-west corner of the HRRR window used by the "..._dir.pmtiles" archives of that area
-    // (HrrrWindProcessor._hrrr_geographic_bounds()). `imageBounds` deliberately stays the d2
-    // point-forecast grid: it is the basis for the `grid_cluster/cluster_<col>_<row>.json` URLs.
+    // South-west corner of the HRRR window the wind tile pyramid covers of that area
+    // (HrrrWindProcessor._hrrr_geographic_bounds(); matches `bounds.west/south` of
+    // `meta/<timestamp>Z.json`).
     windAnchor: { lat: 21.138, lng: -134.096114 }
   },
   [AROME]: {
