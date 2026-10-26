@@ -31,7 +31,7 @@ describe('index fetch parsing', () => {
     // @ts-ignore
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(sample) }));
 
-    const idx = await d2Provider.fetchIndex({ baseUrl: 'https://winddata.pages.dev/' });
+    const idx = await d2Provider.fetchIndex({ baseUrl: 'https://hrrr.b-cdn.net/' });
     expect(idx.available_timestamps).toBeDefined();
     expect(idx.available_timestamps && idx.available_timestamps[0]).toBe('20260813_15');
     expect(idx.current_hour).toBe('20260813_19');

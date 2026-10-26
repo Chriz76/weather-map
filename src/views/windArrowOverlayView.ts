@@ -43,6 +43,15 @@ const TILE_MIN_ZOOM = 0;
 const TILE_MAX_ZOOM = 9;
 /** Finest level the pyramid stores (`pyramid.max_zoom` of `meta/<timestamp>Z.json`). */
 const ARCHIVE_MAX_ZOOM = 7;
+/**
+ * Detail bias of the tileset, in zoom levels.
+ *
+ * `Tileset2D.getTileIndices` picks `round(deckZoom + log2(512 / tileSize) + zoomOffset)`, which is
+ * `mapZoom - 2 + zoomOffset` here. Every step loads the pyramid one level finer at the same map
+ * zoom: at 1 the finest level (0.025 deg) already appears at map zoom 8 instead of 9. The price is
+ * four times as many tiles - and therefore requests - per viewport.
+ */
+const TILE_ZOOM_OFFSET = 1;
 
 /**
  * Tile requests allowed in flight. Every tile is one HTTP request, so this bounds how fast a new
@@ -58,8 +67,10 @@ const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85
  *
  * At TILE_SIZE the finest level shows 1024 / ~114 = 8.98 px per node, exactly what the 512 / ~57
  * of the former archive showed, so the step that keeps ~36 px between arrows is unchanged.
+ * A tile-zoom offset draws every tile one level smaller (1024 -> 512 px), so the base doubles per
+ * offset level: the arrows then land on the very same lattice nodes at the very same spacing.
  */
-const ARROW_STRIDE_BASE = 4;
+const ARROW_STRIDE_BASE = 4 * Math.pow(2, TILE_ZOOM_OFFSET);
 
 /**
  * Node step of the arrows for a tile of the given zoom.
@@ -750,6 +761,7 @@ function baseTileLayerProps(tileBaseUrl: string) {
     updateTriggers: { getTileData: [tileBaseUrl] },
     minZoom: TILE_MIN_ZOOM,
     maxZoom: TILE_MAX_ZOOM,
+    zoomOffset: TILE_ZOOM_OFFSET,
     tileSize: TILE_SIZE,
     extent: TILE_EXTENT,
     maxRequests: TILE_MAX_REQUESTS,

@@ -167,12 +167,12 @@ export async function getTileGrid(
 
   if (signal?.aborted) return null;
 
-  try {
+  /*try {
     buffer = await unpackPayload(buffer);
   } catch (err: unknown) {
     logger.error('[windArrowService] tile unpack failed', { err, z, x, y, url, bytes: buffer.byteLength });
     return null;
-  }
+  }*/
 
   if (buffer.byteLength < PAYLOAD_BYTES) {
     logger.warn('[windArrowService] tile too short', { z, x, y, url, bytes: buffer.byteLength });

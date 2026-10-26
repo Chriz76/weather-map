@@ -39,10 +39,9 @@ export type ProviderConfig = {
  */
 export const providers: Record<string, ProviderConfig> = {
   [D2]: {
-    // TODO: `6db286e6` is a per-deploy preview hash, so this URL stops working after the next
-    // deploy. Replace it with the stable production alias (or a hostname of your own) as soon as
-    // the pipeline publishes there - the pipeline redeploys hourly.
-    baseUrl: "https://cba6da39.winddata.pages.dev/",
+    // Stable CDN host of the HRRR pipeline: `index.json`, `meta/<timestamp>Z.json` and the
+    // `tiles/<timestamp>Z/<z>/<x>/<y>.bin` pyramid all live on this one origin.
+    baseUrl: "https://hrrr.b-cdn.net/",
     gridCellSize: 1.0,
     imageBounds: [
       [43.0440, -4.1616],
