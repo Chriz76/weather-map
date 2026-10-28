@@ -2,12 +2,20 @@ import * as timeUtils from '../utils/time';
 import { logger } from '../utils/logger';
 import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 import { calculatewindSpeeds } from '../utils/interpolation';
-import type { Cluster, ForecastItem, IndexData, LatLng } from '../types';
+import type { Cluster, ForecastItem, IndexData, LatLng, TileCoverage, TileFormatInfo, TilePyramidInfo } from '../types';
 
 type ProviderState = {
   availableTimestamps: string[];
   modelGeneratedAt: string | null;
   modelCurrentHour: string | null;
+  /** Relative tile pyramid template of the index (`{timestamp}/{z}/{x}/{y}` placeholders). */
+  windTilesUrlTemplate: string | null;
+  /** Tiles the active run really stores, or null when the index has no coverage block. */
+  windTileCoverage: TileCoverage | null;
+  /** Pyramid geometry of the index (`pyramid` block). */
+  windPyramid: TilePyramidInfo | null;
+  /** Tile payload encoding of the index (`format` block). */
+  windTileFormat: TileFormatInfo | null;
   lastIndexSync: Date | null;
   supportsArrowOverlay?: boolean;
   locationContext: { latLng: LatLng } | null;
@@ -34,6 +42,10 @@ export class WeatherProviderModel extends EventTarget {
         availableTimestamps: [],
         modelGeneratedAt: null,
         modelCurrentHour: null,
+        windTilesUrlTemplate: null,
+        windTileCoverage: null,
+        windPyramid: null,
+        windTileFormat: null,
         lastIndexSync: null,
         supportsArrowOverlay: true,
         locationContext: null,
@@ -50,6 +62,10 @@ export class WeatherProviderModel extends EventTarget {
         availableTimestamps: [],
         modelGeneratedAt: null,
         modelCurrentHour: null,
+        windTilesUrlTemplate: null,
+        windTileCoverage: null,
+        windPyramid: null,
+        windTileFormat: null,
         lastIndexSync: null,
         supportsArrowOverlay: true,
         locationContext: null,
@@ -66,6 +82,10 @@ export class WeatherProviderModel extends EventTarget {
         availableTimestamps: [],
         modelGeneratedAt: null,
         modelCurrentHour: null,
+        windTilesUrlTemplate: null,
+        windTileCoverage: null,
+        windPyramid: null,
+        windTileFormat: null,
         lastIndexSync: null,
         // The HRRR field comes from a tile pyramid the wind overlay renders itself, so the
         // archive-based arrow overlay (`windArrowOverlayView`) must leave it alone.
@@ -100,6 +120,10 @@ export class WeatherProviderModel extends EventTarget {
   get availableTimestamps(): string[] { return this._getActiveModel().availableTimestamps; }
   get modelGeneratedAt(): string | null { return this._getActiveModel().modelGeneratedAt; }
   get modelCurrentHour(): string | null { return this._getActiveModel().modelCurrentHour; }
+  get windTilesUrlTemplate(): string | null { return this._getActiveModel().windTilesUrlTemplate; }
+  get windTileCoverage(): TileCoverage | null { return this._getActiveModel().windTileCoverage; }
+  get windPyramid(): TilePyramidInfo | null { return this._getActiveModel().windPyramid; }
+  get windTileFormat(): TileFormatInfo | null { return this._getActiveModel().windTileFormat; }
   get windData(): ProviderState['windData'] { return this._getActiveModel().windData; }
   get windSpeed(): number | null { return this._getActiveModel().windData?.speed ?? null; }
   get windDirection(): number | null { return this._getActiveModel().windData?.direction ?? null; }
@@ -209,6 +233,12 @@ export class WeatherProviderModel extends EventTarget {
     this._getActiveModel().activeTimestampIndex = activeIndex;
     this._getActiveModel().modelGeneratedAt = indexData.generated_at ?? null;
     this._getActiveModel().modelCurrentHour = indexData.current_hour ?? null;
+    // The index owns the pyramid layout: template, coverage, geometry and encoding are replaced
+    // as a set, so a run without metadata can never keep serving the previous run's tiles.
+    this._getActiveModel().windTilesUrlTemplate = indexData.tiles_url ?? null;
+    this._getActiveModel().windTileCoverage = indexData.coverage ?? null;
+    this._getActiveModel().windPyramid = indexData.pyramid ?? null;
+    this._getActiveModel().windTileFormat = indexData.format ?? null;
     this.setIndexLoadError(null);
 
     this._setWindDataForActiveTimestamp();

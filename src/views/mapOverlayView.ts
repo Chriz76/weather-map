@@ -52,6 +52,21 @@ function showOverlay(): void {
   windOverlayInstance.addTo(overlayMap);
 }
 
+/**
+ * Creates the raster overlay when the map was initialised for a provider without one.
+ *
+ * `initMap` only creates the layer for a raster provider, so starting on a tile provider (HRRR)
+ * leaves it undefined; switching to D2 or Arome then needs it to appear again.
+ */
+function ensureOverlay(): void {
+  if (windOverlayInstance || !overlayMap) return;
+
+  const cfg = providers[weatherProviderModel.getActiveProviderId()];
+  if (cfg?.windOverlay !== 'raster') return;
+
+  windOverlayInstance = L.imageOverlay('', cfg.imageBounds, { opacity: 0.65, zIndex: 10 });
+}
+
 export function registerMapOverlayView(map: LeafletMap, overlay: WindOverlayLike | null): void {
   windOverlayInstance = overlay;
   overlayMap = map;
@@ -80,6 +95,8 @@ export function registerMapOverlayView(map: LeafletMap, overlay: WindOverlayLike
       hideOverlay();
       return;
     }
+
+    ensureOverlay();
 
     const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
     if (providerCfg?.imageBounds) {

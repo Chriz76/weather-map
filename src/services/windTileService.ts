@@ -46,6 +46,24 @@ export type WindTileFormat = {
  */
 const DEFAULT_TILE_FORMAT: WindTileFormat = { scale: 0.05, sentinel: -20000 };
 
+/**
+ * Payload layouts this decoder can read (`format.id` of `index.json`).
+ *
+ * A pyramid in any other layout would be decoded as garbage, so the overlay checks the id before
+ * it requests tiles.
+ */
+const SUPPORTED_FORMAT_IDS: ReadonlySet<string> = new Set(['hrrr-wind-int16-delta']);
+
+/**
+ * Tells whether {@link getTileGrid} can decode a pyramid with this `format.id`.
+ * @param formatId `format.id` of the index, or undefined when the index has no format block.
+ * @returns `true` for a supported layout and for an index without an id (the caller then trusts
+ * the defaults).
+ */
+export function isSupportedFormat(formatId: string | undefined): boolean {
+  return formatId === undefined || SUPPORTED_FORMAT_IDS.has(formatId);
+}
+
 /** Bytes of the geo header (6 x float32: origin lng/lat, delta lng/lat, rows, cols). */
 const GEO_HEADER_BYTES = 24;
 /** Bytes of the two field lengths (`uLength`, `vLength` as uint32) that follow the header. */
@@ -193,4 +211,88 @@ export async function getTileGrid(
     logger.error('[windTileService] tile decode failed', { err, z, x, y, url });
     return null;
   }
+}
+
+/**
+ * Lattice anchor of a pyramid: every node sits at `anchor + k * delta` (in degrees).
+ *
+ * The anchor is the south-west corner of the model area, so one anchor serves every level - the
+ * nodes double per level, which makes each level's nodes a subset of the finest level's lattice.
+ */
+export type WindGridAnchor = { lng: number; lat: number };
+
+/**
+ * Payload index range a tile covers, in payload nodes (inclusive). Defaults to the whole payload
+ * when the caller does not clip the padded border node.
+ */
+export type WindNodeWindow = { colMin: number; colMax: number; rowMin: number; rowMax: number };
+
+/** One wind node resolved to geographic coordinates. */
+export type WindTilePoint = { position: [number, number]; angle: number; speed: number };
+
+/**
+ * Tolerance when clipping samples to a node window. It sits far below one node, so it can only
+ * repeat a node exactly on a tile seam, never pick an off-lattice one.
+ */
+const WINDOW_EPSILON = 1e-3;
+
+/**
+ * Maps a decoded grid onto geographic wind points for the arrow layer.
+ *
+ * Samples are placed on the model lattice (not on the payload origin), which keeps their spacing
+ * even across tile borders, and only every `stride`-th node is emitted. Positions use the payload's
+ * own origin and `delta`, so the arrows sit exactly on the nodes the data describes.
+ * @param grid Decoded tile grid.
+ * @param stride Node step on both axes as a whole number of nodes; values below 1 are clamped.
+ * @param anchor Lattice anchor of the archive (south-west corner of the model area).
+ * @param window Payload node range to sample; defaults to the whole payload.
+ */
+export function gridToPoints(
+  grid: WindTileGrid,
+  stride: number,
+  anchor: WindGridAnchor,
+  window?: WindNodeWindow
+): WindTilePoint[] {
+  const { originLng, originLat, deltaLng, deltaLat, rows, cols, uv } = grid;
+  const points: WindTilePoint[] = [];
+  const step = Math.max(1, Math.round(stride));
+  if (!Number.isFinite(step)) return points;
+
+  const range = window ?? { colMin: 0, colMax: cols - 1, rowMin: 0, rowMax: rows - 1 };
+
+  // Rounding the payload origin removes the drift of the float32 header `delta` (which reaches
+  // ~1e-5 of a node at high indices), so the samples land exactly on lattice nodes.
+  const colOrigin = Math.round((originLng - anchor.lng) / deltaLng);
+  const rowOrigin = Math.round((originLat - anchor.lat) / deltaLat);
+
+  // Sample k sits `k * step` nodes from the anchor, i.e. at payload index
+  // `k * step - colOrigin` (columns) and `rowOrigin - k * step` (rows run to the south).
+  const firstCol = Math.ceil((colOrigin + range.colMin - WINDOW_EPSILON) / step);
+  const lastCol = Math.floor((colOrigin + range.colMax + WINDOW_EPSILON) / step);
+  const firstRow = Math.ceil((rowOrigin - range.rowMax - WINDOW_EPSILON) / step);
+  const lastRow = Math.floor((rowOrigin - range.rowMin + WINDOW_EPSILON) / step);
+
+  for (let rowSample = firstRow; rowSample <= lastRow; rowSample++) {
+    const gridRow = rowOrigin - rowSample * step;
+    if (gridRow < 0 || gridRow > rows - 1) continue;
+    const nodeRow = gridRow * cols;
+    const lat = originLat - gridRow * deltaLat;
+
+    for (let colSample = firstCol; colSample <= lastCol; colSample++) {
+      const gridCol = colSample * step - colOrigin;
+      if (gridCol < 0 || gridCol > cols - 1) continue;
+
+      const index = (nodeRow + gridCol) * 2;
+      const u = uv[index];
+      const v = uv[index + 1];
+      // Masked nodes carry no wind and are left out.
+      if (u === undefined || v === undefined || !Number.isFinite(u) || !Number.isFinite(v)) continue;
+
+      const lng = originLng + gridCol * deltaLng;
+      const angle = (Math.atan2(u, v) * 180) / Math.PI + 180;
+      points.push({ position: [lng, lat], angle, speed: Math.sqrt(u * u + v * v) });
+    }
+  }
+
+  return points;
 }

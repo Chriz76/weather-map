@@ -28,7 +28,7 @@ function buildTile({ rows, cols, u, v, uLength }: TileOptions): ArrayBuffer {
   view.setFloat32(0, -134.096114, true); // originLng
   view.setFloat32(4, 21.138, true); // originLat
   view.setFloat32(8, 0.025001, true); // deltaLng
-  view.setFloat32(12, -0.025001, true); // deltaLat
+  view.setFloat32(12, 0.025001, true); // deltaLat: positive step, rows run north -> south
   view.setFloat32(16, rows, true);
   view.setFloat32(20, cols, true);
 
@@ -157,5 +157,59 @@ describe('windTileService.getTileGrid', () => {
     controller.abort();
 
     await expect(windTileService.getTileGrid(TEMPLATE, 7, 1, 2, controller.signal)).resolves.toBeNull();
+  });
+});
+
+/** 3x3 grid anchored at (0, 10) with 1 deg nodes, wind blowing towards +u. */
+function makeGrid(override: Partial<windTileService.WindTileGrid> = {}): windTileService.WindTileGrid {
+  const uv = new Float32Array(3 * 3 * 2);
+  for (let node = 0; node < 9; node++) {
+    uv[node * 2] = 1;
+    uv[node * 2 + 1] = 0;
+  }
+
+  // `deltaLat` is the positive step the pipeline writes; latitude decreases with the row index.
+  return { originLng: 0, originLat: 10, deltaLng: 1, deltaLat: 1, rows: 3, cols: 3, uv, ...override };
+}
+
+describe('windTileService.gridToPoints', () => {
+  const anchor = { lng: 0, lat: 10 };
+
+  it('emits one point per node on the lattice', () => {
+    const points = windTileService.gridToPoints(makeGrid(), 1, anchor);
+
+    expect(points).toHaveLength(9);
+    // Rows are walked from the southern end upwards, columns west to east.
+    expect(points[0]).toEqual({ position: [0, 8], angle: 270, speed: 1 });
+    expect(points[8]?.position).toEqual([2, 10]);
+  });
+
+  it('emits only every stride-th node', () => {
+    const points = windTileService.gridToPoints(makeGrid(), 2, anchor);
+
+    expect(points).toHaveLength(4);
+    expect(points.map((point) => point.position)).toEqual([[0, 8], [2, 8], [0, 10], [2, 10]]);
+  });
+
+  it('keeps the phase of the lattice anchor', () => {
+    // Anchored one node further east, so the samples move to column 1 - not to columns 0 and 2.
+    const points = windTileService.gridToPoints(makeGrid(), 2, { lng: 1, lat: 10 });
+
+    expect(points.map((point) => point.position)).toEqual([[1, 8], [1, 10]]);
+  });
+
+  it('skips masked nodes', () => {
+    const grid = makeGrid();
+    // Node 0 is the north-west corner of the payload.
+    grid.uv[0] = Number.NaN;
+
+    const points = windTileService.gridToPoints(grid, 1, anchor);
+
+    expect(points).toHaveLength(8);
+    expect(points.some((point) => point.position[0] === 0 && point.position[1] === 10)).toBe(false);
+  });
+
+  it('clamps a stride below one', () => {
+    expect(windTileService.gridToPoints(makeGrid(), 0, anchor)).toHaveLength(9);
   });
 });
