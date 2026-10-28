@@ -20,6 +20,13 @@ export type ProviderConfig = {
   gridCellSize?: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
   /**
+   * Map view used on the first visit, before any map state is stored.
+   *
+   * Per provider, because the model areas do not overlap: the default view of the app (Germany)
+   * holds no data for a CONUS-only model.
+   */
+  defaultView: { lat: number; lng: number; zoom: number };
+  /**
    * How the provider's wind field reaches the map.
    *
    * `raster`: one `<timestamp>Z.webp` image per step, fetched by
@@ -41,6 +48,7 @@ export const providers: Record<string, ProviderConfig> = {
       [43.0440, -4.1616],
       [58.1647, 20.5444]
     ],
+    defaultView: DEFAULT_MAP_VIEW,
     windOverlay: "raster"
   },
   [AROME]: {
@@ -50,6 +58,7 @@ export const providers: Record<string, ProviderConfig> = {
       [37.5, -12.0],
       [55.4, 16.0]
     ],
+    defaultView: DEFAULT_MAP_VIEW,
     windOverlay: "raster"
   },
   [HRRR]: {
@@ -61,6 +70,8 @@ export const providers: Record<string, ProviderConfig> = {
       [21.138, -134.096114],
       [52.615565, -60.918]
     ],
+    // Centre of the model area, so a first visit with HRRR is not an empty map over Europe.
+    defaultView: { lat: 38.5, lng: -97.5, zoom: 4 },
     windOverlay: "tiles"
   }
 };

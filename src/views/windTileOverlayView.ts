@@ -12,6 +12,7 @@ import type { ProviderConfig } from '../config';
 import { providers } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import * as windTileService from '../services/windTileService';
+import * as windTileGeometry from '../utils/windTileGeometry';
 import * as tilePyramid from '../utils/tilePyramid';
 import * as webgl from '../utils/webgl';
 import { logger } from '../utils/logger';
@@ -58,26 +59,10 @@ const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85
 const ARROW_STRIDE_BASE = 4 * Math.pow(2, TILE_ZOOM_OFFSET);
 /** Uniform scale applied to the arrow icon. */
 const ARROW_SIZE_SCALE = 0.7;
-const TILE_ICON_SIZE = 40;
-
 /** Opacity of the wind field, the value the former image overlay used. */
 const FIELD_OPACITY = 0.65;
 /** 1 m/s in knots. */
 const MS_TO_KNOTS = 1.9438445;
-
-/**
- * Node step of the arrows for one tile zoom.
- *
- * Up to the archive's finest level the payload is the real level and the pixel spacing is
- * constant, so {@link ARROW_STRIDE_BASE} applies unchanged. The tileset keeps subdividing above it
- * while the loader reads the finest level; halving the step per level compensates that.
- * @param tileZoom Zoom of the tileset tile.
- * @param archiveMaxZoom Finest level the pyramid stores.
- */
-function arrowStride(tileZoom: number, archiveMaxZoom: number): number {
-  const finer = Math.max(0, tileZoom - archiveMaxZoom);
-  return Math.max(1, ARROW_STRIDE_BASE / Math.pow(2, finer));
-}
 
 /** Arrow icon, matching the archive-based overlay so both providers look the same. */
 const ARROW_ICON_URL = `data:image/svg+xml;utf8,${encodeURIComponent(`
@@ -263,90 +248,6 @@ function createTileTexture(device: Device, grid: windTileService.WindTileGrid): 
       addressModeV: 'clamp-to-edge'
     }
   });
-}
-
-type GeoBox = { west: number; south: number; east: number; north: number };
-type TileIndex = { x: number; y: number; z: number };
-
-/**
- * Web-Mercator bounds of an XYZ tile index (the scheme deck.gl's Tileset2D uses).
- * @param index Tile index.
- */
-function tileBBoxFromIndex({ x, y, z }: TileIndex): GeoBox {
-  const n = Math.pow(2, z);
-  const latitude = (row: number) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * row) / n))) * 180) / Math.PI;
-  return {
-    west: (x / n) * 360 - 180,
-    east: ((x + 1) / n) * 360 - 180,
-    north: latitude(y),
-    south: latitude(y + 1)
-  };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-/**
- * Narrows `props.tile.bbox` to the WGS84 form.
- *
- * deck.gl hands either that one or a `left/top/right/bottom` box, depending on the indexing scheme
- * of the tileset, so the bbox has to be told apart instead of assumed.
- * @param bbox Value of `props.tile.bbox`.
- */
-function isGeoBox(bbox: unknown): bbox is GeoBox {
-  return typeof bbox === 'object' && bbox !== null && 'west' in bbox;
-}
-
-/** Decoded payload of a tile and the window of it the tile's quad covers. */
-type TileQuad = {
-  grid: windTileService.WindTileGrid;
-  /** Payload window of the quad (payload indices). */
-  i0: number;
-  i1: number;
-  j0: number;
-  j1: number;
-  /** Quad extent as [west, south, east, north]. */
-  bounds: [number, number, number, number];
-};
-
-/**
- * Resolves the part of a tile's payload that its quad covers.
- *
- * The requested tile defines the quad; the payload origin/delta define which part of the grid it
- * covers. Both are clamped to what the payload really contains, so the padded border node is drawn
- * by exactly one tile and the arrows are not doubled at the seams.
- * @param grid Decoded grid of the tile, or null when the archive has no data there.
- * @param tile Tile the sub layers are being built for.
- * @returns Window, extent and grid, or null when there is nothing to draw for this tile.
- */
-function resolveTileQuad(
-  grid: windTileService.WindTileGrid | null,
-  tile: { index: TileIndex; bbox?: unknown }
-): TileQuad | null {
-  if (!grid) return null; // tile does not exist in the archive
-
-  const box: GeoBox = isGeoBox(tile.bbox) ? tile.bbox : tileBBoxFromIndex(tile.index);
-
-  const i0 = clamp((box.west - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
-  const i1 = clamp((box.east - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
-  const j0 = clamp((grid.originLat - box.north) / grid.deltaLat, 0, grid.rows - 1);
-  const j1 = clamp((grid.originLat - box.south) / grid.deltaLat, 0, grid.rows - 1);
-  if (i1 <= i0 || j1 <= j0) return null; // no data here
-
-  return {
-    grid,
-    i0,
-    i1,
-    j0,
-    j1,
-    bounds: [
-      grid.originLng + i0 * grid.deltaLng,
-      grid.originLat - j1 * grid.deltaLat,
-      grid.originLng + i1 * grid.deltaLng,
-      grid.originLat - j0 * grid.deltaLat
-    ]
-  };
 }
 
 const WIND_FIELD_UNIFORM_BLOCK = `\
@@ -593,7 +494,7 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
  * @param quad Window, extent and grid resolved from the tile payload.
  * @param id Layer id.
  */
-function createFieldLayer(quad: TileQuad, id: string): WindTileLayer {
+function createFieldLayer(quad: windTileGeometry.TileQuad, id: string): WindTileLayer {
   return new WindTileLayer({
     id,
     data: quad.grid,
@@ -636,8 +537,9 @@ function createArrowLayer(points: windTileService.WindTilePoint[], id: string): 
     sizeScale: ARROW_SIZE_SCALE,
     sizeUnits: 'pixels',
     billboard: false,
-    pickable: false,
-    transitions: { getAngle: 300, getSize: 300 }
+    pickable: false
+    // No transitions: deck.gl's transition readback (`getBufferSubData`) was the single largest
+    // cost in the frame profile of the prototype, and the arrows only change on a new timestamp.
   });
 }
 
@@ -687,10 +589,10 @@ function createWindTileLayer(
       return await windTileService.getTileGrid(urlTemplate, archiveZ, archiveX, archiveY, signal, format);
     },
     renderSubLayers: (props) => {
-      const quad = resolveTileQuad(props.data, props.tile);
+      const quad = windTileGeometry.resolveTileQuad(props.data, props.tile);
       if (!quad) return null;
 
-      const stride = arrowStride(props.tile.index.z, archiveMaxZoom);
+      const stride = windTileGeometry.arrowStride(props.tile.index.z, archiveMaxZoom, ARROW_STRIDE_BASE);
       const points = windTileService.gridToPoints(quad.grid, stride, anchor, {
         colMin: quad.i0,
         colMax: quad.i1,

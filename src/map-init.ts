@@ -19,8 +19,10 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     if (mapInstance) return { map: mapInstance, windOverlay: windOverlayInstance };
 
     // 1. Get last state from storage.
-    // If empty/missing, falls back directly to the provided default object (Augsburg).
-    const savedState = storage.getMapState(DEFAULT_MAP_VIEW);
+    // If empty/missing, falls back to the active provider's default view - the model areas do not
+    // overlap, so a stored app default would point outside the coverage of e.g. HRRR.
+    const providerDefaultView = providers[weatherProviderModel.getActiveProviderId()]?.defaultView;
+    const savedState = storage.getMapState(providerDefaultView ?? DEFAULT_MAP_VIEW);
 
     // 2. Ensure the map container exists and has height. If height is 0 (CSS not yet applied), apply a temporary fallback.
     const mapContainer = document.getElementById('map');

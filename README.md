@@ -1,9 +1,9 @@
-# Interactive DWD ICON-D2 RUC & AROME PI Wind Map
+# Interactive ICON-D2 RUC, AROME PI & HRRR Wind Map
 
 [![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://chriz76.github.io/weather-map/)
 [![Data Pipeline Repo](https://img.shields.io/badge/Data-Repository-green?style=flat-square)](https://github.com/Chriz76/weather-data)
 
-The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI** using the logo row.
+The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions, plus the **CONUS** area from HRRR. You can switch between **ICON-D2 RUC**, **AROME PI** and **HRRR** using the logo row.
 
 [![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://chriz76.github.io/weather-map/)
 
@@ -16,6 +16,23 @@ To our knowledge, this is a **unique free implementation** providing hourly upda
 [Related: kitespots.zink.tv](https://kitespots.zink.tv)
 
 > ⚠️ **Disclaimer:** Always check the local weather at your spot. Forecasts can be wrong. This project is currently in active development.
+
+---
+
+## Providers
+
+Three rapid-update models are available; switch them with the toggle in the logo row.
+
+| Provider | Area | Resolution | Cycle / steps | Sources |
+| :--- | :--- | :--- | :--- | :--- |
+| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, 15 min steps | DWD OpenData |
+| **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min steps | Météo-France via Open-Meteo |
+| **HRRR** (preview) | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
+
+HRRR is a **preview**. Its wind field is not a rendered image but a static tile pyramid published by
+the `hrrr-data` pipeline: `index.json` names the run and a `tiles_url` template, each tile is an
+int16-delta payload that the client decodes and draws as a colored field plus arrows (WebGL2 via
+deck.gl). Point forecasts come from Open-Meteo's `gfs_hrrr` model and only exist inside CONUS.
 
 ---
 
@@ -58,12 +75,13 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 
 ## Development & Contribution
 
-As this is an actively developed project, contributions to optimize the JSON chunking sizes, add more rapid models like HRRR or Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
+As this is an actively developed project, contributions to optimize the JSON chunking sizes, add more rapid models like Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
 
 This project is a private, free, and ad-free open-source web app. It is maintained strictly for hobby purposes and pursues no commercial interests.
 
 * **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
 * **AROME Attribution:** [Open-Meteo](https://open-meteo.com/) using [Météo-France](https://meteofrance.com/) model data.
+* **HRRR Attribution:** NOAA HRRR model data, point forecasts via [Open-Meteo](https://open-meteo.com/), wind tiles from the `hrrr-data` pipeline.
 * **Author:** [Chriz76](https://github.com/Chriz76)
 
 ## 📄 License & Terms of Use

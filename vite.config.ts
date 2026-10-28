@@ -21,8 +21,8 @@ export default defineConfig({
           template: './info.html',
           injectOptions: {
             data: {
-              pageTitle: 'Documentation & Info | ICON-D2 RUC & Arome PI Weather Map',
-              description: 'Documentation, technical background, and project information for the ICON-D2 RUC and AROME PI wind map.',
+              pageTitle: 'Documentation & Info | ICON-D2 RUC, AROME PI & HRRR Weather Map',
+              description: 'Documentation, technical background, and project information for the ICON-D2 RUC, AROME PI and HRRR wind map.',
               infoContent
             }
           }
