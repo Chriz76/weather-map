@@ -6,6 +6,12 @@ describe('time utilities', () => {
         expect(result).toMatch(/\d{1,2}:\d{2}/);
     });
 
+    it('should format times as a 24-hour clock without AM/PM', () => {
+        expect(formatModelTimestampToTime('20260706_12')).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+        expect(formatModelTimestampToTime('20260706_13')).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+        expect(formatModelTimestampToTime('20260706_04')).toMatch(/^0\d:[0-5]\d$/);
+    });
+
     it('should choose the current or next timestamp index', () => {
         const now = new Date();
         const firstFuture = new Date(now.getTime() + 60 * 60 * 1000);

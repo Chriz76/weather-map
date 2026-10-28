@@ -1,6 +1,7 @@
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { weatherProviderModel } from '../models/weatherProviderModel';
+import { uiStateModel } from '../models/uiStateModel';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, OverlayLoadError } from './actions';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
@@ -147,6 +148,10 @@ function registerLifecycleListeners() {
     const prevTimestamp = weatherProviderModel.activeTimestamp;
 
     weatherProviderModel.setActiveProvider(providerId);
+    // The raster overlay was fetched for the provider that was active before: drop it, so a
+    // provider that renders its own tile pyramid cannot leave the previous provider's image on
+    // the map. The sync below fetches a new image only when the new provider needs one.
+    uiStateModel.setActiveOverlayUrl(null);
     try { storage.saveActiveProvider(providerId); } catch (e) { logger.debug('Failed to persist active provider', e); }
 
     await triggerSyncAndPoll(true, prevTimestamp);

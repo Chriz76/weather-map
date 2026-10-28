@@ -30,10 +30,22 @@ function normalizeToDate(input: string | Date): Date {
     return date;
 }
 
+/**
+ * Formats a date as a zero-padded 24-hour clock time (`18:15`).
+ *
+ * The hour cycle is pinned to `h23`: the locale default would render `06:15 PM` on an English
+ * system and `18:15` on a German one, so the same build would show two different formats.
+ * @param date Date to format.
+ * @returns Time in local timezone, `HH:MM`.
+ */
+function formatClockTime(date: Date): string {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+}
+
 export function formatModelTimestampToTime(timestampStr: string): string {
     try {
         const date = parseModelTimestamp(timestampStr);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return formatClockTime(date);
     } catch (error: unknown) {
             logger.error('❌ Error formatting model timestamp to time:', error);
         return timestampStr;
@@ -44,7 +56,7 @@ export function formatModelTimestampToDateTime(timestampStr: string): string {
     try {
         const date = parseModelTimestamp(timestampStr);
         const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-        const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const uhrzeit = formatClockTime(date);
         return `${datum} ${uhrzeit}`;
     } catch (error: unknown) {
             logger.error('❌ Error formatting model timestamp to date-time:', error);
@@ -55,7 +67,7 @@ export function formatModelTimestampToDateTime(timestampStr: string): string {
 export function formatModelTimestampToTimeAndDescription(timestampStr: string): { time: string; description: string } {
     try {
         const date = parseModelTimestamp(timestampStr);
-        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeStr = formatClockTime(date);
 
         const today = new Date();
         const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -80,7 +92,7 @@ export function formatToDateTime(input: string | Date): string {
     try {
         const date = normalizeToDate(input);
         const datum = date.toLocaleDateString([], { day: '2-digit', month: '2-digit' });
-        const uhrzeit = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const uhrzeit = formatClockTime(date);
 
         return `${datum} ${uhrzeit}`;
     } catch (error: unknown) {
@@ -103,7 +115,7 @@ export function formatMinutesAgo(input: string | Date): string {
 export function formatToTime(input: string | Date): string {
     try {
         const date = normalizeToDate(input);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return formatClockTime(date);
     } catch (error: unknown) {
             logger.error('❌ Error formatting to time:', error);
         return String(input);
