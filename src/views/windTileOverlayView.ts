@@ -1,5 +1,11 @@
 import { IconLayer } from '@deck.gl/layers';
 import { TileLayer } from '@deck.gl/geo-layers';
+import { Layer, project32 } from '@deck.gl/core';
+import type { LayerProps } from '@deck.gl/core';
+import { Geometry, Model } from '@luma.gl/engine';
+import type { ModelProps } from '@luma.gl/engine';
+import type { Device, Texture } from '@luma.gl/core';
+import type { ShaderModule } from '@luma.gl/shadertools';
 import type { Map as LeafletMap } from 'leaflet';
 import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
 import type { ProviderConfig } from '../config';
@@ -28,40 +34,49 @@ let overlayInstance: LeafletDeckOverlay | null = null;
 let appliedTilesetKey: string | null = null;
 
 /**
- * Pixel width deck.gl draws a tile at. With the HRRR pyramid (0.025 deg nodes, `max_zoom` 7) this
- * works out to ~4.5 px per node, so {@link ARROW_STRIDE} arrows sit ~18 px apart on screen.
+ * Pixel width deck.gl draws a tile at.
+ *
+ * The pyramid is self-similar (nodes double per level), so at 1024 px one node is ~9 px on every
+ * level the archive stores. {@link TILE_ZOOM_OFFSET} then makes the tileset pick the finest level
+ * one map zoom earlier.
  */
-const TILE_SIZE = 512;
+const TILE_SIZE = 1024;
+const TILE_MIN_ZOOM = 0;
+/** Detail bias of the tileset, in zoom levels (see `Tileset2D.getTileIndices`). */
+const TILE_ZOOM_OFFSET = 1;
 /** Tile requests in flight; bounds how fast a new timestamp fills in. */
 const TILE_MAX_REQUESTS = 6;
-/**
- * Node step between arrows on the finest level. One node is ~4.5 px at {@link TILE_SIZE}, so this
- * keeps the arrows about 27 px apart, matching the archive-based overlay.
- */
-const ARROW_STRIDE = 6;
-/** Uniform scale applied to the arrow icon. */
-const ARROW_SIZE_SCALE = 0.7;
-const MS_TO_KNOTS = 1.94384;
 const TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 
-/** Map instance the overlay is attached to; needed to derive the arrow spacing from the zoom. */
-let mapInstance: LeafletMap | null = null;
+/**
+ * Node step between arrows on the finest level of the archive.
+ *
+ * The tileset moves one level per zoom step (up to two levels above the archive), and the tiles of
+ * those levels cover a smaller area each, so the step doubles with the offset to keep the on-screen
+ * spacing constant.
+ */
+const ARROW_STRIDE_BASE = 4 * Math.pow(2, TILE_ZOOM_OFFSET);
+/** Uniform scale applied to the arrow icon. */
+const ARROW_SIZE_SCALE = 0.7;
+const TILE_ICON_SIZE = 40;
+
+/** Opacity of the wind field, the value the former image overlay used. */
+const FIELD_OPACITY = 0.65;
+/** 1 m/s in knots. */
+const MS_TO_KNOTS = 1.9438445;
 
 /**
- * Node step of the arrows for the current map zoom.
+ * Node step of the arrows for one tile zoom.
  *
- * Below the pyramid's finest level the payload is the real (coarser) level and the node spacing
- * in pixels is constant, so {@link ARROW_STRIDE} applies unchanged. Above it deck.gl keeps drawing
- * the finest tiles (the archive holds nothing finer), which spreads the nodes across the screen -
- * halving the step per level keeps the spacing even: 4 (map zoom <= 8), 2 (9), 1 (10+).
- * @param zoom Map zoom of the Leaflet map.
- * @param maxZoom Finest level the pyramid stores.
+ * Up to the archive's finest level the payload is the real level and the pixel spacing is
+ * constant, so {@link ARROW_STRIDE_BASE} applies unchanged. The tileset keeps subdividing above it
+ * while the loader reads the finest level; halving the step per level compensates that.
+ * @param tileZoom Zoom of the tileset tile.
+ * @param archiveMaxZoom Finest level the pyramid stores.
  */
-function arrowStrideFor(zoom: number, maxZoom: number): number {
-  // The tileset runs one zoom level below the map zoom (TILE_SIZE 512), so the finest level is
-  // reached at map zoom maxZoom + 1.
-  const overzoom = Math.max(0, zoom - (maxZoom + 1));
-  return Math.max(1, ARROW_STRIDE / Math.pow(2, overzoom));
+function arrowStride(tileZoom: number, archiveMaxZoom: number): number {
+  const finer = Math.max(0, tileZoom - archiveMaxZoom);
+  return Math.max(1, ARROW_STRIDE_BASE / Math.pow(2, finer));
 }
 
 /** Arrow icon, matching the archive-based overlay so both providers look the same. */
@@ -116,6 +131,492 @@ function clearLayers(reason: string): void {
   }
 }
 
+/* -------------------------------------------------------------------------
+ *  Wind field
+ *
+ *  Each tile payload is uploaded as a premultiplied RGBA16F texture (rg = u/v * coverage,
+ *  b = coverage) with LINEAR filtering, so the GPU does the bilinear interpolation and the
+ *  fragment shader needs one texture tap per fragment.
+ * ------------------------------------------------------------------------- */
+
+/** Band colours of css/forecast-view.css (`.w-under-3` ... `.w-over-25`), lowest band first. */
+const KNOTS_COLORS: ReadonlyArray<readonly [number, number, number]> = [
+  [230, 255, 255], // <= 3 kn
+  [0, 191, 255],   // <= 5 kn
+  [0, 255, 204],   // <= 6 kn
+  [0, 204, 0],     // <= 7 kn
+  [153, 255, 0],   // <= 8 kn
+  [255, 255, 0],   // <= 9 kn
+  [209, 158, 0],   // <= 10 kn
+  [255, 85, 0],    // <= 12 kn
+  [255, 0, 0],     // <= 15 kn
+  [255, 51, 153],  // <= 20 kn
+  [153, 0, 204],   // <= 25 kn
+  [0, 0, 255]      // > 25 kn
+];
+
+const BAND_COUNT = KNOTS_COLORS.length;
+
+let paletteTexture: Texture | null = null;
+let paletteDevice: Device | null = null;
+
+/**
+ * Shared palette texture (one row of {@link BAND_COUNT} colours) for all tiles.
+ *
+ * Recreated when the deck.gl device changes, e.g. after the overlay was re-added.
+ * @param device Device that will sample the palette.
+ */
+function getPaletteTexture(device: Device): Texture {
+  if (paletteTexture && paletteDevice === device) return paletteTexture;
+
+  const data = new Uint8Array(BAND_COUNT * 4);
+  KNOTS_COLORS.forEach((color, index) => {
+    data[index * 4] = color[0];
+    data[index * 4 + 1] = color[1];
+    data[index * 4 + 2] = color[2];
+    data[index * 4 + 3] = 255;
+  });
+
+  paletteTexture = device.createTexture({
+    width: BAND_COUNT,
+    height: 1,
+    format: 'rgba8unorm',
+    data,
+    sampler: {
+      minFilter: 'linear',
+      magFilter: 'linear',
+      addressModeU: 'clamp-to-edge',
+      addressModeV: 'clamp-to-edge'
+    }
+  });
+  paletteDevice = device;
+  return paletteTexture;
+}
+
+const FLOAT_ONE = new Float32Array(1);
+const FLOAT_ONE_BITS = new Int32Array(FLOAT_ONE.buffer);
+/** 1.0 as IEEE binary16 bit pattern. */
+const HALF_ONE = 0x3c00;
+
+/**
+ * Converts a float32 value into its IEEE binary16 bit pattern (round to nearest).
+ *
+ * RGBA16F is the only float format WebGL2 filters natively, which is what allows the hardware
+ * interpolation of the wind field.
+ * @param value Value to convert.
+ */
+function toHalf(value: number): number {
+  FLOAT_ONE[0] = value;
+  const bits32 = FLOAT_ONE_BITS[0]!;
+  let bits = (bits32 >> 16) & 0x8000;
+  let mantissa = (bits32 >> 12) & 0x07ff;
+  const exponent = (bits32 >> 23) & 0xff;
+
+  if (exponent < 103) return bits; // too small for a half float -> zero
+  if (exponent > 142) { // inf / NaN
+    return bits | 0x7c00 | ((exponent === 255 && (bits32 & 0x007fffff) !== 0) ? 1 : 0);
+  }
+  if (exponent < 113) { // subnormal
+    mantissa |= 0x0800;
+    return bits | ((mantissa >> (114 - exponent)) + ((mantissa >> (113 - exponent)) & 1));
+  }
+
+  bits |= ((exponent - 112) << 10) | (mantissa >> 1);
+  return bits + (mantissa & 1);
+}
+
+/**
+ * Uploads one decoded tile grid as a premultiplied RGBA16F texture.
+ *
+ * Masked nodes get coverage 0 and therefore contribute nothing to the filtered value.
+ * @param device Device that will sample the texture.
+ * @param grid Decoded tile grid.
+ */
+function createTileTexture(device: Device, grid: windTileService.WindTileGrid): Texture {
+  const { cols, rows, uv } = grid;
+  const half = new Uint16Array(cols * rows * 4);
+
+  for (let row = 0; row < rows; row++) {
+    const rowOffset = row * cols * 4;
+    for (let col = 0; col < cols; col++) {
+      const source = (row * cols + col) * 2;
+      const u = uv[source];
+      const v = uv[source + 1];
+      const valid = u !== undefined && v !== undefined && Number.isFinite(u) && Number.isFinite(v);
+      const target = rowOffset + col * 4;
+      half[target] = valid ? toHalf(u) : 0;      // .r = u * coverage
+      half[target + 1] = valid ? toHalf(v) : 0;  // .g = v * coverage
+      half[target + 2] = valid ? HALF_ONE : 0;   // .b = coverage
+      half[target + 3] = 0;
+    }
+  }
+
+  return device.createTexture({
+    width: cols,
+    height: rows,
+    format: 'rgba16float',
+    data: half,
+    sampler: {
+      minFilter: 'linear',
+      magFilter: 'linear',
+      addressModeU: 'clamp-to-edge',
+      addressModeV: 'clamp-to-edge'
+    }
+  });
+}
+
+type GeoBox = { west: number; south: number; east: number; north: number };
+type TileIndex = { x: number; y: number; z: number };
+
+/**
+ * Web-Mercator bounds of an XYZ tile index (the scheme deck.gl's Tileset2D uses).
+ * @param index Tile index.
+ */
+function tileBBoxFromIndex({ x, y, z }: TileIndex): GeoBox {
+  const n = Math.pow(2, z);
+  const latitude = (row: number) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * row) / n))) * 180) / Math.PI;
+  return {
+    west: (x / n) * 360 - 180,
+    east: ((x + 1) / n) * 360 - 180,
+    north: latitude(y),
+    south: latitude(y + 1)
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Narrows `props.tile.bbox` to the WGS84 form.
+ *
+ * deck.gl hands either that one or a `left/top/right/bottom` box, depending on the indexing scheme
+ * of the tileset, so the bbox has to be told apart instead of assumed.
+ * @param bbox Value of `props.tile.bbox`.
+ */
+function isGeoBox(bbox: unknown): bbox is GeoBox {
+  return typeof bbox === 'object' && bbox !== null && 'west' in bbox;
+}
+
+/** Decoded payload of a tile and the window of it the tile's quad covers. */
+type TileQuad = {
+  grid: windTileService.WindTileGrid;
+  /** Payload window of the quad (payload indices). */
+  i0: number;
+  i1: number;
+  j0: number;
+  j1: number;
+  /** Quad extent as [west, south, east, north]. */
+  bounds: [number, number, number, number];
+};
+
+/**
+ * Resolves the part of a tile's payload that its quad covers.
+ *
+ * The requested tile defines the quad; the payload origin/delta define which part of the grid it
+ * covers. Both are clamped to what the payload really contains, so the padded border node is drawn
+ * by exactly one tile and the arrows are not doubled at the seams.
+ * @param grid Decoded grid of the tile, or null when the archive has no data there.
+ * @param tile Tile the sub layers are being built for.
+ * @returns Window, extent and grid, or null when there is nothing to draw for this tile.
+ */
+function resolveTileQuad(
+  grid: windTileService.WindTileGrid | null,
+  tile: { index: TileIndex; bbox?: unknown }
+): TileQuad | null {
+  if (!grid) return null; // tile does not exist in the archive
+
+  const box: GeoBox = isGeoBox(tile.bbox) ? tile.bbox : tileBBoxFromIndex(tile.index);
+
+  const i0 = clamp((box.west - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
+  const i1 = clamp((box.east - grid.originLng) / grid.deltaLng, 0, grid.cols - 1);
+  const j0 = clamp((grid.originLat - box.north) / grid.deltaLat, 0, grid.rows - 1);
+  const j1 = clamp((grid.originLat - box.south) / grid.deltaLat, 0, grid.rows - 1);
+  if (i1 <= i0 || j1 <= j0) return null; // no data here
+
+  return {
+    grid,
+    i0,
+    i1,
+    j0,
+    j1,
+    bounds: [
+      grid.originLng + i0 * grid.deltaLng,
+      grid.originLat - j1 * grid.deltaLat,
+      grid.originLng + i1 * grid.deltaLng,
+      grid.originLat - j0 * grid.deltaLat
+    ]
+  };
+}
+
+const WIND_FIELD_UNIFORM_BLOCK = `\
+layout(std140) uniform windFieldUniforms {
+  vec2 uTexSize;
+  vec2 uCiMin;
+  vec2 uCiMax;
+  float uOpacity;
+  float uMsToKn;
+  float uBands;
+} windField;
+`;
+
+/**
+ * Uniform block of the field shader. The samplers stay in the layer's fragment shader, because
+ * luma.gl resolves plain (non block) uniforms and bindings by name.
+ */
+const windFieldUniforms: ShaderModule = {
+  name: 'windField',
+  vs: WIND_FIELD_UNIFORM_BLOCK,
+  fs: WIND_FIELD_UNIFORM_BLOCK,
+  uniformTypes: {
+    uTexSize: 'vec2<f32>',
+    uCiMin: 'vec2<f32>',
+    uCiMax: 'vec2<f32>',
+    uOpacity: 'f32',
+    uMsToKn: 'f32',
+    uBands: 'f32'
+  }
+};
+
+const WIND_FIELD_VS = `#version 300 es
+#define SHADER_NAME wind-field-vertex-shader
+
+in vec3 positions;
+in vec2 texCoords;
+
+out vec2 vTexCoord;
+
+void main(void) {
+  geometry.worldPosition = positions;
+  vec4 commonPosition;
+  gl_Position = project_position_to_clipspace(positions, vec3(0.0), vec3(0.0), commonPosition);
+  vTexCoord = texCoords;
+}
+`;
+
+const WIND_FIELD_FS = `#version 300 es
+#define SHADER_NAME wind-field-fragment-shader
+
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform sampler2D uTexture;
+uniform sampler2D uPalette;
+
+in vec2 vTexCoord;
+out vec4 fragColor;
+
+// Band boundaries in knots - keep in sync with KNOTS_COLORS above.
+void bandRange(float kn, out float lo, out float hi, out float band) {
+  lo =  0.0; hi =  3.0; band =  0.0;
+  if (kn >=  3.0) { lo =  3.0; hi =  5.0; band =  1.0; }
+  if (kn >=  5.0) { lo =  5.0; hi =  6.0; band =  2.0; }
+  if (kn >=  6.0) { lo =  6.0; hi =  7.0; band =  3.0; }
+  if (kn >=  7.0) { lo =  7.0; hi =  8.0; band =  4.0; }
+  if (kn >=  8.0) { lo =  8.0; hi =  9.0; band =  5.0; }
+  if (kn >=  9.0) { lo =  9.0; hi = 10.0; band =  6.0; }
+  if (kn >= 10.0) { lo = 10.0; hi = 12.0; band =  7.0; }
+  if (kn >= 12.0) { lo = 12.0; hi = 15.0; band =  8.0; }
+  if (kn >= 15.0) { lo = 15.0; hi = 20.0; band =  9.0; }
+  if (kn >= 20.0) { lo = 20.0; hi = 25.0; band = 10.0; }
+  if (kn >= 25.0) { lo = 25.0; hi = 200.0; band = 11.0; }
+}
+
+vec3 bandColor(float band) {
+  return texture(uPalette, vec2((band + 0.5) / 12.0, 0.5)).rgb;
+}
+
+void main(void) {
+  // vTexCoord runs 0..1 over the tile, the grid window says which part of the payload
+  // belongs to it (integer values are data nodes, so the hardware blends the neighbours).
+  vec2 ci = mix(windField.uCiMin, windField.uCiMax, vTexCoord);
+  vec4 fieldSample = texture(uTexture, (ci + 0.5) / windField.uTexSize);
+
+  float coverage = clamp(fieldSample.b, 0.0, 1.0);
+  if (coverage <= 0.0) {
+    fragColor = vec4(0.0);
+    return;
+  }
+
+  vec2 uvWind = fieldSample.rg / max(coverage, 1e-5);
+  float kn = length(uvWind) * windField.uMsToKn;
+
+  // Guard against NaN/garbage: an overflowed half float (or a bad node) would turn the
+  // band maths into NaN, which drivers paint as flat grey patches.
+  if (!(kn >= 0.0) || kn > 1000.0) {
+    fragColor = vec4(0.0);
+    return;
+  }
+
+  float lo, hi, band;
+  bandRange(kn, lo, hi, band);
+
+  // Continuous band coordinate: it hits the next integer exactly at every boundary, so
+  // fwidth() stays correct even in a pixel quad spanning the boundary.
+  float bandC = band + (kn - lo) / (hi - lo);
+
+  // Hard band edges with a one-pixel transition, matching the legend swatches.
+  float delta = fwidth(bandC) * 0.75;
+  float position = fract(bandC);
+  float edge = smoothstep(1.0 - delta, 1.0 + delta, position);
+  vec3 finalColor = mix(bandColor(band), bandColor(min(band + 1.0, 11.0)), edge);
+
+  fragColor = vec4(finalColor, windField.uOpacity * coverage);
+}
+`;
+
+interface WindTileLayerProps extends LayerProps {
+  /** Decoded grid of this tile. */
+  data: windTileService.WindTileGrid;
+  /** Quad extent as [west, south, east, north]. */
+  bounds: [number, number, number, number];
+  /** Grid window of the payload covered by the quad (payload indices). */
+  ciMin: [number, number];
+  ciMax: [number, number];
+  /** Opacity of the rendered wind field. */
+  fieldOpacity: number;
+}
+
+/** GPU resources of one field tile. */
+type WindTileLayerState = {
+  model?: Model;
+  texture?: Texture;
+  /** Grid the current texture was built from; guards against a duplicate upload. */
+  textureData?: windTileService.WindTileGrid;
+};
+
+/** One tile of the wind field: a single textured quad over the tile's data extent. */
+class WindTileLayer extends Layer<WindTileLayerProps> {
+  static layerName = 'WindTileLayer';
+
+  /** deck.gl types `Layer.state` as `{}`; this narrows it to what `initializeState` sets. */
+  declare state: WindTileLayerState;
+
+  /**
+   * Adds the deck.gl default shader modules (projection, picking).
+   *
+   * `Layer.getShaders` is typed `any`, so the result is asserted once here instead of letting
+   * `any` leak into the model construction.
+   */
+  override getShaders(): ModelProps {
+    return super.getShaders({
+      vs: WIND_FIELD_VS,
+      fs: WIND_FIELD_FS,
+      modules: [project32, windFieldUniforms]
+    }) as ModelProps;
+  }
+
+  override initializeState(): void {
+    this.setState({
+      model: this.createModel(),
+      texture: createTileTexture(this.context.device, this.props.data),
+      textureData: this.props.data
+    });
+  }
+
+  override updateState(params: Parameters<Layer<WindTileLayerProps>['updateState']>[0]): void {
+    const { props } = params;
+
+    // New data for a layer deck.gl matched by id (e.g. after a timestamp change). Comparing
+    // against `oldProps.data` alone is not enough: deck.gl runs the first `updateState` right
+    // after `initializeState` with the default props as `oldProps`, so that call looks like a
+    // data change and every tile would upload the very same texture twice.
+    if (props.data !== this.state.textureData) {
+      this.state.texture?.destroy();
+      this.setState({
+        texture: createTileTexture(this.context.device, props.data),
+        textureData: props.data
+      });
+    }
+  }
+
+  override draw(): void {
+    const { model, texture } = this.state;
+    if (!model || !texture) return;
+
+    const { data, ciMin, ciMax, fieldOpacity } = this.props;
+    model.shaderInputs.setProps({
+      windField: {
+        uTexSize: [data.cols, data.rows],
+        uCiMin: ciMin,
+        uCiMax: ciMax,
+        uOpacity: fieldOpacity,
+        uMsToKn: MS_TO_KNOTS,
+        uBands: 1,
+        // luma.gl routes non-numeric values to the texture bindings by name.
+        uTexture: texture,
+        uPalette: getPaletteTexture(this.context.device)
+      }
+    });
+    model.draw(this.context.renderPass);
+  }
+
+  override finalizeState(): void {
+    this.state.texture?.destroy();
+    // Disposes the model and the attribute manager.
+    super.finalizeState(this.context);
+  }
+
+  private createModel(): Model {
+    const bounds = this.props.bounds;
+    // Explicit triangle list: a triangle strip of four vertices only rendered one of its two
+    // triangles here, which left half of every tile transparent.
+    const positions = new Float32Array([
+      bounds[0], bounds[1], 0,
+      bounds[2], bounds[1], 0,
+      bounds[2], bounds[3], 0,
+      bounds[0], bounds[1], 0,
+      bounds[2], bounds[3], 0,
+      bounds[0], bounds[3], 0
+    ]);
+    // v = 0 is the northern edge, because the first payload row is the northern one.
+    const texCoords = new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]);
+
+    return new Model(this.context.device, {
+      ...this.getShaders(),
+      id: this.props.id,
+      isInstanced: false,
+      geometry: new Geometry({
+        topology: 'triangle-list',
+        attributes: {
+          positions: { size: 3, value: positions },
+          texCoords: { size: 2, value: texCoords }
+        }
+      })
+    });
+  }
+}
+
+/**
+ * Sub layer of the wind field: one textured quad over the part of the payload the tile covers.
+ * @param quad Window, extent and grid resolved from the tile payload.
+ * @param id Layer id.
+ */
+function createFieldLayer(quad: TileQuad, id: string): WindTileLayer {
+  return new WindTileLayer({
+    id,
+    data: quad.grid,
+    bounds: quad.bounds,
+    ciMin: [quad.i0, quad.j0],
+    ciMax: [quad.i1, quad.j1],
+    fieldOpacity: FIELD_OPACITY,
+    // Straight alpha blending; the field is drawn below the arrows and has no depth.
+    parameters: {
+      blend: true,
+      blendColorOperation: 'add',
+      blendColorSrcFactor: 'src-alpha',
+      blendColorDstFactor: 'one-minus-src-alpha',
+      blendAlphaOperation: 'add',
+      blendAlphaSrcFactor: 'one',
+      blendAlphaDstFactor: 'one-minus-src-alpha',
+      depthWriteEnabled: false,
+      depthCompare: 'always',
+      cullMode: 'none'
+    }
+  });
+}
+
 /**
  * Builds the arrow sub layer of one tile.
  * @param points Wind nodes of the decoded tile.
@@ -143,27 +644,33 @@ function createArrowLayer(points: windTileService.WindTilePoint[], id: string): 
 /**
  * Builds the tile layer of one timestamp.
  *
- * `maxZoom` is the pyramid's finest level: above it deck.gl reuses those tiles at the same
- * geographic position, which is what we want - the archive holds no finer data.
+ * The tileset subdivides up to two levels above the archive, so the requested tile is mapped onto
+ * the finest stored level: the level difference shifts the index down with it, otherwise the wrong
+ * tile would be read. Each sub layer then draws only the part of that payload its tile covers (see
+ * {@link resolveTileQuad}).
+ *
+ * `getTileData` is the only update trigger: a new timestamp reloads the tiles, and nothing else
+ * ever invalidates one that is already cached. A zoom therefore builds the next level's tiles
+ * while the cached ones keep their sub layers - no rebuild, no module state.
  * @param urlTemplate Absolute tile URL template of the active timestamp.
- * @param maxZoom Finest level the pyramid stores.
+ * @param archiveMaxZoom Finest level the pyramid stores.
  * @param coverage Tiles the run really stores, or null when the index has no coverage block.
  * @param format Payload encoding of the pyramid.
  * @param anchor Lattice anchor of the archive.
- * @param stride Node step of the arrows.
  */
 function createWindTileLayer(
   urlTemplate: string,
-  maxZoom: number,
+  archiveMaxZoom: number,
   coverage: TileCoverage | null,
   format: windTileService.WindTileFormat,
-  anchor: windTileService.WindGridAnchor,
-  stride: number
+  anchor: windTileService.WindGridAnchor
 ): TileLayer<windTileService.WindTileGrid | null> {
   return new TileLayer<windTileService.WindTileGrid | null>({
     id: 'wind-tile-layer',
-    minZoom: 0,
-    maxZoom,
+    minZoom: TILE_MIN_ZOOM,
+    // Two levels above the archive, until the arrows would be one node apart.
+    maxZoom: archiveMaxZoom + 2,
+    zoomOffset: TILE_ZOOM_OFFSET,
     tileSize: TILE_SIZE,
     extent: TILE_EXTENT,
     maxRequests: TILE_MAX_REQUESTS,
@@ -171,16 +678,32 @@ function createWindTileLayer(
     // A new run means a new URL, and only a new URL means new tiles.
     updateTriggers: { getTileData: [urlTemplate] },
     getTileData: async ({ index, signal }) => {
-      if (index.z > maxZoom) return null;
-      if (!tilePyramid.isTileCovered(coverage, index.z, index.x, index.y)) return null;
-      return await windTileService.getTileGrid(urlTemplate, index.z, index.x, index.y, signal, format);
+      const dz = Math.max(0, index.z - archiveMaxZoom);
+      const archiveZ = index.z - dz;
+      const archiveX = index.x >> dz;
+      const archiveY = index.y >> dz;
+
+      if (!tilePyramid.isTileCovered(coverage, archiveZ, archiveX, archiveY)) return null;
+      return await windTileService.getTileGrid(urlTemplate, archiveZ, archiveX, archiveY, signal, format);
     },
     renderSubLayers: (props) => {
-      const grid = props.data;
-      if (!grid) return null;
+      const quad = resolveTileQuad(props.data, props.tile);
+      if (!quad) return null;
 
-      const points = windTileService.gridToPoints(grid, stride, anchor);
-      return points.length > 0 ? createArrowLayer(points, props.id) : null;
+      const stride = arrowStride(props.tile.index.z, archiveMaxZoom);
+      const points = windTileService.gridToPoints(quad.grid, stride, anchor, {
+        colMin: quad.i0,
+        colMax: quad.i1,
+        rowMin: quad.j0,
+        rowMax: quad.j1
+      });
+
+      // Stable ids: both sub layers are only ever built from this tile's payload, so deck.gl
+      // updates their attributes instead of building new layers.
+      return [
+        createFieldLayer(quad, `${props.id}-field`),
+        createArrowLayer(points, `${props.id}-arrows`)
+      ];
     }
   });
 }
@@ -222,9 +745,8 @@ function applyActiveTiles(): void {
     template,
     tilePyramid.tileFolderTimestamp(timestamp)
   );
-  const maxZoom = weatherProviderModel.windPyramid?.max_zoom ?? 7;
-  const stride = arrowStrideFor(mapInstance?.getZoom() ?? 0, maxZoom);
-  const tilesetKey = `${urlTemplate}|${maxZoom}|${stride}`;
+  const archiveMaxZoom = weatherProviderModel.windPyramid?.max_zoom ?? 7;
+  const tilesetKey = `${urlTemplate}|${archiveMaxZoom}`;
   if (tilesetKey === appliedTilesetKey) return;
 
   const tileFormat: windTileService.WindTileFormat = {
@@ -232,15 +754,14 @@ function applyActiveTiles(): void {
     sentinel: format?.sentinel ?? -20000
   };
 
-  logger.debug('[windTileOverlayView] applying wind tiles', { urlTemplate, maxZoom, stride });
+  logger.debug('[windTileOverlayView] applying wind tiles', { urlTemplate, archiveMaxZoom });
   overlayInstance.setLayers([
     createWindTileLayer(
       urlTemplate,
-      maxZoom,
+      archiveMaxZoom,
       weatherProviderModel.windTileCoverage,
       tileFormat,
-      getGridAnchor(cfg),
-      stride
+      getGridAnchor(cfg)
     )
   ]);
   appliedTilesetKey = tilesetKey;
@@ -262,13 +783,6 @@ export const windTileOverlayView: IWindTileOverlayView = {
     try {
       overlayInstance = new LeafletDeckOverlay({ className: 'wind-tile-deck-overlay', zIndex: '510' });
       overlayInstance.addTo(map);
-      mapInstance = map;
-
-      // The arrow step shrinks with the zoom above the archive's finest level; the apply call
-      // only rebuilds the layer when the step really changed.
-      map.on('zoomend', () => {
-        applyActiveTiles();
-      });
 
       // A switch drops the previous provider's tiles; the new metadata follows with the sync.
       weatherProviderModel.addEventListener('model:provider-changed', () => {
