@@ -3,6 +3,7 @@
 import { CARTO_API_KEY, DEFAULT_MAP_VIEW, providers } from './config.ts';
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
+import * as geoBounds from './utils/geoBounds';
 import { D2 } from './weatherProvider/providerIds';
 import type * as Leaflet from 'leaflet';
 import * as L from 'leaflet';
@@ -20,9 +21,17 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
 
     // 1. Get last state from storage.
     // If empty/missing, falls back to the active provider's default view - the model areas do not
-    // overlap, so a stored app default would point outside the coverage of e.g. HRRR.
-    const providerDefaultView = providers[weatherProviderModel.getActiveProviderId()]?.defaultView;
-    const savedState = storage.getMapState(providerDefaultView ?? DEFAULT_MAP_VIEW);
+    // overlap, so a stored app default would point outside the coverage of e.g. HRRR. The same
+    // check also covers a stored view that still points at the previous provider's area.
+    const activeProviderCfg = providers[weatherProviderModel.getActiveProviderId()];
+    const providerDefaultView = activeProviderCfg?.defaultView ?? DEFAULT_MAP_VIEW;
+    const storedState = storage.getMapState(providerDefaultView);
+    const savedState = activeProviderCfg && !geoBounds.isWithinBounds(activeProviderCfg.imageBounds, {
+        lat: storedState.lat,
+        lng: storedState.lng
+    })
+        ? providerDefaultView
+        : storedState;
 
     // 2. Ensure the map container exists and has height. If height is 0 (CSS not yet applied), apply a temporary fallback.
     const mapContainer = document.getElementById('map');

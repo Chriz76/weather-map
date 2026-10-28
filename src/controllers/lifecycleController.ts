@@ -2,6 +2,8 @@ import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
+import { providers } from '../config';
+import * as geoBounds from '../utils/geoBounds';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, OverlayLoadError } from './actions';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
@@ -148,6 +150,20 @@ function registerLifecycleListeners() {
     const prevTimestamp = weatherProviderModel.activeTimestamp;
 
     weatherProviderModel.setActiveProvider(providerId);
+
+    // The model areas do not overlap (Europe vs. CONUS), so a view left in the previous
+    // provider's area would show an empty map. Move to the new provider's default view, but only
+    // when the current centre is outside its coverage - an intentional position is kept.
+    const switchedCfg = providers[providerId];
+    if (appMap && switchedCfg && !geoBounds.isWithinBounds(switchedCfg.imageBounds, appMap.getCenter())) {
+      logger.debug('Provider switch moved the map into the provider area', {
+        providerId,
+        center: appMap.getCenter(),
+        target: switchedCfg.defaultView
+      });
+      appMap.setView(switchedCfg.defaultView, switchedCfg.defaultView.zoom);
+    }
+
     // The raster overlay was fetched for the provider that was active before: drop it, so a
     // provider that renders its own tile pyramid cannot leave the previous provider's image on
     // the map. The sync below fetches a new image only when the new provider needs one.
