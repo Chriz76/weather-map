@@ -13,6 +13,7 @@ import { getTileGrid, gridToPoints } from '../services/windArrowService';
 import type { WindGridAnchor, WindNodeWindow, WindTileGrid, WindTilePoint } from '../services/windArrowService';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { isDebugEnabled, logger } from '../utils/logger';
+import * as tilePyramid from '../utils/tilePyramid';
 
 let overlayInstance: LeafletDeckOverlay | null = null;
 
@@ -41,7 +42,7 @@ const TILE_MIN_ZOOM = 0;
  * With TILE_SIZE at 1024 a tile zoom sits one level below the map zoom, so this is map zoom 10.
  */
 const TILE_MAX_ZOOM = 9;
-/** Finest level the pyramid stores (`pyramid.max_zoom` of `meta/<timestamp>Z.json`). */
+/** Finest level the pyramid stores (`pyramid.max_zoom` of `index.json`). */
 const ARCHIVE_MAX_ZOOM = 7;
 /**
  * Detail bias of the tileset, in zoom levels.
@@ -87,8 +88,11 @@ function arrowStride(tileZoom: number): number {
   return Math.max(1, ARROW_STRIDE_BASE / Math.pow(2, finer));
 }
 
-/** Tile pyramid of the active timestamp; kept so a new timestamp can replace the layers. */
-let currentTileBaseUrl: string | null = null;
+/**
+ * Tile URL template of the active timestamp (`{z}/{x}/{y}` placeholders); kept so a new timestamp
+ * can replace the layers.
+ */
+let currentTileUrlTemplate: string | null = null;
 
 /**
  * Lattice anchor of the active archive: every node of a wind archive sits at
@@ -118,11 +122,11 @@ function getGridAnchor(): WindGridAnchor {
 /**
  * Removes the current wind layers so no stale field or arrows remain visible.
  * Emptying the layer set makes deck.gl finalize the previous tile layers, so the next
- * `setWindTilesUrl` call builds fresh layers with a clean tile cache.
+ * `setWindTileTemplate` call builds fresh layers with a clean tile cache.
  * @param reason Short description used for diagnostic logging.
  */
 function clearWindLayers(reason: string): void {
-  currentTileBaseUrl = null;
+  currentTileUrlTemplate = null;
   if (!overlayInstance) return;
   logger.debug('[windArrowOverlayView] clearing wind layers', { reason });
   try {
@@ -140,9 +144,9 @@ function clearWindLayers(reason: string): void {
  * @returns True when deck.gl accepted the layer update.
  */
 function applyWindLayers(): boolean {
-  if (!overlayInstance || !currentTileBaseUrl) return false;
-  logger.debug('[windArrowOverlayView] applying wind tile layer', currentTileBaseUrl);
-  return overlayInstance.setLayers([createWindTileLayer(currentTileBaseUrl)]);
+  if (!overlayInstance || !currentTileUrlTemplate) return false;
+  logger.debug('[windArrowOverlayView] applying wind tile layer', currentTileUrlTemplate);
+  return overlayInstance.setLayers([createWindTileLayer(currentTileUrlTemplate)]);
 }
 
 /* -------------------------------------------------------------------------
@@ -737,13 +741,25 @@ function resolveTileQuad(
  * requested tile is mapped onto the finest stored level: the level difference shifts the index
  * down with it, otherwise the wrong tile would be read. The sub layers then draw only the part of
  * that payload their tile covers (see resolveTileQuad).
- * @param tileBaseUrl Base URL of the pyramid of the active timestamp.
+ *
+ * The coverage block of the index describes exactly those shifted indices, so a tile the run does
+ * not store is skipped before its request is made. `null` is the same "no data" answer the loader
+ * gives for a 404, which deck.gl caches as an empty tile.
+ * @param tileUrlTemplate Tile URL template of the pyramid of the active timestamp.
  */
-function createTileLoader(tileBaseUrl: string) {
+function createTileLoader(tileUrlTemplate: string) {
   return async (tile: { index: TileIndex; signal?: AbortSignal }): Promise<WindTileGrid | null> => {
     const { z, x, y } = tile.index;
     const dz = Math.max(0, z - ARCHIVE_MAX_ZOOM);
-    return getTileGrid(tileBaseUrl, z - dz, x >> dz, y >> dz, tile.signal);
+    const archiveZ = z - dz;
+    const archiveX = x >> dz;
+    const archiveY = y >> dz;
+
+    if (!tilePyramid.isTileCovered(weatherProviderModel.windTileCoverage, archiveZ, archiveX, archiveY)) {
+      return null;
+    }
+
+    return getTileGrid(tileUrlTemplate, archiveZ, archiveX, archiveY, tile.signal);
   };
 }
 
@@ -754,11 +770,11 @@ function createTileLoader(tileBaseUrl: string) {
  * nothing else ever invalidates one that is already in the cache. That is what keeps a zoom free
  * of rebuilds - the tileset selects the new level and builds those tiles, while the cached ones
  * keep their sub layers.
- * @param tileBaseUrl Base URL of the pyramid of the active timestamp.
+ * @param tileUrlTemplate Tile URL template of the pyramid of the active timestamp.
  */
-function baseTileLayerProps(tileBaseUrl: string) {
+function baseTileLayerProps(tileUrlTemplate: string) {
   return {
-    updateTriggers: { getTileData: [tileBaseUrl] },
+    updateTriggers: { getTileData: [tileUrlTemplate] },
     minZoom: TILE_MIN_ZOOM,
     maxZoom: TILE_MAX_ZOOM,
     zoomOffset: TILE_ZOOM_OFFSET,
@@ -767,7 +783,7 @@ function baseTileLayerProps(tileBaseUrl: string) {
     maxRequests: TILE_MAX_REQUESTS,
     debounceTime: TILE_DEBOUNCE_MS,
     refinementStrategy: 'best-available' as const,
-    getTileData: createTileLoader(tileBaseUrl)
+    getTileData: createTileLoader(tileUrlTemplate)
   };
 }
 
@@ -807,11 +823,11 @@ function createFieldLayer(quad: TileQuad, id: string): WindTileLayer {
  * arrows take every `arrowStride`-th node of that grid. The tileset moves up to TILE_MAX_ZOOM, so a
  * zoom change builds the next level's tiles and with them the next arrow density - no update
  * trigger, no rebuild of the cached tiles, no module state.
- * @param tileBaseUrl Base URL of the pyramid of the active timestamp.
+ * @param tileUrlTemplate Tile URL template of the pyramid of the active timestamp.
  */
-function createWindTileLayer(tileBaseUrl: string) {
+function createWindTileLayer(tileUrlTemplate: string) {
   return new TileLayer<WindTileGrid | null>({
-    ...baseTileLayerProps(tileBaseUrl),
+    ...baseTileLayerProps(tileUrlTemplate),
     id: 'wind-tile-layer',
 
     renderSubLayers: (props) => {
@@ -832,7 +848,7 @@ function createWindTileLayer(tileBaseUrl: string) {
       // matches the layer and updates its attributes instead of building a new one.
       return [
         createFieldLayer(quad, `${props.id}-field`),
-        createArrowLayer(points, `${props.id}-arrows`, tileBaseUrl)
+        createArrowLayer(points, `${props.id}-arrows`, tileUrlTemplate)
       ];
     }
   });
@@ -864,9 +880,9 @@ const ARROW_ICON_URL = `data:image/svg+xml;utf8,${encodeURIComponent(`
  * Icon layer with the wind arrows of one tile.
  * @param points Wind points derived from the tile grid.
  * @param id Layer id.
- * @param tileBaseUrl Tile pyramid URL, used as update trigger.
+ * @param tileUrlTemplate Tile URL template, used as update trigger.
  */
-function createArrowLayer(points: WindTilePoint[], id: string, tileBaseUrl: string): IconLayer<WindTilePoint> {
+function createArrowLayer(points: WindTilePoint[], id: string, tileUrlTemplate: string): IconLayer<WindTilePoint> {
   return new IconLayer<WindTilePoint>({
     id,
     data: points,
@@ -880,9 +896,9 @@ function createArrowLayer(points: WindTilePoint[], id: string, tileBaseUrl: stri
 
     // Triggers keep the arrows in sync when a new timestamp is selected.
     updateTriggers: {
-      getPosition: [tileBaseUrl],
-      getAngle: [tileBaseUrl],
-      getSize: [tileBaseUrl]
+      getPosition: [tileUrlTemplate],
+      getAngle: [tileUrlTemplate],
+      getSize: [tileUrlTemplate]
     },
 
     // Soft animation of the arrows on data changes (in ms).
@@ -900,7 +916,7 @@ function createArrowLayer(points: WindTilePoint[], id: string, tileBaseUrl: stri
 
 export interface IWindArrowOverlayView {
   init: (map: LeafletMap) => void;
-  setWindTilesUrl?: (tileBaseUrl: string) => void;
+  setWindTileTemplate?: (tileUrlTemplate: string) => void;
 }
 
 export const windArrowOverlayView: IWindArrowOverlayView = {
@@ -919,13 +935,22 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
         const ts = weatherProviderModel.activeTimestamp;
         if (!ts) return;
 
-        // One base for index.json and the pyramid; the tile folders carry a `Z` suffix that the
-        // timestamps in index.json do not.
+        // The index owns the pyramid layout: `tiles_url` is a path relative to the provider root
+        // with a `{timestamp}` placeholder, and the run it starts with changes per model run.
+        const template = weatherProviderModel.windTilesUrlTemplate;
         const baseUrl = providers[weatherProviderModel.getActiveProviderId()]?.baseUrl;
-        if (!baseUrl) return;
-        const tileBaseUrl = `${baseUrl.replace(/\/+$/, '')}/tiles/${ts}Z`;
-        logger.debug('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: tileBaseUrl });
-        windArrowOverlayView.setWindTilesUrl?.(tileBaseUrl);
+        if (!template || !baseUrl) {
+          clearWindLayers('index has no tiles_url');
+          return;
+        }
+
+        const tileUrlTemplate = tilePyramid.buildTileUrlTemplate(
+          baseUrl,
+          template,
+          tilePyramid.tileFolderTimestamp(ts)
+        );
+        logger.debug('[windArrowOverlayView] model:timestamp-index-updated', { timestamp: ts, url: tileUrlTemplate });
+        windArrowOverlayView.setWindTileTemplate?.(tileUrlTemplate);
       });
 
       // On provider switch, drop the wind layers of the previous provider. They stay hidden
@@ -939,11 +964,11 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
     }
   },
 
-  setWindTilesUrl(tileBaseUrl: string) {
-    if (!tileBaseUrl || !overlayInstance) return;
+  setWindTileTemplate(tileUrlTemplate: string) {
+    if (!tileUrlTemplate || !overlayInstance) return;
 
-    logger.debug('[windArrowOverlayView] setWindTilesUrl', tileBaseUrl);
-    currentTileBaseUrl = tileBaseUrl;
+    logger.debug('[windArrowOverlayView] setWindTileTemplate', tileUrlTemplate);
+    currentTileUrlTemplate = tileUrlTemplate;
 
     // Field and arrows: two layers over the same pyramid.
     applyWindLayers();

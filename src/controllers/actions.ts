@@ -1,4 +1,4 @@
-import { EXPECTED_API_VERSION } from '../config';
+import { EXPECTED_API_VERSION, EXPECTED_WIND_FORMAT_ID } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { weatherService } from '../services/weatherService';
 import { loadingSpinnerController } from './loadingSpinnerController';
@@ -72,10 +72,20 @@ export async function syncAppWithServerAction(background = true, force = false, 
       throw new ApiMismatchError(indexData.api_version);
     }
 
+    // The tile layout is a second contract: `api_version` stayed the same when the index switched
+    // to the templated `tiles_url`, so an index that publishes an unknown `format.id` would be
+    // decoded as garbage by this client.
+    if (indexData.format?.id && indexData.format.id !== EXPECTED_WIND_FORMAT_ID) {
+      throw new ApiMismatchError(indexData.format.id);
+    }
+
     logger.info('📊 [SYNC NETWORK] Index loaded successfully:', {
       api_version: indexData?.api_version,
       generated_at: indexData?.generated_at,
       current_hour: indexData?.current_hour,
+      run: indexData?.run,
+      tiles_url: indexData?.tiles_url,
+      coverage_levels: indexData?.coverage ? Object.keys(indexData.coverage).length : 0,
       timestamp_count: indexData?.available_timestamps?.length
     });
 

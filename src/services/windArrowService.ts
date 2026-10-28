@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger';
 import { providers as providerConfig } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
+import * as tilePyramid from '../utils/tilePyramid';
 
 /**
  * Resolves a wind tile base URL to an absolute URL without a trailing slash.
@@ -119,8 +120,8 @@ async function unpackPayload(buffer: ArrayBuffer): Promise<ArrayBuffer> {
 /**
  * Reads and decodes one tile of a wind tile pyramid.
  *
- * One tile is one plain GET of `<tileBaseUrl>/<z>/<x>/<y>.bin` - there is no container to seek in
- * and no range request. The server compresses the response (`Content-Encoding: gzip`) and `fetch`
+ * One tile is one plain GET of the URL the pyramid template resolves to - there is no container to
+ * seek in and no range request. The server compresses the response (`Content-Encoding: gzip`) and `fetch`
  * decodes it, so the bytes seen here are already the raw layout below:
  * `[24 B geo header][u_len u32][v_len u32][u int16 deltas][v int16 deltas]`.
  * The field uploads the grid as a texture and the arrows are derived from the very same grid
@@ -129,7 +130,8 @@ async function unpackPayload(buffer: ArrayBuffer): Promise<ArrayBuffer> {
  * A missing tile is not an error: the pyramid simply has no data there (outside the model area,
  * or on a border tile of the model grid). Resolving to null - instead of throwing - is what makes
  * deck.gl cache such a tile as empty instead of retrying it on every render.
- * @param tileBaseUrl Base URL of the pyramid of the active timestamp, without a trailing slash.
+ * @param tileBaseUrl Tile URL template (`{z}/{x}/{y}` placeholders) of the active timestamp, or a
+ * plain pyramid base URL; both without a trailing slash.
  * @param z Tile zoom of the pyramid.
  * @param x Tile column.
  * @param y Tile row, 0 = north (XYZ scheme, no TMS flip).
@@ -143,10 +145,13 @@ export async function getTileGrid(
   y: number,
   signal?: AbortSignal
 ): Promise<WindTileGrid | null> {
-  const url = `${resolveBase(tileBaseUrl)}/${z}/${x}/${y}.bin`;
+  const url = tilePyramid.expandTileUrl(resolveBase(tileBaseUrl), z, x, y);
 
   let buffer: ArrayBuffer;
   try {
+    // No cache option and no cache buster on purpose: every run publishes under its own URL
+    // (`runs/<run>/tiles/<timestamp>Z/...`), so a tile is immutable and the browser cache may
+    // answer it without a revalidation.
     const response = await fetch(url, { signal: signal ?? null });
     if (signal?.aborted) return null;
 

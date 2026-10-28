@@ -1,7 +1,16 @@
 import { D2, AROME } from './weatherProvider/providerIds.ts';
 import type * as Leaflet from 'leaflet';
 
-export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
+/** API version the client understands; a different one means the app needs an update. */
+export const EXPECTED_API_VERSION = "1.1.0";
+
+/**
+ * Binary layout the tile decoder implements (`format.id` of `index.json`).
+ *
+ * The API version did not move when the index switched to the templated `tiles_url`, so the tile
+ * payload is guarded separately: any other id would be decoded as garbage.
+ */
+export const EXPECTED_WIND_FORMAT_ID = "hrrr-wind-int16-delta";
 
 export const CARTO_API_KEY = 'cb1_28i5_1_ccfb2588484de9213cc3f36f';
 
@@ -15,9 +24,9 @@ export type ProviderConfig = {
   /**
    * Origin of the provider's data, with a trailing slash.
    *
-   * One host serves both APIs: `<baseUrl>index.json` and the wind tile pyramid
-   * (`<baseUrl>tiles/<timestamp>Z/<z>/<x>/<y>.bin`). Keeping them on the same origin means the
-   * timestamps in the index are exactly the ones the pyramid really serves.
+   * One host serves both APIs: `<baseUrl>index.json` and the wind tile pyramid its `tiles_url`
+   * points at (a path below this root). Keeping them on the same origin means the timestamps in
+   * the index are exactly the ones the pyramid really serves.
    */
   baseUrl: string;
   gridCellSize: number;
@@ -39,8 +48,8 @@ export type ProviderConfig = {
  */
 export const providers: Record<string, ProviderConfig> = {
   [D2]: {
-    // Stable CDN host of the HRRR pipeline: `index.json`, `meta/<timestamp>Z.json` and the
-    // `tiles/<timestamp>Z/<z>/<x>/<y>.bin` pyramid all live on this one origin.
+    // Stable CDN host of the HRRR pipeline: `index.json` and the run-scoped tile pyramid its
+    // `tiles_url` points at (`runs/<run>/tiles/<timestamp>/<z>/<x>/<y>.bin`).
     baseUrl: "https://hrrr.b-cdn.net/",
     gridCellSize: 1.0,
     imageBounds: [
@@ -48,8 +57,7 @@ export const providers: Record<string, ProviderConfig> = {
       [58.1647, 20.5444]
     ],
     // South-west corner of the HRRR window the wind tile pyramid covers of that area
-    // (HrrrWindProcessor._hrrr_geographic_bounds(); matches `bounds.west/south` of
-    // `meta/<timestamp>Z.json`).
+    // (HrrrWindProcessor._hrrr_geographic_bounds(); matches `bounds.west/south` of `index.json`).
     windAnchor: { lat: 21.138, lng: -134.096114 }
   },
   [AROME]: {
