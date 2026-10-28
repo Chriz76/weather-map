@@ -35,3 +35,9 @@
 .leaflet-bar a.wind-toggle-view svg.wind-toggle-icon-disabled {
     stroke: #9CA3AF !important;
 }
+
+/* Active provider has no station source (CONUS model): keep the button visible but inert. */
+.leaflet-bar a.wind-toggle-view.wind-toggle-view--disabled {
+    opacity: 0.45;
+    cursor: default;
+}

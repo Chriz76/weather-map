@@ -36,6 +36,13 @@ export type ProviderConfig = {
    * neither an image nor a PMTiles archive is fetched.
    */
   windOverlay: 'raster' | 'tiles';
+  /**
+   * Whether station measurements exist for the provider's area.
+   *
+   * The only source is Bright Sky (DWD stations, Europe), so a CONUS-only model has none and the
+   * "wind measurements" toggle stays disabled while it is active.
+   */
+  hasWindMeasurements: boolean;
 };
 
 /**
@@ -51,7 +58,8 @@ export const providers: Record<string, ProviderConfig> = {
       [58.1647, 20.5444]
     ],
     defaultView: DEFAULT_MAP_VIEW,
-    windOverlay: "raster"
+    windOverlay: "raster",
+    hasWindMeasurements: true
   },
   [AROME]: {
     baseUrl: "https://chriz76.github.io/weather-data/",
@@ -61,7 +69,8 @@ export const providers: Record<string, ProviderConfig> = {
       [55.4, 16.0]
     ],
     defaultView: DEFAULT_MAP_VIEW,
-    windOverlay: "raster"
+    windOverlay: "raster",
+    hasWindMeasurements: true
   },
   [HRRR]: {
     // NOAA HRRR (CONUS only). Origin of both the `index.json` and the tile pyramid its `tiles_url`
@@ -74,6 +83,8 @@ export const providers: Record<string, ProviderConfig> = {
     ],
     // Centre of the model area, so a first visit with HRRR is not an empty map over Europe.
     defaultView: { lat: 38.5, lng: -97.5, zoom: 4 },
-    windOverlay: "tiles"
+    windOverlay: "tiles",
+    // Bright Sky only covers DWD stations in Europe.
+    hasWindMeasurements: false
   }
 };
