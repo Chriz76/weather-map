@@ -1,6 +1,6 @@
 import * as timeUtils from '../utils/time';
 import { logger } from '../utils/logger';
-import { D2, AROME } from '../weatherProvider/providerIds';
+import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 import { calculatewindSpeeds } from '../utils/interpolation';
 import type { Cluster, ForecastItem, IndexData, LatLng } from '../types';
 
@@ -52,6 +52,24 @@ export class WeatherProviderModel extends EventTarget {
         modelCurrentHour: null,
         lastIndexSync: null,
         supportsArrowOverlay: true,
+        locationContext: null,
+        windData: null,
+        forecast: null,
+        indexLoadError: null,
+        overlayLoadError: null,
+        pointDataLoadError: null,
+        apiMismatchError: null,
+        startupError: null,
+        activeTimestampIndex: 0
+      },
+      [HRRR]: {
+        availableTimestamps: [],
+        modelGeneratedAt: null,
+        modelCurrentHour: null,
+        lastIndexSync: null,
+        // The HRRR field comes from a tile pyramid the wind overlay renders itself, so the
+        // archive-based arrow overlay (`windArrowOverlayView`) must leave it alone.
+        supportsArrowOverlay: false,
         locationContext: null,
         windData: null,
         forecast: null,

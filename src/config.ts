@@ -1,4 +1,4 @@
-import { D2, AROME } from './weatherProvider/providerIds.ts';
+import { D2, AROME, HRRR } from './weatherProvider/providerIds.ts';
 import type * as Leaflet from 'leaflet';
 
 export const EXPECTED_API_VERSION = "1.1.0"; // Deine gewünschte Version
@@ -13,8 +13,20 @@ export const DEFAULT_MAP_VIEW = {
 
 export type ProviderConfig = {
   baseUrl: string;
-  gridCellSize: number;
+  /**
+   * Cell size of the provider's `grid_cluster/*.json` files in degrees, used to pick the cluster a
+   * click falls into. Only providers that publish cluster files (D2) set it.
+   */
+  gridCellSize?: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
+  /**
+   * How the provider's wind field reaches the map.
+   *
+   * `raster`: one `<timestamp>Z.webp` image per step, fetched by
+   * `updateOverlayForTimestampAction`. `tiles`: a static tile pyramid that the wind overlay loads
+   * tile by tile, so no image is fetched at all.
+   */
+  windOverlay: 'raster' | 'tiles';
 };
 
 /**
@@ -28,7 +40,8 @@ export const providers: Record<string, ProviderConfig> = {
     imageBounds: [
       [43.0440, -4.1616],
       [58.1647, 20.5444]
-    ]
+    ],
+    windOverlay: "raster"
   },
   [AROME]: {
     baseUrl: "https://chriz76.github.io/weather-data/",
@@ -36,6 +49,18 @@ export const providers: Record<string, ProviderConfig> = {
     imageBounds: [
       [37.5, -12.0],
       [55.4, 16.0]
-    ]
+    ],
+    windOverlay: "raster"
+  },
+  [HRRR]: {
+    // NOAA HRRR (CONUS only). Origin of both the `index.json` and the tile pyramid its `tiles_url`
+    // points at, so the timestamps of the index are exactly the ones the pyramid serves.
+    baseUrl: "https://hrrr.b-cdn.net/",
+    // Same window as `bounds` of the index: point forecast and tiles cover the same area.
+    imageBounds: [
+      [21.138, -134.096114],
+      [52.615565, -60.918]
+    ],
+    windOverlay: "tiles"
   }
 };

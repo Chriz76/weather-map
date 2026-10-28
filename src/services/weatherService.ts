@@ -1,11 +1,12 @@
 import { d2Provider } from '../weatherProvider/d2Provider';
 import { aromeProvider } from '../weatherProvider/aromeProvider';
-import { D2, AROME } from '../weatherProvider/providerIds';
+import { hrrrProvider } from '../weatherProvider/hrrrProvider';
+import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers as providerConfig } from '../config';
 import type { Provider, LatLng, ForecastItem, IndexData } from '../types';
 
-const providers: Record<string, Provider> = { [D2]: d2Provider, [AROME]: aromeProvider };
+const providers: Record<string, Provider> = { [D2]: d2Provider, [AROME]: aromeProvider, [HRRR]: hrrrProvider };
 
 /**
  * Evaluated once per page load on purpose, exactly like the PMTiles cache in

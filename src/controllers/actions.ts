@@ -1,4 +1,4 @@
-import { EXPECTED_API_VERSION } from '../config';
+import { EXPECTED_API_VERSION, providers } from '../config';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { uiStateModel } from '../models/uiStateModel';
 import { weatherService } from '../services/weatherService';
@@ -56,6 +56,10 @@ async function fetchWeatherOverlayUrl(timestamp: string | null): Promise<string 
 }
 
 export async function updateOverlayForTimestampAction(timestamp: string | null): Promise<void> {
+  // Providers with a tile pyramid have no raster image to fetch: their overlay view loads the
+  // tiles of the active timestamp itself, driven by `model:timestamp-index-updated`.
+  if (providers[weatherProviderModel.getActiveProviderId()]?.windOverlay !== 'raster') return;
+
   if (!timestamp) return;
 
   try {

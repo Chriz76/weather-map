@@ -1,5 +1,5 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
-import { D2, AROME } from '../weatherProvider/providerIds';
+import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
@@ -24,6 +24,7 @@ export function registerLogoView(map: LeafletMap): void {
             <div class="logo-view__toggle" role="tablist" aria-label="Model toggle">
               <button type="button" class="logo-view__toggle-btn" data-provider="${D2}" aria-pressed="false">D2 RUC</button>
               <button type="button" class="logo-view__toggle-btn" data-provider="${AROME}" aria-pressed="false">Arome PI</button>
+              <button type="button" class="logo-view__toggle-btn" data-provider="${HRRR}" aria-pressed="false">HRRR</button>
             </div>
             <h2 class="logo-view__subtitle">Rapid Update Forecast Models</h2>
           </div>
