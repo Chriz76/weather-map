@@ -17,7 +17,6 @@ type ProviderState = {
   /** Tile payload encoding of the index (`format` block). */
   windTileFormat: TileFormatInfo | null;
   lastIndexSync: Date | null;
-  supportsArrowOverlay?: boolean;
   locationContext: { latLng: LatLng } | null;
   currentClusterData?: Cluster | null;
   windData: { speed: number | null; gust: number | null; direction: number | null } | null;
@@ -47,7 +46,6 @@ export class WeatherProviderModel extends EventTarget {
         windPyramid: null,
         windTileFormat: null,
         lastIndexSync: null,
-        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -67,7 +65,6 @@ export class WeatherProviderModel extends EventTarget {
         windPyramid: null,
         windTileFormat: null,
         lastIndexSync: null,
-        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -87,9 +84,6 @@ export class WeatherProviderModel extends EventTarget {
         windPyramid: null,
         windTileFormat: null,
         lastIndexSync: null,
-        // The HRRR field comes from a tile pyramid the wind overlay renders itself, so the
-        // archive-based arrow overlay (`windArrowOverlayView`) must leave it alone.
-        supportsArrowOverlay: false,
         locationContext: null,
         windData: null,
         forecast: null,
@@ -132,7 +126,6 @@ export class WeatherProviderModel extends EventTarget {
   get currentClusterData(): Cluster | null { return this._getActiveModel().currentClusterData ?? null; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }
-  get supportsArrowOverlay(): boolean { return !!this._getActiveModel().supportsArrowOverlay; }
 
   setLastIndexSync(date: Date | null): void {
     this._getActiveModel().lastIndexSync = date;

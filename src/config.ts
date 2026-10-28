@@ -27,11 +27,13 @@ export type ProviderConfig = {
    */
   defaultView: { lat: number; lng: number; zoom: number };
   /**
-   * How the provider's wind field reaches the map.
+   * Which wind overlay stack the provider uses. Single capability, read by every overlay decision
+   * (raster image, archive arrows, tile pyramid) so no provider can end up in two stacks.
    *
-   * `raster`: one `<timestamp>Z.webp` image per step, fetched by
-   * `updateOverlayForTimestampAction`. `tiles`: a static tile pyramid that the wind overlay loads
-   * tile by tile, so no image is fetched at all.
+   * `raster`: one `<timestamp>Z.webp` image per step (`updateOverlayForTimestampAction`) plus the
+   * `<timestamp>Z_dir.pmtiles` arrows of `windArrowOverlayView`.
+   * `tiles`: a `{z}/{x}/{y}.bin` pyramid that `windTileOverlayView` decodes and draws itself, so
+   * neither an image nor a PMTiles archive is fetched.
    */
   windOverlay: 'raster' | 'tiles';
 };

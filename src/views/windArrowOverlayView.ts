@@ -3,6 +3,7 @@ import { TileLayer } from '@deck.gl/geo-layers';
 import type { Map as LeafletMap } from 'leaflet';
 import { LeafletDeckOverlay } from '../utils/leafletDeckOverlay';
 import { PMTiles } from 'pmtiles';
+import { providers } from '../config';
 import { getTilePoints } from '../services/windArrowService';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { logger } from '../utils/logger';
@@ -174,9 +175,10 @@ export const windArrowOverlayView: IWindArrowOverlayView = {
       overlayInstance.addTo(map);
 
       weatherProviderModel.addEventListener('model:timestamp-index-updated', () => {
-        // if the active provider does not support PMTiles, clear any existing arrows
-        if (!weatherProviderModel.supportsArrowOverlay) {
-          clearArrows('provider does not support arrow overlay');
+        // Only the image providers publish the PMTiles archive this view reads. A tile provider
+        // draws its own field and arrows (`windTileOverlayView`), so this one stays empty.
+        if (providers[weatherProviderModel.getActiveProviderId()]?.windOverlay !== 'raster') {
+          clearArrows('provider does not use the archive overlay');
           return;
         }
 
