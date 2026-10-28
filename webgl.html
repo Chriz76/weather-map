@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AROME Custom Wind Layer - Bilinear, hardware-gefiltert (RGBA16F)</title>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- luma.gl & deck.gl Standalone Bundles -->
+    <script src="https://unpkg.com/luma.gl@8.5.10/dist/luma.gl.min.js"></script>
+    <script src="https://unpkg.com/deck.gl@8.9.33/dist.min.js"></script>
+
+    <!-- PMTiles-Container. Version an die Version deiner App angleichen (package.json). -->
+    <script src="https://unpkg.com/pmtiles@4/dist/pmtiles.js"></script>
+
+    <style>
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #ffffff;
+            touch-action: none;
+        }
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            position: absolute; 
+            top: 0;
+            left: 0;
+            z-index: 1; 
+        }
+        #deck-canvas { 
+            position: absolute; 
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: 100%; 
+            pointer-events: none !important; 
+            z-index: 2; 
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            line-height: 1.4;
+            z-index: 10;
+            max-width: 320px;
+            pointer-events: none;
+        }
+        #info code { color: #9fd3ff; }
+
+        #legend {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 5px;
+            font-size: 11px;
+            line-height: 1.15;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .legend-title { font-weight: bold; margin-bottom: 6px; font-size: 12px; }
+        .legend-row { display: flex; align-items: center; gap: 6px; height: 14px; }
+        .legend-row i { width: 26px; height: 11px; display: inline-block; }
+        .legend-row span { opacity: 0.9; min-width: 34px; }
+
+        #gridToggle { pointer-events: auto; cursor: pointer; user-select: none; }
+        #gridToggle2 { pointer-events: auto; cursor: pointer; user-select: none; }
+        #windToggle { pointer-events: auto; cursor: pointer; user-select: none; }
+        #bandToggle { pointer-events: auto; cursor: pointer; user-select: none; }
+
+        #points {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            margin: 0;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #e8f4ff;
+            font: 10px/1.35 ui-monospace, Consolas, monospace;
+            border-radius: 5px;
+            max-height: 45vh;
+            max-width: 460px;
+            overflow: auto;
+            z-index: 10;
+            display: none;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <canvas id="deck-canvas"></canvas>
+
+    <div id="info">
+        <strong>AROME Isotachen aus PMTiles</strong><br>
+        • deck.gl TileLayer: nur Kacheln im Viewport<br>
+        • eine Textur je Kachel, Datenstufe = Kachelzoom<br>
+        • Bänder in Knoten, ungleiche Grenzen<br>
+        • Bilinear aus der Hardware (RGBA16F, LINEAR)<br>
+        <span id="zoom">Zoom: –</span><br>
+        <label id="windToggle">
+            <input type="checkbox" id="showWind" checked> Windstufe zeigen <kbd>w</kbd>
+        </label><br>
+        <label id="bandToggle">
+            <input type="checkbox" id="showBands" checked> Stufen (12 Bänder) <kbd>b</kbd>
+        </label><br>
+        <label id="gridToggle">
+            <input type="checkbox" id="showGrid"> Gitterpunkte zeigen
+        </label><br>
+        <label id="gridToggle2">
+            <input type="checkbox" id="showTiles"> Kacheln listen
+        </label><br>
+        <span id="status">initialisiere …</span>
+    </div>
+    <div id="legend"></div>
+    <pre id="points"></pre>
+
+    <script>
+        // ==================================================================
+        //  AROME-Wind aus PMTiles (eigenes Float32-Rasterformat)
+        //
+        //  Payload pro Kachel (gzip/brotli/zstd wird von der pmtiles-Bibliothek
+        //  bereits entpackt, getZxy liefert { data: ArrayBuffer, ... }):
+        //    24 B Header = 6 x float32 LE
+        //      originLng, originLat (NORDkante), deltaLng, deltaLat, rows, cols
+        //    danach rows*cols Paare float32 (u, v in m/s), row-major,
+        //    Zeilen laufen nach Sueden
+        // ==================================================================
+
+        // Modellgebiet d2. Das Archiv deckt genau dieses Rechteck ab - bei z=4
+        // enthaelt es deshalb genau die vier Kacheln 7/4, 7/5, 8/4 und 8/5.
+        // (Die frueheren Werte 55.4/16.175 waren zu klein: sie haben in deck's
+        // Kachelauswahl den Norden ab Stufe 4 und den Osten ab Stufe 6
+        // weggecullt.)
+        const AROME_BOUNDS = [-4.1616, 43.0440, 20.5444, 58.1647];
+
+        const MS_TO_KN    = 1.9438445;                                // 1 m/s = 1.9438445 kn
+        const KNOTS_UPPER = [3, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25];   // 11 Grenzen -> 12 Baender
+        // Farben in Band-Reihenfolge 0..11 (= Legende von unten nach oben).
+        // TODO: die echten Werte aus dem CSS uebernehmen
+        //       (legend-view__swatch w-under-3 ... w-over-25)
+        const KNOTS_COLORS = [
+            [ 40,  70, 140], [ 40, 110, 190], [ 50, 160, 205], [ 70, 195, 195],
+            [100, 210, 155], [150, 220, 115], [195, 225,  85], [235, 220,  60],
+            [250, 190,  45], [245, 150,  40], [235, 100,  45], [190,  50,  90]
+        ];
+
+        // Kachelschema des Archivs. Deck rechnet mit 512er-Welten, der Kachelzoom
+        // ist also round(Deck-Zoom + log2(512 / TILE_SIZE)). Der Deck-Zoom ist
+        // Leaflet-Zoom - 1, mit 512 ergibt das genau den bisherigen Datenlevel
+        // (round(Deck-Zoom) = Leaflet-Zoom - 1). 256 waere eine Stufe feiner -
+        // viermal so viele Kacheln, dafuer schaerfer.
+        const TILE_SIZE = 512;
+        // Kein Einblenden: eine frisch geladene Kachel wird sofort voll deckend
+        // gezeichnet. Mit Fade war 0,25 s lang der grobe Vorfahre zu sehen -
+        // deck's Platzhalter ist voll deckend, die neue Kachel fast unsichtbar.
+        // Genau daher kam der Eindruck, beim Pannen liege aussen eine andere
+        // Datenstufe.
+        const USE_MEMORY_SOURCE = true;   // false = pmtiles.FetchSource (braucht HTTP-Range/206)
+        // Archiv mit je einer Zeile/Spalte Punkte rundherum (1-Punkt-Ueberlapp):
+        // dadurch darf jede Kachel bis zum Rand zeichnen und der Filter zieht an
+        // der Naht den echten Nachbarpunkt herein. './dir.pmtiles' ist das
+        // ungepaddete Archiv - damit bleibt genau eine Zelle Verschnitt.
+        const ARCHIVE = './padded.pmtiles';
+
+        let showGrid = false;             // Diagnose: Gitterpunkte einblenden
+        let showWind = true;              // Windstufe sichtbar? (w = umschalten)
+        let showBands = true;             // Stufen oder durchgehender Verlauf (b)
+
+        /* ---------- Status ---------- */
+        function setStatus(msg) {
+            console.log('[isobaren]', msg);
+            const el = document.getElementById('status');
+            if (el) el.textContent = msg;
+        }
+
+        /* ---------- PMTiles-Quelle ---------- */
+        async function memorySource(url) {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} fuer ${url}`);
+            const buf = await res.arrayBuffer();
+            return {
+                getKey: () => url,
+                getBytes: async (offset, length) => ({ data: buf.slice(offset, offset + length) })
+            };
+        }
+
+        /* ---------- Nutzlast zu ArrayBuffer normalisieren ---------- */
+        function toArrayBufferFromTileData(d) {
+            if (d instanceof ArrayBuffer) return d;
+            if (ArrayBuffer.isView(d)) {
+                return new Uint8Array(d.buffer, d.byteOffset, d.byteLength).slice().buffer;
+            }
+            if (d && typeof d === 'object' && d.buffer instanceof ArrayBuffer) {
+                const byteOffset = typeof d.byteOffset === 'number' ? d.byteOffset : 0;
+                const byteLength = typeof d.byteLength === 'number' ? d.byteLength : d.buffer.byteLength - byteOffset;
+                return new Uint8Array(d.buffer, byteOffset, byteLength).slice().buffer;
+            }
+            return null;
+        }
+
+        /* ---------- eigene Wetter-Dekodierung ---------- */
+        function decodeDirTile(payload) {
+            const buf = toArrayBufferFromTileData(payload);
+            if (!buf || buf.byteLength < 24) return null;
+
+            const dv = new DataView(buf);
+            const originLng = dv.getFloat32(0, true);
+            const originLat = dv.getFloat32(4, true);    // Nordkante
+            const deltaLng  = dv.getFloat32(8, true);
+            const deltaLat  = dv.getFloat32(12, true);
+            const rows      = Math.round(dv.getFloat32(16, true));
+            const cols      = Math.round(dv.getFloat32(20, true));
+
+            if (!(rows > 1 && cols > 1) || rows * cols > 4e6) return null;
+
+            // exakte Laengenpruefung: bester Kanarienvogel, falls das
+            // Entpacken doch nicht gegriffen hat
+            const need = 24 + rows * cols * 8;
+            if (buf.byteLength !== need) {
+                console.warn('[isobaren] Payload-Laenge unerwartet',
+                    { have: buf.byteLength, need, rows, cols, deltaLng, deltaLat });
+                if (buf.byteLength < need) return null;
+            }
+
+            return {
+                originLng, originLat, deltaLng, deltaLat, rows, cols,
+                uv: new Float32Array(buf, 24, rows * cols * 2)   // row-major u,v
+            };
+        }
+
+        // Kacheln und Interpolation am Rand:
+        // Das Quad deckt genau die KACHEL-Ausdehnung ab, das Texturfenster sagt,
+        // welcher Ausschnitt der Nutzlast dazugehoert. Beides wird aus der
+        // Kachelausdehnung von deck abgeleitet, deshalb stimmt es fuer beide
+        // Archive:
+        //   gepaddet   -> Fenster 1 .. cols-1, also Kachelrand bis Kachelrand
+        //                 (der aeussere Punkt jeder Seite ist der Ueberlapp)
+        //   ungepaddet -> Fenster 0 .. cols-1, also Datenpunkt-Extent. Zwischen
+        //                 zwei Kacheln bleibt dann genau eine Zelle leer (die
+        //                 Haarlinie), dafuer wird nie ein Texel der Nachbarkachel
+        //                 mitgefiltert.
+        function tileBBoxFromIndex({ x, y, z }) {
+            const n = Math.pow(2, z);
+            const lat = (yy) =>
+                Math.atan(Math.sinh(Math.PI * (1 - 2 * yy / n))) * 180 / Math.PI;
+            return {
+                west:  (x / n) * 360 - 180,
+                east:  ((x + 1) / n) * 360 - 180,
+                north: lat(y),
+                south: lat(y + 1)
+            };
+        }
+
+
+
+        /* ---------- float32 -> float16 (IEEE, round-to-nearest) ----------
+           Der Upload liefert Halbfloat: nur RGBA16F ist in WebGL2 von Haus aus
+           filterbar, und genau das ist der Trick - die Hardware rechnet daraus
+           bilinear, der Shader braucht keinen einzigen Tap von Hand.
+           (Ist Float16Array vorhanden, kann man direkt zuweisen und sich die
+           Umrechnung sparen - hier bewusst ohne, damit es ueberall laeuft.) */
+        const _f32 = new Float32Array(1);
+        const _i32 = new Int32Array(_f32.buffer);
+        const HALF_ONE = 0x3c00;                 // 1.0 als Halbfloat
+        function toHalf(val) {
+            _f32[0] = val;
+            const x = _i32[0];
+            let bits = (x >> 16) & 0x8000;        // Vorzeichen
+            let m    = (x >> 12) & 0x07ff;        // Mantisse + 1 Reservebit
+            const e  = (x >> 23) & 0xff;          // Exponent (Bias 127)
+            if (e < 103) return bits;             // zu klein -> 0
+            if (e > 142) {                        // inf / NaN
+                return bits | 0x7c00 | (((e === 255) && (x & 0x007fffff)) ? 1 : 0);
+            }
+            if (e < 113) {                        // subnormal
+                m |= 0x0800;
+                return bits | ((m >> (114 - e)) + ((m >> (113 - e)) & 1));
+            }
+            bits |= ((e - 112) << 10) | (m >> 1);
+            return bits + (m & 1);                // runden
+        }
+
+        // Textur EINER Kachel. RGBA16F ist in WebGL2 von Haus aus filterbar,
+        // also LINEAR - die Hardware interpoliert, ein Tap im Shader genuegt.
+        function allocTileTexture(gl, cols, rows) {
+            if (typeof gl.RGBA16F !== 'number' || typeof gl.HALF_FLOAT !== 'number') {
+                throw new Error('WebGL2 mit RGBA16F/HALF_FLOAT erforderlich (DeckGL useWebGL2: true)');
+            }
+            const tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, cols, rows, 0, gl.RGBA, gl.HALF_FLOAT, null);
+            return tex;
+        }
+
+        // Palette: ein Exemplar fuer alle Kacheln.
+        let _paletteTex = null;
+        function getPaletteTexture(gl) {
+            if (_paletteTex) return _paletteTex;
+            const data = new Uint8Array(KNOTS_COLORS.length * 3);
+            KNOTS_COLORS.forEach((c, i) => {
+                data[i * 3] = c[0]; data[i * 3 + 1] = c[1]; data[i * 3 + 2] = c[2];
+            });
+            const tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, KNOTS_COLORS.length, 1, 0,
+                          gl.RGB, gl.UNSIGNED_BYTE, data);
+            _paletteTex = tex;
+            return tex;
+        }
+
+        // Geladene Kacheln fuer die Diagnose-Liste: jede Kachel meldet sich an
+        // und wieder ab, sobald deck.gl sie aus dem Viewport wirft.
+        const liveTiles = new Map();
+
+        const { Layer, project32 } = deck;
+        const { Model, Geometry } = luma;
+
+        // SubLayer: EINE Kachel, ein Quad, eine Textur. Alles, was vorher das
+        // Mosaik gerechnet hat (Lattice, Grid-Offset, Domaenengrenzen), faellt
+        // hier weg - die Kachel kennt ihre Ausdehnung selbst.
+        class WindTileLayer extends Layer {
+            getShaders() {
+                return {
+                    vs: `#version 300 es
+                        in vec3 positions;
+                        in vec2 texCoords;
+
+                        out vec2 vTexCoord;
+
+                        void main(void) {
+                            geometry.worldPosition = positions;
+                            vec4 clipPosition;
+                            gl_Position = project_position_to_clipspace(positions, vec3(0.0), vec3(0.0), clipPosition);
+                            vTexCoord = texCoords;
+                        }
+                    `,
+                    fs: `#version 300 es
+                        precision highp float;
+
+                        // Textur DIESER Kachel: RGBA16F, LINEAR gefiltert. Die
+                        // Kanaele sind praemultipliziert (rg = u*cov, v*cov,
+                        // b = cov), denn gefiltert wird in allen Kanaelen mit
+                        // denselben Gewichten:
+                        //   (sum w*u*cov) / (sum w*cov) = u
+                        // Das ist die abdeckungsgewichtete Interpolation - vom
+                        // Sampler, ohne einen Tap von Hand. cov 0 (maskierte
+                        // Zelle) traegt nichts bei.
+                        uniform sampler2D uTexture;
+                        uniform sampler2D uPalette;   // 12 x 1 RGB, Bandindex 0..11
+                        uniform vec2  uTexSize;       // cols, rows der Nutzlast
+                        uniform vec2  uCiMin;         // Gitterfenster dieser Kachel
+                        uniform vec2  uCiMax;         // (Indizes in der Nutzlast)
+                        uniform float uOpacity;
+                        uniform float uMsToKn;        // 1.9438445
+                        uniform float uShowGrid;      // 1 = Gitterpunkte einblenden
+                        uniform float uBands;         // 1 = 12 harte Stufen, 0 = Verlauf
+
+                        in vec2 vTexCoord;
+                        out vec4 fragColor;
+
+                        // Bandgrenzen in Knoten - identisch zu KNOTS_UPPER im JS
+                        // untere/obere Grenze des Bandes, in dem kn liegt
+                        void bandRange(float kn, out float lo, out float hi, out float band) {
+                            lo =  0.0; hi =  3.0; band =  0.0;
+                            if (kn >=  3.0) { lo =  3.0; hi =  5.0; band =  1.0; }
+                            if (kn >=  5.0) { lo =  5.0; hi =  6.0; band =  2.0; }
+                            if (kn >=  6.0) { lo =  6.0; hi =  7.0; band =  3.0; }
+                            if (kn >=  7.0) { lo =  7.0; hi =  8.0; band =  4.0; }
+                            if (kn >=  8.0) { lo =  8.0; hi =  9.0; band =  5.0; }
+                            if (kn >=  9.0) { lo =  9.0; hi = 10.0; band =  6.0; }
+                            if (kn >= 10.0) { lo = 10.0; hi = 12.0; band =  7.0; }
+                            if (kn >= 12.0) { lo = 12.0; hi = 15.0; band =  8.0; }
+                            if (kn >= 15.0) { lo = 15.0; hi = 20.0; band =  9.0; }
+                            if (kn >= 20.0) { lo = 20.0; hi = 25.0; band = 10.0; }
+                            if (kn >= 25.0) { lo = 25.0; hi = 200.0; band = 11.0; }
+                        }
+
+                        vec3 bandColor(float band) {
+                            return texture(uPalette, vec2((band + 0.5) / 12.0, 0.5)).rgb;
+                        }
+
+                        void main(void) {
+                            // vTexCoord laeuft 0..1 ueber die Kachelflaeche, das
+                            // Gitterfenster sagt, welcher Ausschnitt der Nutzlast
+                            // dazu gehoert (Ganzzahlen = Datenpunkte). Beim
+                            // gepaddeten Archiv sind das die Kachelraender selbst:
+                            // neben dem Randtexel liegt der echte Nachbarpunkt,
+                            // die Hardware interpoliert also nahtlos ueber die
+                            // Kachelgrenze hinweg.
+                            vec2  ci = mix(uCiMin, uCiMax, vTexCoord);
+                            vec4  s  = texture(uTexture, (ci + 0.5) / uTexSize);
+                            float cov = clamp(s.b, 0.0, 1.0);
+                            if (cov <= 0.0) { fragColor = vec4(0.0); return; }
+                            vec2  uvWind = s.rg / max(cov, 1e-5);
+                            float kn = length(uvWind) * uMsToKn;
+
+                            // 2. Band + lokale Bandgrenzen (ungleiche Breiten!)
+                            float lo, hi, band;
+                            bandRange(kn, lo, hi, band);
+
+                            // 3. STETIGE Bandkoordinate: an jeder Grenze springt
+                            //    bandC genau auf die naechste Ganzzahl, deshalb ist
+                            //    fwidth auch in einem Pixel-Quad korrekt, das die
+                            //    Grenze ueberspannt (pos allein springt dort von 1
+                            //    auf 0 -> 1-px-Naht). Ergebnis: 1,5 px Uebergang,
+                            //    unabhaengig von Zoom UND von der Bandbreite.
+                            float bandC = band + (kn - lo) / (hi - lo);
+                            vec3  finalColor;
+
+                            if (uBands > 0.5) {
+                                // Stufen: harte Farbbaender mit weicher Kante
+                                float delta = fwidth(bandC) * 0.75;
+                                float pos   = fract(bandC);
+                                float edge  = smoothstep(1.0 - delta, 1.0 + delta, pos);
+                                vec3 colA = bandColor(band);
+                                vec3 colB = bandColor(min(band + 1.0, 11.0));
+                                finalColor = mix(colA, colB, edge);
+                            } else {
+                                // Durchgehender Verlauf: dieselbe Palette, nur
+                                // linear zwischen den 12 Farben interpoliert.
+                                // An den Bandgrenzen (kn = 3, 5, 6, ...) liefern
+                                // beide Varianten exakt dieselbe Farbe, der
+                                // Unterschied ist nur der Verlauf dazwischen.
+                                finalColor = texture(uPalette, vec2((bandC + 0.5) / 12.0, 0.5)).rgb;
+                            }
+
+                            // Diagnose: Gitterpunkte (zeigt die echte Datenaufloesung)
+                            if (uShowGrid > 0.5) {
+                                vec2 g   = ci;
+                                vec2 dpx = fwidth(g);
+                                vec2 d   = abs(fract(g + 0.5) - 0.5);
+                                float px = min(d.x / max(dpx.x, 1e-9), d.y / max(dpx.y, 1e-9));
+                                float m  = 1.0 - smoothstep(0.8, 2.4, px);
+                                finalColor = mix(finalColor, vec3(1.0), m * 0.9);
+                            }
+
+                            // cov: 1 im Inneren, < 1 an maskierten Zellen
+                            fragColor = vec4(finalColor, uOpacity * cov);
+                        }
+                    `,
+                    modules: [project32]
+                };
+            }
+
+            initializeState() {
+                const gl = this.context.gl;
+                this._rowBuf = null;              // Staging fuer texSubImage2D
+                this.setState({
+                    model: this._getModel(),
+                    texture: allocTileTexture(gl, this.props.cols, this.props.rows)
+                });
+                this._upload();
+                liveTiles.set(this.id, {
+                    zxy: this.props.zxy, cols: this.props.cols, rows: this.props.rows,
+                    kmLon: this.props.data.deltaLng * 111.32 *
+                           Math.cos((this.props.data.originLat * Math.PI) / 180),
+                    kmLat: this.props.data.deltaLat * 110.57
+                });
+            }
+
+            updateState({ props, oldProps }) {
+                // Neue Daten fuer dieselbe Kachel (Reload / neue Modellzeit)
+                if (props.data !== oldProps.data) {
+                    const gl = this.context.gl;
+                    if (this.state.texture) gl.deleteTexture(this.state.texture);
+                    this.setState({
+                        texture: allocTileTexture(gl, props.cols, props.rows)
+                    });
+                    this._upload();
+                }
+            }
+
+            // Schreibt die Kachel in IHRE Textur: praemultipliziert (u*cov,
+            // v*cov, cov), cov = 0 fuer maskierte Zellen. Eine texSubImage2D fuer
+            // die ganze Kachel, Zeilen liegen dicht (UNPACK_ROW_LENGTH bleibt 0).
+            _upload() {
+                const { data, cols, rows } = this.props;
+                const gl = this.context.gl;
+                const rowValues = cols * 4;
+                const need = rowValues * rows;
+                if (!this._rowBuf || this._rowBuf.length < need) {
+                    this._rowBuf = new Uint16Array(need);
+                }
+                const buf = this._rowBuf;
+                for (let j = 0; j < rows; j++) {
+                    const dst = j * rowValues;
+                    for (let i = 0; i < cols; i++) {
+                        const s = (j * cols + i) * 2;
+                        const u = data.uv[s], v = data.uv[s + 1];
+                        const ok = Number.isFinite(u) && Number.isFinite(v);
+                        const o = dst + i * 4;
+                        buf[o]     = ok ? toHalf(u) : 0;   // .r = u * cov
+                        buf[o + 1] = ok ? toHalf(v) : 0;   // .g = v * cov
+                        buf[o + 2] = ok ? HALF_ONE : 0;    // .b = cov
+                        buf[o + 3] = 0;                    // .a frei
+                    }
+                }
+                gl.bindTexture(gl.TEXTURE_2D, this.state.texture);
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, cols, rows,
+                                 gl.RGBA, gl.HALF_FLOAT, buf.subarray(0, need));
+            }
+
+
+
+            // Ein Quad ueber den Datenpunkt-Extent dieser Kachel. texCoord v = 0
+            // liegt auf der Nordkante, weil die erste Zeile der Kachel die
+            // noerdlichste ist.
+            _getModel() {
+                const gl = this.context.gl;
+                const b = this.props.bounds;
+                const positions = new Float32Array([
+                    b[0], b[1], 0,
+                    b[2], b[1], 0,
+                    b[2], b[3], 0,
+                    b[0], b[3], 0
+                ]);
+                const texCoords = new Float32Array([
+                    0, 1,
+                    1, 1,
+                    1, 0,
+                    0, 0
+                ]);
+                return new Model(gl, {
+                    ...this.getShaders(),
+                    id: this.props.id,
+                    geometry: new Geometry({
+                        drawMode: gl.TRIANGLE_FAN,
+                        attributes: {
+                            positions: { size: 3, value: positions },
+                            texCoords: { size: 2, value: texCoords }
+                        }
+                    })
+                });
+            }
+
+            draw({ uniforms }) {
+                const { model, texture } = this.state;
+                if (!model || !texture) return;
+
+                const gl = this.context.gl;
+                // Kein Einblenden und damit auch kein selbst gesetzter
+                // Redraw-Flag: eine neue Kachel bekommt ihr Bild in genau dem
+                // Frame, in dem deck sie anlegt (TileLayer._onTileLoad ->
+                // setNeedsUpdate -> updateLayers + redraw).
+
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, getPaletteTexture(gl));
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+
+                model.setUniforms({
+                    ...uniforms,
+                    uTexture: 0,
+                    uPalette: 1,
+                    uTexSize: [this.props.cols, this.props.rows],
+                    uCiMin: this.props.ciMin,
+                    uCiMax: this.props.ciMax,
+                    uOpacity: this.props.opacity !== undefined ? this.props.opacity : 0.5,
+                    uMsToKn: MS_TO_KN,
+                    uShowGrid: showGrid ? 1.0 : 0.0,
+                    uBands: showBands ? 1.0 : 0.0
+                });
+                model.draw();
+            }
+
+            finalizeState() {
+                super.finalizeState();
+                liveTiles.delete(this.id);
+                const gl = this.context.gl;
+                if (this.state.texture) gl.deleteTexture(this.state.texture);
+            }
+        }
+
+        WindTileLayer.layerName = 'WindTileLayer';
+
+        const map = L.map('map', { 
+            center: [50.6, 8.2],     // Mitte von d2
+            zoom: 5 
+        });
+
+        L.tileLayer('https://c.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // ------------------------------------------------------------------
+        //  Windkacheln
+        //
+        //  deck.TileLayer holt genau die Kacheln im Viewport und haelt sie im
+        //  eigenen Cache; der Parent bleibt sichtbar, bis das Kind da ist
+        //  (refinementStrategy best-available). Das ersetzt die frueher selbst
+        //  gebaute Mosaik-/LOD-Kette komplett: keine Stufenplanung, kein
+        //  Nachlade-Pump, keine Domaenengrenzen.
+        //
+        //  Perspektive Netz: nur memorySource -> pmtiles.FetchSource tauschen,
+        //  getTileData bleibt unveraendert (HTTP-Range macht PMTiles).
+        // ------------------------------------------------------------------
+        const TILE_OPACITY = 0.6;
+        let tileLayer = null;
+
+        async function createWindTiles() {
+            if (typeof pmtiles === 'undefined') throw new Error('pmtiles-Bundle nicht geladen');
+            if (typeof deck.TileLayer !== 'function') throw new Error('deck.TileLayer nicht im Bundle');
+
+            const src = USE_MEMORY_SOURCE
+                ? await memorySource(ARCHIVE)
+                : new pmtiles.FetchSource(ARCHIVE);
+            const pm = new pmtiles.PMTiles(src);
+            const header = await pm.getHeader();
+            setStatus(`PMTiles z${header.minZoom}-${header.maxZoom} · tileType ${header.tileType} · ` +
+                      `tileCompression ${header.tileCompression}`);
+
+            return new deck.TileLayer({
+                id: 'arome-wind-tiles',
+                visible: showWind,
+                minZoom: header.minZoom,
+                maxZoom: header.maxZoom,
+                tileSize: TILE_SIZE,
+                // Der extent ist nur ein Anfragefilter (er verhindert, dass bei
+                // kleinem Zoom die ganze Welt angefragt wird). Eine Winzigkeit
+                // zu klein cullt in deck's OSMNode.insideBounds aber genau die
+                // Randkacheln weg - daran fehlten Nord und Ost -, also mit
+                // etwas Luft rechnen.
+                extent: [AROME_BOUNDS[0] - 0.5, AROME_BOUNDS[1] - 0.5,
+                         AROME_BOUNDS[2] + 0.5, AROME_BOUNDS[3] + 0.5],
+                refinementStrategy: 'best-available',
+                // 0 = unbegrenzt (RequestScheduler schaltet das Throttling ab).
+                // Die 6 waren die Browsergrenze pro Domain bei HTTP/1.1 - beim
+                // Speicher-Quelltext reine Bremse, und jede Bremse verlaengert
+                // genau die Zeit, in der der grobe Platzhalter zu sehen ist.
+                maxRequests: 0,
+                getTileData: async ({ index }) => {
+                    // Kein Eltern-Gang: das Archiv hat fuer jede angefragte
+                    // Kachel Daten. Fehlte doch eine, bliebe sie leer und deck
+                    // zeigt den bereits gecachten Vorfahren als Platzhalter.
+                    const resp = await pm.getZxy(index.z, index.x, index.y);
+                    return resp && resp.data ? decodeDirTile(resp.data) : null;
+                },
+                onTileLoad: () => setStatus(`Windkacheln im Viewport: ${liveTiles.size}`),
+                onTileError: (e) => console.warn('[isobaren] Kachel', e),
+                renderSubLayers: (p) => {
+                    const t = p.data;
+                    const idx = p.tile.index;
+                    if (!t) return null;                     // Kachel existiert nicht (Maske)
+
+                    // Mass ist die ANGEFRAGTE Kachel, nicht die Nutzlast: aus
+                    // ihrer Ausdehnung wird das Gitterfenster der Nutzlast
+                    // gerechnet und auf das geklemmt, was wirklich da ist.
+                    const bb = p.tile.bbox || tileBBoxFromIndex(idx);
+                    const i0 = Math.max(0, Math.min(t.cols - 1,
+                                  (bb.west  - t.originLng) / t.deltaLng));
+                    const i1 = Math.max(0, Math.min(t.cols - 1,
+                                  (bb.east  - t.originLng) / t.deltaLng));
+                    const j0 = Math.max(0, Math.min(t.rows - 1,
+                                  (t.originLat - bb.north) / t.deltaLat));
+                    const j1 = Math.max(0, Math.min(t.rows - 1,
+                                  (t.originLat - bb.south) / t.deltaLat));
+                    if (i1 <= i0 || j1 <= j0) return null;   // hier gibt es keine Daten
+
+                    // Quad = geklemmte Ausdehnung, Texturfenster = dieselben
+                    // Indizes. Gepaddet ist das der Kachelrand, ungepaddet der
+                    // Datenpunkt-Extent (siehe tileBBoxFromIndex oben).
+                    return new WindTileLayer({
+                        id: `${p.id}-${idx.z}/${idx.x}/${idx.y}`,
+                        zxy: `${idx.z}/${idx.x}/${idx.y}`,
+                        data: t,
+                        bounds: [t.originLng + i0 * t.deltaLng,
+                                 t.originLat - j1 * t.deltaLat,
+                                 t.originLng + i1 * t.deltaLng,
+                                 t.originLat - j0 * t.deltaLat],
+                        ciMin: [i0, j0],
+                        ciMax: [i1, j1],
+                        cols: t.cols,
+                        rows: t.rows,
+                        opacity: TILE_OPACITY
+                    });
+                }
+            });
+        }
+
+        // ------------------------------------------------------------------
+        //  Overlay beim Zoom mitziehen
+        //
+        //  Leaflet animiert den Zoom nicht durch Neuzeichnen, sondern skaliert
+        //  die Kachelebenen 250 ms lang per CSS-Transform. Das DeckGL-Canvas
+        //  liegt ausserhalb dieser Ebenen und erfaehrt vom Zoom erst am Ende
+        //  etwas - genau daher kommt der Sprung ("Karte waechst fliessend,
+        //  Overlay springt").
+        //
+        //  Deshalb spiegeln wir dieselbe Transformation auf das Canvas: gleiche
+        //  Skala, gleicher Versatz, gleiche Dauer und Kurve wie leaflet.css.
+        //  Das Overlay waechst damit pixelgleich mit den Kacheln mit. Erst wenn
+        //  deck.gl das erste Bild im NEUEN Zoom gezeichnet hat, wird die
+        //  Spiegelung entfernt - sonst faellt es einen Frame auf das alte Bild
+        //  zurueck.
+        //
+        //  Die Abbildung ist eine reine Aehnlichkeitstransformation:
+        //    neu = scale * alt + offset
+        //  Skala 2^deltaZoom ist isotrop, weil Web-Mercator konform ist.
+        //  Fuer den Versatz genuegt ein bekannter Punkt: die linke obere Ecke
+        //  des Viewports liegt bei (0,0), wir fragen nur, wo sie nach dem Zoom
+        //  landet.
+        // ------------------------------------------------------------------
+        const deckCanvas = document.getElementById('deck-canvas');
+        let mirrorActive = false;      // liegt gerade eine CSS-Spiegelung auf dem Canvas?
+        let mirrorAwaitRender = false; // Animation vorbei, warten auf das neue Bild
+        let zoomGen = 0;               // unterscheidet aufeinanderfolgende Animationen
+
+        // ----------------------------------------------------------------
+        //  WER animiert den Zoom?
+        //
+        //  'mirror' = unsere CSS-Spiegelung. Pixelgleich zu Leaflet, weil sie
+        //             dessen Kurve, Dauer und Fixpunkt einfach kopiert.
+        //  'deck'   = deck.gl animiert seinen eigenen ViewState
+        //             (transitionDuration/-Easing/-Interpolator). Deck weiss
+        //             nichts von Leaflets Tween: die Kurve ist nachgebaut,
+        //             und deck interpoliert lon/lat/zoom, Leaflet dagegen
+        //             die SKALA (siehe transitionEasing unten).
+        // ----------------------------------------------------------------
+        // 'mirror' schaltet die alte CSS-Spiegelung wieder ein.
+        const ZOOM_ANIM = 'mirror';
+
+        // cubic-bezier(x1, y1, x2, y2) aus leaflet.css als JS-Funktion:
+        // Newton-Iteration auf x(t) = x, Rueckgabe y(t).
+        function cubicBezier(x1, y1, x2, y2) {
+            const A = (a, b) => 1 - 3 * b + 3 * a;
+            const B = (a, b) => 3 * b - 6 * a;
+            const cx = (t) => ((A(x1, x2) * t + B(x1, x2)) * t + 3 * x1) * t;
+            const cy = (t) => ((A(y1, y2) * t + B(y1, y2)) * t + 3 * y1) * t;
+            const dx = (t) => 3 * A(x1, x2) * t * t + 2 * B(x1, x2) * t + 3 * x1;
+            return (x) => {
+                if (x <= 0) return 0;
+                if (x >= 1) return 1;
+                let t = x;
+                for (let i = 0; i < 6; i++) {
+                    const s = dx(t);
+                    if (Math.abs(s) < 1e-6) break;
+                    t = Math.min(1, Math.max(0, t - (cx(t) - x) / s));
+                }
+                return cy(t);
+            };
+        }
+        // Kurve und Dauer identisch zu .leaflet-zoom-anim .leaflet-zoom-animated
+        const EASE_ZOOM = cubicBezier(0, 0, 0.25, 1);
+        const ZOOM_MS = 250;
+
+        // Variante 'deck': laeuft gerade eine deck-Transition?
+        let deckZoomAnim = false;
+
+        // Wo landet ein Punkt, wenn die neue Ansicht steht? Bewusst in
+        // CONTAINER-Koordinaten gerechnet, nicht in Layer-Koordinaten:
+        // Leaflet haengt den Pane beim Pannen um (panePos) und seine
+        // Layer-Transforms enthalten diesen Versatz. Unser Canvas haengt nicht
+        // am Pane, ihm fehlt er - deshalb waere die Layer-Rechnung nach einem
+        // Pan um panePos falsch.
+        //   c_neu(X) = project(X, zoom) - project(center, zoom) + viewHalf
+        // Der Pane-Versatz kuerzt sich hier heraus, weil er in Leaflet sowohl
+        // im Pixelursprung als auch in der Layer-Position steckt.
+        function newContainerPoint(latlng, zoom, center) {
+            return map.project(latlng, zoom)
+                      .subtract(map.project(center, zoom))
+                      .add(map.getSize().divideBy(2));
+        }
+
+        // Deck-View setzen. Leaflet-Zoom - 1, weil das Overlay eine Stufe
+        // groesser gezeichnet wird als die Karte (siehe updateDeckView).
+        function setDeckView(center, zoom) {
+            deckgl.setProps({
+                viewState: {
+                    longitude: center.lng,
+                    latitude: center.lat,
+                    zoom: zoom - 1,
+                    pitch: 0,
+                    bearing: 0
+                }
+            });
+        }
+
+        // Wartet beim Rauszoomen darauf, dass deck.gl die Zielansicht gezeichnet
+        // hat; erst dann wird die inverse Spiegelung aufgesetzt.
+        let pendingZoomOut = null;     // { k, px, py } | null
+
+        // Zielansicht vergroessert aufsetzen (ohne Uebergang), Wert
+        // festschreiben und auf 1 zuruecklaufen lassen. Wird in onAfterRender
+        // aufgerufen - also in dem Frame, in dem das neue Bild schon auf dem
+        // Canvas liegt, aber noch nicht zusammengesetzt ist. Deshalb ist kein
+        // Zwischenbild zu sehen.
+        function startInverseMirror() {
+            const p = pendingZoomOut;
+            if (!p) return;
+            pendingZoomOut = null;
+            deckCanvas.style.transition = 'none';
+            deckCanvas.style.transformOrigin = `${p.px}px ${p.py}px`;
+            deckCanvas.style.willChange = 'transform';
+            deckCanvas.style.transform = `scale(${p.k})`;
+            void deckCanvas.offsetWidth;              // Startwert festschreiben
+            // Werte identisch zu .leaflet-zoom-anim .leaflet-zoom-animated
+            deckCanvas.style.transition = 'transform 250ms cubic-bezier(0, 0, 0.25, 1)';
+            deckCanvas.style.transform = 'scale(1)';
+        }
+
+        function overlayZoomStart(e) {
+            const scale = map.getZoomScale(e.zoom);                   // 2^deltaZoom
+            // Die linke obere Viewport-Ecke liegt bei (0,0); unter der
+            // Skalierung bleibt sie dort, der Versatz ist also genau ihre neue
+            // Position.
+            //   off = wo die linke obere Ecke nach dem Zoom landet
+            //   P   = Fixpunkt der Animation: off + scale*P = P
+            const nw  = map.containerPointToLatLng([0, 0]);
+            const off = newContainerPoint(nw, e.zoom, e.center);
+
+            if (e.zoom < map.getZoom() && scale > 0 && scale < 1) {
+                // RAUSZOOMEN: Das ALTE Bild zu verkleinern laesst drumherum alles
+                // leer (genau das Viereck). Stattdessen die Ansicht im ZIELzoom
+                // zeichnen und diese um 1/scale VERGROESSERN: sie zeigt am
+                // Anfang pixelgleich dieselbe Ansicht - nur aus der vorhandenen
+                // Textur statt aus einem verkleinerten Bild - und deckt dabei
+                // immer die ganze Flaeche ab.
+                // Geometrisch ist das genau die Spiegelung der Karte: die Karte
+                // skaliert das alte Bild um scale um P, hier skaliert das neue
+                // Bild um 1/scale um denselben Punkt. Weil CSS die Skalierung
+                // linear interpoliert, sind beide Bewegungen identisch.
+                pendingZoomOut = {
+                    k: 1 / scale,
+                    px: off.x / (1 - scale),
+                    py: off.y / (1 - scale)
+                };
+                setDeckView(e.center, e.zoom);   // e.center/e.zoom ist das Ziel
+                // Notnagel, falls deck.gl nicht im naechsten Frame zeichnet
+                setTimeout(startInverseMirror, 80);
+
+                zoomGen++;
+                mirrorActive = true;
+                mirrorAwaitRender = false;
+                return;
+            }
+
+            pendingZoomOut = null;
+            zoomGen++;
+            mirrorActive = true;
+            mirrorAwaitRender = false;
+
+            deckCanvas.style.transformOrigin = '0 0';
+            deckCanvas.style.willChange = 'transform';
+            // Werte identisch zu .leaflet-zoom-anim .leaflet-zoom-animated
+            deckCanvas.style.transition = 'transform 250ms cubic-bezier(0, 0, 0.25, 1)';
+            deckCanvas.style.transform =
+                `translate3d(${off.x}px, ${off.y}px, 0) scale(${scale})`;
+        }
+
+        function overlayZoomEnd() {
+            mirrorActive = false;
+            mirrorAwaitRender = false;
+            pendingZoomOut = null;
+            deckCanvas.style.transition = 'none';
+            deckCanvas.style.transform = '';
+            deckCanvas.style.transformOrigin = '';
+            deckCanvas.style.willChange = '';
+        }
+
+        // ------------------------------------------------------------------
+        //  Variante 'mirror': CSS-Transformation auf dem Canvas
+        // ------------------------------------------------------------------
+        if (ZOOM_ANIM === 'mirror') {
+            map.on('zoomanim', overlayZoomStart);
+
+            // zoomend kommt, wenn die 250 ms vorbei sind - das neue Bild von
+            // deck.gl aber erst im naechsten Frame. Deshalb wird hier nur die
+            // Bereitschaft gemeldet; zurueckgesetzt wird in onAfterRender.
+            map.on('zoomend', () => {
+                if (!mirrorActive) return;
+                mirrorAwaitRender = true;
+                const gen = zoomGen;
+                // Notnagel, falls deck.gl gar nicht mehr zeichnet (Tab im Hintergrund)
+                setTimeout(() => { if (gen === zoomGen && mirrorAwaitRender) overlayZoomEnd(); }, 500);
+            });
+        }
+
+        // ------------------------------------------------------------------
+        //  Variante 'deck': deck.gl animiert den eigenen ViewState
+        //
+        //  Die Transition-Props gehoeren in den viewState (CommonViewState =
+        //  TransitionProps). Wichtig: waehrend der Animation darf KEIN
+        //  updateDeckView dazwischenfunken - das setzt die Zielansicht ohne
+        //  Transition und wuerde die Animation sofort beenden.
+        // ------------------------------------------------------------------
+        function startDeckZoom(center, zoom, oldZoom) {
+            const dz = zoom - oldZoom;
+            deckZoomAnim = true;
+            deckgl.setProps({
+                viewState: {
+                    longitude: center.lng,
+                    latitude: center.lat,
+                    zoom: zoom - 1,
+                    pitch: 0,
+                    bearing: 0,
+                    transitionDuration: ZOOM_MS,
+                    transitionInterpolator:
+                        new deck.LinearInterpolator(['longitude', 'latitude', 'zoom']),
+                    // Deck interpoliert den ZOOM linear, Leaflet die SKALA.
+                    // e(t) = log2(1 + (2^dz - 1) * u(t)) / dz macht daraus
+                    // dieselbe Bewegung (u = Leaflets Bezier).
+                    transitionEasing: (t) => {
+                        const u = EASE_ZOOM(t);
+                        return Math.abs(dz) < 1e-6
+                            ? u
+                            : Math.log2(1 + (Math.pow(2, dz) - 1) * u) / dz;
+                    },
+                    onTransitionEnd: () => {
+                        deckZoomAnim = false;
+                        updateDeckView();       // exakt auf die Zielansicht
+                    }
+                }
+            });
+        }
+
+        if (ZOOM_ANIM === 'deck') {
+            console.log('[isobaren] Zoom-Animation: deck.gl eigener ViewState');
+            map.on('zoomanim', (e) => {
+                // Bei zoomanim ist der Karten-Zoom noch der ALTE, deshalb taugt
+                // getZoom() hier als Ausgangswert (die Spiegelung rechnet
+                // genauso mit map.getZoomScale).
+                startDeckZoom(e.center, e.zoom, map.getZoom());
+                const gen = ++zoomGen;
+                // Notnagel, falls onTransitionEnd ausbleibt (Tab im Hintergrund)
+                setTimeout(() => {
+                    if (gen === zoomGen && deckZoomAnim) {
+                        deckZoomAnim = false;
+                        updateDeckView();
+                    }
+                }, ZOOM_MS + 350);
+            });
+        }
+
+        const deckgl = new deck.DeckGL({
+            canvas: 'deck-canvas',
+            useWebGL2: true,
+            passthrough: true,
+            layers: [],
+            onAfterRender: () => {
+                if (ZOOM_ANIM !== 'mirror') return;
+                // Rauszoomen: erst jetzt steht die Zielansicht auf dem Canvas ->
+                // die vergroesserte Skalierung aufsetzen und auf 1 zuruecklaufen
+                // lassen. Vorher gesetzt waere einen Frame lang das alte Bild
+                // vergroessert zu sehen.
+                startInverseMirror();
+                // Reinzoomen: erst jetzt ist das Bild im neuen Zoom auf dem
+                // Canvas -> die Spiegelung kann weg, ohne dass es kurz
+                // zurueckspringt.
+                if (mirrorAwaitRender) overlayZoomEnd();
+            }
+        });
+
+        // PMTiles lesen und den TileLayer nachreichen - vorher gibt es nichts
+        // zu zeichnen.
+        createWindTiles().then((tl) => {
+            tileLayer = tl;
+            deckgl.setProps({ layers: [tl] });
+            setStatus('Kacheln werden geladen …');
+        }).catch((e) => {
+            console.error('[isobaren]', e);
+            setStatus(`Fehler: ${e.message}`);
+        });
+
+        document.getElementById('showGrid').addEventListener('change', (e) => {
+            showGrid = e.target.checked;
+            deckgl.redraw(true);
+        });
+
+        // Blendet nur die Windstufe aus (das WebGL-Overlay mit den Farbbaendern).
+        // Die Legende bleibt stehen - sie gehoert zur Karte, nicht zum Overlay.
+        // Unsichtbar heisst auch: draw() laeuft nicht, also pausiert das
+        // Kachel-Nachladen, bis wieder eingeblendet wird.
+        function setWindVisible(on) {
+            showWind = !!on;
+            const cb = document.getElementById('showWind');
+            if (cb) cb.checked = showWind;
+            if (tileLayer) tileLayer.setProps({ visible: showWind });
+            deckgl.redraw(true);
+        }
+
+        document.getElementById('showWind').addEventListener('change', (e) => {
+            setWindVisible(e.target.checked);
+        });
+
+        // Stufen ein-/ausschalten: aus = durchgehender Farbverlauf derselben
+        // Palette. Rein im Shader (uBands), es wird nichts neu geladen.
+        function setBands(on) {
+            showBands = !!on;
+            const cb = document.getElementById('showBands');
+            if (cb) cb.checked = showBands;
+            deckgl.redraw(true);
+        }
+
+        document.getElementById('showBands').addEventListener('change', (e) => {
+            setBands(e.target.checked);
+        });
+
+        // Taste w schaltet die Windstufe um (nicht waehrend der Eingabe)
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const t = e.target;
+            const tag = t && t.tagName;
+            const textish = tag === 'TEXTAREA' || tag === 'SELECT' ||
+                            (tag === 'INPUT' && !['checkbox', 'radio', 'button', 'submit'].includes(t.type));
+            if (textish) return;
+            const k = e.key.toLowerCase();
+            if (k === 'w') {
+                setWindVisible(!showWind);
+                e.preventDefault();
+            } else if (k === 'b') {
+                setBands(!showBands);
+                e.preventDefault();
+            }
+        });
+
+        // Diagnose: welche Kacheln deck.gl gerade im Viewport haelt.
+        let _tilesTimer = null;
+        function renderDebugTiles() {
+            const el = document.getElementById('points');
+            if (!el) return;
+            const rows = [...liveTiles.values()].sort((a, b) => (a.zxy < b.zxy ? -1 : 1));
+            el.textContent = `Windkacheln im Viewport: ${rows.length}\n` + rows.map((r) =>
+                `${r.zxy.padEnd(12)} ${r.cols}x${r.rows} Punkte   ` +
+                `${r.kmLon.toFixed(2)} x ${r.kmLat.toFixed(2)} km`).join('\n');
+        }
+
+        function setDebugTiles(on) {
+            const el = document.getElementById('points');
+            if (el) el.style.display = on ? 'block' : 'none';
+            if (on && !_tilesTimer) {
+                _tilesTimer = setInterval(renderDebugTiles, 250);
+            } else if (!on && _tilesTimer) {
+                clearInterval(_tilesTimer);
+                _tilesTimer = null;
+            }
+            renderDebugTiles();
+        }
+
+        document.getElementById('showTiles').addEventListener('change', (e) => {
+            setDebugTiles(e.target.checked);
+        });
+
+        function updateDeckView() {
+            // Waehrend einer deck-Transition fuehrt deck den View selbst; ein
+            // setProps hier setzt die Zielansicht hart und bricht sie ab.
+            if (ZOOM_ANIM === 'deck' && deckZoomAnim) return;
+
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+
+            const zEl = document.getElementById('zoom');
+            if (zEl) {
+                // Kachelzoom = round(Deck-Zoom + log2(512 / TILE_SIZE)) und mit
+                // TILE_SIZE 512 gerade der Deck-Zoom.
+                zEl.textContent = `Zoom: Leaflet ${zoom} · Deck ${(zoom - 1).toFixed(2)}` +
+                                  ` · Datenstufe ${zoom - 1}`;
+            }
+
+            setDeckView(center, zoom);
+        }
+
+        map.on('move', updateDeckView);
+        map.on('zoom', updateDeckView);
+        map.on('viewreset', updateDeckView);
+
+        window.addEventListener('resize', () => {
+            map.invalidateSize();
+            updateDeckView();
+        });
+
+        // Legende aus derselben Farbtabelle wie der Shader -> kann nicht auseinanderlaufen
+        (function buildLegend() {
+            const el = document.getElementById('legend');
+            const out = ['<div class="legend-title">Wind (kn)</div>'];
+            for (let i = KNOTS_COLORS.length - 1; i >= 0; i--) {
+                const c = KNOTS_COLORS[i];
+                const label = (i === KNOTS_COLORS.length - 1)
+                    ? `&gt; ${KNOTS_UPPER[KNOTS_UPPER.length - 1]}`
+                    : `&le; ${KNOTS_UPPER[i]}`;
+                out.push('<div class="legend-row">' +
+                    `<i style="background:rgb(${c[0]},${c[1]},${c[2]})"></i>` +
+                    `<span>${label}</span></div>`);
+            }
+            el.innerHTML = out.join('');
+        })();
+
+        updateDeckView();
+    </script>
+</body>
+</html>
