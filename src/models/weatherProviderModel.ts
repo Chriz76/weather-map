@@ -96,7 +96,9 @@ export class WeatherProviderModel extends EventTarget {
       }
     };
 
-    this.activeProviderId = AROME;
+    // Default for a first visit (no URL parameter, no stored provider): HRRR, so the app opens
+    // centred on the CONUS model area (see `providers[HRRR].defaultView`).
+    this.activeProviderId = HRRR;
   }
 
   getActiveProviderId(): string { return this.activeProviderId; }
