@@ -258,7 +258,6 @@ layout(std140) uniform windFieldUniforms {
   float uOpacity;
   float uMsToKn;
   float uBands;
-  float uQuantKn;
 } windField;
 `;
 
@@ -276,8 +275,7 @@ const windFieldUniforms: ShaderModule = {
     uCiMax: 'vec2<f32>',
     uOpacity: 'f32',
     uMsToKn: 'f32',
-    uBands: 'f32',
-    uQuantKn: 'f32'
+    uBands: 'f32'
   }
 };
 
@@ -371,10 +369,8 @@ void main(void) {
   // fwidth() stays correct even in a pixel quad spanning the boundary.
   float bandC = band + (kn - lo) / (hi - lo);
 
-  // Hard band edges with a one-pixel transition, matching the legend swatches. The width
-  // is never allowed to fall below half a payload quantization step: the stored values
-  // are rounded to uQuantKn, so a narrower edge locks the contour onto that lattice.
-  float delta = max(fwidth(bandC) * 0.75, 0.5 * windField.uQuantKn / (hi - lo));
+  // Hard band edges with a one-pixel transition, matching the legend swatches.
+  float delta = fwidth(bandC) * 0.75;
   float position = fract(bandC);
   float edge = smoothstep(1.0 - delta, 1.0 + delta, position);
   vec3 finalColor = mix(bandColor(band), bandColor(min(band + 1.0, 11.0)), edge);
@@ -393,8 +389,6 @@ interface WindTileLayerProps extends LayerProps {
   ciMax: [number, number];
   /** Opacity of the rendered wind field. */
   fieldOpacity: number;
-  /** Quantization step of the payload in knots (`format.scale` converted). */
-  quantKn: number;
 }
 
 /** GPU resources of one field tile. */
@@ -454,7 +448,7 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
     const { model, texture } = this.state;
     if (!model || !texture) return;
 
-    const { data, ciMin, ciMax, fieldOpacity, quantKn } = this.props;
+    const { data, ciMin, ciMax, fieldOpacity } = this.props;
     model.shaderInputs.setProps({
       windField: {
         uTexSize: [data.cols, data.rows],
@@ -463,7 +457,6 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
         uOpacity: fieldOpacity,
         uMsToKn: MS_TO_KNOTS,
         uBands: 1,
-        uQuantKn: quantKn,
         // luma.gl routes non-numeric values to the texture bindings by name.
         uTexture: texture,
         uPalette: getPaletteTexture(this.context.device)
@@ -512,9 +505,8 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
  * Sub layer of the wind field: one textured quad over the part of the payload the tile covers.
  * @param quad Window, extent and grid resolved from the tile payload.
  * @param id Layer id.
- * @param quantKn Payload quantization step in knots, used as the minimum band-edge width.
  */
-function createFieldLayer(quad: windTileGeometry.TileQuad, id: string, quantKn: number): WindTileLayer {
+function createFieldLayer(quad: windTileGeometry.TileQuad, id: string): WindTileLayer {
   return new WindTileLayer({
     id,
     data: quad.grid,
@@ -522,7 +514,6 @@ function createFieldLayer(quad: windTileGeometry.TileQuad, id: string, quantKn: 
     ciMin: [quad.i0, quad.j0],
     ciMax: [quad.i1, quad.j1],
     fieldOpacity: FIELD_OPACITY,
-    quantKn,
     // Straight alpha blending; the field is drawn below the arrows and has no depth.
     parameters: {
       blend: true,
@@ -624,7 +615,7 @@ function createWindTileLayer(
       // Stable ids: both sub layers are only ever built from this tile's payload, so deck.gl
       // updates their attributes instead of building new layers.
       return [
-        createFieldLayer(quad, `${props.id}-field`, format.scale * MS_TO_KNOTS),
+        createFieldLayer(quad, `${props.id}-field`),
         createArrowLayer(points, `${props.id}-arrows`)
       ];
     }
