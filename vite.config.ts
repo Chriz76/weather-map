@@ -21,8 +21,8 @@ export default defineConfig({
           template: './info.html',
           injectOptions: {
             data: {
-              pageTitle: 'Documentation & Info | ICON-D2 RUC, AROME PI & HRRR Weather Map',
-              description: 'Documentation, technical background, and project information for the ICON-D2 RUC, AROME PI and HRRR wind map.',
+              pageTitle: 'Documentation & Info | RapidWind – ICON-D2, AROME & HRRR Weather Map',
+              description: 'Documentation, technical background and project information for RapidWind, the hourly wind and weather map built on ICON-D2 RUC, AROME PI and HRRR.',
               infoContent
             }
           }

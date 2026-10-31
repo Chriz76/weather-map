@@ -1,11 +1,11 @@
 # Interactive ICON-D2 RUC, AROME PI & HRRR Wind Map
 
-[![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://chriz76.github.io/weather-map/)
+[![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://rapidwind.app/)
 [![Data Pipeline Repo](https://img.shields.io/badge/Data-Repository-green?style=flat-square)](https://github.com/Chriz76/weather-data)
 
 The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions, plus the **CONUS** area from HRRR. You can switch between **ICON-D2 RUC**, **AROME PI** and **HRRR** using the logo row.
 
-[![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://chriz76.github.io/weather-map/)
+[![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://rapidwind.app/)
 
 The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
 

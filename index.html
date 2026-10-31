@@ -3,7 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ICON-D2 RUC, AROME PI & HRRR | Hourly Forecasts</title>
+    <title>RapidWind – Hourly Forecasts | ICON-D2 RUC, AROME PI, HRRR</title>
+    <meta name="description" content="Hourly wind and weather forecasts from ICON-D2 RUC, AROME PI and HRRR on an interactive map. Click any spot for a point forecast and share the link – free." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+
+    <!-- Static social preview tags: these crawlers do not execute JavaScript -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RapidWind" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="RapidWind – Hourly Forecasts | ICON-D2 RUC, AROME PI, HRRR" />
+    <meta property="og:description" content="Hourly wind and weather forecasts from ICON-D2 RUC, AROME PI and HRRR on an interactive map. Click any spot for a point forecast and share the link – free." />
+    <meta property="og:url" content="https://rapidwind.app/" />
+    <meta property="og:image" content="https://rapidwind.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RapidWind – hourly wind and weather forecast maps" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RapidWind – Hourly Forecasts | ICON-D2 RUC, AROME PI, HRRR" />
+    <meta name="twitter:description" content="Hourly wind and weather forecasts from ICON-D2 RUC, AROME PI and HRRR on an interactive map." />
+    <meta name="twitter:image" content="https://rapidwind.app/og-image.png" />
+
 <!-- 1. Das Sentry Loader Script (deine persönliche URL aus Sentry) -->
 <script
   src="https://js-de.sentry-cdn.com/42050bcde7224901aca1b006cde17a71.min.js"
@@ -63,13 +83,62 @@
       }
     </script>
     <!-- Suchmaschinen-Signale für den korrekten Namen & URL -->
-    <link rel="canonical" href="https://wind.zink.tv/">
+    <link rel="canonical" href="https://rapidwind.app/">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "ICON-D2 RUC & Arome PI | Hourly Forecasts",
-      "url": "https://wind.zink.tv/"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://rapidwind.app/#website",
+          "url": "https://rapidwind.app/",
+          "name": "RapidWind",
+          "alternateName": "RapidWind – The ICON-D2 RUC, AROME PI and HRRR wind map",
+          "description": "Hourly wind and weather forecasts from ICON-D2 RUC, AROME PI and HRRR on an interactive map.",
+          "inLanguage": "en",
+          "publisher": { "@id": "https://rapidwind.app/#organization" },
+          "hasPart": { "@id": "https://rapidwind.app/#app" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://rapidwind.app/#organization",
+          "name": "RapidWind",
+          "url": "https://rapidwind.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://rapidwind.app/favicon-48x48.png",
+            "width": 48,
+            "height": 48
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://rapidwind.app/#app",
+          "name": "RapidWind",
+          "url": "https://rapidwind.app/",
+          "applicationCategory": "WeatherApplication",
+          "applicationSubCategory": "Wind and weather forecast map",
+          "operatingSystem": "Any modern web browser",
+          "browserRequirements": "Requires JavaScript and WebGL",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR"
+          },
+          "image": "https://rapidwind.app/og-image.png",
+          "featureList": [
+            "Hourly wind, gust and direction forecasts",
+            "ICON-D2 RUC (Germany) with rapid update cycles",
+            "AROME PI (Western Europe)",
+            "HRRR (CONUS)",
+            "Point forecast by map click",
+            "Wind measurement stations",
+            "Shareable location links"
+          ],
+          "publisher": { "@id": "https://rapidwind.app/#organization" }
+        }
+      ]
     }
     </script>
     
@@ -95,6 +164,20 @@
     <link rel="stylesheet" href="css/special-data-view.css" />
 </head>
 <body>
+
+    <!-- Crawlable text anchor: visually hidden, so it never covers the fullscreen map -->
+    <header class="seo-heading">
+        <h1>RapidWind – Hourly Wind &amp; Weather Forecast Maps</h1>
+        <p>Hourly wind forecasts from the ICON-D2 RUC, AROME PI and HRRR models on an interactive map. Click any spot for a point forecast, switch between models and share the location. Free, no login required. <a href="./info.html">Documentation and project info</a></p>
+    </header>
+
+    <noscript>
+        <div class="seo-noscript">
+            <p class="seo-noscript__title">RapidWind – Hourly Wind &amp; Weather Forecast Maps</p>
+            <p>This interactive wind map requires JavaScript. The forecasts are based on the ICON-D2 RUC, AROME PI and HRRR models.</p>
+            <p><a href="./info.html">Documentation and project info</a></p>
+        </div>
+    </noscript>
 
     <div id="map"></div>
 
