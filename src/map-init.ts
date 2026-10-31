@@ -26,6 +26,9 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     const activeProviderCfg = providers[weatherProviderModel.getActiveProviderId()];
     const providerDefaultView = activeProviderCfg?.defaultView ?? DEFAULT_MAP_VIEW;
     const storedState = storage.getMapState(providerDefaultView);
+    // Nothing stored means a first visit: fit the whole model area instead of a fixed centre, so
+    // the user sees which region the active provider covers (see the `fitBounds` call below).
+    const isFirstVisit = !storage.hasMapState();
     const savedState = activeProviderCfg && !geoBounds.isWithinBounds(activeProviderCfg.imageBounds, {
         lat: storedState.lat,
         lng: storedState.lng
@@ -58,6 +61,12 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     }).setView([savedState.lat, savedState.lng], savedState.zoom);
 
     mapInstance.attributionControl.setPrefix(false);
+
+    // First visit: show the complete model area of the active provider.
+    if (isFirstVisit && activeProviderCfg) {
+        mapInstance.invalidateSize();
+        mapInstance.fitBounds(activeProviderCfg.imageBounds, { padding: [16, 16] });
+    }
 
     // Add zoom controls manually at top-right
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);

@@ -50,5 +50,26 @@ export const storage = {
     getActiveProvider(fallback: string): string {
         const val = core.get(KEYS.ACTIVE_PROVIDER, '', false);
         return val && typeof val === 'string' && val.length > 0 ? val : fallback;
+    },
+    /**
+     * Reports whether the user ever picked a provider explicitly.
+     *
+     * `getActiveProvider` always returns its fallback, so it cannot tell a stored choice apart
+     * from an empty storage. First-visit features need that distinction.
+     *
+     * @returns `true` when a provider id is stored.
+     */
+    hasActiveProvider(): boolean {
+        const val = core.get(KEYS.ACTIVE_PROVIDER, '', false);
+        return typeof val === 'string' && val.length > 0;
+    },
+    /**
+     * Reports whether a map view state is stored.
+     *
+     * @returns `true` when the previous session left a map view behind.
+     */
+    hasMapState(): boolean {
+        const val = core.get(KEYS.MAP_STATE, '', false);
+        return typeof val === 'string' && val.length > 0;
     }
 };

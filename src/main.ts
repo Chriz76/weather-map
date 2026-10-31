@@ -29,11 +29,27 @@ import { registerToastView } from './views/toastView';
 import { specialDataView } from './views/specialDataView';
 import { D2, AROME } from './weatherProvider/providerIds';
 import { parseUrlParams, cleanUrlHistory, normalizeProviderId } from './utils/url';
+import * as regionUtils from './utils/region';
+import { logger } from './utils/logger';
 
 const { providerId: urlProviderId, location: urlLocation, hadParams } = parseUrlParams();
 if (hadParams) cleanUrlHistory();
-const storedProviderId = normalizeProviderId(storage.getActiveProvider(weatherProviderModel.getActiveProviderId()));
-const initialProviderId = urlProviderId ?? storedProviderId ?? weatherProviderModel.getActiveProviderId();
+
+// Provider resolution: URL parameter > stored choice > time zone heuristic > HRRR default.
+// The heuristic result is deliberately not persisted, so a first visit stays adjustable and a
+// shared link always wins over the region of the device.
+const hasStoredProvider = storage.hasActiveProvider();
+const storedProviderId = hasStoredProvider
+    ? normalizeProviderId(storage.getActiveProvider(weatherProviderModel.getActiveProviderId()))
+    : null;
+const useTimeZoneHeuristic = !urlProviderId && !hasStoredProvider;
+const browserTimeZone = useTimeZoneHeuristic ? regionUtils.getBrowserTimeZone() : null;
+const regionProviderId = useTimeZoneHeuristic ? regionUtils.resolveProviderForTimeZone(browserTimeZone) : null;
+const initialProviderId = urlProviderId ?? storedProviderId ?? regionProviderId ?? weatherProviderModel.getActiveProviderId();
+
+if (regionProviderId) {
+    logger.debug('No stored provider, selected by time zone:', browserTimeZone, '->', regionProviderId);
+}
 
 // --- 1. INITIALISIERUNG ---
 // Restore previously selected provider (before map init so imageBounds are correct)

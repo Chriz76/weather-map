@@ -20,10 +20,11 @@ export type ProviderConfig = {
   gridCellSize?: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
   /**
-   * Map view used on the first visit, before any map state is stored.
+   * Map view used as a fallback for a provider: the centre of its model area.
    *
-   * Per provider, because the model areas do not overlap: the default view of the app (Germany)
-   * holds no data for a CONUS-only model.
+   * Per provider, because the model areas do not overlap: the centre of one model area holds no
+   * data for another. `map-init` additionally fits the whole area on a first visit, so the zoom
+   * here is only a fallback for provider switches and invalid stored views.
    */
   defaultView: { lat: number; lng: number; zoom: number };
   /**
@@ -57,7 +58,8 @@ export const providers: Record<string, ProviderConfig> = {
       [43.0440, -4.1616],
       [58.1647, 20.5444]
     ],
-    defaultView: DEFAULT_MAP_VIEW,
+    // Centre of the model area, so a switch from another model does not land on an empty map.
+    defaultView: { lat: 50.6044, lng: 8.1914, zoom: 4 },
     windOverlay: "raster",
     hasWindMeasurements: true
   },
@@ -68,7 +70,8 @@ export const providers: Record<string, ProviderConfig> = {
       [37.5, -12.0],
       [55.4, 16.0]
     ],
-    defaultView: DEFAULT_MAP_VIEW,
+    // Centre of the model area (Western Europe), see `providers[D2].defaultView`.
+    defaultView: { lat: 46.45, lng: 2.0, zoom: 4 },
     windOverlay: "raster",
     hasWindMeasurements: true
   },
@@ -82,7 +85,7 @@ export const providers: Record<string, ProviderConfig> = {
       [52.615565, -60.918]
     ],
     // Centre of the model area, so a first visit with HRRR is not an empty map over Europe.
-    defaultView: { lat: 38.5, lng: -97.5, zoom: 4 },
+    defaultView: { lat: 36.877, lng: -97.507, zoom: 4 },
     windOverlay: "tiles",
     // Bright Sky only covers DWD stations in Europe.
     hasWindMeasurements: false
