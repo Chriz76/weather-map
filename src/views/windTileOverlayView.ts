@@ -258,6 +258,7 @@ layout(std140) uniform windFieldUniforms {
   float uOpacity;
   float uMsToKn;
   float uBands;
+  float uQuantKn;
 } windField;
 `;
 
@@ -275,7 +276,8 @@ const windFieldUniforms: ShaderModule = {
     uCiMax: 'vec2<f32>',
     uOpacity: 'f32',
     uMsToKn: 'f32',
-    uBands: 'f32'
+    uBands: 'f32',
+    uQuantKn: 'f32'
   }
 };
 
@@ -330,25 +332,37 @@ vec3 bandColor(float band) {
 
 void main(void) {
   // vTexCoord runs 0..1 over the tile, the grid window says which part of the payload
-  // belongs to it (integer values are data nodes, so the hardware blends the neighbours).
+  // belongs to it (integer values are data nodes, so the taps below blend the neighbours).
   vec2 ci = mix(windField.uCiMin, windField.uCiMax, vTexCoord);
-  vec4 fieldSample = texture(uTexture, (ci + 0.5) / windField.uTexSize);
+
+  // Manual bilinear reconstruction. The payload is uploaded as RGBA16F and the hardware
+  // filtering of that format is not reliable here: the sample comes back nearest, which
+  // turns the field into flat cell blocks and makes the band contour follow the payload
+  // grid (the visible stair steps). Four explicit taps on the surrounding texel centres,
+  // weighted by the fractional position, reconstruct the interpolation.
+  vec2 base = floor(ci);
+  vec2 frac = ci - base;
+  vec2 uvA = (base + 0.5) / windField.uTexSize;
+  vec2 uvB = (base + 1.5) / windField.uTexSize;
+  vec4 sample00 = texture(uTexture, vec2(uvA.x, uvA.y));
+  vec4 sample10 = texture(uTexture, vec2(uvB.x, uvA.y));
+  vec4 sample01 = texture(uTexture, vec2(uvA.x, uvB.y));
+  vec4 sample11 = texture(uTexture, vec2(uvB.x, uvB.y));
+  vec4 fieldSample = mix(
+      mix(sample00, sample10, frac.x),
+      mix(sample01, sample11, frac.x),
+      frac.y
+  );
 
   float coverage = clamp(fieldSample.b, 0.0, 1.0);
-  if (coverage <= 0.0) {
-    fragColor = vec4(0.0);
-    return;
-  }
-
   vec2 uvWind = fieldSample.rg / max(coverage, 1e-5);
   float kn = length(uvWind) * windField.uMsToKn;
 
-  // Guard against NaN/garbage: an overflowed half float (or a bad node) would turn the
-  // band maths into NaN, which drivers paint as flat grey patches.
-  if (!(kn >= 0.0) || kn > 1000.0) {
-    fragColor = vec4(0.0);
-    return;
-  }
+  // Guard against NaN/garbage without leaving the uniform control flow that fwidth()
+  // below needs: an overflowed half float would turn the band maths into NaN, which
+  // drivers paint as flat grey patches.
+  bool usable = (kn >= 0.0) && (kn <= 1000.0) && (coverage > 1e-4);
+  kn = usable ? kn : 0.0;
 
   float lo, hi, band;
   bandRange(kn, lo, hi, band);
@@ -357,8 +371,10 @@ void main(void) {
   // fwidth() stays correct even in a pixel quad spanning the boundary.
   float bandC = band + (kn - lo) / (hi - lo);
 
-  // Hard band edges with a one-pixel transition, matching the legend swatches.
-  float delta = fwidth(bandC) * 0.75;
+  // Hard band edges with a one-pixel transition, matching the legend swatches. The width
+  // is never allowed to fall below half a payload quantization step: the stored values
+  // are rounded to uQuantKn, so a narrower edge locks the contour onto that lattice.
+  float delta = max(fwidth(bandC) * 0.75, 0.5 * windField.uQuantKn / (hi - lo));
   float position = fract(bandC);
   float edge = smoothstep(1.0 - delta, 1.0 + delta, position);
   vec3 finalColor = mix(bandColor(band), bandColor(min(band + 1.0, 11.0)), edge);
@@ -377,6 +393,8 @@ interface WindTileLayerProps extends LayerProps {
   ciMax: [number, number];
   /** Opacity of the rendered wind field. */
   fieldOpacity: number;
+  /** Quantization step of the payload in knots (`format.scale` converted). */
+  quantKn: number;
 }
 
 /** GPU resources of one field tile. */
@@ -436,7 +454,7 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
     const { model, texture } = this.state;
     if (!model || !texture) return;
 
-    const { data, ciMin, ciMax, fieldOpacity } = this.props;
+    const { data, ciMin, ciMax, fieldOpacity, quantKn } = this.props;
     model.shaderInputs.setProps({
       windField: {
         uTexSize: [data.cols, data.rows],
@@ -445,6 +463,7 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
         uOpacity: fieldOpacity,
         uMsToKn: MS_TO_KNOTS,
         uBands: 1,
+        uQuantKn: quantKn,
         // luma.gl routes non-numeric values to the texture bindings by name.
         uTexture: texture,
         uPalette: getPaletteTexture(this.context.device)
@@ -493,8 +512,9 @@ class WindTileLayer extends Layer<WindTileLayerProps> {
  * Sub layer of the wind field: one textured quad over the part of the payload the tile covers.
  * @param quad Window, extent and grid resolved from the tile payload.
  * @param id Layer id.
+ * @param quantKn Payload quantization step in knots, used as the minimum band-edge width.
  */
-function createFieldLayer(quad: windTileGeometry.TileQuad, id: string): WindTileLayer {
+function createFieldLayer(quad: windTileGeometry.TileQuad, id: string, quantKn: number): WindTileLayer {
   return new WindTileLayer({
     id,
     data: quad.grid,
@@ -502,6 +522,7 @@ function createFieldLayer(quad: windTileGeometry.TileQuad, id: string): WindTile
     ciMin: [quad.i0, quad.j0],
     ciMax: [quad.i1, quad.j1],
     fieldOpacity: FIELD_OPACITY,
+    quantKn,
     // Straight alpha blending; the field is drawn below the arrows and has no depth.
     parameters: {
       blend: true,
@@ -603,7 +624,7 @@ function createWindTileLayer(
       // Stable ids: both sub layers are only ever built from this tile's payload, so deck.gl
       // updates their attributes instead of building new layers.
       return [
-        createFieldLayer(quad, `${props.id}-field`),
+        createFieldLayer(quad, `${props.id}-field`, format.scale * MS_TO_KNOTS),
         createArrowLayer(points, `${props.id}-arrows`)
       ];
     }
