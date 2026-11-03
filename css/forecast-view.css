@@ -21,7 +21,8 @@
 /* FIX: Better height handling to avoid squashing in Firefox */
 .forecast-view--has-data {
     height: auto;
-    max-height: 100px;
+    /* 20 (header) + 25 (values) + 25 (gusts) + 18 (direction) + 18 (weather) + 2x2 border */
+    max-height: 120px;
     opacity: 1;
     pointer-events: auto; /* Make clickable again */
     border: 2px solid rgba(0, 0, 0, 0.15);
@@ -129,6 +130,43 @@
 
 .forecast-view__dir-icon--unknown {
     transform: none;
+}
+
+/* Weather-code row: Meteocons icons for providers that report a WMO weather code */
+.forecast-view__row-weather {
+    display: none;
+}
+
+.forecast-view--has-weather .forecast-view__row-weather {
+    display: table-row;
+}
+
+.forecast-view__cell-weather {
+    height: 18px;
+    text-align: center;
+    vertical-align: middle;
+    background: #f4f7f9;
+    border-right: 1px solid #dfe6eb;
+    padding: 0;
+    margin: 0;
+    line-height: 0;
+    box-sizing: border-box;
+}
+
+.forecast-view__cell-weather .forecast-view__weather-icon {
+    display: block;
+    font-size: 15px;
+    line-height: 18px;
+    text-align: center;
+    padding: 0;
+    margin: 0 auto;
+    color: #1f2933;
+}
+
+.forecast-view__cell-weather .forecast-view__weather-icon--missing {
+    font-size: 10px;
+    line-height: 18px;
+    color: #9aa5af;
 }
 
 /* Mark the active hour with a clean border */

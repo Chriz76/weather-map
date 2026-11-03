@@ -64,6 +64,7 @@ This project is a private, free, and ad-free open-source web app. It is maintain
 
 * **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
 * **AROME Attribution:** [Open-Meteo](https://open-meteo.com/) using [Météo-France](https://meteofrance.com/) model data.
+* **Icon Attribution:** [Weather Icons](https://erikflowers.github.io/weather-icons/) by Erik Flowers (SIL OFL 1.1 / MIT) for the forecast weather icons.
 * **Author:** [Chriz76](https://github.com/Chriz76)
 
 ## 📄 License & Terms of Use

@@ -1,6 +1,7 @@
 import * as L from 'leaflet';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import * as timeUtils from '../utils/time';
+import * as weatherCodes from '../utils/weatherCodes';
 import type { Map as LeafletMap } from 'leaflet';
 import type { ForecastItem } from '../types';
 
@@ -9,6 +10,22 @@ function renderDirectionIcon(direction: number | null): string {
   const normalizedDirection = ((direction % 360) + 360) % 360;
   const iconRotation = ((normalizedDirection + 90) % 360);
   return `<span class="forecast-view__dir-icon" style="--dir-deg:${iconRotation}deg">➤</span>`;
+}
+
+/**
+ * Renders the weather-code cell for one forecast hour.
+ *
+ * Providers without weather data (ICON-D2 clusters) end up in the dash branch, while the
+ * row itself stays visible only when at least one hour carries a WMO code.
+ */
+function renderWeatherCell(item: ForecastItem): string {
+  const iconClass = weatherCodes.getWeatherIconClass(item.weatherCode, item.isDay);
+  if (iconClass === null) {
+    return `<td class="forecast-view__cell-weather" data-time="${item.fullKey}"><span class="forecast-view__weather-icon forecast-view__weather-icon--missing">–</span></td>`;
+  }
+
+  const description = weatherCodes.describeWeatherCode(item.weatherCode);
+  return `<td class="forecast-view__cell-weather" data-time="${item.fullKey}"><i class="wi ${iconClass} forecast-view__weather-icon" role="img" aria-label="${description}" title="${description}"></i></td>`;
 }
 
 /**
@@ -37,6 +54,7 @@ class ForecastControl extends L.Control {
                         <tr class="forecast-view__row-values"></tr>
                         <tr class="forecast-view__row-gusts"></tr>
                         <tr class="forecast-view__row-direction"></tr>
+                        <tr class="forecast-view__row-weather"></tr>
                     </table>
                 </div>
             `;
@@ -93,7 +111,8 @@ class ForecastControl extends L.Control {
     const valuesRow = container.querySelector('.forecast-view__row-values') as HTMLElement | null;
     const gustsRow = container.querySelector('.forecast-view__row-gusts') as HTMLElement | null;
     const directionRow = container.querySelector('.forecast-view__row-direction') as HTMLElement | null;
-    if (!headerRow || !valuesRow || !gustsRow || !directionRow) return;
+    const weatherRow = container.querySelector('.forecast-view__row-weather') as HTMLElement | null;
+    if (!headerRow || !valuesRow || !gustsRow || !directionRow || !weatherRow) return;
 
     function getColorClass(wind: number): string {
       if (wind < 3.0) return 'w-under-3';
@@ -114,6 +133,8 @@ class ForecastControl extends L.Control {
     let valuesHtml = '';
     let gustsHtml = '';
     let directionHtml = '';
+    let weatherHtml = '';
+    let hasWeatherCodes = false;
 
     forecast.forEach((item: ForecastItem) => {
       const colorClass = getColorClass(item.wind ?? 0);
@@ -126,12 +147,16 @@ class ForecastControl extends L.Control {
       valuesHtml += `<td class="forecast-view__cell-value ${colorClass}" data-time="${item.fullKey}">${formattedValue}</td>`;
       gustsHtml += `<td class="forecast-view__cell-value forecast-view__cell-gust ${gustColorClass}" data-time="${item.fullKey}">${formattedGust}</td>`;
       directionHtml += `<td class="forecast-view__cell-direction" data-time="${item.fullKey}">${directionIcon}</td>`;
+      weatherHtml += renderWeatherCell(item);
+      hasWeatherCodes = hasWeatherCodes || item.weatherCode != null;
     });
 
     headerRow.innerHTML = headerHtml;
     valuesRow.innerHTML = valuesHtml;
     gustsRow.innerHTML = gustsHtml;
     directionRow.innerHTML = directionHtml;
+    weatherRow.innerHTML = hasWeatherCodes ? weatherHtml : '';
+    container.classList.toggle('forecast-view--has-weather', hasWeatherCodes);
 
     this.highlightActiveForecastHour();
     window.setTimeout(() => { this.scrollActiveForecastHourToCenter(); }, 50);
@@ -148,7 +173,7 @@ class ForecastControl extends L.Control {
     const renderedForecast = this.renderedForecast;
     if (!renderedForecast || renderedForecast.length === 0) return;
 
-    const activeElements = container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction');
+    const activeElements = container.querySelectorAll('.forecast-view__cell-header, .forecast-view__cell-value, .forecast-view__cell-gust, .forecast-view__cell-direction, .forecast-view__cell-weather');
     activeElements.forEach((el) => el.classList.remove('forecast-view__cell--active'));
 
     const matchedIndex = timeUtils.findMatchingTimestampIndexBy(renderedForecast, currentKey, (item) => item.fullKey);
