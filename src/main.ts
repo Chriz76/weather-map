@@ -1,4 +1,5 @@
 // main.js
+import 'weather-icons/css/weather-icons.min.css';
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
 import { uiStateModel } from './models/uiStateModel';

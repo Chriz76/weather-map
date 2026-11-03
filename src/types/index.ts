@@ -14,6 +14,10 @@ export interface ForecastItem {
   gust: number;
   direction: number | null;
   fullKey: string;
+  /** WMO weather code (Open-Meteo `weather_code`); absent for providers without weather data. */
+  weatherCode?: number | null;
+  /** Daylight flag reported next to the weather code; `null` when unavailable. */
+  isDay?: boolean | null;
 }
 
 export interface TimelineEntry {
