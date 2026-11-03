@@ -51,6 +51,62 @@ describe('openMeteo.readForecast', () => {
     expect(openMeteo.readForecast({ hourly_units: {} })).toBeNull();
     expect(openMeteo.readForecast('nope')).toBeNull();
   });
+
+  it('annotates sub-hourly steps with the nearest hourly weather code', () => {
+    const hourStart = 1793206800;
+    const forecast = openMeteo.readForecast({
+      minutely_15: {
+        time: [hourStart, hourStart + 900, hourStart + 1800, hourStart + 2700],
+        wind_speed_10m: [10, 11, 12, 13],
+        wind_gusts_10m: [20, 21, 22, 23],
+        wind_direction_10m: [180, 190, 200, 210]
+      },
+      hourly: {
+        time: [hourStart, hourStart + 3600],
+        weather_code: [3, 61],
+        is_day: [1, 0]
+      }
+    });
+
+    expect(forecast).toHaveLength(4);
+    expect(forecast![0]).toMatchObject({ weatherCode: 3, isDay: true });
+    expect(forecast![1]).toMatchObject({ weatherCode: 3, isDay: true });
+    expect(forecast![2]).toMatchObject({ weatherCode: 61, isDay: false });
+    expect(forecast![3]).toMatchObject({ weatherCode: 61, isDay: false });
+  });
+
+  it('keeps the newest published hour for steps beyond the hourly window', () => {
+    const hourStart = 1793206800;
+    const forecast = openMeteo.readForecast({
+      minutely_15: {
+        time: [hourStart, hourStart + 7200],
+        wind_speed_10m: [10, 11],
+        wind_gusts_10m: [20, 21],
+        wind_direction_10m: [180, 190]
+      },
+      hourly: {
+        time: [hourStart],
+        weather_code: [45],
+        is_day: [0]
+      }
+    });
+
+    expect(forecast).toHaveLength(2);
+    expect(forecast![1]).toMatchObject({ weatherCode: 45, isDay: false });
+  });
+
+  it('leaves the weather fields null when the payload has no hourly container', () => {
+    const forecast = openMeteo.readForecast({
+      minutely_15: {
+        time: [T0],
+        wind_speed_10m: [10],
+        wind_gusts_10m: [20],
+        wind_direction_10m: [180]
+      }
+    });
+
+    expect(forecast![0]).toMatchObject({ weatherCode: null, isDay: null });
+  });
 });
 
 describe('hrrrProvider', () => {
@@ -74,6 +130,7 @@ describe('hrrrProvider', () => {
     const url = String(fetchMock.mock.calls[0]?.[0]);
     expect(url).toContain('models=gfs_hrrr');
     expect(url).toContain('minutely_15=');
+    expect(url).toContain('hourly=weather_code,is_day');
     expect(url).toContain('latitude=39');
   });
 

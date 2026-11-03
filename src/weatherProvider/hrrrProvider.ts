@@ -21,7 +21,8 @@ export const hrrrProvider = {
     if (!latlng) return null;
 
     // NOAA HRRR: 15-minute wind series, CONUS only - outside it every series comes back empty.
-    const url = `https://api.open-meteo.com/v1/gfs?latitude=${latlng.lat}&longitude=${latlng.lng}&minutely_15=wind_speed_10m,wind_gusts_10m,wind_direction_10m&models=gfs_hrrr&forecast_minutely_15=124&past_minutely_15=8&timeformat=unixtime&wind_speed_unit=kn&${CACHE_BUSTER}`;
+    // weather_code/is_day are only published hourly, so they are requested for the same window.
+    const url = `https://api.open-meteo.com/v1/gfs?latitude=${latlng.lat}&longitude=${latlng.lng}&minutely_15=wind_speed_10m,wind_gusts_10m,wind_direction_10m&hourly=weather_code,is_day&models=gfs_hrrr&forecast_minutely_15=124&past_minutely_15=8&past_hours=2&forecast_hours=32&timeformat=unixtime&wind_speed_unit=kn&${CACHE_BUSTER}`;
 
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
