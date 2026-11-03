@@ -60,7 +60,7 @@ const ARROW_STRIDE_BASE = 4 * Math.pow(2, TILE_ZOOM_OFFSET);
 /** Uniform scale applied to the arrow icon. */
 const ARROW_SIZE_SCALE = 0.7;
 /** Opacity of the wind field, the value the former image overlay used. */
-const FIELD_OPACITY = 0.65;
+const FIELD_OPACITY = 0.55;
 /** 1 m/s in knots. */
 const MS_TO_KNOTS = 1.9438445;
 
