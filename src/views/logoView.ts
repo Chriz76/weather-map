@@ -3,6 +3,16 @@ import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 import * as L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 
+/**
+ * Registers the logo control (top left): logo link plus the provider toggle.
+ *
+ * The toggle is split into two region groups, each with its own caption, because the providers
+ * cover disjoint model areas: ICON-D2 and AROME share Europe (same location can be compared),
+ * HRRR covers the CONUS. Every button stays in one flat selector scope, so the active state is
+ * still exclusive across both groups.
+ *
+ * @param map Leaflet map the control is added to.
+ */
 export function registerLogoView(map: LeafletMap): void {
   class LogoControl extends L.Control {
     constructor() {
@@ -21,29 +31,39 @@ export function registerLogoView(map: LeafletMap): void {
           </a>
 
           <div class="logo-view__text-box">
-            <div class="logo-view__toggle" role="tablist" aria-label="Model toggle">
-              <button type="button" class="logo-view__toggle-btn" data-provider="${D2}" aria-pressed="false">D2 RUC</button>
-              <button type="button" class="logo-view__toggle-btn" data-provider="${AROME}" aria-pressed="false">Arome PI</button>
-              <button type="button" class="logo-view__toggle-btn" data-provider="${HRRR}" aria-pressed="false">HRRR</button>
+            <div class="logo-view__groups">
+              <div class="logo-view__group" role="group" aria-label="Europe models">
+                <div class="logo-view__toggle">
+                  <button type="button" class="logo-view__toggle-btn" data-provider="${D2}" aria-pressed="false">D2 RUC</button>
+                  <button type="button" class="logo-view__toggle-btn" data-provider="${AROME}" aria-pressed="false">Arome PI</button>
+                </div>
+                <span class="logo-view__group-label">Europe</span>
+              </div>
+
+              <div class="logo-view__group" role="group" aria-label="United States models">
+                <div class="logo-view__toggle">
+                  <button type="button" class="logo-view__toggle-btn" data-provider="${HRRR}" aria-pressed="false">HRRR</button>
+                </div>
+                <span class="logo-view__group-label">USA</span>
+              </div>
             </div>
-            <h2 class="logo-view__subtitle">Rapid Update Forecast Models</h2>
           </div>
         </div>
       `;
 
-      const toggle = container.querySelector('.logo-view__toggle') as HTMLElement | null;
+      const groups = container.querySelector('.logo-view__groups') as HTMLElement | null;
 
       function updateActiveState() {
         const active = weatherProviderModel.getActiveProviderId();
-        toggle?.querySelectorAll('.logo-view__toggle-btn').forEach((btn) => {
+        groups?.querySelectorAll('.logo-view__toggle-btn').forEach((btn) => {
           const isActive = btn.getAttribute('data-provider') === active;
           btn.classList.toggle('logo-view__toggle-btn--active', isActive);
           btn.setAttribute('aria-pressed', String(isActive));
         });
       }
 
-      if (toggle) {
-        L.DomEvent.on(toggle, 'click', (ev: Event) => {
+      if (groups) {
+        L.DomEvent.on(groups, 'click', (ev: Event) => {
           L.DomEvent.stopPropagation(ev);
           L.DomEvent.preventDefault(ev);
           const target = ev.target as HTMLElement;

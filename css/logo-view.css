@@ -46,9 +46,9 @@
     display: flex;
     flex-direction: column;
     /* Remove fixed height so the content can size naturally */
-    gap: 3px; /* Very small spacing between toggle and subtitle */
-    padding-bottom: 0px; /* Um 1px reduziert für weniger Platz unter dem Subtitle */
-    align-items: flex-start; /* Keep the toggle only as wide as its content */
+    gap: 3px; /* Kept from the single-toggle layout so the control height stays valid for the legend offset */
+    padding-bottom: 0px;
+    align-items: flex-start; /* Keep the group row only as wide as its content */
 }
 
 .logo-view__title {
@@ -60,11 +60,28 @@
     letter-spacing: -0.3px;
 }
 
-.logo-view__subtitle {
+/* Model areas side by side: Europe (D2/Arome) and USA (HRRR). The gap is the only separator,
+   because a visible divider would suggest a third, equal option instead of two regions. */
+.logo-view__groups {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+/* One region: its toggle plus the caption underneath. */
+.logo-view__group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px; /* Same spacing the toggle/subtitle pair used, so the control keeps its height */
+}
+
+/* Region caption; present regardless of the active provider. */
+.logo-view__group-label {
     font-size: 9.5px;
     line-height: 10px;
     margin: 0;
-    color: #111827; /* Black text for the subtitle */
+    color: #111827; /* Black text */
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -80,7 +97,7 @@
     background: #ffffff;
     border-radius: 4px; /* Match slider/nav button rounding */
     overflow: hidden; /* Ensure rounded corners apply to children */
-    align-self: flex-start; /* Avoid stretching to fill the parent */
+    align-self: center; /* Shrink to content and stay centred above the group caption */
 }
 
 .logo-view__toggle-btn {
