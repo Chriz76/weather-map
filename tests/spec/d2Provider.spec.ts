@@ -61,7 +61,10 @@ describe('d2Provider fetchForecast', () => {
 
     const forecast = await d2Provider.fetchForecast({ lat: 50.6, lng: 8.19 }, null);
 
-    expect(forecast!.map((item) => item.hour)).toEqual(['15:15', '16:15', '17:15', '18:15']);
+    // Model keys are UTC, so this also pins the hourly spacing independent of the test timezone.
+    expect(forecast!.map((item) => item.fullKey)).toEqual(
+      [T0, T0 + 3600, T0 + 7200, T0 + 10800].map(modelKey)
+    );
     expect(forecast!.map((item) => item.weatherCode)).toEqual([3, 3, 61, 61]);
     expect(forecast!.map((item) => item.isDay)).toEqual([true, true, false, false]);
   });
