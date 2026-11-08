@@ -15,8 +15,8 @@ function renderDirectionIcon(direction: number | null): string {
 /**
  * Renders the weather-code cell for one forecast hour.
  *
- * Providers without weather data (ICON-D2 clusters) end up in the dash branch, while the
- * row itself stays visible only when at least one hour carries a WMO code.
+ * Providers without weather data end up in the dash branch, while the row itself stays
+ * visible only when at least one hour carries a WMO code.
  */
 function renderWeatherCell(item: ForecastItem): string {
   const iconClass = weatherCodes.getWeatherIconClass(item.weatherCode, item.isDay);

@@ -7,7 +7,7 @@ The app visualizes localized wind forecast data for **Germany**, **France** and 
 
 [![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://rapidwind.app/)
 
-The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
+The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. Point forecasts for all three providers, including the WMO weather codes (WW), come from Open-Meteo; the ICON-D2 and AROME map overlays are rendered from the DWD/Météo-France runs. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries from these high-resolution models.
 
@@ -25,7 +25,7 @@ Three rapid-update models are available; switch them with the toggle in the logo
 
 | Provider | Area | Resolution | Cycle / steps | Sources |
 | :--- | :--- | :--- | :--- | :--- |
-| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, 15 min steps | DWD OpenData |
+| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, 15 min steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
 | **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min steps | Météo-France via Open-Meteo |
 | **HRRR** (preview) | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
 

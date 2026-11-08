@@ -13,11 +13,6 @@ export const DEFAULT_MAP_VIEW = {
 
 export type ProviderConfig = {
   baseUrl: string;
-  /**
-   * Cell size of the provider's `grid_cluster/*.json` files in degrees, used to pick the cluster a
-   * click falls into. Only providers that publish cluster files (D2) set it.
-   */
-  gridCellSize?: number;
   imageBounds: Leaflet.LatLngBoundsExpression;
   /**
    * Map view used as a fallback for a provider: the centre of its model area.
@@ -48,12 +43,11 @@ export type ProviderConfig = {
 
 /**
  * Provider-specific default configuration accessible as `config.providers[providerId]`.
- * Consumers can read e.g. `providers[AROME].gridCellSize`.
+ * Consumers can read e.g. `providers[AROME].windOverlay`.
  */
 export const providers: Record<string, ProviderConfig> = {
   [D2]: {
     baseUrl: "https://chriz76.github.io/icond2ruc-data/",
-    gridCellSize: 1.0,
     imageBounds: [
       [43.0440, -4.1616],
       [58.1647, 20.5444]
@@ -65,7 +59,6 @@ export const providers: Record<string, ProviderConfig> = {
   },
   [AROME]: {
     baseUrl: "https://chriz76.github.io/weather-data/",
-    gridCellSize: 1.0,
     imageBounds: [
       [37.5, -12.0],
       [55.4, 16.0]

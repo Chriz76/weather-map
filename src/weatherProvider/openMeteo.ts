@@ -93,6 +93,30 @@ function pickWeather(weather: Map<number, StepWeather>, timestamp: number): Step
   return newest ?? NO_WEATHER;
 }
 
+/**
+ * Returns the weather of one step, preferring a series published in the same container.
+ *
+ * ICON-D2 RUC resolves `weather_code`/`is_day` every 15 minutes, so those steps must not be
+ * annotated with the neighbouring hour. Models that publish weather hourly only (HRRR) leave
+ * the same-container series empty and fall back to {@link pickWeather}.
+ */
+function pickStepWeather(
+  codes: Array<number | null>,
+  dayFlags: Array<number | null>,
+  hourlyWeather: Map<number, StepWeather>,
+  index: number,
+  timestamp: number
+): StepWeather {
+  const code = codes[index] ?? null;
+  const dayFlag = dayFlags[index] ?? null;
+  if (code == null && dayFlag == null) return pickWeather(hourlyWeather, timestamp);
+
+  return {
+    weatherCode: code == null ? null : Math.round(code),
+    isDay: dayFlag == null ? null : dayFlag >= 1
+  };
+}
+
 /** Formats a unix timestamp (seconds) as the model key `YYYYMMDD_HHmm`. */
 function unixToModelKey(seconds: number): string {
   const date = new Date(seconds * 1000);
@@ -110,7 +134,8 @@ function unixToModelKey(seconds: number): string {
  * Accepts the `minutely_15`, `minutely15` and `hourly` containers, because the resolution depends
  * on the requested model rather than on the endpoint. Trailing steps the model has not published
  * yet are dropped: they carry an array of nulls, and the timeline would otherwise end in "--:--".
- * Sub-hourly steps inherit `weather_code`/`is_day` from the neighbouring hourly container.
+ * Weather codes are read from the same container when the model publishes them per step
+ * (ICON-D2 RUC) and from the neighbouring hourly container otherwise.
  * @param payload Parsed JSON body of an Open-Meteo response.
  * @returns One entry per published step, or null when the payload is not a wind response.
  */
@@ -126,7 +151,9 @@ export function readForecast(payload: unknown): ForecastItem[] | null {
   const speeds = parsing.toNumberOrNullSeries(container[SPEED_KEY]);
   const directions = parsing.toNumberOrNullSeries(container[DIRECTION_KEY]);
   const gusts = parsing.toNumberOrNullSeries(container[GUST_KEY]);
-  const weather = readHourlyWeather(payload);
+  const stepCodes = parsing.toNumberOrNullSeries(container[WEATHER_CODE_KEY]);
+  const stepDayFlags = parsing.toNumberOrNullSeries(container[IS_DAY_KEY]);
+  const hourlyWeather = readHourlyWeather(payload);
 
   let lastIndex = -1;
   for (let i = times.length - 1; i >= 0; i--) {
@@ -143,7 +170,7 @@ export function readForecast(payload: unknown): ForecastItem[] | null {
     const speed = speeds[i] ?? null;
     const gust = gusts[i] ?? null;
     const direction = directions[i] ?? null;
-    const stepWeather = pickWeather(weather, timestamp);
+    const stepWeather = pickStepWeather(stepCodes, stepDayFlags, hourlyWeather, i, timestamp);
     const fullKey = unixToModelKey(timestamp);
 
     result.push({
