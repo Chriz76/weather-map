@@ -33,6 +33,9 @@ type StepWeather = { weatherCode: number | null; isDay: boolean | null };
 
 const NO_WEATHER: StepWeather = { weatherCode: null, isDay: null };
 
+/** Centre of the model grid cell Open-Meteo resolved for the request. */
+type ModelCell = { lat: number; lng: number };
+
 /** Returns the first container (in key order) that holds an object. */
 function findContainer(payload: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> | null {
   for (const key of keys) {
@@ -40,6 +43,21 @@ function findContainer(payload: Record<string, unknown>, keys: readonly string[]
     if (parsing.isObject(candidate)) return candidate;
   }
   return null;
+}
+
+/**
+ * Reads the grid cell Open-Meteo resolved for the request.
+ *
+ * The response carries the centre of the cell it used, not the requested coordinate. The distance
+ * between the two is the real resolution limit of the model at that spot, so it is passed on to
+ * the view instead of being dropped.
+ * @param payload Parsed JSON body of an Open-Meteo response.
+ * @returns Cell centre, or null when the payload does not carry one.
+ */
+export function readModelCell(payload: Record<string, unknown>): ModelCell | null {
+  const lat = parsing.toFiniteNumber(payload['latitude']);
+  const lng = parsing.toFiniteNumber(payload['longitude']);
+  return lat == null || lng == null ? null : { lat, lng };
 }
 
 /** Collects the hourly weather codes, keyed by the hour start in unix seconds. */
@@ -136,7 +154,8 @@ function unixToModelKey(seconds: number): string {
  * on the requested model rather than on the endpoint. Trailing steps the model has not published
  * yet are dropped: they carry an array of nulls, and the timeline would otherwise end in "--:--".
  * Weather codes are read from the same container when the model publishes them there and from the
- * neighbouring hourly container otherwise.
+ * neighbouring hourly container otherwise. Every item carries the resolved grid cell
+ * (`modelLat`/`modelLng`) when the payload reports one.
  * @param payload Parsed JSON body of an Open-Meteo response.
  * @returns One entry per published step, or null when the payload is not a wind response.
  */
@@ -155,6 +174,7 @@ export function readForecast(payload: unknown): ForecastItem[] | null {
   const stepCodes = parsing.toNumberOrNullSeries(container[WEATHER_CODE_KEY]);
   const stepDayFlags = parsing.toNumberOrNullSeries(container[IS_DAY_KEY]);
   const hourlyWeather = readHourlyWeather(payload);
+  const modelCell = readModelCell(payload);
 
   let lastIndex = -1;
   for (let i = times.length - 1; i >= 0; i--) {
@@ -181,7 +201,8 @@ export function readForecast(payload: unknown): ForecastItem[] | null {
       direction: direction == null ? null : Math.round(direction * 10) / 10,
       weatherCode: stepWeather.weatherCode,
       isDay: stepWeather.isDay,
-      fullKey
+      fullKey,
+      ...(modelCell ? { modelLat: modelCell.lat, modelLng: modelCell.lng } : {})
     });
   }
 

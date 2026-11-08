@@ -1,6 +1,7 @@
 import { formatModelTimestampToTime } from '../utils/time';
 import * as parsing from '../utils/parsing';
 import { fetchIndexData } from './indexData';
+import { readModelCell } from './openMeteo';
 import { AROME } from './providerIds';
 import type { ForecastItem, IndexData, LatLng } from '../types';
 
@@ -57,7 +58,7 @@ export const aromeProvider = {
     if (!latlng) return null;
 
     // Requesting without an explicit model makes Open-Meteo use seamless blending on a 15-minute grid.
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day&models=meteofrance_arome_seamless&forecast_days=4&timeformat=unixtime&wind_speed_unit=kn&forecast_hours=31&past_hours=2&temporal_resolution=native&${CACHE_BUSTER}`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latlng.lat}&longitude=${latlng.lng}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day&models=meteofrance_arome_seamless&forecast_days=4&timeformat=unixtime&wind_speed_unit=kn&forecast_hours=31&past_hours=2&temporal_resolution=native&cell_selection=nearest&${CACHE_BUSTER}`;
 
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
@@ -76,6 +77,8 @@ export const aromeProvider = {
     const gusts = parsing.toNumberOrNullSeries(pickSeries(container, GUST_KEYS));
     const weatherCodes = parsing.toNumberOrNullSeries(pickSeries(container, WEATHER_CODE_KEYS));
     const isDayFlags = parsing.toNumberOrNullSeries(pickSeries(container, IS_DAY_KEYS));
+    // The response reports the grid cell it resolved, not the requested coordinate.
+    const modelCell = parsing.isObject(payload) ? readModelCell(payload) : null;
 
     let lastIdx = -1;
     for (let i = times.length - 1; i >= 0; i--) {
@@ -104,7 +107,8 @@ export const aromeProvider = {
         direction: direction == null ? null : Math.round(direction * 10) / 10,
         weatherCode: weatherCode == null ? null : Math.round(weatherCode),
         isDay: isDayFlag == null ? null : isDayFlag >= 1,
-        fullKey
+        fullKey,
+        ...(modelCell ? { modelLat: modelCell.lat, modelLng: modelCell.lng } : {})
       });
     }
 

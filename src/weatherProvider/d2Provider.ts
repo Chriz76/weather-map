@@ -24,7 +24,7 @@ export const d2Provider = {
     // rapid update cycle, Central Europe only. Requested hourly because DWD publishes neither
     // 10 m wind nor weather codes below one hour for the RUC - `minutely_15` would only
     // interpolate these hourly fields, so it carries no extra information.
-    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latlng.lat}&longitude=${latlng.lng}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day&models=dwd_icon_d2_ruc_native&forecast_hours=25&past_hours=6&timeformat=unixtime&wind_speed_unit=kn&${CACHE_BUSTER}`;
+    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latlng.lat}&longitude=${latlng.lng}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day&models=dwd_icon_d2_ruc_native&forecast_hours=25&past_hours=6&timeformat=unixtime&wind_speed_unit=kn&cell_selection=nearest&${CACHE_BUSTER}`;
 
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);

@@ -73,7 +73,7 @@ export function registerMapOverlayView(map: LeafletMap, overlay: WindOverlayLike
 
   weatherProviderModel.addEventListener('model:windspeed-updated', () => {
     if (weatherProviderModel.lastClickedLatLng) {
-      updateMapMarkerWindspeed(map, weatherProviderModel.windData as WindData | null);
+      updateMapMarkerWindspeed(map, weatherProviderModel.windData as WindData | null, weatherProviderModel.pointModelCell);
     } else {
       clearMarker(map);
     }
@@ -82,7 +82,7 @@ export function registerMapOverlayView(map: LeafletMap, overlay: WindOverlayLike
   weatherProviderModel.addEventListener('model:location-updated', () => {
     const latLng = weatherProviderModel.lastClickedLatLng;
     if (latLng) {
-      updateMapMarkerLocation(map, latLng.lat, latLng.lng);
+      updateMapMarkerLocation(map, latLng.lat, latLng.lng, weatherProviderModel.pointModelCell);
     } else {
       clearMarker(map);
     }

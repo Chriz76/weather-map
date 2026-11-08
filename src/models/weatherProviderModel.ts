@@ -125,6 +125,17 @@ export class WeatherProviderModel extends EventTarget {
   get windDirection(): number | null { return this._getActiveModel().windData?.direction ?? null; }
   get windGust(): number | null { return this._getActiveModel().windData?.gust ?? null; }
   get forecast(): ForecastItem[] | null { return this._getActiveModel().forecast; }
+  /**
+   * Grid cell of the active point forecast.
+   *
+   * Open-Meteo answers with the cell it resolved, not with the requested coordinate, so the view
+   * can show how far the values are from the clicked spot. Null for providers without a cell.
+   */
+  get pointModelCell(): LatLng | null {
+    const first = this.forecast?.[0];
+    if (!first || first.modelLat == null || first.modelLng == null) return null;
+    return { lat: first.modelLat, lng: first.modelLng };
+  }
   get currentClusterData(): Cluster | null { return this._getActiveModel().currentClusterData ?? null; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }

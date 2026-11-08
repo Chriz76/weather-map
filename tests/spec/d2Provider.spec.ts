@@ -24,6 +24,8 @@ describe('d2Provider fetchForecast', () => {
 
   it('requests the explicit ICON-D2 RUC model with hourly wind and weather series', async () => {
     const fetchMock = mockFetch({
+      latitude: 50.61,
+      longitude: 8.2,
       hourly: {
         time: [T0],
         wind_speed_10m: [5.1],
@@ -37,7 +39,16 @@ describe('d2Provider fetchForecast', () => {
     const forecast = await d2Provider.fetchForecast({ lat: 50.6, lng: 8.19 }, null);
 
     expect(forecast).toHaveLength(1);
-    expect(forecast![0]).toMatchObject({ fullKey: modelKey(T0), wind: 5.1, gust: 8.2, direction: 90, weatherCode: 3, isDay: true });
+    expect(forecast![0]).toMatchObject({
+      fullKey: modelKey(T0),
+      wind: 5.1,
+      gust: 8.2,
+      direction: 90,
+      weatherCode: 3,
+      isDay: true,
+      modelLat: 50.61,
+      modelLng: 8.2
+    });
 
     const url = String(fetchMock.mock.calls[0]?.[0]);
     expect(url).toContain('models=dwd_icon_d2_ruc_native');
@@ -45,6 +56,7 @@ describe('d2Provider fetchForecast', () => {
     expect(url).not.toContain('minutely_15');
     expect(url).toContain('weather_code');
     expect(url).toContain('latitude=50.6');
+    expect(url).toContain('cell_selection=nearest');
   });
 
   it('keeps the weather codes of the hourly wind container', async () => {

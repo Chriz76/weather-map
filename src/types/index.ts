@@ -18,6 +18,10 @@ export interface ForecastItem {
   weatherCode?: number | null;
   /** Daylight flag reported next to the weather code; `null` when unavailable. */
   isDay?: boolean | null;
+  /** Latitude of the model grid cell the values come from; absent when the provider omits it. */
+  modelLat?: number;
+  /** Longitude of the model grid cell, see `modelLat`. */
+  modelLng?: number;
 }
 
 export interface TimelineEntry {
