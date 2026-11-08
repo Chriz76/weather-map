@@ -22,9 +22,9 @@ describe('d2Provider fetchForecast', () => {
     vi.unstubAllGlobals();
   });
 
-  it('requests the explicit ICON-D2 RUC model with 15-minute wind and weather series', async () => {
+  it('requests the explicit ICON-D2 RUC model with hourly wind and weather series', async () => {
     const fetchMock = mockFetch({
-      minutely_15: {
+      hourly: {
         time: [T0],
         wind_speed_10m: [5.1],
         wind_gusts_10m: [8.2],
@@ -41,15 +41,16 @@ describe('d2Provider fetchForecast', () => {
 
     const url = String(fetchMock.mock.calls[0]?.[0]);
     expect(url).toContain('models=dwd_icon_d2_ruc_native');
-    expect(url).toContain('minutely_15=');
+    expect(url).toContain('hourly=');
+    expect(url).not.toContain('minutely_15');
     expect(url).toContain('weather_code');
     expect(url).toContain('latitude=50.6');
   });
 
-  it('keeps per-step weather codes instead of the neighbouring hour', async () => {
+  it('keeps the weather codes of the hourly wind container', async () => {
     mockFetch({
-      minutely_15: {
-        time: [T0, T0 + 900, T0 + 1800, T0 + 2700],
+      hourly: {
+        time: [T0, T0 + 3600, T0 + 7200, T0 + 10800],
         wind_speed_10m: [5, 6, 7, 8],
         wind_gusts_10m: [8, 9, 10, 11],
         wind_direction_10m: [90, 95, 100, 105],
@@ -60,6 +61,7 @@ describe('d2Provider fetchForecast', () => {
 
     const forecast = await d2Provider.fetchForecast({ lat: 50.6, lng: 8.19 }, null);
 
+    expect(forecast!.map((item) => item.hour)).toEqual(['15:15', '16:15', '17:15', '18:15']);
     expect(forecast!.map((item) => item.weatherCode)).toEqual([3, 3, 61, 61]);
     expect(forecast!.map((item) => item.isDay)).toEqual([true, true, false, false]);
   });

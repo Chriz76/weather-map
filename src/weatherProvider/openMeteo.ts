@@ -96,9 +96,10 @@ function pickWeather(weather: Map<number, StepWeather>, timestamp: number): Step
 /**
  * Returns the weather of one step, preferring a series published in the same container.
  *
- * ICON-D2 RUC resolves `weather_code`/`is_day` every 15 minutes, so those steps must not be
- * annotated with the neighbouring hour. Models that publish weather hourly only (HRRR) leave
- * the same-container series empty and fall back to {@link pickWeather}.
+ * When the wind container carries its own `weather_code`/`is_day` series those values win, so a
+ * sub-hourly wind series is never annotated with a neighbouring hour. Models that publish the
+ * weather in a separate hourly container (HRRR) leave the same-container series empty and fall
+ * back to {@link pickWeather}.
  */
 function pickStepWeather(
   codes: Array<number | null>,
@@ -134,8 +135,8 @@ function unixToModelKey(seconds: number): string {
  * Accepts the `minutely_15`, `minutely15` and `hourly` containers, because the resolution depends
  * on the requested model rather than on the endpoint. Trailing steps the model has not published
  * yet are dropped: they carry an array of nulls, and the timeline would otherwise end in "--:--".
- * Weather codes are read from the same container when the model publishes them per step
- * (ICON-D2 RUC) and from the neighbouring hourly container otherwise.
+ * Weather codes are read from the same container when the model publishes them there and from the
+ * neighbouring hourly container otherwise.
  * @param payload Parsed JSON body of an Open-Meteo response.
  * @returns One entry per published step, or null when the payload is not a wind response.
  */

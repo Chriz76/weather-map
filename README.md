@@ -25,9 +25,12 @@ Three rapid-update models are available; switch them with the toggle in the logo
 
 | Provider | Area | Resolution | Cycle / steps | Sources |
 | :--- | :--- | :--- | :--- | :--- |
-| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, 15 min steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
+| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, hourly steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
 | **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min steps | Météo-France via Open-Meteo |
 | **HRRR** (preview) | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
+
+ICON-D2 RUC is requested at its native hourly step: DWD publishes neither 10 m wind nor weather
+codes below one hour for the RUC, so a 15-minute series would only interpolate the hourly field.
 
 HRRR is a **preview**. Its wind field is not a rendered image but a static tile pyramid published by
 the `hrrr-data` pipeline: `index.json` names the run and a `tiles_url` template, each tile is an
@@ -43,7 +46,7 @@ Most mainstream consumer weather applications render global or regional models w
 | :--- | :--- | :--- |
 | **Horizontal Resolution** | **2.2/2.5(1.3) km** grid | 13 km – 27 km grid |
 | **Update Cycle** | **Hourly (Every 60 minutes)** | Every 6 hours |
-| **Interval** | **60/15 min** | 60-360 min |
+| **Interval** | **60 min** (D2 RUC) / **15 min** (Arome PI) | 60-360 min |
 | **Data Assimilation** | **Rapid Update Cycle (RUC)** (Continuous assimilation of local radar & station observations) | Intermittent batch assimilation |
 | **Forecast Range** | 28/6 hours | Multi-day extended range |
 
