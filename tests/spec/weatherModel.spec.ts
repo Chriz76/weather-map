@@ -1,23 +1,16 @@
 import { weatherProviderModel } from '../../src/models/weatherProviderModel';
 import { uiStateModel } from '../../src/models/uiStateModel';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PointForecast } from '../../src/types';
 
 describe('WeatherProviderModel', () => {
-    const cluster = {
-        lats: [50.0, 50.1, 49.9],
-        lons: [8.0, 8.0, 8.0],
-        timeline: {
-            '20260706_12': {
-                speeds: [10, 12, 11],
-                dirs: [180, 190, 170],
-                gusts: [15, 16, 14]
-            },
-            '20260706_15': {
-                speeds: [11, 13, 12],
-                dirs: [185, 195, 175],
-                gusts: [16, 17, 15]
-            }
-        }
+    /** Two-step point forecast; the grid cell is shared by both steps. */
+    const pointForecast: PointForecast = {
+        items: [
+            { hour: '12:00', wind: 10, gust: 15, direction: 180, fullKey: '20260706_12' },
+            { hour: '15:00', wind: 11, gust: 16, direction: 185, fullKey: '20260706_15' }
+        ],
+        modelCell: { lat: 50.02, lng: 8.01 }
     };
 
     function resetModel() {
@@ -43,6 +36,7 @@ describe('WeatherProviderModel', () => {
         expect(weatherProviderModel.availableTimestamps).toEqual([]);
         expect(weatherProviderModel.activeTimestamp).toBeNull();
         expect(weatherProviderModel.forecast).toBeNull();
+        expect(weatherProviderModel.pointModelCell).toBeNull();
         expect(weatherProviderModel.windData).toBeNull();
     });
 
@@ -61,25 +55,28 @@ describe('WeatherProviderModel', () => {
         expect(weatherProviderModel.modelCurrentHour).toBe('12');
     });
 
-    it('should update point data and recalculate forecast', () => {
+    it('should store point data and expose the forecast of the active timestamp', () => {
         weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
 
-        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, pointForecast);
 
         expect(weatherProviderModel.lastClickedLatLng).toEqual({ lat: 50.0, lng: 8.0 });
-        expect(weatherProviderModel.currentClusterData).toBe(cluster);
+        expect(weatherProviderModel.pointModelCell).toEqual({ lat: 50.02, lng: 8.01 });
         expect(weatherProviderModel.windData).not.toBeNull();
-        expect(weatherProviderModel.forecast).not.toBeNull();
-        expect(weatherProviderModel.forecast.length).toBe(2);
+        expect(weatherProviderModel.forecast).toBe(pointForecast.items);
+        expect(weatherProviderModel.forecast!.length).toBe(2);
     });
 
     it('should tolerate mixed timestamp formats when matching forecast data', () => {
         weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260820_17', '20260820_18'], generated_at: null, current_hour: null });
 
-        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, [
-            { hour: '17:15', wind: 11, gust: 15, direction: 180, fullKey: '20260820_1715' },
-            { hour: '17:30', wind: 12, gust: 16, direction: 190, fullKey: '20260820_1730' }
-        ]);
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, {
+            items: [
+                { hour: '17:15', wind: 11, gust: 15, direction: 180, fullKey: '20260820_1715' },
+                { hour: '17:30', wind: 12, gust: 16, direction: 190, fullKey: '20260820_1730' }
+            ],
+            modelCell: null
+        });
 
         expect(weatherProviderModel.activeTimestamp).toBe('20260820_17');
         expect(weatherProviderModel.windData).toEqual({ speed: 11, gust: 15, direction: 180 });
@@ -93,25 +90,25 @@ describe('WeatherProviderModel', () => {
 
         weatherProviderModel.addEventListener('model:timestamp-index-updated', handler);
         weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
-        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, pointForecast);
 
         weatherProviderModel.setActiveTimestampIndex(1);
 
         expect(weatherProviderModel.activeTimestamp).toBe('20260706_15');
         expect(events.some((e) => e.type === 'model:timestamp-index-updated')).toBeTruthy();
-        expect(weatherProviderModel.forecast[0].fullKey).toBe('20260706_12');
+        expect(weatherProviderModel.forecast![0].fullKey).toBe('20260706_12');
 
         weatherProviderModel.removeEventListener('model:timestamp-index-updated', handler);
     });
 
-    it('should remove point data and clear forecast and wind data', () => {
+    it('should remove point data and clear forecast, cell and wind data', () => {
         weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12'], generated_at: null, current_hour: null });
-        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, cluster);
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, pointForecast);
 
         weatherProviderModel.removePointData();
 
         expect(weatherProviderModel.lastClickedLatLng).toBeNull();
-        expect(weatherProviderModel.currentClusterData).toBeNull();
+        expect(weatherProviderModel.pointModelCell).toBeNull();
         expect(weatherProviderModel.forecast).toBeNull();
         expect(weatherProviderModel.windData).toBeNull();
     });

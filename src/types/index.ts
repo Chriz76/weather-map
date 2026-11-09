@@ -18,22 +18,21 @@ export interface ForecastItem {
   weatherCode?: number | null;
   /** Daylight flag reported next to the weather code; `null` when unavailable. */
   isDay?: boolean | null;
-  /** Latitude of the model grid cell the values come from; absent when the provider omits it. */
-  modelLat?: number;
-  /** Longitude of the model grid cell, see `modelLat`. */
-  modelLng?: number;
 }
 
-export interface TimelineEntry {
-  speeds?: Array<number | undefined>;
-  dirs?: Array<number | null | undefined>;
-  gusts?: Array<number | undefined>;
-}
+/** Centre of the model grid cell a point forecast was read from. */
+export interface ModelCell { lat: number; lng: number }
 
-export interface Cluster {
-  lats: number[];
-  lons: number[];
-  timeline: Record<string, TimelineEntry>;
+/**
+ * Point forecast of one location.
+ *
+ * The grid cell is reported once per request, not once per step: Open-Meteo resolves it per
+ * request, so repeating the same two numbers on every item would only duplicate them.
+ */
+export interface PointForecast {
+  items: ForecastItem[];
+  /** Cell centre, or null when the provider reports none. */
+  modelCell: ModelCell | null;
 }
 
 export interface Station {
@@ -117,5 +116,5 @@ export interface IndexData {
 export interface Provider {
   id: ProviderId;
   fetchIndex(config: Record<string, unknown>): Promise<IndexData>;
-  fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null>;
+  fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<PointForecast | null>;
 }

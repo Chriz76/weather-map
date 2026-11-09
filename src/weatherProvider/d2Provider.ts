@@ -2,7 +2,7 @@ import * as parsing from '../utils/parsing';
 import { fetchIndexData } from './indexData';
 import { readForecast } from './openMeteo';
 import { D2 } from './providerIds';
-import type { ForecastItem, IndexData, LatLng } from '../types';
+import type { IndexData, LatLng, PointForecast } from '../types';
 
 export const ID = D2;
 
@@ -17,7 +17,7 @@ export const d2Provider = {
     return fetchIndexData(parsing.isString(baseUrlRaw) ? baseUrlRaw : '');
   },
 
-  async fetchForecast(latlng: LatLng | null, _config: Record<string, unknown> | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null, _config: Record<string, unknown> | null): Promise<PointForecast | null> {
     if (!latlng) return null;
 
     // DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`): hourly wind *and* weather (WW) series from the

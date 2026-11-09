@@ -5,7 +5,7 @@ import { weatherService } from '../services/weatherService';
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { logger } from '../utils/logger';
-import type { IndexData, LatLng, ForecastItem } from '../types';
+import type { IndexData, LatLng, PointForecast } from '../types';
 
 export class ApiMismatchError extends Error {
   version: string | undefined;
@@ -83,12 +83,12 @@ export async function updateOverlayForTimestampAction(timestamp: string | null):
 
 export async function loadWeatherDataForLocationAction(latlng: LatLng): Promise<void> {
   try {
-    let forecast: ForecastItem[] | null = null;
+    let forecast: PointForecast | null = null;
     await loadingSpinnerController.track(async () => {
       forecast = await weatherService.fetchForecast(latlng);
     });
 
-    weatherProviderModel.setPointData(latlng, Array.isArray(forecast) ? forecast : null);
+    weatherProviderModel.setPointData(latlng, forecast);
   } catch (e: unknown) {
     const errMsg = e instanceof Error ? e.message : String(e);
     logger.error('🚨 Error processing location data:', errMsg);

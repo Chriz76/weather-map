@@ -1,13 +1,12 @@
 import { logger } from '../utils/logger';
 import { SHARE_ICON_SVG } from './shareView';
-import type { WindData } from '../types';
+import type { ModelCell, WindData } from '../types';
 import * as L from 'leaflet';
 import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
 import type { CircleMarker } from 'leaflet';
 let activeSpotMarker: CircleMarker | Marker | null = null;
 
 /** Centre of the model grid cell that produced the current values. */
-type ModelCell = { lat: number; lng: number };
 let activeModelCell: ModelCell | null = null;
 
 function normalizeWindData(windData: WindData | number | null | undefined) {
@@ -29,43 +28,21 @@ function normalizeWindData(windData: WindData | number | null | undefined) {
   };
 }
 
-/** Kilometres per degree of latitude; precise enough at the ~2 km scale used here. */
-const KM_PER_DEGREE = 111.32;
-
-/** Offsets below this distance are hidden: the cell is effectively the clicked spot. */
-const OFFSET_MIN_KM = 0.2;
-
 /**
- * Distance between a clicked point and the grid cell that produced its values.
+ * Writes the clicked coordinate and the resolved model grid cell to the console.
  *
- * Uses a flat-earth approximation, which is accurate to a few metres over the ~2 km a model cell
- * can be away, instead of a full haversine for what is only a visibility threshold.
+ * The popup no longer shows coordinates, so this is the only place they stay readable. It is
+ * called once per click (not once per timeline step), and `debug` level keeps a normal console
+ * clean - the values appear with `?debug=true`.
  * @param lat Latitude of the clicked point.
  * @param lng Longitude of the clicked point.
- * @param cell Grid cell centre, or null when unknown.
- * @returns Distance in kilometres, or null without a cell.
+ * @param cell Grid cell centre, or null when the provider reports none.
  */
-function cellDistanceKm(lat: number, lng: number, cell: ModelCell | null): number | null {
-  if (!cell) return null;
-  const northKm = (cell.lat - lat) * KM_PER_DEGREE;
-  const eastKm = (cell.lng - lng) * KM_PER_DEGREE * Math.cos((lat * Math.PI) / 180);
-  return Math.hypot(northKm, eastKm);
-}
-
-/**
- * Formats the model grid cell as its own popup line.
- *
- * Two decimals are deliberate: a model cell is about 2 km wide, so more digits would fake a
- * precision the data does not have. Below {@link OFFSET_MIN_KM} the line is dropped entirely.
- * @param lat Latitude of the clicked point.
- * @param lng Longitude of the clicked point.
- * @returns `Cell 51.13, 10.55`, or an empty string when there is nothing worth showing.
- */
-function formatCellLine(lat: number, lng: number): string {
-  if (!activeModelCell) return '';
-  const distanceKm = cellDistanceKm(lat, lng, activeModelCell);
-  if (distanceKm === null || distanceKm < OFFSET_MIN_KM) return '';
-  return `Cell ${activeModelCell.lat.toFixed(2)}, ${activeModelCell.lng.toFixed(2)}`;
+function logPointCoordinates(lat: number, lng: number, cell: ModelCell | null): void {
+  const clicked = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  // Two decimals: a model cell is about 2 km wide, more digits would fake a precision.
+  const gridCell = cell ? `${cell.lat.toFixed(2)}, ${cell.lng.toFixed(2)}` : 'unknown';
+  logger.debug('Point coordinates:', clicked, '| model cell:', gridCell);
 }
 
 function renderDirectionIcon(direction: number | null) {
@@ -75,7 +52,7 @@ function renderDirectionIcon(direction: number | null) {
   return `<strong class="marker-popup__direction" style="--dir-deg:${iconRotation}deg">➤</strong>`;
 }
 
-function createPopupHtml(formattedValue: string, formattedGust: string, direction: number | null, coordsDisplay: string, cellDisplay: string) {
+function createPopupHtml(formattedValue: string, formattedGust: string, direction: number | null) {
   const directionDataAttr = direction === null ? '' : String(direction);
   const directionIcon = renderDirectionIcon(direction);
   // Wind direction in degrees with a trailing degree symbol, e.g. "184°"
@@ -95,8 +72,6 @@ function createPopupHtml(formattedValue: string, formattedGust: string, directio
                                         </div>
                                 </div>
                         </div>
-            <div class="marker-popup__coords">${coordsDisplay}</div>
-            ${cellDisplay ? `<div class="marker-popup__coords">${cellDisplay}</div>` : ''}
             <button type="button" class="marker-popup__share-button" aria-label="Share current location">
                 ${SHARE_ICON_SVG}
                 <span>Share location</span>
@@ -126,18 +101,6 @@ function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: s
       autoPanPadding: [50, 120]
     }).openPopup();
   }
-}
-
-function getExistingCoordsDisplay() {
-  if (!activeSpotMarker) return '0.0000, 0.0000';
-  const latlng = activeSpotMarker.getLatLng();
-  return `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
-}
-
-function getExistingCellDisplay() {
-  if (!activeSpotMarker) return '';
-  const latlng = activeSpotMarker.getLatLng();
-  return formatCellLine(latlng.lat, latlng.lng);
 }
 
 function getExistingWindDisplay() {
@@ -183,9 +146,7 @@ export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | n
     const normalized = normalizeWindData(windData);
     const formattedValue = (normalized.speed === null || Number.isNaN(normalized.speed as number)) ? '?' : (normalized.speed as number).toFixed(1);
     const formattedGust = (normalized.gust === null || Number.isNaN(normalized.gust as number)) ? '?' : (normalized.gust as number).toFixed(0);
-    const coordsDisplay = getExistingCoordsDisplay();
-    const cellDisplay = getExistingCellDisplay();
-    const popupContent = createPopupHtml(formattedValue, formattedGust, normalized.direction, coordsDisplay, cellDisplay);
+    const popupContent = createPopupHtml(formattedValue, formattedGust, normalized.direction);
 
     if (!activeSpotMarker) {
       createMarker(map, 0, 0, popupContent);
@@ -201,10 +162,9 @@ export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | n
 export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: number, cell?: ModelCell | null): void {
   try {
     if (cell !== undefined) activeModelCell = cell;
-    const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    const cellDisplay = formatCellLine(lat, lng);
+    logPointCoordinates(lat, lng, activeModelCell);
     const existingWind = getExistingWindDisplay();
-    const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.gustDisplay, existingWind.direction, coordsDisplay, cellDisplay);
+    const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.gustDisplay, existingWind.direction);
 
     if (!activeSpotMarker) {
       createMarker(map, lat, lng, popupContent);

@@ -38,17 +38,18 @@ describe('d2Provider fetchForecast', () => {
 
     const forecast = await d2Provider.fetchForecast({ lat: 50.6, lng: 8.19 }, null);
 
-    expect(forecast).toHaveLength(1);
-    expect(forecast![0]).toMatchObject({
+    expect(forecast!.items).toHaveLength(1);
+    expect(forecast!.items[0]).toMatchObject({
       fullKey: modelKey(T0),
       wind: 5.1,
       gust: 8.2,
       direction: 90,
       weatherCode: 3,
-      isDay: true,
-      modelLat: 50.61,
-      modelLng: 8.2
+      isDay: true
     });
+    // The cell is reported once per request, not on every step.
+    expect(forecast!.modelCell).toEqual({ lat: 50.61, lng: 8.2 });
+    expect(forecast!.items[0]).not.toHaveProperty('modelLat');
 
     const url = String(fetchMock.mock.calls[0]?.[0]);
     expect(url).toContain('models=dwd_icon_d2_ruc_native');
@@ -74,11 +75,11 @@ describe('d2Provider fetchForecast', () => {
     const forecast = await d2Provider.fetchForecast({ lat: 50.6, lng: 8.19 }, null);
 
     // Model keys are UTC, so this also pins the hourly spacing independent of the test timezone.
-    expect(forecast!.map((item) => item.fullKey)).toEqual(
+    expect(forecast!.items.map((item) => item.fullKey)).toEqual(
       [T0, T0 + 3600, T0 + 7200, T0 + 10800].map(modelKey)
     );
-    expect(forecast!.map((item) => item.weatherCode)).toEqual([3, 3, 61, 61]);
-    expect(forecast!.map((item) => item.isDay)).toEqual([true, true, false, false]);
+    expect(forecast!.items.map((item) => item.weatherCode)).toEqual([3, 3, 61, 61]);
+    expect(forecast!.items.map((item) => item.isDay)).toEqual([true, true, false, false]);
   });
 
   it('throws when Open-Meteo answers with an error status', async () => {

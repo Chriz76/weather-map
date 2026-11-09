@@ -21,6 +21,8 @@ function mockFetch(body: unknown, ok = true, status = 200) {
 describe('openMeteo.readForecast', () => {
   it('reads the minutely_15 container into forecast items', () => {
     const forecast = openMeteo.readForecast({
+      latitude: 39.75,
+      longitude: -104.99,
       minutely_15: {
         time: [T0, T0 + 900],
         wind_speed_10m: [17.24, 12.06],
@@ -29,9 +31,23 @@ describe('openMeteo.readForecast', () => {
       }
     });
 
-    expect(forecast).toHaveLength(2);
-    expect(forecast![0]).toMatchObject({ fullKey: modelKey(T0), wind: 17.2, gust: 27.4, direction: 189 });
-    expect(forecast![1]).toMatchObject({ fullKey: modelKey(T0 + 900), wind: 12.1, gust: 0, direction: 192 });
+    expect(forecast!.items).toHaveLength(2);
+    expect(forecast!.items[0]).toMatchObject({ fullKey: modelKey(T0), wind: 17.2, gust: 27.4, direction: 189 });
+    expect(forecast!.items[1]).toMatchObject({ fullKey: modelKey(T0 + 900), wind: 12.1, gust: 0, direction: 192 });
+    expect(forecast!.modelCell).toEqual({ lat: 39.75, lng: -104.99 });
+  });
+
+  it('reports no cell when the payload has no coordinates', () => {
+    const forecast = openMeteo.readForecast({
+      minutely_15: {
+        time: [T0],
+        wind_speed_10m: [10],
+        wind_gusts_10m: [20],
+        wind_direction_10m: [180]
+      }
+    });
+
+    expect(forecast!.modelCell).toBeNull();
   });
 
   it('drops trailing steps without data', () => {
@@ -44,7 +60,7 @@ describe('openMeteo.readForecast', () => {
       }
     });
 
-    expect(forecast).toHaveLength(1);
+    expect(forecast!.items).toHaveLength(1);
   });
 
   it('returns null for a payload without a known container', () => {
@@ -68,11 +84,11 @@ describe('openMeteo.readForecast', () => {
       }
     });
 
-    expect(forecast).toHaveLength(4);
-    expect(forecast![0]).toMatchObject({ weatherCode: 3, isDay: true });
-    expect(forecast![1]).toMatchObject({ weatherCode: 3, isDay: true });
-    expect(forecast![2]).toMatchObject({ weatherCode: 61, isDay: false });
-    expect(forecast![3]).toMatchObject({ weatherCode: 61, isDay: false });
+    expect(forecast!.items).toHaveLength(4);
+    expect(forecast!.items[0]).toMatchObject({ weatherCode: 3, isDay: true });
+    expect(forecast!.items[1]).toMatchObject({ weatherCode: 3, isDay: true });
+    expect(forecast!.items[2]).toMatchObject({ weatherCode: 61, isDay: false });
+    expect(forecast!.items[3]).toMatchObject({ weatherCode: 61, isDay: false });
   });
 
   it('keeps the newest published hour for steps beyond the hourly window', () => {
@@ -91,8 +107,8 @@ describe('openMeteo.readForecast', () => {
       }
     });
 
-    expect(forecast).toHaveLength(2);
-    expect(forecast![1]).toMatchObject({ weatherCode: 45, isDay: false });
+    expect(forecast!.items).toHaveLength(2);
+    expect(forecast!.items[1]).toMatchObject({ weatherCode: 45, isDay: false });
   });
 
   it('leaves the weather fields null when the payload has no hourly container', () => {
@@ -105,7 +121,7 @@ describe('openMeteo.readForecast', () => {
       }
     });
 
-    expect(forecast![0]).toMatchObject({ weatherCode: null, isDay: null });
+    expect(forecast!.items[0]).toMatchObject({ weatherCode: null, isDay: null });
   });
 });
 
@@ -126,7 +142,7 @@ describe('hrrrProvider', () => {
 
     const forecast = await hrrrProvider.fetchForecast({ lat: 39, lng: -98 }, null);
 
-    expect(forecast).toHaveLength(1);
+    expect(forecast!.items).toHaveLength(1);
     const url = String(fetchMock.mock.calls[0]?.[0]);
     expect(url).toContain('models=gfs_hrrr');
     expect(url).toContain('minutely_15=');

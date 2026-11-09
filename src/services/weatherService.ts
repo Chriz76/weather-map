@@ -4,7 +4,7 @@ import { hrrrProvider } from '../weatherProvider/hrrrProvider';
 import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import { providers as providerConfig } from '../config';
-import type { Provider, LatLng, ForecastItem, IndexData } from '../types';
+import type { Provider, LatLng, IndexData, PointForecast } from '../types';
 
 const providers: Record<string, Provider> = { [D2]: d2Provider, [AROME]: aromeProvider, [HRRR]: hrrrProvider };
 
@@ -36,7 +36,7 @@ export const weatherService = {
     return await fetcher.fetchIndex(providerConfig[activeId]!);
   },
 
-  async fetchForecast(latlng: LatLng | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null): Promise<PointForecast | null> {
     const activeId = weatherProviderModel.getActiveProviderId();
     const fetcher = providers[activeId]!;
     return await fetcher.fetchForecast(latlng, providerConfig[activeId]!);

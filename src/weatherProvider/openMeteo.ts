@@ -1,6 +1,6 @@
 import { formatModelTimestampToTime } from '../utils/time';
 import * as parsing from '../utils/parsing';
-import type { ForecastItem } from '../types';
+import type { ForecastItem, ModelCell, PointForecast } from '../types';
 
 /**
  * Reader for Open-Meteo wind payloads, shared by the providers that take their point forecast
@@ -9,8 +9,8 @@ import type { ForecastItem } from '../types';
  * Import as a namespace so call sites stay explicit, e.g. `openMeteo.readForecast(payload)`.
  */
 
-/** Payload containers Open-Meteo uses, best resolution first. */
-const CONTAINER_KEYS = ['minutely_15', 'minutely15', 'hourly'] as const;
+/** Payload containers Open-Meteo uses, best resolution first (verified against live responses). */
+const CONTAINER_KEYS = ['minutely_15', 'hourly'] as const;
 
 /** Series names of the requested wind fields. */
 const SPEED_KEY = 'wind_speed_10m';
@@ -33,9 +33,6 @@ type StepWeather = { weatherCode: number | null; isDay: boolean | null };
 
 const NO_WEATHER: StepWeather = { weatherCode: null, isDay: null };
 
-/** Centre of the model grid cell Open-Meteo resolved for the request. */
-type ModelCell = { lat: number; lng: number };
-
 /** Returns the first container (in key order) that holds an object. */
 function findContainer(payload: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> | null {
   for (const key of keys) {
@@ -50,11 +47,11 @@ function findContainer(payload: Record<string, unknown>, keys: readonly string[]
  *
  * The response carries the centre of the cell it used, not the requested coordinate. The distance
  * between the two is the real resolution limit of the model at that spot, so it is passed on to
- * the view instead of being dropped.
+ * the caller instead of being dropped.
  * @param payload Parsed JSON body of an Open-Meteo response.
  * @returns Cell centre, or null when the payload does not carry one.
  */
-export function readModelCell(payload: Record<string, unknown>): ModelCell | null {
+function readModelCell(payload: Record<string, unknown>): ModelCell | null {
   const lat = parsing.toFiniteNumber(payload['latitude']);
   const lng = parsing.toFiniteNumber(payload['longitude']);
   return lat == null || lng == null ? null : { lat, lng };
@@ -154,12 +151,12 @@ function unixToModelKey(seconds: number): string {
  * on the requested model rather than on the endpoint. Trailing steps the model has not published
  * yet are dropped: they carry an array of nulls, and the timeline would otherwise end in "--:--".
  * Weather codes are read from the same container when the model publishes them there and from the
- * neighbouring hourly container otherwise. Every item carries the resolved grid cell
- * (`modelLat`/`modelLng`) when the payload reports one.
+ * neighbouring hourly container otherwise. The resolved grid cell is returned once for the whole
+ * series (`modelCell`), because it is a property of the request, not of a single step.
  * @param payload Parsed JSON body of an Open-Meteo response.
- * @returns One entry per published step, or null when the payload is not a wind response.
+ * @returns The forecast series plus the cell, or null when the payload is not a wind response.
  */
-export function readForecast(payload: unknown): ForecastItem[] | null {
+export function readForecast(payload: unknown): PointForecast | null {
   if (!parsing.isObject(payload)) return null;
 
   const container = findContainer(payload, CONTAINER_KEYS);
@@ -201,10 +198,9 @@ export function readForecast(payload: unknown): ForecastItem[] | null {
       direction: direction == null ? null : Math.round(direction * 10) / 10,
       weatherCode: stepWeather.weatherCode,
       isDay: stepWeather.isDay,
-      fullKey,
-      ...(modelCell ? { modelLat: modelCell.lat, modelLng: modelCell.lng } : {})
+      fullKey
     });
   }
 
-  return result;
+  return { items: result, modelCell };
 }

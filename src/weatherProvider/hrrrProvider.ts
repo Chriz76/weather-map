@@ -2,7 +2,7 @@ import * as parsing from '../utils/parsing';
 import { fetchIndexData } from './indexData';
 import { readForecast } from './openMeteo';
 import { HRRR } from './providerIds';
-import type { ForecastItem, IndexData, LatLng } from '../types';
+import type { IndexData, LatLng, PointForecast } from '../types';
 
 export const ID = HRRR;
 
@@ -17,7 +17,7 @@ export const hrrrProvider = {
     return fetchIndexData(parsing.isString(baseUrlRaw) ? baseUrlRaw : '');
   },
 
-  async fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null> {
+  async fetchForecast(latlng: LatLng | null, _config: Record<string, unknown> | null): Promise<PointForecast | null> {
     if (!latlng) return null;
 
     // NOAA HRRR: 15-minute wind series, CONUS only - outside it every series comes back empty.

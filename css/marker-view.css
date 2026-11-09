@@ -53,17 +53,6 @@
     transform: none;
 }
 
-.marker-popup__direction-value {
-    font-weight: 700;
-    color: #1f2933;
-}
-
-.marker-popup__coords {
-    font-size: 10px;
-    color: #777777;
-    white-space: nowrap;
-}
-
 .marker-popup__share-button {
     display: inline-flex;
     align-items: center;
