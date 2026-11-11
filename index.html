@@ -1,118 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ICON-D2 RUC & Arome PI | Hourly Forecasts</title>
-<!-- 1. Das Sentry Loader Script (deine persönliche URL aus Sentry) -->
-<script
-  src="https://js-de.sentry-cdn.com/42050bcde7224901aca1b006cde17a71.min.js"
-  crossorigin="anonymous"
-></script>
-
-<!-- 2. Die datenschutz- und performance-optimierte Konfiguration -->
-<script>
-  Sentry.onLoad(function() {
-    Sentry.init({
-      // Verhindert das Miterfassen von IP-Adressen/Nutzerdaten
-      sendDefaultPii: false,
-      dataCollection: {
-        userInfo: false
-      },
-
-      // Verhindert Session-Tracking & Cookies
-      autoSessionTracking: false,
-
-      // Schont Performance & Datenvolumen am Beach
-      tracesSampleRate: 0,
-      replaysSessionSampleRate: 0,
-      replaysOnErrorSampleRate: 0,
-
-      // Unterscheidet Preview-URL von der Live-App
-      environment: window.location.hostname.includes("preview") ? "preview" : "production"
-    });
-  });
-</script>
-
-    
-    <script>
-      window.WEATHER_DEBUG = new URLSearchParams(window.location.search).get('debug') === 'true';
-
-      if (window.WEATHER_DEBUG) {
-          // 1. Eruda Skript-Tag erstellen
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-          
-          // 2. Initialisieren, sobald das Skript geladen ist
-          script.onload = function () {
-              eruda.init({
-                  theme: 'dark',
-                  defaults: {
-                      displaySize: 50, 
-                      transparency: 90
-                  }
-              });
-              console.log('Eruda DevTools erfolgreich geladen. Viel Spaß beim Debuggen!');
-              
-              // Falls du den Puffer-Logger nutzt, hier einspielen:
-              // if (window.flushEarlyLogs) window.flushEarlyLogs();
-          };   
-
-          // 3. WICHTIG: In den <head> (document.head) einfügen, da body noch null ist!
-          document.head.appendChild(script);
-      }
-    </script>
-    <!-- Suchmaschinen-Signale für den korrekten Namen & URL -->
-    <link rel="canonical" href="https://wind.zink.tv/">
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "ICON-D2 RUC & Arome PI | Hourly Forecasts",
-      "url": "https://wind.zink.tv/"
-    }
-    </script>
-    
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
-
-    
-
-    <link rel="stylesheet" href="css/main.css" />
-    <link rel="stylesheet" href="css/timeline-view.css" />
-    <link rel="stylesheet" href="css/forecast-view.css" />
-    <link rel="stylesheet" href="css/logo-view.css" />
-    <link rel="stylesheet" href="css/legend-view.css" />
-    <link rel="stylesheet" href="css/marker-view.css" />
-    <link rel="stylesheet" href="css/station-view.css" />
-    <link rel="stylesheet" href="css/model-info-view.css" />
-    <link rel="stylesheet" href="css/gps-view.css" />
-    <link rel="stylesheet" href="css/wind-toggle-view.css" />
-    <link rel="stylesheet" href="css/share-view.css" />
-    <link rel="stylesheet" href="css/loading-spinner-view.css" />
-    <link rel="stylesheet" href="css/notification-view.css" />
-    <link rel="stylesheet" href="css/toast-view.css" />
-    <link rel="stylesheet" href="css/special-data-view.css" />
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=https://rapidwind.app">
+  <link rel="canonical" href="https://rapidwind.app">
+  <title>Redirecting to rapidwind.app...</title>
+  <script>
+    window.location.href = "https://rapidwind.app";
+  </script>
 </head>
 <body>
-
-    <div id="map"></div>
-
-    
-    <script type="module" src="/src/globals.ts"></script>
-    <script type="module" src="/src/main.ts"></script>
-    
-    <div class="model-info">Model run: Loading...</div>
-<script>
-  if (!window.WEATHER_DEBUG) {
-    // 2. Tracking Skript dynamisch nachladen (wenn debug DEAKTIVIERT ist)
-    const trackingScript = document.createElement('script');
-    trackingScript.src = 'https://cloud.umami.is/script.js';
-    trackingScript.setAttribute('data-website-id', '8a85a60f-4770-4ff7-9210-63badbb5d34c');
-    trackingScript.defer = true;
-    document.head.appendChild(trackingScript);
-  }
-</script>
-    
+  <p>If you are not redirected automatically, <a href="https://rapidwind.app">click here</a>.</p>
 </body>
 </html>
