@@ -1,11 +1,12 @@
-import { calculatewindSpeeds } from '../utils/interpolation';
 import * as parsing from '../utils/parsing';
 import { fetchIndexData } from './indexData';
+import { readForecast } from './openMeteo';
 import { D2 } from './providerIds';
-import type { Cluster, ForecastItem, IndexData, LatLng, TimelineEntry } from '../types';
+import type { IndexData, LatLng, PointForecast } from '../types';
 
 export const ID = D2;
 
+/** Evaluated once per page load: a per-call timestamp would defeat the HTTP cache. */
 const CACHE_BUSTER = `cb=${Date.now()}`;
 
 export const d2Provider = {
@@ -16,61 +17,22 @@ export const d2Provider = {
     return fetchIndexData(parsing.isString(baseUrlRaw) ? baseUrlRaw : '');
   },
 
-  async fetchForecast(latlng: LatLng | null, config: Record<string, unknown> | null): Promise<ForecastItem[] | null> {
-    if (!latlng || !config) return null;
+  async fetchForecast(latlng: LatLng | null, _config: Record<string, unknown> | null): Promise<PointForecast | null> {
+    if (!latlng) return null;
 
-    const imageBounds = config['imageBounds'];
-    const gridCellSize = config['gridCellSize'];
+    // DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`): hourly wind *and* weather (WW) series from the
+    // rapid update cycle, Central Europe only. Requested hourly because DWD publishes neither
+    // 10 m wind nor weather codes below one hour for the RUC - `minutely_15` would only
+    // interpolate these hourly fields, so it carries no extra information.
+    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latlng.lat}&longitude=${latlng.lng}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code,is_day&models=dwd_icon_d2_ruc_native&forecast_hours=25&past_hours=6&timeformat=unixtime&wind_speed_unit=kn&cell_selection=nearest&${CACHE_BUSTER}`;
 
-    if (!parsing.isUnknownArray(imageBounds) || !parsing.isNumber(gridCellSize)) return null;
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`Open-Meteo request failed (${res.status})`);
 
-    const firstRow = imageBounds[0];
-    if (!parsing.isUnknownArray(firstRow)) return null;
-
-    const latMin = firstRow[0];
-    const lonMin = firstRow[1];
-    if (!parsing.isNumber(latMin) || !parsing.isNumber(lonMin)) return null;
-
-    const baseUrlRaw = config['baseUrl'];
-    const baseUrl = parsing.isString(baseUrlRaw) ? baseUrlRaw : '';
-
-    const col = Math.floor((latlng.lng - lonMin) / gridCellSize);
-    const row = Math.floor((latlng.lat - latMin) / gridCellSize);
-    const clusterUrl = `${baseUrl}grid_cluster/cluster_${col}_${row}.json?${CACHE_BUSTER}`;
-
-    const response = await fetch(clusterUrl, { cache: 'no-cache' });
-    if (!response.ok) throw new Error(`Cluster file could not be loaded (${response.status})`);
-
-    const clusterJson: unknown = await response.json();
-    if (!parsing.isObject(clusterJson)) throw new Error('Cluster data structure is invalid.');
-
-    const latsRaw = clusterJson['lats'];
-    const lonsRaw = clusterJson['lons'];
-    const timelineRaw = clusterJson['timeline'];
-    if (!parsing.isUnknownArray(latsRaw) || !parsing.isUnknownArray(lonsRaw) || !parsing.isObject(timelineRaw)) {
-      throw new Error('Cluster data structure is invalid.');
-    }
-
-    const lats = latsRaw.filter(parsing.isNumber);
-    const lons = lonsRaw.filter(parsing.isNumber);
-
-    if (lats.length === 0 || lons.length === 0 || lats.length !== lons.length) {
-      throw new Error('Cluster lat/lon arrays are invalid.');
-    }
-
-    const timeline: Record<string, TimelineEntry> = {};
-    for (const [key, value] of Object.entries(timelineRaw)) {
-      if (!parsing.isObject(value)) continue;
-      timeline[key] = {
-        speeds: parsing.toNumberOrUndefinedSeries(value['speeds']),
-        dirs: parsing.toDirectionSeries(value['dirs']),
-        gusts: parsing.toNumberOrUndefinedSeries(value['gusts'])
-      };
-    }
-
-    const cluster: Cluster = { lats, lons, timeline };
-
-    return calculatewindSpeeds(latlng, cluster);
+    const payload: unknown = await res.json();
+    const forecast = readForecast(payload);
+    if (!forecast) throw new Error('Open-Meteo payload invalid');
+    return forecast;
   }
 };
 

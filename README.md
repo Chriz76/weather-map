@@ -1,13 +1,13 @@
-# Interactive DWD ICON-D2 RUC & AROME PI Wind Map
+# Interactive ICON-D2 RUC, AROME PI & HRRR Wind Map
 
-[![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://chriz76.github.io/weather-map/)
+[![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://rapidwind.app/)
 [![Data Pipeline Repo](https://img.shields.io/badge/Data-Repository-green?style=flat-square)](https://github.com/Chriz76/weather-data)
 
-The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions. You can switch between **ICON-D2 RUC** and **AROME PI** using the logo row.
+The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions, plus the **CONUS** area from HRRR. You can switch between **ICON-D2 RUC**, **AROME PI** and **HRRR** using the logo row.
 
-[![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://chriz76.github.io/weather-map/)
+[![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://rapidwind.app/)
 
-The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
+The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. Point forecasts for all three providers, including the WMO weather codes (WW), come from Open-Meteo; the ICON-D2 and AROME map overlays are rendered from the DWD/Météo-France runs. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
 
 To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries from these high-resolution models.
 
@@ -19,6 +19,26 @@ To our knowledge, this is a **unique free implementation** providing hourly upda
 
 ---
 
+## Providers
+
+Three rapid-update models are available; switch them with the toggle in the logo row.
+
+| Provider | Area | Resolution | Cycle / steps | Sources |
+| :--- | :--- | :--- | :--- | :--- |
+| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, hourly steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
+| **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min steps | Météo-France via Open-Meteo |
+| **HRRR** (preview) | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
+
+ICON-D2 RUC is requested at its native hourly step: DWD publishes neither 10 m wind nor weather
+codes below one hour for the RUC, so a 15-minute series would only interpolate the hourly field.
+
+HRRR is a **preview**. Its wind field is not a rendered image but a static tile pyramid published by
+the `hrrr-data` pipeline: `index.json` names the run and a `tiles_url` template, each tile is an
+int16-delta payload that the client decodes and draws as a colored field plus arrows (WebGL2 via
+deck.gl). Point forecasts come from Open-Meteo's `gfs_hrrr` model and only exist inside CONUS.
+
+---
+
 ## Technical Specifications & Advantages of ICON-D2 RUC / Arome PI
 Most mainstream consumer weather applications render global or regional models with coarse resolution and slow update cycles. This application visualizes premier high-resolution local models:
 
@@ -26,7 +46,7 @@ Most mainstream consumer weather applications render global or regional models w
 | :--- | :--- | :--- |
 | **Horizontal Resolution** | **2.2/2.5(1.3) km** grid | 13 km – 27 km grid |
 | **Update Cycle** | **Hourly (Every 60 minutes)** | Every 6 hours |
-| **Interval** | **60/15 min** | 60-360 min |
+| **Interval** | **60 min** (D2 RUC) / **15 min** (Arome PI) | 60-360 min |
 | **Data Assimilation** | **Rapid Update Cycle (RUC)** (Continuous assimilation of local radar & station observations) | Intermittent batch assimilation |
 | **Forecast Range** | 28/6 hours | Multi-day extended range |
 
@@ -58,12 +78,13 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 
 ## Development & Contribution
 
-As this is an actively developed project, contributions to optimize the JSON chunking sizes, add more rapid models like HRRR or Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
+As this is an actively developed project, contributions to optimize the JSON chunking sizes, add more rapid models like Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
 
 This project is a private, free, and ad-free open-source web app. It is maintained strictly for hobby purposes and pursues no commercial interests.
 
 * **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
 * **AROME Attribution:** [Open-Meteo](https://open-meteo.com/) using [Météo-France](https://meteofrance.com/) model data.
+* **HRRR Attribution:** NOAA HRRR model data, point forecasts via [Open-Meteo](https://open-meteo.com/), wind tiles from the `hrrr-data` pipeline.
 * **Icon Attribution:** [Weather Icons](https://erikflowers.github.io/weather-icons/) by Erik Flowers (SIL OFL 1.1 / MIT) for the forecast weather icons.
 * **Author:** [Chriz76](https://github.com/Chriz76)
 

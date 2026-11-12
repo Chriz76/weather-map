@@ -1,7 +1,7 @@
 import { weatherProviderModel } from '../models/weatherProviderModel';
 import type { Map as LeafletMap } from 'leaflet';
 
-const SHARE_TEXT = 'High-res ICON-D2 & AROME wind nowcasting. Free & open-source.';
+const SHARE_TEXT = 'High-res ICON-D2 RUC, AROME and HRRR wind maps. Free & open-source.';
 
 function buildShareUrl(lat: number, lng: number, providerId: string): string {
   const url = new URL(window.location.origin + window.location.pathname);
@@ -34,5 +34,5 @@ export async function shareCurrentLocation(map: LeafletMap): Promise<void> {
   }
 
   await navigator.clipboard.writeText(shareUrl);
-  alert('Link in die Zwischenablage kopiert!');
+  alert('Link copied to the clipboard.');
 }

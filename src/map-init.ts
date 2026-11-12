@@ -3,6 +3,7 @@
 import { CARTO_API_KEY, DEFAULT_MAP_VIEW, providers } from './config.ts';
 import { weatherProviderModel } from './models/weatherProviderModel';
 import { storage } from './utils/storage';
+import * as geoBounds from './utils/geoBounds';
 import { D2 } from './weatherProvider/providerIds';
 import type * as Leaflet from 'leaflet';
 import * as L from 'leaflet';
@@ -19,8 +20,21 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     if (mapInstance) return { map: mapInstance, windOverlay: windOverlayInstance };
 
     // 1. Get last state from storage.
-    // If empty/missing, falls back directly to the provided default object (Augsburg).
-    const savedState = storage.getMapState(DEFAULT_MAP_VIEW);
+    // If empty/missing, falls back to the active provider's default view - the model areas do not
+    // overlap, so a stored app default would point outside the coverage of e.g. HRRR. The same
+    // check also covers a stored view that still points at the previous provider's area.
+    const activeProviderCfg = providers[weatherProviderModel.getActiveProviderId()];
+    const providerDefaultView = activeProviderCfg?.defaultView ?? DEFAULT_MAP_VIEW;
+    const storedState = storage.getMapState(providerDefaultView);
+    // Nothing stored means a first visit: fit the whole model area instead of a fixed centre, so
+    // the user sees which region the active provider covers (see the `fitBounds` call below).
+    const isFirstVisit = !storage.hasMapState();
+    const savedState = activeProviderCfg && !geoBounds.isWithinBounds(activeProviderCfg.imageBounds, {
+        lat: storedState.lat,
+        lng: storedState.lng
+    })
+        ? providerDefaultView
+        : storedState;
 
     // 2. Ensure the map container exists and has height. If height is 0 (CSS not yet applied), apply a temporary fallback.
     const mapContainer = document.getElementById('map');
@@ -47,6 +61,12 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
     }).setView([savedState.lat, savedState.lng], savedState.zoom);
 
     mapInstance.attributionControl.setPrefix(false);
+
+    // First visit: show the complete model area of the active provider.
+    if (isFirstVisit && activeProviderCfg) {
+        mapInstance.invalidateSize();
+        mapInstance.fitBounds(activeProviderCfg.imageBounds, { padding: [16, 16] });
+    }
 
     // Add zoom controls manually at top-right
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
@@ -108,14 +128,15 @@ export function initMap(): { map: Leaflet.Map | null; windOverlay: Leaflet.Image
         attribution: '&copy;<a href="https://www.openstreetmap.org/copyright">osm</a>|&copy;<a href="https://carto.com/attributions">carto</a>'
     }).addTo(mapInstance);
 
-    const providerId = weatherProviderModel.getActiveProviderId();
-    const imageBounds = providers[providerId]!.imageBounds;
-
-    // Weather graphic overlay in the middle
-    windOverlayInstance = L.imageOverlay('', imageBounds, {
-        opacity: 0.65,
-        zIndex: 10
-    }).addTo(mapInstance);
+    // Weather graphic overlay in the middle. Providers whose field is rendered from a tile
+    // pyramid have no image to show here, so the overlay instance stays null for them.
+    const providerCfg = providers[weatherProviderModel.getActiveProviderId()];
+    if (providerCfg?.windOverlay === 'raster') {
+        windOverlayInstance = L.imageOverlay('', providerCfg.imageBounds, {
+            opacity: 0.65,
+            zIndex: 10
+        }).addTo(mapInstance);
+    }
 
     // Labels layer on top of everything (use synced label pane so labels stay aligned with map)
     L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`, {

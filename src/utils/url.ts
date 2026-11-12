@@ -1,4 +1,4 @@
-import { D2, AROME } from '../weatherProvider/providerIds';
+import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
 
 export interface InitialUrlParams {
   providerId: string | null;
@@ -8,7 +8,7 @@ export interface InitialUrlParams {
 
 export function normalizeProviderId(value: string | null): string | null {
   if (!value) return null;
-  if (value === D2 || value === AROME) return value;
+  if (value === D2 || value === AROME || value === HRRR) return value;
   return null;
 }
 

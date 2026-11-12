@@ -1,10 +1,13 @@
 import { logger } from '../utils/logger';
 import { SHARE_ICON_SVG } from './shareView';
-import type { WindData } from '../types';
+import type { ModelCell, WindData } from '../types';
 import * as L from 'leaflet';
 import type { Map as LeafletMap, Marker, LatLngExpression } from 'leaflet';
 import type { CircleMarker } from 'leaflet';
 let activeSpotMarker: CircleMarker | Marker | null = null;
+
+/** Centre of the model grid cell that produced the current values. */
+let activeModelCell: ModelCell | null = null;
 
 function normalizeWindData(windData: WindData | number | null | undefined) {
   if (typeof windData === 'number') {
@@ -25,6 +28,23 @@ function normalizeWindData(windData: WindData | number | null | undefined) {
   };
 }
 
+/**
+ * Writes the clicked coordinate and the resolved model grid cell to the console.
+ *
+ * The popup no longer shows coordinates, so this is the only place they stay readable. It is
+ * called once per click (not once per timeline step), and `debug` level keeps a normal console
+ * clean - the values appear with `?debug=true`.
+ * @param lat Latitude of the clicked point.
+ * @param lng Longitude of the clicked point.
+ * @param cell Grid cell centre, or null when the provider reports none.
+ */
+function logPointCoordinates(lat: number, lng: number, cell: ModelCell | null): void {
+  const clicked = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  // Two decimals: a model cell is about 2 km wide, more digits would fake a precision.
+  const gridCell = cell ? `${cell.lat.toFixed(2)}, ${cell.lng.toFixed(2)}` : 'unknown';
+  logger.debug('Point coordinates:', clicked, '| model cell:', gridCell);
+}
+
 function renderDirectionIcon(direction: number | null) {
   if (direction === null) return '<strong class="marker-popup__direction marker-popup__direction--unknown">?</strong>';
   const normalizedDirection = ((direction % 360) + 360) % 360;
@@ -32,7 +52,7 @@ function renderDirectionIcon(direction: number | null) {
   return `<strong class="marker-popup__direction" style="--dir-deg:${iconRotation}deg">➤</strong>`;
 }
 
-function createPopupHtml(formattedValue: string, formattedGust: string, direction: number | null, coordsDisplay: string) {
+function createPopupHtml(formattedValue: string, formattedGust: string, direction: number | null) {
   const directionDataAttr = direction === null ? '' : String(direction);
   const directionIcon = renderDirectionIcon(direction);
   // Wind direction in degrees with a trailing degree symbol, e.g. "184°"
@@ -52,7 +72,6 @@ function createPopupHtml(formattedValue: string, formattedGust: string, directio
                                         </div>
                                 </div>
                         </div>
-            <div class="marker-popup__coords">${coordsDisplay}</div>
             <button type="button" class="marker-popup__share-button" aria-label="Share current location">
                 ${SHARE_ICON_SVG}
                 <span>Share location</span>
@@ -82,12 +101,6 @@ function createMarker(map: LeafletMap, lat: number, lng: number, popupContent: s
       autoPanPadding: [50, 120]
     }).openPopup();
   }
-}
-
-function getExistingCoordsDisplay() {
-  if (!activeSpotMarker) return '0.0000, 0.0000';
-  const latlng = activeSpotMarker.getLatLng();
-  return `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
 }
 
 function getExistingWindDisplay() {
@@ -127,13 +140,13 @@ function getExistingWindDisplay() {
   };
 }
 
-export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | number | null | undefined): void {
+export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | number | null | undefined, cell?: ModelCell | null): void {
   try {
+    if (cell !== undefined) activeModelCell = cell;
     const normalized = normalizeWindData(windData);
     const formattedValue = (normalized.speed === null || Number.isNaN(normalized.speed as number)) ? '?' : (normalized.speed as number).toFixed(1);
     const formattedGust = (normalized.gust === null || Number.isNaN(normalized.gust as number)) ? '?' : (normalized.gust as number).toFixed(0);
-    const coordsDisplay = getExistingCoordsDisplay();
-    const popupContent = createPopupHtml(formattedValue, formattedGust, normalized.direction, coordsDisplay);
+    const popupContent = createPopupHtml(formattedValue, formattedGust, normalized.direction);
 
     if (!activeSpotMarker) {
       createMarker(map, 0, 0, popupContent);
@@ -146,11 +159,12 @@ export function updateMapMarkerWindspeed(map: LeafletMap, windData: WindData | n
   }
 }
 
-export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: number): void {
+export function updateMapMarkerLocation(map: LeafletMap, lat: number, lng: number, cell?: ModelCell | null): void {
   try {
-    const coordsDisplay = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    if (cell !== undefined) activeModelCell = cell;
+    logPointCoordinates(lat, lng, activeModelCell);
     const existingWind = getExistingWindDisplay();
-    const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.gustDisplay, existingWind.direction, coordsDisplay);
+    const popupContent = createPopupHtml(existingWind.speedDisplay, existingWind.gustDisplay, existingWind.direction);
 
     if (!activeSpotMarker) {
       createMarker(map, lat, lng, popupContent);
@@ -174,5 +188,6 @@ export function clearMarker(map: LeafletMap): void {
     // `Marker` and `CircleMarker` both extend `Layer`, so no cast is required.
     map.removeLayer(activeSpotMarker);
     activeSpotMarker = null;
+    activeModelCell = null;
   }
 }

@@ -1,0 +1,35 @@
+{
+  "id": "/",
+  "name": "RapidWind – Hourly Wind & Weather Forecasts",
+  "short_name": "RapidWind",
+  "description": "Hourly wind, gust and weather forecasts for kite, wing foil and windsurfing. ICON-D2 RUC, AROME PI and HRRR on an interactive map.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "theme_color": "#0077a4",
+  "background_color": "#efefef",
+  "categories": ["weather", "navigation", "sports"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

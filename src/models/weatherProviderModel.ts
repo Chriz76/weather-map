@@ -1,19 +1,26 @@
 import * as timeUtils from '../utils/time';
 import { logger } from '../utils/logger';
-import { D2, AROME } from '../weatherProvider/providerIds';
-import { calculatewindSpeeds } from '../utils/interpolation';
-import type { Cluster, ForecastItem, IndexData, LatLng } from '../types';
+import { D2, AROME, HRRR } from '../weatherProvider/providerIds';
+import type { ForecastItem, IndexData, LatLng, ModelCell, PointForecast, TileCoverage, TileFormatInfo, TilePyramidInfo } from '../types';
 
 type ProviderState = {
   availableTimestamps: string[];
   modelGeneratedAt: string | null;
   modelCurrentHour: string | null;
+  /** Relative tile pyramid template of the index (`{timestamp}/{z}/{x}/{y}` placeholders). */
+  windTilesUrlTemplate: string | null;
+  /** Tiles the active run really stores, or null when the index has no coverage block. */
+  windTileCoverage: TileCoverage | null;
+  /** Pyramid geometry of the index (`pyramid` block). */
+  windPyramid: TilePyramidInfo | null;
+  /** Tile payload encoding of the index (`format` block). */
+  windTileFormat: TileFormatInfo | null;
   lastIndexSync: Date | null;
-  supportsArrowOverlay?: boolean;
   locationContext: { latLng: LatLng } | null;
-  currentClusterData?: Cluster | null;
   windData: { speed: number | null; gust: number | null; direction: number | null } | null;
   forecast: ForecastItem[] | null;
+  /** Grid cell the active point forecast was read from; null when unknown. */
+  modelCell: ModelCell | null;
   indexLoadError: string | null;
   overlayLoadError: string | null;
   pointDataLoadError: string | null;
@@ -34,11 +41,15 @@ export class WeatherProviderModel extends EventTarget {
         availableTimestamps: [],
         modelGeneratedAt: null,
         modelCurrentHour: null,
+        windTilesUrlTemplate: null,
+        windTileCoverage: null,
+        windPyramid: null,
+        windTileFormat: null,
         lastIndexSync: null,
-        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
+        modelCell: null,
         indexLoadError: null,
         overlayLoadError: null,
         pointDataLoadError: null,
@@ -50,11 +61,35 @@ export class WeatherProviderModel extends EventTarget {
         availableTimestamps: [],
         modelGeneratedAt: null,
         modelCurrentHour: null,
+        windTilesUrlTemplate: null,
+        windTileCoverage: null,
+        windPyramid: null,
+        windTileFormat: null,
         lastIndexSync: null,
-        supportsArrowOverlay: true,
         locationContext: null,
         windData: null,
         forecast: null,
+        modelCell: null,
+        indexLoadError: null,
+        overlayLoadError: null,
+        pointDataLoadError: null,
+        apiMismatchError: null,
+        startupError: null,
+        activeTimestampIndex: 0
+      },
+      [HRRR]: {
+        availableTimestamps: [],
+        modelGeneratedAt: null,
+        modelCurrentHour: null,
+        windTilesUrlTemplate: null,
+        windTileCoverage: null,
+        windPyramid: null,
+        windTileFormat: null,
+        lastIndexSync: null,
+        locationContext: null,
+        windData: null,
+        forecast: null,
+        modelCell: null,
         indexLoadError: null,
         overlayLoadError: null,
         pointDataLoadError: null,
@@ -64,7 +99,9 @@ export class WeatherProviderModel extends EventTarget {
       }
     };
 
-    this.activeProviderId = AROME;
+    // Default for a first visit (no URL parameter, no stored provider): HRRR, so the app opens
+    // centred on the CONUS model area (see `providers[HRRR].defaultView`).
+    this.activeProviderId = HRRR;
   }
 
   getActiveProviderId(): string { return this.activeProviderId; }
@@ -82,15 +119,25 @@ export class WeatherProviderModel extends EventTarget {
   get availableTimestamps(): string[] { return this._getActiveModel().availableTimestamps; }
   get modelGeneratedAt(): string | null { return this._getActiveModel().modelGeneratedAt; }
   get modelCurrentHour(): string | null { return this._getActiveModel().modelCurrentHour; }
+  get windTilesUrlTemplate(): string | null { return this._getActiveModel().windTilesUrlTemplate; }
+  get windTileCoverage(): TileCoverage | null { return this._getActiveModel().windTileCoverage; }
+  get windPyramid(): TilePyramidInfo | null { return this._getActiveModel().windPyramid; }
+  get windTileFormat(): TileFormatInfo | null { return this._getActiveModel().windTileFormat; }
   get windData(): ProviderState['windData'] { return this._getActiveModel().windData; }
   get windSpeed(): number | null { return this._getActiveModel().windData?.speed ?? null; }
   get windDirection(): number | null { return this._getActiveModel().windData?.direction ?? null; }
   get windGust(): number | null { return this._getActiveModel().windData?.gust ?? null; }
   get forecast(): ForecastItem[] | null { return this._getActiveModel().forecast; }
-  get currentClusterData(): Cluster | null { return this._getActiveModel().currentClusterData ?? null; }
+  /**
+   * Grid cell of the active point forecast.
+   *
+   * Open-Meteo answers with the cell it resolved, not with the requested coordinate. The marker
+   * view logs it next to the clicked coordinate; the popup itself shows no coordinates. Null for
+   * providers that report no cell.
+   */
+  get pointModelCell(): ModelCell | null { return this._getActiveModel().modelCell; }
   get lastClickedLatLng(): LatLng | null { return this._globalLastClickedLatLng ?? null; }
   get lastIndexSync(): Date | null { return this._getActiveModel().lastIndexSync ?? null; }
-  get supportsArrowOverlay(): boolean { return !!this._getActiveModel().supportsArrowOverlay; }
 
   setLastIndexSync(date: Date | null): void {
     this._getActiveModel().lastIndexSync = date;
@@ -191,6 +238,12 @@ export class WeatherProviderModel extends EventTarget {
     this._getActiveModel().activeTimestampIndex = activeIndex;
     this._getActiveModel().modelGeneratedAt = indexData.generated_at ?? null;
     this._getActiveModel().modelCurrentHour = indexData.current_hour ?? null;
+    // The index owns the pyramid layout: template, coverage, geometry and encoding are replaced
+    // as a set, so a run without metadata can never keep serving the previous run's tiles.
+    this._getActiveModel().windTilesUrlTemplate = indexData.tiles_url ?? null;
+    this._getActiveModel().windTileCoverage = indexData.coverage ?? null;
+    this._getActiveModel().windPyramid = indexData.pyramid ?? null;
+    this._getActiveModel().windTileFormat = indexData.format ?? null;
     this.setIndexLoadError(null);
 
     this._setWindDataForActiveTimestamp();
@@ -207,31 +260,16 @@ export class WeatherProviderModel extends EventTarget {
 
   /**
    * Stores point data for a clicked location.
-   * Accepts either a precomputed forecast or a raw cluster payload, which is interpolated
-   * into a forecast by {@link calculatewindSpeeds}.
    * @param latlng Clicked position.
-   * @param forecast Precomputed forecast items or a raw cluster payload.
+   * @param point Forecast series plus the grid cell it came from, or null when loading failed.
    */
-  setPointData(latlng: LatLng, forecast: ForecastItem[] | Cluster | null): void {
+  setPointData(latlng: LatLng, point: PointForecast | null): void {
     this._getActiveModel().locationContext = { latLng: latlng };
     this._globalLastClickedLatLng = latlng;
     this.setPointDataLoadError(null);
 
-    if (Array.isArray(forecast)) {
-      this._getActiveModel().forecast = forecast;
-      this._getActiveModel().currentClusterData = null;
-    } else if (forecast) {
-      // Keep the raw cluster for callers/tests that rely on it, then interpolate a forecast.
-      this._getActiveModel().currentClusterData = forecast;
-      try {
-        this._getActiveModel().forecast = calculatewindSpeeds(latlng, forecast);
-      } catch {
-        this._getActiveModel().forecast = null;
-      }
-    } else {
-      this._getActiveModel().forecast = null;
-      this._getActiveModel().currentClusterData = null;
-    }
+    this._getActiveModel().forecast = point?.items ?? null;
+    this._getActiveModel().modelCell = point?.modelCell ?? null;
 
     this._setWindDataForActiveTimestamp();
     this.dispatchEvent(new CustomEvent('model:location-updated'));
@@ -243,7 +281,7 @@ export class WeatherProviderModel extends EventTarget {
     if (resetGlobalLastClickedLatLng) this._globalLastClickedLatLng = null;
     this._getActiveModel().locationContext = null;
     this._getActiveModel().forecast = null;
-    this._getActiveModel().currentClusterData = null;
+    this._getActiveModel().modelCell = null;
     this._getActiveModel().windData = null;
     this.dispatchEvent(new CustomEvent('model:location-updated'));
     this.dispatchEvent(new CustomEvent('model:forecast-data-updated'));

@@ -1,6 +1,9 @@
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { weatherProviderModel } from '../models/weatherProviderModel';
+import { uiStateModel } from '../models/uiStateModel';
+import { providers } from '../config';
+import * as geoBounds from '../utils/geoBounds';
 import { syncAppWithServerAction, ApiMismatchError, IndexLoadError, OverlayLoadError } from './actions';
 import { updateStationsOnMapAction } from './updateStationsOnMapAction';
 import { updateSpecialDataOnMapAction } from './updateSpecialDataOnMapAction';
@@ -145,8 +148,59 @@ function registerLifecycleListeners() {
     if (weatherProviderModel.getActiveProviderId() === providerId) return;
 
     const prevTimestamp = weatherProviderModel.activeTimestamp;
+    const switchedCfg = providers[providerId];
+
+    // A selected point from the previous provider's area cannot be resolved by the new provider:
+    // the point request fails and the user would see a load error while the map switches. Drop
+    // such a selection up front so its popup closes before the fly-by; a point that lies inside
+    // the new area is kept and simply refreshed by the sync below.
+    const selectedPoint = weatherProviderModel.lastClickedLatLng;
+    if (switchedCfg && selectedPoint && !geoBounds.isWithinBounds(switchedCfg.imageBounds, selectedPoint)) {
+      logger.debug('Provider switch dropped a selected point outside the new model area', {
+        providerId,
+        point: selectedPoint
+      });
+      weatherProviderModel.removePointData();
+    }
 
     weatherProviderModel.setActiveProvider(providerId);
+
+    // The model areas do not overlap (Europe vs. CONUS), so a view left in the previous
+    // provider's area would show an empty map. Move to the new provider's default view, but only
+    // when the current centre is outside its coverage - an intentional position is kept.
+    if (appMap && switchedCfg && !geoBounds.isWithinBounds(switchedCfg.imageBounds, appMap.getCenter())) {
+      const target = switchedCfg.defaultView;
+
+      logger.debug('Provider switch moved the map into the provider area', {
+        providerId,
+        center: appMap.getCenter(),
+        target
+      });
+
+      // Fly across the map instead of jumping, so the user can follow the transition between
+      // the two non-overlapping model areas. Users who disabled motion get an instant jump.
+      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+      if (prefersReducedMotion) {
+        appMap.setView([target.lat, target.lng], target.zoom);
+      } else {
+        // Keep the animation brisk: the distance grows fast across continents, so cap the
+        // duration tightly instead of letting large jumps drag on.
+        const distanceDeg = appMap.getCenter().distanceTo([target.lat, target.lng]) / 111_320;
+        const duration = Math.min(0.9, Math.max(0.45, 0.35 + distanceDeg / 150));
+
+        appMap.flyTo([target.lat, target.lng], target.zoom, {
+          duration,
+          easeLinearity: 0.25,
+          animate: true
+        });
+      }
+    }
+
+    // The raster overlay was fetched for the provider that was active before: drop it, so a
+    // provider that renders its own tile pyramid cannot leave the previous provider's image on
+    // the map. The sync below fetches a new image only when the new provider needs one.
+    uiStateModel.setActiveOverlayUrl(null);
     try { storage.saveActiveProvider(providerId); } catch (e) { logger.debug('Failed to persist active provider', e); }
 
     await triggerSyncAndPoll(true, prevTimestamp);
