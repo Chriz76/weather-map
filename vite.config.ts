@@ -21,6 +21,8 @@ const devContentPages = new Map<string, string>([
   ['/icon-d2-ruc.html', 'icon-d2-ruc.html'],
   ['/arome-pi', 'arome-pi.html'],
   ['/arome-pi.html', 'arome-pi.html'],
+  ['/hrrr-conus', 'hrrr-conus.html'],
+  ['/hrrr-conus.html', 'hrrr-conus.html'],
 ]);
 
 const serveDevContentPages = (): Plugin => ({
@@ -83,6 +85,11 @@ export default defineConfig({
           // Static, JavaScript-free content page (French) for the AROME PI model.
           filename: 'arome-pi.html',
           template: './arome-pi.html'
+        },
+        {
+          // Static, JavaScript-free content page (English) for the HRRR model.
+          filename: 'hrrr-conus.html',
+          template: './hrrr-conus.html'
         }
       ],
       minify: true

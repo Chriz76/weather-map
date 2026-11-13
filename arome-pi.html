@@ -12,6 +12,8 @@
   <link rel="canonical" href="https://rapidwind.app/arome-pi" />
   <link rel="alternate" hreflang="de" href="https://rapidwind.app/icon-d2-ruc" />
   <link rel="alternate" hreflang="fr" href="https://rapidwind.app/arome-pi" />
+  <link rel="alternate" hreflang="en" href="https://rapidwind.app/hrrr-conus" />
+  <link rel="alternate" hreflang="x-default" href="https://rapidwind.app/hrrr-conus" />
 
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="RapidWind" />
@@ -40,7 +42,7 @@
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
 
   <!-- Page de contenu : aucun JavaScript, une seule feuille de style. -->
-  <link rel="stylesheet" href="css/arome-pi.css" />
+  <link rel="stylesheet" href="css/model-page.css" />
 
   <script type="application/ld+json">
     {
@@ -115,7 +117,7 @@
               "name": "À quelle fréquence AROME PI est-il actualisé ?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Toutes les heures. Chaque run repart d’une analyse qui intègre les observations les plus récentes. Les données sont généralement disponibles quinze à vingt minutes après l’heure du run ; en bas à gauche, la mention « Updated … | Next ~… » donne l’heure de la dernière mise à jour et celle du run suivant."
+                "text": "Toutes les heures. Chaque run repart d’une analyse qui intègre les observations les plus récentes. En bas à gauche, la mention « Updated … | Next ~… » donne la dernière mise à jour et le prochain run estimé ; un clic affiche le run exact (« Model run ») et l’heure de la dernière synchronisation."
               }
             },
             {
@@ -175,6 +177,13 @@
 
 <body>
   <main>
+    <nav class="breadcrumb" aria-label="Fil d’Ariane">
+      <ol>
+        <li><a href="/">RapidWind</a></li>
+        <li aria-current="page">AROME PI</li>
+      </ol>
+    </nav>
+
     <header class="hero">
       <p class="hero__eyebrow">Le modèle en détail</p>
       <h1>AROME PI : la prévision de vent à 1,3&nbsp;km, actualisée toutes les heures</h1>
@@ -252,7 +261,7 @@
         Le champ de vent coloré suit la même logique : pas de 15&nbsp;minutes pendant les six premières
         heures (AROME PI), puis valeurs horaires (AROME France) jusqu’au lendemain. La prévision
         ponctuelle, elle, va jusqu’à environ 31&nbsp;heures. En bas à gauche, la mention
-        «&nbsp;Updated … | Next ~…&nbsp;» donne l’heure de la dernière mise à jour et celle du prochain run.
+        «&nbsp;Updated … | Next ~…&nbsp;» donne la dernière mise à jour et le prochain run ; un clic ouvre\n        un rapport court avec le run affiché et l’heure de la dernière synchronisation.
       </div>
     </section>
 
@@ -346,31 +355,31 @@
         </thead>
         <tbody>
           <tr>
-            <td scope="row">Maille</td>
+            <th scope="row">Maille</th>
             <td>env. 1,3&nbsp;km</td>
             <td>1,3 à 2,5&nbsp;km</td>
             <td>env. 11&nbsp;km</td>
           </tr>
           <tr>
-            <td scope="row">Nouveaux runs</td>
+            <th scope="row">Nouveaux runs</th>
             <td>toutes les heures</td>
             <td>plusieurs fois par jour</td>
             <td>plusieurs fois par jour</td>
           </tr>
           <tr>
-            <td scope="row">Échéance</td>
+            <th scope="row">Échéance</th>
             <td>6&nbsp;h</td>
             <td>48&nbsp;h</td>
             <td>4 jours</td>
           </tr>
           <tr>
-            <td scope="row">Point fort</td>
+            <th scope="row">Point fort</th>
             <td>corrections à très court terme, heure de bascule</td>
             <td>planification du lendemain</td>
             <td>situation générale, tendance</td>
           </tr>
           <tr>
-            <td scope="row">Usage vent</td>
+            <th scope="row">Usage vent</th>
             <td>la session de la journée</td>
             <td>le week-end</td>
             <td>la semaine, les vacances</td>
@@ -489,6 +498,51 @@
       </p>
     </section>
 
+    <section class="card" aria-labelledby="couverture">
+      <h2 id="couverture">Vous n’êtes pas en France ? Quel modèle choisir</h2>
+      <p>
+        RapidWind propose trois modèles, chacun avec son domaine. Ils ne se recouvrent pas : une zone
+        vide signifie « aucun modèle », pas « pas de vent ».
+      </p>
+      <table>
+        <caption>Couverture des modèles</caption>
+        <thead>
+          <tr>
+            <th scope="col">Où vous naviguez</th>
+            <th scope="col">Modèle</th>
+            <th scope="col">Page détaillée</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">France et côtes voisines</th>
+            <td>AROME PI — 1,3&nbsp;km, toutes les heures</td>
+            <td><a href="./arome-pi">Cette page</a></td>
+          </tr>
+          <tr>
+            <th scope="row">Allemagne, Autriche, Suisse, Benelux</th>
+            <td>ICON-D2 RUC — env. 2&nbsp;km, toutes les heures</td>
+            <td><a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC (en allemand)</a></td>
+          </tr>
+          <tr>
+            <th scope="row">États-Unis (CONUS)</th>
+            <td>HRRR — 3&nbsp;km, toutes les heures</td>
+            <td><a href="./hrrr-conus" hreflang="en" lang="en">HRRR (en anglais)</a></td>
+          </tr>
+          <tr>
+            <th scope="row">Royaume-Uni, Irlande et le reste</th>
+            <td>Aucun domaine dans RapidWind</td>
+            <td>Service national (Met Office, Met Éireann)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Pour le Royaume-Uni et l’Irlande, c’est une limite assumée et non un défaut : aucun des trois
+        modèles ne couvre ces côtes, et une prévision à 3&nbsp;km y serait une extrapolation, pas un
+        résultat de modèle.
+      </p>
+    </section>
+
     <section class="card" id="spots" aria-labelledby="spots-titre">
       <h2 id="spots-titre">Les spots couverts par AROME PI</h2>
       <p>
@@ -604,9 +658,9 @@
         <summary><h3>À quelle fréquence AROME PI est-il actualisé ?</h3></summary>
         <p>
           Toutes les heures. Chaque run repart d’une analyse qui intègre les observations les plus
-          récentes. Les données sont généralement disponibles quinze à vingt minutes après l’heure du
-          run ; en bas à gauche, la mention « Updated … | Next ~… » donne l’heure de la dernière mise à
-          jour et celle du run suivant.
+          récentes. En bas à gauche, la mention « Updated … | Next ~… » donne la dernière mise à jour et le
+          prochain run estimé ; un clic affiche le run exact (« Model run ») et l’heure de la dernière
+          synchronisation.
         </p>
       </details>
 
@@ -700,6 +754,7 @@
     <nav aria-label="Autres pages">
       <a href="/">Ouvrir la carte</a>
       <a href="./info">Projet, architecture et chaîne de traitement</a>
+      <a href="./hrrr-conus" hreflang="en" lang="en">HRRR (en anglais)</a>
       <a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC en détail (en allemand)</a>
       <a href="https://kitespots.zink.tv" rel="noopener">Guides de spots sur kitespots.zink.tv</a>
     </nav>

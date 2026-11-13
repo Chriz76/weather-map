@@ -39,6 +39,31 @@ main {
   padding: 24px 20px 72px;
 }
 
+.breadcrumb {
+  margin: 0 0 14px;
+}
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.breadcrumb li + li::before {
+  content: "›";
+  margin-right: 6px;
+  color: var(--muted);
+}
+
+.breadcrumb a {
+  color: var(--muted);
+}
+
 .hero {
   background: var(--panel);
   border: 1px solid var(--border);

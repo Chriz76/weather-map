@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HRRR model: 3 km hourly wind forecasts for the US</title>
+  <meta
+    name="description"
+    content="HRRR explained: 3 km grid, hourly runs, 15-minute steps for the first 18 hours. What that means for kite, wing and windsurf sessions in the US."
+  />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://rapidwind.app/hrrr-conus" />
+  <link rel="alternate" hreflang="de" href="https://rapidwind.app/icon-d2-ruc" />
+  <link rel="alternate" hreflang="fr" href="https://rapidwind.app/arome-pi" />
+  <link rel="alternate" hreflang="en" href="https://rapidwind.app/hrrr-conus" />
+  <link rel="alternate" hreflang="x-default" href="https://rapidwind.app/hrrr-conus" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="RapidWind" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="de_DE" />
+  <meta property="og:locale:alternate" content="fr_FR" />
+  <meta property="og:title" content="HRRR model: 3 km hourly wind forecasts for the US" />
+  <meta
+    property="og:description"
+    content="A new HRRR run every hour, 3 km grid, 15-minute steps for the first 18 hours. What it means for sea breeze, convection and timing at US spots."
+  />
+  <meta property="og:url" content="https://rapidwind.app/hrrr-conus" />
+  <meta property="og:image" content="https://rapidwind.app/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="RapidWind – hourly wind forecast with the HRRR model" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="HRRR model: 3 km hourly wind forecasts for the US" />
+  <meta
+    name="twitter:description"
+    content="HRRR explained for wind sports: 3 km grid, hourly runs, 15-minute steps for 18 hours, and where the model stops."
+  />
+  <meta name="twitter:image" content="https://rapidwind.app/og-image.png" />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+
+  <!-- Content page: no JavaScript, one stylesheet. -->
+  <link rel="stylesheet" href="css/model-page.css" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "TechArticle",
+          "@id": "https://rapidwind.app/hrrr-conus#article",
+          "headline": "HRRR model: 3 km hourly wind forecasts for the US",
+          "description": "How NOAA's HRRR model works: 3 km grid, hourly runs, 15-minute output for the first 18 hours, radar assimilation, limits and what the RapidWind map shows.",
+          "inLanguage": "en",
+          "datePublished": "2026-11-13",
+          "dateModified": "2026-11-13",
+          "isAccessibleForFree": true,
+          "image": "https://rapidwind.app/og-image.png",
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://rapidwind.app/hrrr-conus"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Christian Zink",
+            "url": "https://kitespots.zink.tv"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "RapidWind",
+            "url": "https://rapidwind.app/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://rapidwind.app/favicon-48x48.png",
+              "width": 48,
+              "height": 48
+            }
+          },
+          "about": {
+            "@type": "Dataset",
+            "name": "High-Resolution Rapid Refresh (HRRR)",
+            "description": "NOAA/NCEP convection-allowing model for the contiguous United States with a 3 km grid and hourly updates.",
+            "creator": {
+              "@type": "GovernmentOrganization",
+              "name": "NOAA / National Centers for Environmental Prediction",
+              "url": "https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/hrrr.php"
+            },
+            "license": "https://www.noaa.gov/information-technology/open-data-dissemination"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://rapidwind.app/hrrr-conus#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "RapidWind",
+              "item": "https://rapidwind.app/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "HRRR (CONUS)",
+              "item": "https://rapidwind.app/hrrr-conus"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://rapidwind.app/hrrr-conus#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How often does the HRRR update?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Every hour, all day. Each run starts from a fresh analysis that includes radar reflectivity from the past hour. The 48-hour versions run four times a day (00, 06, 12 and 18 UTC); every other hour produces an 18-hour forecast. Bottom left, the line “Updated … | Next ~…” gives the last update and the estimated next run; click it to see the exact model run and the last sync."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What output interval does the HRRR use?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "15 minutes for the first 18 hours, hourly after that up to 48 hours. For wind sports the 15-minute part is the interesting one: it is where sea breeze, outflow and thermal breeze change fastest."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does HRRR cover Hawaii, Alaska or Puerto Rico?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. The CONUS HRRR covers the contiguous United States only. Alaska runs as a separate HRRR sector on a three-hourly cycle; Hawaii and Puerto Rico have no HRRR product at all. The RapidWind map therefore shows HRRR for CONUS spots only."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is HRRR a global model?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. It is a limited-area, convection-allowing model: a 3 km grid over CONUS, initialized from the RAP analysis, which in turn is driven by the GFS. Outside its domain there is no data, which is why RapidWind uses separate models for Europe."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does my forecast differ from another app?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Usually because of the model, the grid or the grid cell: the value comes from the nearest 3 km cell, not from a measurement at the beach. In sea-breeze regimes and around headlands two neighboring cells can differ noticeably. Gusts are also less certain than the mean wind."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is the data free to use?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. HRRR output is NOAA open data and free to use, with attribution to NOAA/NCEP. RapidWind is free as well: no login, no ads."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What about Europe or the UK?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "HRRR has no data there. RapidWind carries two European models instead: ICON-D2 RUC for Germany and Central Europe, and AROME PI for France and its neighbors. Spots in the UK and Ireland fall outside all three model areas."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+</head>
+
+<body>
+  <main>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">RapidWind</a></li>
+        <li aria-current="page">HRRR (CONUS)</li>
+      </ol>
+    </nav>
+
+    <header class="hero">
+      <p class="hero__eyebrow">The model in detail</p>
+      <h1>HRRR: a 3 km wind forecast, recalculated every hour</h1>
+      <p class="hero__lead">
+        NOAA’s High-Resolution Rapid Refresh is a convection-allowing model on a 3&nbsp;km grid over the
+        contiguous United States. It gets a <strong>new run every hour</strong>, starts from an analysis
+        that includes the last hour of radar data, and puts out <strong>15-minute steps</strong> for the
+        first 18 hours. That is exactly the window where sea breeze, outflow and thermal breeze decide
+        whether a session happens.
+      </p>
+      <div class="cta-row">
+        <a class="cta cta--primary" href="/?model=hrrr">Open the HRRR map</a>
+        <a class="cta cta--secondary" href="#spots">Jump to a spot</a>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="numbers">
+      <h2 id="numbers">HRRR in numbers</h2>
+      <dl class="fact-grid">
+        <div class="fact">
+          <dt>Grid spacing</dt>
+          <dd>3&nbsp;km</dd>
+        </div>
+        <div class="fact">
+          <dt>New runs</dt>
+          <dd>every hour</dd>
+        </div>
+        <div class="fact">
+          <dt>Range</dt>
+          <dd>18 h / 48 h</dd>
+        </div>
+        <div class="fact">
+          <dt>Output interval</dt>
+          <dd>15 min (first 18 h)</dd>
+        </div>
+        <div class="fact">
+          <dt>Vertical levels</dt>
+          <dd>50</dd>
+        </div>
+        <div class="fact">
+          <dt>Domain</dt>
+          <dd>CONUS only</dd>
+        </div>
+      </dl>
+      <p class="region-note">
+        Sources: NOAA/NCEP model documentation. Hourly runs produce 18-hour forecasts; the 00, 06, 12 and
+        18 UTC runs go out to 48 hours.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="two-horizons">
+      <h2 id="two-horizons">Rapid refresh: two run lengths, one model</h2>
+      <p>
+        The HRRR produces two kinds of run from the same system:
+      </p>
+      <ul>
+        <li>
+          <strong>Hourly runs, 18 hours out.</strong> Every hour of the day, a new forecast that covers
+          the next 18 hours in 15-minute steps. This is the part that matters for a session today.
+        </li>
+        <li>
+          <strong>Four long runs, 48 hours out.</strong> At 00, 06, 12 and 18 UTC the model extends to two
+          days, hourly. Good for planning tomorrow, coarser in time.
+        </li>
+      </ul>
+      <p>
+        The engine behind it is a convection-allowing setup: radar reflectivity is assimilated every
+        15&nbsp;minutes over a one-hour window, on the same 3&nbsp;km grid the forecast runs on, and the
+        background comes from the hourly analysis of the coarser RAP model. Since version 4 the
+        initialization also uses a 36-member, 3&nbsp;km ensemble (HRRRDAS) with direct reflectivity
+        assimilation — that is what lets the model start a thunderstorm where the radar already sees rain,
+        instead of waiting for a global model to notice.
+      </p>
+
+      <div class="note">
+        <strong>What the RapidWind map shows</strong>
+        The colored wind field is a tile pyramid rendered in the browser, one tile set per model hour. The
+        point forecast comes from Open-Meteo’s HRRR feed, at 20 hours in 15-minute steps. Bottom left, the
+        line “Updated … | Next ~…” shows the last update and the next run; clicking it opens a short report
+        with the model run and the last sync time.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="why">
+      <h2 id="why">Why 3 km and 15 minutes make a difference</h2>
+
+      <h3>Sea breeze and the coastline</h3>
+      <p>
+        A sea breeze is a circulation, not a gradient: it builds when the land heats faster than the water
+        and collapses when the contrast fades. Its leading edge — the sea-breeze front — is a few
+        kilometers wide. On a 13&nbsp;km grid it is averaged away; on 3&nbsp;km it survives, which is why
+        coastal spots see a believable onset time instead of a smooth afternoon bump.
+      </p>
+
+      <h3>Terrain and channeled wind</h3>
+      <p>
+        The Columbia River Gorge is the classic case: a pressure difference across the Cascades pushes air
+        through a narrow gap, and the shape of the walls decides where it accelerates. A convection-allowing
+        grid resolves that channel; a coarse one smears it over the whole region. The same applies to
+        canyons, headlands and the thermal breezes of the Great Lakes.
+      </p>
+
+      <h3>Convection, outflow and cold pools</h3>
+      <p>
+        Thunderstorms are not resolved by global models — they are parameterized, i.e. approximated from
+        the surrounding conditions. At 3&nbsp;km the HRRR partly resolves updrafts, downdrafts and the
+        cold pool that spreads out underneath a storm. That gust front is often the strongest wind of the
+        day, and it is also the hardest to place in time.
+      </p>
+
+      <h3>Timing rather than strength</h3>
+      <p>
+        The most expensive error in session planning is rarely the wind speed; it is the clock. A front
+        passes, the wind shifts inside half an hour, a storm cuts the thermal. A run reinitialized every
+        hour corrects those shifts far faster than a run that is six hours old.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="limits">
+      <h2 id="limits">Where the HRRR stops</h2>
+      <p>The limits are worth knowing:</p>
+      <ul>
+        <li>
+          <strong>CONUS is a hard boundary.</strong> Alaska runs as a separate HRRR sector on a three-hourly
+          cycle; Hawaii and Puerto Rico have no HRRR product at all. Nothing outside the grid is filled in.
+        </li>
+        <li>
+          <strong>18 hours at 15 minutes, then hourly.</strong> Beyond hour 18 the output interval coarsens and
+          the detail you came for is gone.
+        </li>
+        <li>
+          <strong>No waves, no tide, no currents.</strong> The model carries wind, gusts, direction and
+          weather — not sea state. For surf, swell or water level you need another source.
+        </li>
+        <li>
+          <strong>A 3 km grid does not see the beach.</strong> Dunes, seawalls, piers and trees are not in
+          the grid. At the water’s edge the wind is gustier and more disturbed than 500&nbsp;m offshore.
+        </li>
+        <li>
+          <strong>Cold pools and storm initiation remain hard.</strong> Where and when a cell first forms
+          is still the weakest link, even at 3&nbsp;km.
+        </li>
+        <li>
+          <strong>No operational ensemble.</strong> The HRRRDAS ensemble is used for data assimilation;
+          there is no public HRRR forecast ensemble. A single run is a single scenario.
+        </li>
+        <li>
+          <strong>A successor is in the works.</strong> RRFS is designed to replace RAP, HRRR and NAM;
+          until it is declared operational, HRRR remains the product to use.
+        </li>
+      </ul>
+      <div class="note">
+        <strong>And the most important limit:</strong>
+        A forecast is still a forecast. Check the water, the sky and the local indicators — not just the
+        number on screen.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="comparison">
+      <h2 id="comparison">HRRR compared with the other US models</h2>
+      <table>
+        <caption>Model comparison at a glance</caption>
+        <thead>
+          <tr>
+            <th scope="col">Property</th>
+            <th scope="col">HRRR</th>
+            <th scope="col">RAP</th>
+            <th scope="col">GFS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Grid spacing</th>
+            <td>3 km</td>
+            <td>13 km</td>
+            <td>13 km (0.25° product ~28 km)</td>
+          </tr>
+          <tr>
+            <th scope="row">New runs</th>
+            <td>hourly</td>
+            <td>hourly</td>
+            <td>every 6 hours</td>
+          </tr>
+          <tr>
+            <th scope="row">Range</th>
+            <td>18 h / 48 h</td>
+            <td>51 h</td>
+            <td>16 days</td>
+          </tr>
+          <tr>
+            <th scope="row">Convection</th>
+            <td>explicit at 3 km</td>
+            <td>parameterized</td>
+            <td>parameterized</td>
+          </tr>
+          <tr>
+            <th scope="row">Use for wind sports</th>
+            <td>today’s session, timing of shifts</td>
+            <td>background and boundary conditions</td>
+            <td>trend, longer trips</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="region-note">
+        Values from NOAA/NCEP documentation. RAP provides the hourly background for the HRRR, so the two
+        are not competing products.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="gusts">
+      <h2 id="gusts">Gusts and storms: what the model knows, what it does not</h2>
+      <p>
+        The gust value shown is the maximum over the step interval — 15&nbsp;minutes in the first 18 hours,
+        one hour later on. It gives you an idea of the peak, not a promise about what you will get at the
+        water’s edge. Three situations come up again and again:
+      </p>
+      <ul>
+        <li>
+          <strong>Established sea breeze</strong> — modest gusts, steady wind: the model is usually
+          reliable, and the 15-minute steps show the onset.
+        </li>
+        <li>
+          <strong>Storm outflow</strong> — the gust front can double the wind in minutes and shift the
+          direction sharply. The HRRR often shows the cold pool, rarely its exact arrival time.
+        </li>
+        <li>
+          <strong>Channeled wind</strong> (Gorge, canyons) — the acceleration is captured well; the local
+          effect of a wing dam, pier or bluff is not in the grid.
+        </li>
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="read">
+      <h2 id="read">How to read the map</h2>
+      <ul>
+        <li>
+          <strong>Color is mean wind speed</strong>, calibrated to the range that matters for kite, wing
+          and windsurf — not to a general weather service scale. Values are in <strong>knots</strong>:
+          1&nbsp;kn ≈ 1.15&nbsp;mph (1.852&nbsp;km/h), so 15&nbsp;kn ≈ 17&nbsp;mph.
+        </li>
+        <li>
+          <strong>Arrows show wind direction.</strong> Read them together with the degrees in the point
+          forecast, which follow the meteorological convention: 270° means a west wind, blowing from the
+          west.
+        </li>
+        <li>
+          <strong>Click the map for a point forecast</strong> — the time series at that coordinate, with
+          gusts and a weather code.
+        </li>
+        <li>
+          <strong>Every timeline step is a real model step</strong>, not an interpolated in-between value:
+          15 minutes for the first 18 hours, one hour after that.
+        </li>
+        <li>
+          <strong>No station overlay with HRRR.</strong> The measurement layer is built from European
+          stations, so the toggle stays disabled while HRRR is active. For ground truth in the US, use
+          NDBC buoys or a nearby METAR station.
+        </li>
+        <li>
+          <strong>Gusts are maxima over the step interval</strong> — 15 minutes early on, one hour later.
+          A calm hour can still contain a few spikes. Look at mean wind <em>and</em> gust.
+        </li>
+        <li>
+          <strong>Model switch, top left:</strong> ICON-D2 RUC for Germany and Central Europe, AROME PI for
+          France, HRRR for the US.
+        </li>
+      </ul>
+      <p>
+        <strong>What the map does not show:</strong> no swell, no tide, no currents, no water temperature.
+        The feed carries mean wind, gusts, direction, a weather code and day/night only.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="trust">
+      <h2 id="trust">How far to trust a run</h2>
+      <p>An hourly run does not make a forecast certain. For session planning this gradation helps:</p>
+      <table>
+        <caption>Reliability by lead time</caption>
+        <thead>
+          <tr>
+            <th scope="col">Lead time</th>
+            <th scope="col">Reliability</th>
+            <th scope="col">What it allows</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">0–3 hours</th>
+            <td>very high</td>
+            <td>The analysis is fresh: you are watching reality more than a forecast.</td>
+          </tr>
+          <tr>
+            <th scope="row">3–6 hours</th>
+            <td>high</td>
+            <td>Sea-breeze onset and storm evolution are usually well timed.</td>
+          </tr>
+          <tr>
+            <th scope="row">6–18 hours</th>
+            <td>moderate</td>
+            <td>Pattern is right, strength and timing can still move.</td>
+          </tr>
+          <tr>
+            <th scope="row">18–48 hours</th>
+            <td>low to moderate</td>
+            <td>Read as a trend and re-check on the morning of the session.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Past the first few hours the 15-minute detail is gone: the run is still hourly and still 3&nbsp;km,
+        but it is no longer a nowcast of the next gust front.
+      </p>
+    </section>
+
+    <section class="card" id="coverage" aria-labelledby="coverage-title">
+      <h2 id="coverage-title">Not in the US? Which model to use</h2>
+      <p>
+        RapidWind carries three models with different, only partly overlapping areas. Where no model
+        reaches, the map stays blank — that means “no model”, not “no wind”.
+      </p>
+      <table>
+        <caption>Model coverage</caption>
+        <thead>
+          <tr>
+            <th scope="col">Where you sail</th>
+            <th scope="col">Model</th>
+            <th scope="col">Detail page</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">United States (CONUS)</th>
+            <td>HRRR — 3 km, hourly</td>
+            <td><a href="./hrrr-conus">This page</a></td>
+          </tr>
+          <tr>
+            <th scope="row">Germany, Austria, Switzerland, Benelux</th>
+            <td>ICON-D2 RUC — ~2 km, hourly</td>
+            <td><a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC (German)</a></td>
+          </tr>
+          <tr>
+            <th scope="row">France and neighboring coasts</th>
+            <td>AROME PI — 1.3 km, hourly</td>
+            <td><a href="./arome-pi" hreflang="fr" lang="fr">AROME PI (French)</a></td>
+          </tr>
+          <tr>
+            <th scope="row">UK, Ireland and everything else</th>
+            <td>No model area in RapidWind</td>
+            <td>Use a national service (Met Office, Met Éireann)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        For the UK and Ireland this is a deliberate limitation rather than a bug: the European models are
+        centered on Germany and France, and none of them is a good fit for Atlantic coasts. If you ride in
+        Cornwall, Wales or Scotland, the honest answer is a national high-resolution model — Met Office UKV
+        for Great Britain, Met Éireann for Ireland — not this map.
+      </p>
+      <p class="region-note">
+        The European models are described in German and French respectively, because that is where their
+        readers are. Both pages carry the same structure as this one: what the model does, where it stops,
+        and a spot list.
+      </p>
+    </section>
+
+    <section class="card" id="spots" aria-labelledby="spots-title">
+      <h2 id="spots-title">US spots covered by the HRRR</h2>
+      <p>
+        A click opens the map at that coordinate with HRRR already selected and the point forecast loaded.
+        Coordinates are approximate reference points near the launch — beach, harbor or parking — and not
+        the riding area itself.
+      </p>
+
+      <h3>New York, Connecticut and New England</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=40.9279&amp;lon=-73.7518&amp;model=hrrr">Larchmont Harbor, NY</a></li>
+        <li><a href="/?lat=40.9807&amp;lon=-73.6837&amp;model=hrrr">Rye Playland, NY</a></li>
+        <li><a href="/?lat=41.0265&amp;lon=-73.6285&amp;model=hrrr">Greenwich, CT</a></li>
+        <li><a href="/?lat=41.0473&amp;lon=-73.5010&amp;model=hrrr">Cove Island Park, CT</a></li>
+        <li><a href="/?lat=41.0848&amp;lon=-73.3954&amp;model=hrrr">Calf Pasture Beach, CT</a></li>
+        <li><a href="/?lat=41.4373&amp;lon=-71.4512&amp;model=hrrr">Narragansett Town Beach, RI</a></li>
+        <li><a href="/?lat=41.3223&amp;lon=-71.8162&amp;model=hrrr">Misquamicut, RI</a></li>
+        <li><a href="/?lat=41.6348&amp;lon=-70.2786&amp;model=hrrr">Kalmus Beach, MA</a></li>
+        <li><a href="/?lat=41.6646&amp;lon=-70.1728&amp;model=hrrr">West Dennis, MA</a></li>
+        <li><a href="/?lat=41.3585&amp;lon=-70.5070&amp;model=hrrr">Katama, Martha’s Vineyard, MA</a></li>
+        <li><a href="/?lat=41.2835&amp;lon=-70.0995&amp;model=hrrr">Jetties Beach, Nantucket, MA</a></li>
+        <li><a href="/?lat=41.0096&amp;lon=-72.0681&amp;model=hrrr">Napeague, NY</a></li>
+      </ul>
+
+      <h3>Long Island, New Jersey and Delmarva</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=40.8884&amp;lon=-72.4631&amp;model=hrrr">Shinnecock, NY</a></li>
+        <li><a href="/?lat=40.4700&amp;lon=-74.0000&amp;model=hrrr">Sandy Hook, NJ</a></li>
+        <li><a href="/?lat=39.7532&amp;lon=-74.2229&amp;model=hrrr">Barnegat Bay, NJ</a></li>
+        <li><a href="/?lat=38.9351&amp;lon=-74.9060&amp;model=hrrr">Cape May, NJ</a></li>
+        <li><a href="/?lat=38.6929&amp;lon=-75.0746&amp;model=hrrr">Dewey Beach, DE</a></li>
+        <li><a href="/?lat=38.3365&amp;lon=-75.0849&amp;model=hrrr">Ocean City, MD</a></li>
+        <li><a href="/?lat=38.0918&amp;lon=-75.2038&amp;model=hrrr">Assateague, MD</a></li>
+      </ul>
+
+      <h3>Outer Banks and the Southeast</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=36.0646&amp;lon=-75.7057&amp;model=hrrr">Kitty Hawk, NC</a></li>
+        <li><a href="/?lat=35.9574&amp;lon=-75.6241&amp;model=hrrr">Nags Head, NC</a></li>
+        <li><a href="/?lat=35.3610&amp;lon=-75.5050&amp;model=hrrr">Canadian Hole, NC</a></li>
+        <li><a href="/?lat=35.5669&amp;lon=-75.4685&amp;model=hrrr">Waves, NC</a></li>
+        <li><a href="/?lat=34.2085&amp;lon=-77.7964&amp;model=hrrr">Wrightsville Beach, NC</a></li>
+        <li><a href="/?lat=32.7632&amp;lon=-79.8368&amp;model=hrrr">Sullivan’s Island, SC</a></li>
+        <li><a href="/?lat=32.0002&amp;lon=-80.8457&amp;model=hrrr">Tybee Island, GA</a></li>
+      </ul>
+
+      <h3>Florida</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=25.7121&amp;lon=-80.1539&amp;model=hrrr">Crandon Park, FL</a></li>
+        <li><a href="/?lat=25.7350&amp;lon=-80.1600&amp;model=hrrr">Hobie Beach, FL</a></li>
+        <li><a href="/?lat=26.9342&amp;lon=-80.0942&amp;model=hrrr">Jupiter, FL</a></li>
+        <li><a href="/?lat=28.3206&amp;lon=-80.6092&amp;model=hrrr">Cocoa Beach, FL</a></li>
+        <li><a href="/?lat=27.8534&amp;lon=-82.5459&amp;model=hrrr">Picnic Island, Tampa, FL</a></li>
+        <li><a href="/?lat=27.7380&amp;lon=-82.7530&amp;model=hrrr">Upham Beach, FL</a></li>
+        <li><a href="/?lat=27.2679&amp;lon=-82.5453&amp;model=hrrr">Siesta Key, FL</a></li>
+        <li><a href="/?lat=26.4527&amp;lon=-81.9501&amp;model=hrrr">Fort Myers Beach, FL</a></li>
+      </ul>
+
+      <h3>Gulf Coast and Texas</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=30.2555&amp;lon=-88.1097&amp;model=hrrr">Dauphin Island, AL</a></li>
+        <li><a href="/?lat=29.3014&amp;lon=-94.7977&amp;model=hrrr">Galveston, TX</a></li>
+        <li><a href="/?lat=27.4890&amp;lon=-97.2920&amp;model=hrrr">Bird Island Basin, TX</a></li>
+        <li><a href="/?lat=26.1037&amp;lon=-97.1647&amp;model=hrrr">South Padre Island, TX</a></li>
+      </ul>
+
+      <h3>Southern California</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=32.5839&amp;lon=-117.1131&amp;model=hrrr">Imperial Beach, CA</a></li>
+        <li><a href="/?lat=32.6859&amp;lon=-117.1831&amp;model=hrrr">Coronado, CA</a></li>
+        <li><a href="/?lat=32.7726&amp;lon=-117.2303&amp;model=hrrr">Fiesta Island, Mission Bay, CA</a></li>
+        <li><a href="/?lat=33.7572&amp;lon=-118.1370&amp;model=hrrr">Belmont Shore, CA</a></li>
+        <li><a href="/?lat=34.0442&amp;lon=-118.9393&amp;model=hrrr">Leo Carrillo, CA</a></li>
+        <li><a href="/?lat=34.2783&amp;lon=-119.2932&amp;model=hrrr">Ventura, CA</a></li>
+        <li><a href="/?lat=34.4050&amp;lon=-119.6940&amp;model=hrrr">Santa Barbara, CA</a></li>
+      </ul>
+
+      <h3>Central and Northern California</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=35.1428&amp;lon=-120.6413&amp;model=hrrr">Pismo Beach, CA</a></li>
+        <li><a href="/?lat=35.3658&amp;lon=-120.8499&amp;model=hrrr">Morro Bay, CA</a></li>
+        <li><a href="/?lat=37.0900&amp;lon=-122.2770&amp;model=hrrr">Waddell Creek, CA</a></li>
+        <li><a href="/?lat=37.8040&amp;lon=-122.4650&amp;model=hrrr">Crissy Field, CA</a></li>
+        <li><a href="/?lat=37.8790&amp;lon=-122.3130&amp;model=hrrr">Berkeley, CA</a></li>
+        <li><a href="/?lat=37.7710&amp;lon=-122.2609&amp;model=hrrr">Alameda, CA</a></li>
+        <li><a href="/?lat=38.0370&amp;lon=-121.7860&amp;model=hrrr">Sherman Island, CA</a></li>
+        <li><a href="/?lat=38.3333&amp;lon=-123.0481&amp;model=hrrr">Bodega Bay, CA</a></li>
+        <li><a href="/?lat=38.2508&amp;lon=-122.9653&amp;model=hrrr">Dillon Beach, CA</a></li>
+      </ul>
+
+      <h3>Pacific Northwest</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=45.7054&amp;lon=-121.5215&amp;model=hrrr">Hood River, OR</a></li>
+        <li><a href="/?lat=45.5946&amp;lon=-121.1787&amp;model=hrrr">The Dalles, OR</a></li>
+        <li><a href="/?lat=45.6949&amp;lon=-120.7359&amp;model=hrrr">Rufus, OR</a></li>
+        <li><a href="/?lat=45.7148&amp;lon=-121.4645&amp;model=hrrr">Bingen, WA</a></li>
+        <li><a href="/?lat=45.6957&amp;lon=-121.8845&amp;model=hrrr">Stevenson, WA</a></li>
+        <li><a href="/?lat=46.8901&amp;lon=-124.1041&amp;model=hrrr">Westport, WA</a></li>
+        <li><a href="/?lat=46.1879&amp;lon=-123.8313&amp;model=hrrr">Astoria, OR</a></li>
+      </ul>
+
+      <h3>Great Lakes</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=41.9630&amp;lon=-87.6390&amp;model=hrrr">Montrose Beach, Chicago, IL</a></li>
+        <li><a href="/?lat=43.0170&amp;lon=-87.8850&amp;model=hrrr">Milwaukee, WI</a></li>
+        <li><a href="/?lat=43.7508&amp;lon=-87.7145&amp;model=hrrr">Sheboygan, WI</a></li>
+        <li><a href="/?lat=43.2342&amp;lon=-86.2484&amp;model=hrrr">Muskegon, MI</a></li>
+        <li><a href="/?lat=43.0536&amp;lon=-86.2464&amp;model=hrrr">Grand Haven, MI</a></li>
+        <li><a href="/?lat=44.7631&amp;lon=-85.6206&amp;model=hrrr">Traverse City, MI</a></li>
+        <li><a href="/?lat=41.4910&amp;lon=-81.7440&amp;model=hrrr">Cleveland, OH</a></li>
+        <li><a href="/?lat=42.7890&amp;lon=-78.8420&amp;model=hrrr">Buffalo, NY</a></li>
+        <li><a href="/?lat=46.7833&amp;lon=-92.1066&amp;model=hrrr">Duluth, MN</a></li>
+      </ul>
+
+      <p class="region-note">
+        Not in the list? Open the map and click anywhere inside the US. Hawaii, Alaska and Puerto Rico are
+        outside the HRRR domain and will show no data.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="faq">
+      <h2 id="faq">HRRR model FAQ</h2>
+
+      <details open>
+        <summary><h3>How often does the HRRR update?</h3></summary>
+        <p>
+          Every hour, all day. Each run starts from a fresh analysis that includes radar reflectivity from
+          the past hour. The 48-hour versions run four times a day (00, 06, 12 and 18 UTC); every other
+          hour produces an 18-hour forecast. Bottom left, the line “Updated … | Next ~…” gives the last
+          update and the estimated next run; click it to see the exact model run and the last sync.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>What output interval does the HRRR use?</h3></summary>
+        <p>
+          15 minutes for the first 18 hours, hourly after that up to 48 hours. For wind sports the
+          15-minute part is the interesting one: it is where sea breeze, outflow and thermal breeze change
+          fastest.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Does HRRR cover Hawaii, Alaska or Puerto Rico?</h3></summary>
+        <p>
+          No. The CONUS HRRR covers the contiguous United States only. Alaska runs as a separate HRRR
+          sector on a three-hourly cycle; Hawaii and Puerto Rico have no HRRR product at all. The RapidWind
+          map therefore shows HRRR for CONUS spots only.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Is HRRR a global model?</h3></summary>
+        <p>
+          No. It is a limited-area, convection-allowing model: a 3 km grid over CONUS, initialized from
+          the RAP analysis, which in turn is driven by the GFS. Outside its domain there is no data, which
+          is why RapidWind uses separate models for Europe.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Why does my forecast differ from another app?</h3></summary>
+        <p>
+          Usually because of the model, the grid or the grid cell: the value comes from the nearest 3 km
+          cell, not from a measurement at the beach. In sea-breeze regimes and around headlands two
+          neighboring cells can differ noticeably. Gusts are also less certain than the mean wind.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Is the data free to use?</h3></summary>
+        <p>
+          Yes. HRRR output is NOAA open data and free to use, with attribution to NOAA/NCEP. RapidWind is
+          free as well: no login, no ads.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>What about Europe or the UK?</h3></summary>
+        <p>
+          HRRR has no data there. RapidWind carries two European models instead: ICON-D2 RUC for Germany
+          and Central Europe, and AROME PI for France and its neighbors. Spots in the UK and Ireland fall
+          outside all three model areas.
+        </p>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="sources">
+      <h2 id="sources">Sources and further reading</h2>
+      <ul class="sources">
+        <li>
+          NOAA/NCEP — HRRR model description (grid, levels, run schedule, assimilation, ensemble):
+          <a href="https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/hrrr.php" rel="noopener">emc.ncep.noaa.gov — HRRR</a>
+        </li>
+        <li>
+          NOAA/NCEP — product table (sub-hourly files, Lambert conformal 3&nbsp;km):
+          <a href="https://www.nco.ncep.noaa.gov/pmb/products/hrrr/" rel="noopener">nco.ncep.noaa.gov — HRRR products</a>
+        </li>
+        <li>
+          NOAA — Rapid Refresh project page (radar assimilation, background from RAP):
+          <a href="https://rapidrefresh.noaa.gov/hrrr/" rel="noopener">rapidrefresh.noaa.gov — HRRR</a>
+        </li>
+        <li>
+          NOAA — NCEP implementation changes (HRRRv4, 48-hour extension):
+          <a href="https://www.nco.ncep.noaa.gov/pmb/changes/" rel="noopener">nco.ncep.noaa.gov — changes</a>
+        </li>
+        <li>
+          NOAA — open data registry entry for HRRR (public domain, attribution requested):
+          <a href="https://registry.opendata.aws/noaa-hrrr-pds/" rel="noopener">registry.opendata.aws — NOAA HRRR</a>
+        </li>
+        <li>
+          Open-Meteo — GFS/HRRR API (variables, 15-minute data, update times):
+          <a href="https://open-meteo.com/en/docs/gfs-api" rel="noopener">open-meteo.com — GFS &amp; HRRR API</a>
+        </li>
+        <li>
+          Open-Meteo — model update times:
+          <a href="https://open-meteo.com/en/docs/model-updates" rel="noopener">open-meteo.com — Model Updates</a>
+        </li>
+      </ul>
+      <p class="region-note">
+        Last updated: 13 November 2026. Model configurations change — where sources differ, NOAA
+        documentation takes precedence.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="cta-end">
+      <h2 id="cta-end">Ready to look at your spot?</h2>
+      <p>
+        The map opens on the US with HRRR selected. Click anywhere in the CONUS area for a point forecast,
+        or pick one of the spots above. Background on the data pipeline is in the
+        <a href="./info">project documentation</a>.
+      </p>
+      <div class="cta-row">
+        <a class="cta cta--primary" href="/?model=hrrr">Open the HRRR map</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <nav aria-label="Other pages">
+      <a href="/">Open the map</a>
+      <a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC in detail (German)</a>
+      <a href="./arome-pi" hreflang="fr" lang="fr">AROME PI in detail (French)</a>
+      <a href="./info">Project, architecture and data pipeline</a>
+    </nav>
+    <p>
+      RapidWind is an independent project. Forecasts can be wrong — always check conditions on site. Model
+      data: NOAA/NCEP (public domain) and Météo-France / DWD for the European models.
+    </p>
+  </footer>
+</body>
+</html>
