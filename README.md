@@ -27,13 +27,13 @@ Three rapid-update models are available; switch them with the toggle in the logo
 | :--- | :--- | :--- | :--- | :--- |
 | **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, hourly steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
 | **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min steps | Météo-France via Open-Meteo |
-| **HRRR** (preview) | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
+| **HRRR** | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
 
 ICON-D2 RUC is requested at its native hourly step: DWD publishes neither 10 m wind nor weather
 codes below one hour for the RUC, so a 15-minute series would only interpolate the hourly field.
 
-HRRR is a **preview**. Its wind field is not a rendered image but a static tile pyramid published by
-the `hrrr-data` pipeline: `index.json` names the run and a `tiles_url` template, each tile is an
+HRRR publishes its wind field not as a rendered image but as a static tile pyramid from the
+`hrrr-data` pipeline: `index.json` names the run and a `tiles_url` template, each tile is an
 int16-delta payload that the client decodes and draws as a colored field plus arrows (WebGL2 via
 deck.gl). Point forecasts come from Open-Meteo's `gfs_hrrr` model and only exist inside CONUS.
 
