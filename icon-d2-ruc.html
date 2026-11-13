@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ICON-D2 RUC: stündliche Windvorhersage in 2 km</title>
+  <meta
+    name="description"
+    content="ICON-D2 RUC erklärt: 2 km Auflösung, stündliche Läufe, 27 h Reichweite – und was das für Thermik, Seewind und Fronttiming beim Kiten und Wingfoilen heißt."
+  />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://rapidwind.app/icon-d2-ruc" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="RapidWind" />
+  <meta property="og:locale" content="de_DE" />
+  <meta property="og:title" content="ICON-D2 RUC: stündliche Windvorhersage in 2 km" />
+  <meta
+    property="og:description"
+    content="2 km Auflösung, stündliche Läufe, 27 h Reichweite – was der Rapid Update Cycle für Thermik, Seewind und Fronttiming bedeutet, und wo seine Grenzen liegen."
+  />
+  <meta property="og:url" content="https://rapidwind.app/icon-d2-ruc" />
+  <meta property="og:image" content="https://rapidwind.app/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="RapidWind – stündliche Windvorhersage mit ICON-D2 RUC" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ICON-D2 RUC: stündliche Windvorhersage in 2 km" />
+  <meta
+    name="twitter:description"
+    content="2 km Auflösung, stündliche Läufe, 27 h Reichweite – was der Rapid Update Cycle für Thermik, Seewind und Fronttiming bedeutet."
+  />
+  <meta name="twitter:image" content="https://rapidwind.app/og-image.png" />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+
+  <!-- No JavaScript on this page: CSS is the only external asset. -->
+  <link rel="stylesheet" href="css/icon-d2-ruc.css" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "TechArticle",
+          "@id": "https://rapidwind.app/icon-d2-ruc#article",
+          "headline": "ICON-D2 RUC: stündliche Windvorhersage in 2 km für Kite, Wingfoil und Windsurfen",
+          "description": "Erklärung des ICON-D2 Rapid Update Cycle: Auflösung, Aktualisierungszyklus, Datenassimilation, Vorhersagezeitraum, Grenzen und Bedeutung für Windsport am Spot.",
+          "inLanguage": "de",
+          "datePublished": "2026-11-13",
+          "dateModified": "2026-11-13",
+          "isAccessibleForFree": true,
+          "image": "https://rapidwind.app/og-image.png",
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://rapidwind.app/icon-d2-ruc"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Christian Zink",
+            "url": "https://kitespots.zink.tv"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "RapidWind",
+            "url": "https://rapidwind.app/"
+          },
+          "about": {
+            "@type": "Dataset",
+            "name": "ICON-D2 RUC",
+            "description": "Kürzestfristvorhersage des Deutschen Wetterdienstes mit stündlichen Läufen und einer Gitterweite von rund 2 km.",
+            "creator": {
+              "@type": "GovernmentOrganization",
+              "name": "Deutscher Wetterdienst",
+              "url": "https://www.dwd.de/"
+            },
+            "license": "https://creativecommons.org/licenses/by/4.0/"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://rapidwind.app/icon-d2-ruc#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "RapidWind",
+              "item": "https://rapidwind.app/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "ICON-D2 RUC",
+              "item": "https://rapidwind.app/icon-d2-ruc"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://rapidwind.app/icon-d2-ruc#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Wie oft wird ICON-D2 RUC aktualisiert?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Stündlich. Jeder Lauf beginnt mit einer neuen Analyse, in die aktuelle Beobachtungen eingehen. Bis ein Lauf über den Open-Data-Server des DWD bereitsteht und auf der Karte erscheint, vergehen je nach System einige Minuten. Unten links in der Karte steht unter „Model run“, welcher Lauf gerade angezeigt wird."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Wie weit reicht die Vorhersage?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "27 Stunden. Der DWD hat den Zeitraum im Juni 2026 von 14 auf 27 Stunden erweitert. Ein um 06 UTC gestarteter Lauf endet am Folgetag um 09 UTC – genug für heute und den Vormittag von morgen, nicht für den ganzen nächsten Tag. Die Karte zeigt die nächsten 25 Stunden des Laufs."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Ist das Nowcasting?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nein, auch wenn es in der Praxis ähnlich nützlich ist. Nowcasting extrapoliert Radarbilder für die nächsten ein bis zwei Stunden. Der RUC ist ein numerisches Vorhersagemodell, das stündlich neu gestartet wird – die Kurzfristigkeit entsteht hier durch die Taktung der Analyse, nicht durch Bildfortschreibung."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Warum nur 27 Stunden und nicht sieben Tage?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Weil 24 Läufe am Tag in ein festes operationelles Zeitfenster passen müssen. Jeder Lauf hat einen festen Datenannahmeschluss; ein längerer Horizont würde die Bereitstellung verzögern. Der RUC ist als schnellstes Glied der Kette ausgelegt, nicht als Ersatz für die 48-h-Läufe von ICON-D2."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Deckt das Modell meinen Spot ab?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Das Gebiet umfasst Deutschland, Österreich, die Schweiz, Benelux und Teile der Nachbarländer. Die Spots oben liegen vollständig darin. Für weite Teile Frankreichs nutzt RapidWind AROME PI, für die USA HRRR – beide ebenfalls mit hoher Auflösung und kurzen Zyklen."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Warum unterscheidet sich die Vorhersage von anderen Apps?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Meist liegt ein anderes Modell zugrunde, ein anderes Gitter oder eine andere Rasterzelle. Der Wert stammt aus der nächsten 2-km-Rasterzelle, nicht aus einer Messung am Strand. Bei Seewind, Thermik und in Lee-Lagen können Nachbargitterpunkte spürbar abweichen. Zusätzlich gilt: Böen sind in jedem Modell unsicherer als der Mittelwind."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Ist die Nutzung kostenlos?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Ja, ohne Anmeldung und ohne Werbung. Die Modelldaten des DWD stehen als Open Data unter CC BY 4.0 zur Verfügung. RapidWind verwendet sie mit Quellenvermerk."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+</head>
+
+<body>
+  <main>
+    <header class="hero">
+      <p class="hero__eyebrow">Modell im Detail</p>
+      <h1>ICON-D2 RUC: die stündliche Windvorhersage mit rund 2&nbsp;km Auflösung</h1>
+      <p class="hero__lead">
+        Der Rapid Update Cycle (RUC) des Deutschen Wetterdienstes rechnet nicht alle drei oder sechs Stunden,
+        sondern <strong>jede Stunde</strong> einen neuen Lauf – auf einem Gitter von rund zwei Kilometern.
+        Genau dort entstehen die Windsysteme, die auf einer Karte mit 10-km-Maschen verschwinden:
+        Thermik an Seen, Seewind an der Küste, Föhndüsen an den Alpenrändern, das Timing einer Front.
+      </p>
+      <div class="cta-row">
+        <a class="cta cta--primary" href="/?model=icon-d2">Karte mit ICON-D2 RUC öffnen</a>
+        <a class="cta cta--secondary" href="#spots">Spots direkt anspringen</a>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="fakten">
+      <h2 id="fakten">ICON-D2 RUC in Zahlen</h2>
+      <dl class="fact-grid">
+        <div class="fact">
+          <dt>Gitterweite</dt>
+          <dd>ca. 2 km</dd>
+        </div>
+        <div class="fact">
+          <dt>Neue Läufe</dt>
+          <dd>jede Stunde</dd>
+        </div>
+        <div class="fact">
+          <dt>Reichweite</dt>
+          <dd>27 Stunden</dd>
+        </div>
+        <div class="fact">
+          <dt>Zeitliche Auflösung</dt>
+          <dd>stündlich</dd>
+        </div>
+        <div class="fact">
+          <dt>Modelllevel</dt>
+          <dd>65</dd>
+        </div>
+        <div class="fact">
+          <dt>Gebiet</dt>
+          <dd>DE, AT, CH, Benelux</dd>
+        </div>
+      </dl>
+      <p class="region-note">
+        Quelle: Deutscher Wetterdienst. Die englische Modellübersicht nennt 2,2&nbsp;km, die deutsche
+        Modelldokumentation 2,1&nbsp;km Gitterweite – daher hier „rund 2&nbsp;km“. Die 65 Modelllevel und die
+        Reichweite von 27&nbsp;Stunden gelten für den RUC-Lauf; die Karte zeigt daraus die nächsten
+        25&nbsp;Stunden.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="warum-ruc">
+      <h2 id="warum-ruc">Was „Rapid Update Cycle“ konkret bedeutet</h2>
+      <p>
+        Der Standardlauf von ICON-D2 startet achtmal am Tag – um 00, 03, 06, 09, 12, 15, 18 und 21 UTC – und
+        reicht bis 48&nbsp;Stunden. Zwischen zwei Läufen liegen also bis zu drei Stunden, in denen die
+        Ausgangslage des Modells nicht aktualisiert wird.
+      </p>
+      <p>
+        Der RUC schließt diese Lücke mit einem anderen Rhythmus: <strong>stündlich</strong> eine neue Analyse,
+        stündlich ein neuer Lauf, dafür mit kürzerem Horizont. Der DWD hat die Reichweite im Juni 2026 von
+        14 auf <strong>27&nbsp;Stunden</strong> verlängert. Ein um 06 UTC gestarteter Lauf endet damit am
+        Folgetag um 09 UTC – genug für heute und den Vormittag von morgen, aber bewusst nicht genug für
+        eine Wochenprognose.
+      </p>
+      <p>
+        Entscheidend ist dabei nicht die Anzahl der Läufe allein, sondern was in die Analyse hineingeht.
+        Der DWD setzt für ICON-D2 und RUC das Assimilationssystem <strong>KENDA</strong> ein (Km-scale
+        Ensemble-based Data Assimilation) – ein ensemblebasiertes Verfahren, das Beobachtungen und
+        Modell-Hintergrund zu einer Analyse kombiniert. In den Änderungsmitteilungen des DWD finden sich
+        dazu die relevanten Schritte: eine überarbeitete Radardatenassimilation (Juli 2024), die Ausweitung
+        der Assimilation des 10-m-Winds (Januar 2024) und mehrere Änderungen am KENDA-System (2024/2025).
+        Seit Januar 2026 liefert die Wetterinterpretation auch für ICON-D2 und RUC Wettercodes (WW).
+      </p>
+      <p>
+        Für Windsport ist vor allem die Assimilation des 10-m-Winds relevant: In die Analyse geht nicht nur
+        die großräumige Wetterlage ein, sondern auch, was in der letzten Stunde am Boden und in den
+        untersten Modellschichten beobachtet wurde.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="bedeutung">
+      <h2 id="bedeutung">Warum zwei Kilometer und eine Stunde den Unterschied machen</h2>
+
+      <h3>Thermik an Seen und im Binnenland</h3>
+      <p>
+        Thermische Windsysteme entstehen aus dem Temperaturunterschied zwischen Wasser- und Landflächen und
+        aus der Hangneigung im Umfeld. Sie sind typisch 5 bis 20&nbsp;km groß. Ein Modell mit 10&nbsp;km
+        Maschenweite mittelt diese Strukturen weg – es zeigt dann eine gleichmäßige Brise, wo in
+        Wirklichkeit eine schmale Düse steht. Mit 2&nbsp;km Maschenweite bleibt das Muster erhalten
+        und der Tagesgang wird abgebildet: der Anlauf am Vormittag, das Maximum am Nachmittag, der
+        Zusammenbruch am Abend. Einzelne Thermikschläuche bleiben aber auch bei 2&nbsp;km parametrisiert –
+        das Modell zeigt das Muster, nicht jede Blase.
+      </p>
+
+      <h3>Seewind und Küstenlinie</h3>
+      <p>
+        Seewind hängt an der Lage der Küstenlinie, an der Wassertemperatur und an der Landnutzung dahinter.
+        An der Ostsee entscheidet oft, ob ein Spot im Lee einer Halbinsel oder frei zum Wind liegt – ein
+        Unterschied von wenigen Kilometern. Wer eine Bucht mit 2-km-Maschen auflöst, sieht diese
+        Abschattung; wer sie mit 10-km-Maschen rechnet, sieht sie nicht.
+      </p>
+
+      <h3>Timing statt Betrag</h3>
+      <p>
+        Der teuerste Fehler in der Session-Planung ist selten die Windstärke, sondern der Zeitpunkt. Fronten
+        ziehen durch, der Wind dreht innerhalb einer Stunde, eine Gewitterzelle baut sich auf und kappt die
+        Thermik. Ein stündlich neu analysierter Lauf korrigiert solche Verschiebungen deutlich schneller als
+        ein Lauf, der drei Stunden alt ist. Für eine Session von 14 bis 17 Uhr ist genau das der
+        entscheidende Unterschied.
+      </p>
+
+      <h3>Wettercodes und Bewölkung</h3>
+      <p>
+        Der RUC liefert neben Wind, Böen und Richtung auch Wettercodes nach WMO (WW). Bewölkung und
+        Niederschlag sind für Windsport mehr als Kulisse: Eine geschlossene Wolkendecke kann Thermik
+        ersticken, ein Schauerzug bringt Böen und Dreher. Deshalb zeigt die Karte diese Information
+        gemeinsam mit dem Wind und nicht als getrennte Seite.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="grenzen">
+      <h2 id="grenzen">Wo ICON-D2 RUC an seine Grenzen kommt</h2>
+      <p>
+        Ein ehrlicher Blick auf ein Modell ist nützlicher als ein Werbetext. Diese Punkte sollte man kennen:
+      </p>
+      <ul>
+        <li>
+          <strong>27 Stunden sind keine Woche.</strong> Wer in fünf Tagen verreisen will, braucht zusätzlich
+          die größeren Modelle (ICON-EU, ICON Global) und muss deren Unsicherheit mitdenken.
+        </li>
+        <li>
+          <strong>Nowcasting ist etwas anderes.</strong> Echte Nowcast-Verfahren extrapolieren Radarbilder
+          für die nächsten ein bis zwei Stunden. Der RUC ist ein vollwertiges Modell, kein Radarbild-Fortschreibung.
+        </li>
+        <li>
+          <strong>Ein 2-km-Gitter kennt keinen Strand.</strong> Dünen, Deiche, Baumreihen und Gebäude sind
+          nicht im Modell. Direkt an der Kante weht es böiger und anders als 500&nbsp;Meter draußen.
+        </li>
+        <li>
+          <strong>Böen bleiben unsicherer als der Mittelwind.</strong> Böen sind ein statistisches Produkt
+          der Turbulenz und der Grenzschicht – das Modell kann sie plausibel, aber nicht punktgenau liefern.
+        </li>
+        <li>
+          <strong>Konvektion bleibt schwierig.</strong> Einzelne Schauerzellen und Gewitter sind der
+          schwierigste Teil jeder Kurzfristvorhersage, auch bei 2&nbsp;km.
+        </li>
+        <li>
+          <strong>Außerhalb des Gebiets gibt es keine Daten.</strong> Der RUC deckt Deutschland, Österreich,
+          die Schweiz, Benelux und Teile der Nachbarländer ab. Für weite Teile Frankreichs und für die USA
+          braucht es andere Modelle.
+        </li>
+        <li>
+          <strong>Nur ein einzelner Lauf.</strong> Der RUC ist deterministisch. Wie unsicher eine Lage ist,
+          zeigt erst der Ensemble-Ableger ICON-D2-EPS mit 20 Mitgliedern – die Streuung der Läufe ist dort
+          das eigentliche Signal, nicht der Einzelwert.
+        </li>
+      </ul>
+      <div class="note">
+        <strong>Und der wichtigste Punkt:</strong>
+        Eine Vorhersage bleibt eine Vorhersage. Prüfe am Spot immer die Realität – Wolkenbild,
+        Wassertemperatur, lokale Anzeiger – und nicht nur die Zahl auf dem Bildschirm.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="vergleich">
+      <h2 id="vergleich">ICON-D2 RUC im Vergleich</h2>
+      <table>
+        <caption>Vergleich der Modelle auf einen Blick</caption>
+        <thead>
+          <tr>
+            <th scope="col">Eigenschaft</th>
+            <th scope="col">ICON-D2 RUC</th>
+            <th scope="col">ICON-D2 (Standardlauf)</th>
+            <th scope="col">Globales Modell (z.&nbsp;B. GFS)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Gitterweite</td>
+            <td>ca. 2&nbsp;km</td>
+            <td>ca. 2&nbsp;km</td>
+            <td>13–28&nbsp;km</td>
+          </tr>
+          <tr>
+            <td>Neue Läufe</td>
+            <td>stündlich</td>
+            <td>alle 3&nbsp;Stunden</td>
+            <td>alle 6&nbsp;Stunden</td>
+          </tr>
+          <tr>
+            <td>Reichweite</td>
+            <td>27&nbsp;h</td>
+            <td>48&nbsp;h</td>
+            <td>mehrere Tage</td>
+          </tr>
+          <tr>
+            <td>Stärke</td>
+            <td>kurzfristige Korrekturen, Tagesgang, Timing</td>
+            <td>mittelfristige Planung im Nahbereich</td>
+            <td>großräumige Lage, lange Zeiträume</td>
+          </tr>
+          <tr>
+            <td>Für Windsport</td>
+            <td>Session-Planung am selben und nächsten Tag</td>
+            <td>Wochenendplanung</td>
+            <td>Tendenz, Reiseplanung</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="region-note">
+        Werte nach den Modellübersichten des DWD und von Open-Meteo; globales Modell exemplarisch für die
+        Größenordnung.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="karte">
+      <h2 id="karte">So liest du die Karte</h2>
+      <ul>
+        <li>
+          <strong>Farbe = Windgeschwindigkeit</strong>, abgestimmt auf den Bereich, der beim Kiten, Wingfoilen,
+          Windsurfen und Foilen tatsächlich entscheidet – nicht auf die Skala eines globalen Wetterdienstes.
+          Die Karte rechnet in <strong>Knoten</strong>: 1&nbsp;kn entspricht 1,852&nbsp;km/h, 15&nbsp;kn sind
+          also rund 28&nbsp;km/h.
+        </li>
+        <li>
+          <strong>Pfeile = Richtung.</strong> Die Länge folgt der Stärke, damit die Richtung auf einen Blick
+          lesbar bleibt.
+        </li>
+        <li>
+          <strong>Klick auf die Karte = Punktvorhersage.</strong> Du bekommst den stündlichen Verlauf für
+          genau diese Koordinate, inklusive Böen und Wettercode.
+        </li>
+        <li>
+          <strong>Böen sind Stundenmaxima.</strong> Der Böenwert einer Zeile ist der höchste Wert der
+          vorangegangenen Stunde, kein Momentanwert. Ein hoher Böenwert kann deshalb eine ruhige Stunde
+          mit einzelnen Spitzen verbergen – für die Frage „kann ich fahren?“ zählt beides: Mittelwind und Böe.
+        </li>
+        <li>
+          <strong>Zeitleiste = Modellstunden.</strong> Jeder Schritt ist eine echte Modellstunde des Laufs,
+          keine interpolierte Zwischenstufe.
+        </li>
+        <li>
+          <strong>Modellwechsel oben links:</strong> ICON-D2 RUC für Mitteleuropa, AROME PI für Frankreich
+          und angrenzende Gebiete, HRRR für die USA.
+        </li>
+      </ul>
+      <p>
+        Ein Hinweis zur Auflösung der Zeitachse: Für Wind und Wettercode liefert ICON-D2 RUC nur Stundenwerte.
+        15-Minuten-Daten gibt es beim DWD lediglich für wenige andere Größen (zum Beispiel Niederschlag und
+        Strahlung); ein 15-Minuten-Windwert wäre rechnerisch interpoliert und wird hier deshalb nicht als
+        eigene Modellinformation ausgegeben.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="vertrauen">
+      <h2 id="vertrauen">Wie weit kann man dem Lauf trauen?</h2>
+      <p>
+        Eine stündliche Aktualisierung macht eine Vorhersage nicht automatisch sicher. Als Faustregel für
+        die Session-Planung hat sich diese Abstufung bewährt:
+      </p>
+      <table>
+        <caption>Verlässlichkeit nach Vorhersagezeit</caption>
+        <thead>
+          <tr>
+            <th scope="col">Vorhersagezeit</th>
+            <th scope="col">Belastbarkeit</th>
+            <th scope="col">Was daraus folgt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0–6 Stunden</td>
+            <td>sehr hoch</td>
+            <td>Analyse ist frisch, Abweichungen betreffen meist Details wie Böen oder Bewölkung.</td>
+          </tr>
+          <tr>
+            <td>6–12 Stunden</td>
+            <td>hoch</td>
+            <td>Tagesgang und Fronttiming sind brauchbar, bei der Windstärke bleibt Streuung.</td>
+          </tr>
+          <tr>
+            <td>12–24 Stunden</td>
+            <td>mittel</td>
+            <td>Tendenz stimmt häufig, Betrag und Zeitpunkt können noch kippen.</td>
+          </tr>
+          <tr>
+            <td>24–27 Stunden</td>
+            <td>niedrig</td>
+            <td>Nur als Tendenz lesen – und am nächsten Morgen neu prüfen.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Ab etwa zwölf Stunden verliert der RUC seinen eigentlichen Vorteil: Er ist dann nicht besser als der
+        48-Stunden-Lauf von ICON-D2, nur früher gestartet. Sein Wert liegt in den ersten Stunden – und darin,
+        dass man morgens eine andere (bessere) Vorhersage bekommt als am Abend zuvor.
+      </p>
+      <p>
+        Am Rand des Modellgebiets – etwa im Elsass, im östlichen Frankreich oder im äußersten Osten
+        Österreichs – nimmt die Qualität ab, weil Beobachtungen und Antrieb von außen kommen. Für diese
+        Gebiete lohnt der Wechsel auf AROME PI in der Karte; fehlt die Fläche ganz, zeigt die Karte dort keine
+        Daten statt einer stillen Null.
+      </p>
+    </section>
+
+    <section class="card" id="spots" aria-labelledby="spots-title">
+      <h2 id="spots-title">Spots mit ICON-D2-RUC-Vorhersage</h2>
+      <p>
+        Ein Klick auf einen Spot öffnet die Karte an genau dieser Koordinate – mit aktivem ICON-D2 RUC und
+        der Punktvorhersage für den Spot. Die Koordinaten sind bewusst als Bezugspunkt gesetzt: die
+        Wasserlinie oder der Einstieg, nicht die Ortsmitte.
+      </p>
+
+      <h3>Nordsee</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=55.0514&amp;lon=8.4328&amp;model=icon-d2">Sylt – Ellenbogen</a></li>
+        <li><a href="/?lat=54.9103&amp;lon=8.2952&amp;model=icon-d2">Sylt – Brandenburger Strand</a></li>
+        <li><a href="/?lat=54.7950&amp;lon=8.2830&amp;model=icon-d2">Sylt – K4 (Kilometer 4)</a></li>
+        <li><a href="/?lat=54.6405&amp;lon=8.3120&amp;model=icon-d2">Amrum – Kniepsand</a></li>
+        <li><a href="/?lat=54.7115&amp;lon=8.3940&amp;model=icon-d2">Föhr – Utersum</a></li>
+        <li><a href="/?lat=54.6820&amp;lon=8.4890&amp;model=icon-d2">Föhr – Goting Cliff</a></li>
+        <li><a href="/?lat=54.3167&amp;lon=8.5812&amp;model=icon-d2">St. Peter-Ording – Hauptstrand</a></li>
+        <li><a href="/?lat=54.2934&amp;lon=8.6141&amp;model=icon-d2">St. Peter-Ording – Südstrand</a></li>
+        <li><a href="/?lat=54.1415&amp;lon=8.8472&amp;model=icon-d2">Büsum – Perlebucht</a></li>
+        <li><a href="/?lat=54.3828&amp;lon=11.0022&amp;model=icon-d2">Heiligenhafen – Graswarder</a></li>
+        <li><a href="/?lat=53.7145&amp;lon=7.1550&amp;model=icon-d2">Norderney – Nordstrand</a></li>
+        <li><a href="/?lat=53.7170&amp;lon=7.1420&amp;model=icon-d2">Norderney – Januskopf</a></li>
+        <li><a href="/?lat=53.5995&amp;lon=6.6580&amp;model=icon-d2">Borkum – Nordstrand</a></li>
+        <li><a href="/?lat=53.5765&amp;lon=6.6850&amp;model=icon-d2">Borkum – Südstrand</a></li>
+        <li><a href="/?lat=53.6240&amp;lon=7.1510&amp;model=icon-d2">Norddeich – Badestrand</a></li>
+        <li><a href="/?lat=53.8645&amp;lon=8.5905&amp;model=icon-d2">Cuxhaven – Sahlenburg</a></li>
+        <li><a href="/?lat=53.8915&amp;lon=8.6830&amp;model=icon-d2">Cuxhaven – Kugelbake</a></li>
+        <li><a href="/?lat=53.7439&amp;lon=8.5134&amp;model=icon-d2">Dorum-Neufeld – Kutterhafen</a></li>
+        <li><a href="/?lat=53.7040&amp;lon=8.0260&amp;model=icon-d2">Schillig – Kitesurfstrand</a></li>
+        <li><a href="/?lat=53.6550&amp;lon=8.0550&amp;model=icon-d2">Hooksiel – Hooksieler Strand</a></li>
+        <li><a href="/?lat=53.5828&amp;lon=8.2456&amp;model=icon-d2">Tossens – Friesenstrand</a></li>
+        <li><a href="/?lat=53.7944&amp;lon=7.8875&amp;model=icon-d2">Wangerooge – Surfstrand</a></li>
+        <li><a href="/?lat=53.7025&amp;lon=7.7050&amp;model=icon-d2">Neuharlingersiel – Hafen/Strand</a></li>
+        <li><a href="/?lat=53.3340&amp;lon=7.0180&amp;model=icon-d2">Emden – Knock</a></li>
+      </ul>
+
+      <h3>Ostsee</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=54.4150&amp;lon=11.1022&amp;model=icon-d2">Fehmarn – Gold</a></li>
+        <li><a href="/?lat=54.4486&amp;lon=11.0967&amp;model=icon-d2">Fehmarn – Lemkenhafen</a></li>
+        <li><a href="/?lat=54.4439&amp;lon=11.0531&amp;model=icon-d2">Fehmarn – Orth</a></li>
+        <li><a href="/?lat=54.4111&amp;lon=11.1714&amp;model=icon-d2">Fehmarn – Wulfener Hals</a></li>
+        <li><a href="/?lat=54.5042&amp;lon=11.1964&amp;model=icon-d2">Fehmarn – Grüner Brink</a></li>
+        <li><a href="/?lat=54.4981&amp;lon=11.1025&amp;model=icon-d2">Fehmarn – Altenteil</a></li>
+        <li><a href="/?lat=54.4789&amp;lon=11.2144&amp;model=icon-d2">Fehmarn – Presen</a></li>
+        <li><a href="/?lat=54.0911&amp;lon=10.8753&amp;model=icon-d2">Pelzerhaken – Lübecker Bucht</a></li>
+        <li><a href="/?lat=54.4183&amp;lon=10.2222&amp;model=icon-d2">Laboe – Kieler Förde</a></li>
+        <li><a href="/?lat=54.4367&amp;lon=10.3244&amp;model=icon-d2">Heidkate – Kieler Bucht</a></li>
+        <li><a href="/?lat=54.4597&amp;lon=9.8458&amp;model=icon-d2">Eckernförde – Südstrand</a></li>
+        <li><a href="/?lat=54.4608&amp;lon=13.1492&amp;model=icon-d2">Rügen – Suhrendorf (Ummanz)</a></li>
+        <li><a href="/?lat=54.6122&amp;lon=13.2842&amp;model=icon-d2">Rügen – Wieker Bodden</a></li>
+        <li><a href="/?lat=54.6314&amp;lon=13.2219&amp;model=icon-d2">Rügen – Dranske</a></li>
+        <li><a href="/?lat=54.2783&amp;lon=13.7144&amp;model=icon-d2">Rügen – Thiessow</a></li>
+        <li><a href="/?lat=54.2711&amp;lon=13.6936&amp;model=icon-d2">Rügen – Klein Zicker</a></li>
+        <li><a href="/?lat=54.2981&amp;lon=13.4117&amp;model=icon-d2">Rügen – Rosengarten</a></li>
+        <li><a href="/?lat=54.4447&amp;lon=12.6953&amp;model=icon-d2">Zingst – Sportstrand</a></li>
+        <li><a href="/?lat=54.3806&amp;lon=12.4183&amp;model=icon-d2">Ahrenshoop – Wellenspot</a></li>
+        <li><a href="/?lat=54.3156&amp;lon=12.4836&amp;model=icon-d2">Saal – Saaler Bodden</a></li>
+        <li><a href="/?lat=54.3314&amp;lon=12.4419&amp;model=icon-d2">Neuendorf – Saaler Bodden</a></li>
+        <li><a href="/?lat=54.1831&amp;lon=12.1022&amp;model=icon-d2">Warnemünde – Hohe Düne</a></li>
+        <li><a href="/?lat=54.1539&amp;lon=11.7714&amp;model=icon-d2">Kühlungsborn – Oststrand</a></li>
+        <li><a href="/?lat=54.1628&amp;lon=11.6686&amp;model=icon-d2">Meschendorf – Ostsee</a></li>
+        <li><a href="/?lat=54.0156&amp;lon=11.5892&amp;model=icon-d2">Pepelow – Salzhaff</a></li>
+        <li><a href="/?lat=54.1378&amp;lon=13.6194&amp;model=icon-d2">Lubmin – Greifswalder Bodden</a></li>
+        <li><a href="/?lat=54.1206&amp;lon=13.5358&amp;model=icon-d2">Loissin – Greifswalder Bodden</a></li>
+        <li><a href="/?lat=54.1167&amp;lon=13.8442&amp;model=icon-d2">Usedom – Karlshagen</a></li>
+        <li><a href="/?lat=54.0211&amp;lon=14.0106&amp;model=icon-d2">Usedom – Ückeritz</a></li>
+      </ul>
+
+      <h3>Binnenseen in Deutschland</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=52.4914&amp;lon=9.2936&amp;model=icon-d2">Steinhuder Meer – Mardorf</a></li>
+        <li><a href="/?lat=52.5892&amp;lon=7.3086&amp;model=icon-d2">Speicherbecken Geeste</a></li>
+        <li><a href="/?lat=49.1367&amp;lon=10.9620&amp;model=icon-d2">Großer Brombachsee</a></li>
+        <li><a href="/?lat=49.1309&amp;lon=10.7345&amp;model=icon-d2">Altmühlsee – Schlungenhof</a></li>
+        <li><a href="/?lat=47.8926&amp;lon=12.5401&amp;model=icon-d2">Chiemsee – Chieming</a></li>
+        <li><a href="/?lat=47.9978&amp;lon=11.1671&amp;model=icon-d2">Ammersee – Herrsching</a></li>
+        <li><a href="/?lat=47.6800&amp;lon=9.1800&amp;model=icon-d2">Bodensee – Konstanz</a></li>
+        <li><a href="/?lat=47.6085&amp;lon=9.5281&amp;model=icon-d2">Bodensee – Langenargen</a></li>
+        <li><a href="/?lat=51.2725&amp;lon=12.3364&amp;model=icon-d2">Cospudener See</a></li>
+        <li><a href="/?lat=51.3642&amp;lon=14.5244&amp;model=icon-d2">Bärwalder See – Boxberg</a></li>
+      </ul>
+
+      <h3>Alpen, Österreich und Schweiz</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=46.4619&amp;lon=9.7947&amp;model=icon-d2">Silvaplanersee – Engadin</a></li>
+        <li><a href="/?lat=46.9242&amp;lon=8.5944&amp;model=icon-d2">Urnersee – Isleten</a></li>
+        <li><a href="/?lat=46.6897&amp;lon=7.8711&amp;model=icon-d2">Brienzersee – Interlaken</a></li>
+        <li><a href="/?lat=46.9189&amp;lon=6.9614&amp;model=icon-d2">Neuenburgersee – Portalban</a></li>
+        <li><a href="/?lat=46.8014&amp;lon=6.7456&amp;model=icon-d2">Neuenburgersee – Yvonand</a></li>
+        <li><a href="/?lat=47.0133&amp;lon=6.9875&amp;model=icon-d2">Neuenburgersee – Saint-Blaise</a></li>
+        <li><a href="/?lat=47.8544&amp;lon=16.8261&amp;model=icon-d2">Neusiedler See – Podersdorf</a></li>
+        <li><a href="/?lat=47.8106&amp;lon=13.7842&amp;model=icon-d2">Traunsee – Ebensee</a></li>
+        <li><a href="/?lat=47.4217&amp;lon=11.7064&amp;model=icon-d2">Achensee – Buchau</a></li>
+      </ul>
+
+      <h3>Niederlande und Zeeland</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=51.7589&amp;lon=3.8436&amp;model=icon-d2">Brouwersdam – Zeeland</a></li>
+        <li><a href="/?lat=51.5847&amp;lon=3.6133&amp;model=icon-d2">Vrouwenpolder – Zeeland</a></li>
+        <li><a href="/?lat=51.6267&amp;lon=3.6908&amp;model=icon-d2">Neeltje Jans – Zeeland</a></li>
+        <li><a href="/?lat=51.5833&amp;lon=3.6819&amp;model=icon-d2">Kamperland – Veerse Meer</a></li>
+        <li><a href="/?lat=52.8464&amp;lon=5.3789&amp;model=icon-d2">Mirns – IJsselmeer</a></li>
+        <li><a href="/?lat=52.9811&amp;lon=5.4132&amp;model=icon-d2">Workum – IJsselmeer</a></li>
+        <li><a href="/?lat=52.9469&amp;lon=5.3944&amp;model=icon-d2">Hindeloopen – IJsselmeer</a></li>
+        <li><a href="/?lat=52.6319&amp;lon=5.1189&amp;model=icon-d2">Schellinkhout – Markermeer</a></li>
+        <li><a href="/?lat=52.3325&amp;lon=5.1147&amp;model=icon-d2">Muiderberg – IJmeer</a></li>
+        <li><a href="/?lat=52.4939&amp;lon=4.5811&amp;model=icon-d2">Wijk aan Zee</a></li>
+        <li><a href="/?lat=52.4597&amp;lon=4.5622&amp;model=icon-d2">IJmuiden – Kennemerstrand</a></li>
+        <li><a href="/?lat=51.9214&amp;lon=4.0714&amp;model=icon-d2">Oostvoorne – Autostrand</a></li>
+        <li><a href="/?lat=53.0319&amp;lon=4.7186&amp;model=icon-d2">Texel – Paal 17</a></li>
+      </ul>
+
+      <p class="region-note">
+        Außerhalb dieser Liste geht es auch: einfach die Karte öffnen und an die gewünschte Stelle klicken.
+        Für Spots in Frankreich ist AROME PI das passende Modell, für die USA HRRR.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="faq">
+      <h2 id="faq">Häufige Fragen zu ICON-D2 RUC</h2>
+
+      <details open>
+        <summary><h3>Wie oft wird ICON-D2 RUC aktualisiert?</h3></summary>
+        <p>
+          Stündlich. Jeder Lauf beginnt mit einer neuen Analyse, in die aktuelle Beobachtungen eingehen.
+          Bis ein Lauf über den Open-Data-Server des DWD bereitsteht und auf der Karte erscheint, vergehen
+          je nach System einige Minuten. Unten links in der Karte steht unter „Model run“, welcher Lauf
+          gerade angezeigt wird.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Wie weit reicht die Vorhersage?</h3></summary>
+        <p>
+          27 Stunden. Der DWD hat den Zeitraum im Juni 2026 von 14 auf 27 Stunden erweitert. Ein um 06 UTC
+          gestarteter Lauf endet am Folgetag um 09 UTC – genug für heute und den Vormittag von morgen,
+          nicht für den ganzen nächsten Tag. Die Karte zeigt die nächsten 25 Stunden des Laufs.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Ist das Nowcasting?</h3></summary>
+        <p>
+          Nein, auch wenn es in der Praxis ähnlich nützlich ist. Nowcasting extrapoliert Radarbilder für die
+          nächsten ein bis zwei Stunden. Der RUC ist ein numerisches Vorhersagemodell, das stündlich neu
+          gestartet wird – die Kurzfristigkeit entsteht hier durch die Taktung der Analyse, nicht durch
+          Bildfortschreibung.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Warum nur 27 Stunden und nicht sieben Tage?</h3></summary>
+        <p>
+          Weil 24 Läufe am Tag in ein festes operationelles Zeitfenster passen müssen. Jeder Lauf hat einen
+          festen Datenannahmeschluss; ein längerer Horizont würde die Bereitstellung verzögern. Der RUC ist
+          als schnellstes Glied der Kette ausgelegt, nicht als Ersatz für die 48-h-Läufe von ICON-D2.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Deckt das Modell meinen Spot ab?</h3></summary>
+        <p>
+          Das Gebiet umfasst Deutschland, Österreich, die Schweiz, Benelux und Teile der Nachbarländer.
+          Die Spots oben liegen vollständig darin. Für weite Teile Frankreichs nutzt RapidWind AROME PI, für
+          die USA HRRR – beide ebenfalls mit hoher Auflösung und kurzen Zyklen.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Warum unterscheidet sich die Vorhersage von anderen Apps?</h3></summary>
+        <p>
+          Meist liegt ein anderes Modell zugrunde, ein anderes Gitter oder eine andere Rasterzelle. Der
+          Wert stammt aus der nächsten 2-km-Rasterzelle, nicht aus einer Messung am Strand. Bei Seewind,
+          Thermik und in Lee-Lagen können Nachbargitterpunkte spürbar abweichen. Zusätzlich gilt: Böen sind
+          in jedem Modell unsicherer als der Mittelwind.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Ist die Nutzung kostenlos?</h3></summary>
+        <p>
+          Ja, ohne Anmeldung und ohne Werbung. Die Modelldaten des DWD stehen als Open Data unter CC BY 4.0
+          zur Verfügung. RapidWind verwendet sie mit Quellenvermerk.
+        </p>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="quellen">
+      <h2 id="quellen">Quellen und weiterführende Links</h2>
+      <ul class="sources">
+        <li>
+          Deutscher Wetterdienst – Modellübersicht (ICON-D2, ICON-EU, ICON Global, ICON-D2 EPS):
+          <a href="https://www.dwd.de/EN/ourservices/nwp_forecast_data/nwp_forecast_data.html" rel="noopener">dwd.de – NWP forecast data</a>
+        </li>
+        <li>
+          Deutscher Wetterdienst – Modelldokumentationen ICON-D2:
+          <a href="https://www.dwd.de/DE/leistungen/nwv_icon_d2_modelldokumentation/nwv_icon_d2_modelldokumentation.html" rel="noopener">dwd.de – ICON-D2 Modelldokumentation</a>
+        </li>
+        <li>
+          Deutscher Wetterdienst – Änderungsmitteilungen ICON-D2 (u.&nbsp;a. RUC-Reichweite 27&nbsp;h, KENDA, Radardatenassimilation):
+          <a href="https://www.dwd.de/DE/fachnutzer/forschung_lehre/numerische_wettervorhersage/nwv_aenderungen/_functions/DownloadBox_modellaenderungen/nwv_aenderungen_icon_d2_gesamt.html" rel="noopener">dwd.de – Änderungsmitteilungen ICON-D2</a>
+        </li>
+        <li>
+          Deutscher Wetterdienst – Open Data, Bereitstellung der Modelldaten:
+          <a href="https://www.dwd.de/DE/leistungen/opendata/opendata.html" rel="noopener">dwd.de – Open Datad.de – Open Data</a>
+        </li>
+        <li>
+          Deutscher Wetterdienst – Rechtliche Hinweise und Quellenvermerk (CC BY 4.0):
+          <a href="https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html" rel="noopener">dwd.de – Rechtliche Hinweise</a>
+        </li>
+        <li>
+          Open-Meteo – DWD-ICON-API (Modellgebiete, Variablen, 15-Minuten-Daten):
+          <a href="https://open-meteo.com/en/docs/dwd-api" rel="noopener">open-meteo.com – DWD ICON API</a>
+        </li>
+        <li>
+          Open-Meteo – Modell-Aktualisierungszeiten (ICON-D2 RUC Native: stündlich):
+          <a href="https://open-meteo.com/en/docs/model-updates" rel="noopener">open-meteo.com – Model Updates</a>
+        </li>
+      </ul>
+      <p class="region-note">
+        Stand: 13. November 2026. Modellkonfigurationen ändern sich – bei Abweichungen gelten die
+        Angaben des Deutschen Wetterdienstes.
+      </p>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <nav aria-label="Weitere Seiten">
+      <a href="/">Karte öffnen</a>
+      <a href="./info">Projekt, Architektur und Datenpipeline</a>
+      <a href="https://kitespots.zink.tv" rel="noopener">Spot-Guides auf kitespots.zink.tv</a>
+    </nav>
+    <p>
+      RapidWind ist ein unabhängiges Projekt. Windvorhersagen können falsch sein – prüfe immer die
+      Bedingungen am Spot. Modelldaten: Deutscher Wetterdienst (CC BY 4.0).
+    </p>
+  </footerer>
+</body>
+</html>

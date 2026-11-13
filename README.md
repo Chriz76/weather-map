@@ -23,6 +23,9 @@ To our knowledge, this is a **unique free implementation** providing hourly upda
 
 Three rapid-update models are available; switch them with the toggle in the logo row.
 
+Background on the ICON-D2 RUC update cycle, its resolution and its limits:
+[ICON-D2 RUC im Detail (German)](https://rapidwind.app/icon-d2-ruc).
+
 | Provider | Area | Resolution | Cycle / steps | Sources |
 | :--- | :--- | :--- | :--- | :--- |
 | **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, hourly steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
