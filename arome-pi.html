@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AROME PI : prévision de vent à 1,3 km, actualisée chaque heure</title>
+  <meta
+    name="description"
+    content="AROME PI expliqué : maille 1,3 km, prévision immédiate actualisée chaque heure, 6 h d'échéance. Pour le kitesurf, le wingfoil et la planche à voile."
+  />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://rapidwind.app/arome-pi" />
+  <link rel="alternate" hreflang="de" href="https://rapidwind.app/icon-d2-ruc" />
+  <link rel="alternate" hreflang="fr" href="https://rapidwind.app/arome-pi" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="RapidWind" />
+  <meta property="og:locale" content="fr_FR" />
+  <meta property="og:locale:alternate" content="de_DE" />
+  <meta property="og:title" content="AROME PI : prévision de vent à 1,3 km, actualisée chaque heure" />
+  <meta
+    property="og:description"
+    content="Prévision immédiate de Météo-France : maille 1,3 km, 6 h d'échéance, un run chaque heure. Ce que cela change pour la brise thermique et le passage des grains."
+  />
+  <meta property="og:url" content="https://rapidwind.app/arome-pi" />
+  <meta property="og:image" content="https://rapidwind.app/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="RapidWind – prévision de vent avec AROME PI" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AROME PI : prévision de vent à 1,3 km, actualisée chaque heure" />
+  <meta
+    name="twitter:description"
+    content="AROME PI et AROME France expliqués : maille, échéances, pas de temps, limites. Et ce que la carte RapidWind affiche réellement."
+  />
+  <meta name="twitter:image" content="https://rapidwind.app/og-image.png" />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+
+  <!-- Page de contenu : aucun JavaScript, une seule feuille de style. -->
+  <link rel="stylesheet" href="css/arome-pi.css" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "TechArticle",
+          "@id": "https://rapidwind.app/arome-pi#article",
+          "headline": "AROME PI : prévision de vent à 1,3 km actualisée chaque heure",
+          "description": "AROME PI, la prévision immédiate de Météo-France : maille, cadence des runs, assimilation des observations, échéances, limites et ce que la carte RapidWind en affiche.",
+          "inLanguage": "fr",
+          "datePublished": "2026-11-13",
+          "dateModified": "2026-11-13",
+          "isAccessibleForFree": true,
+          "image": "https://rapidwind.app/og-image.png",
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://rapidwind.app/arome-pi"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Christian Zink",
+            "url": "https://kitespots.zink.tv"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "RapidWind",
+            "url": "https://rapidwind.app/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://rapidwind.app/favicon-48x48.png",
+              "width": 48,
+              "height": 48
+            }
+          },
+          "about": {
+            "@type": "Dataset",
+            "name": "AROME PI",
+            "description": "Configuration de prévision immédiate du modèle AROME de Météo-France, avec une maille d’environ 1,3 km et un nouveau run chaque heure.",
+            "creator": {
+              "@type": "GovernmentOrganization",
+              "name": "Météo-France",
+              "url": "https://meteofrance.com/"
+            },
+            "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://rapidwind.app/arome-pi#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "RapidWind",
+              "item": "https://rapidwind.app/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "AROME PI",
+              "item": "https://rapidwind.app/arome-pi"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://rapidwind.app/arome-pi#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "À quelle fréquence AROME PI est-il actualisé ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Toutes les heures. Chaque run repart d’une analyse qui intègre les observations les plus récentes. Les données sont généralement disponibles quinze à vingt minutes après l’heure du run ; en bas à gauche, la mention « Updated … | Next ~… » donne l’heure de la dernière mise à jour et celle du run suivant."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Quelle est l’échéance d’AROME PI ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Six heures, avec un pas de temps de 15 minutes. C’est le prix de la cadence horaire : le PI est conçu pour la toute courte échéance, pas pour la prévision de la semaine."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "AROME PI, est-ce du nowcasting ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Presque, mais ce n’est pas la même méthode. Le nowcasting classique extrapole les images radar pour l’heure suivante. AROME PI est un vrai modèle numérique : il est réinitialisé chaque heure avec une analyse qui intègre notamment les radars et les stations, puis il calcule la suite de l’évolution."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Pourquoi la carte affiche-t-elle plus de 6 heures ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Parce que RapidWind combine deux échelles : AROME PI pour les premières heures, puis AROME France, qui va jusqu’à 48 heures. La prévision ponctuelle garde le pas natif de 15 minutes dans la zone couverte par le PI, puis passe à l’heure."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "AROME PI couvre-t-il mon spot ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Le domaine couvre la France métropolitaine et les zones proches. Les spots ci-dessus en font partie. Pour l’Allemagne et les Alpes orientales, RapidWind utilise ICON-D2 RUC ; pour les États-Unis, HRRR."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Pourquoi ma prévision diffère-t-elle d’une autre application ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Souvent à cause du modèle, de la maille ou de la cellule choisie : la valeur provient de la maille la plus proche, pas d’une mesure sur la plage. En brise thermique et sous le vent d’un relief, deux mailles voisines peuvent différer nettement. Les rafales restent par ailleurs plus incertaines que le vent moyen."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Est-ce gratuit ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui, sans inscription et sans publicité. Les données d’AROME sont publiées par Météo-France en données ouvertes sous Licence Ouverte ; RapidWind les utilise avec mention de la source."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+</head>
+
+<body>
+  <main>
+    <header class="hero">
+      <p class="hero__eyebrow">Le modèle en détail</p>
+      <h1>AROME PI : la prévision de vent à 1,3&nbsp;km, actualisée toutes les heures</h1>
+      <p class="hero__lead">
+        La prévision immédiate de Météo-France ne calcule pas une fois par jour : elle repart
+        <strong>chaque heure</strong> d’une analyse à jour, sur une maille d’environ 1,3&nbsp;km et avec un
+        pas de temps de 15&nbsp;minutes. C’est là que se jouent la brise thermique, le passage d’un grain et
+        l’heure exacte à laquelle le vent bascule.
+      </p>
+      <div class="cta-row">
+        <a class="cta cta--primary" href="/?model=arome">Ouvrir la carte AROME PI</a>
+        <a class="cta cta--secondary" href="#spots">Aller directement à un spot</a>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="chiffres">
+      <h2 id="chiffres">AROME PI en chiffres</h2>
+      <dl class="fact-grid">
+        <div class="fact">
+          <dt>Maille</dt>
+          <dd>env. 1,3&nbsp;km</dd>
+        </div>
+        <div class="fact">
+          <dt>Nouveaux runs</dt>
+          <dd>toutes les heures</dd>
+        </div>
+        <div class="fact">
+          <dt>Échéance PI</dt>
+          <dd>6&nbsp;heures</dd>
+        </div>
+        <div class="fact">
+          <dt>Pas de temps</dt>
+          <dd>15&nbsp;minutes</dd>
+        </div>
+        <div class="fact">
+          <dt>Échéance AROME France</dt>
+          <dd>48&nbsp;heures</dd>
+        </div>
+        <div class="fact">
+          <dt>Domaine</dt>
+          <dd>France et zones proches</dd>
+        </div>
+      </dl>
+      <p class="region-note">
+        La grille officielle du PI est de 1,3&nbsp;km (0,01°). Open-Meteo arrondit cette même grille à
+        «&nbsp;~1,5&nbsp;km&nbsp;» dans sa documentation et publie en plus une déclinaison 15&nbsp;minutes en
+        0,025° (~2,5&nbsp;km) : d’où l’écart apparent entre les sources.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="deux-modeles">
+      <h2 id="deux-modeles">Deux modèles, un nom qui prête à confusion</h2>
+      <p>
+        « AROME » désigne la famille de modèles régionaux de Météo-France. Deux configurations nous
+        intéressent ici, et elles ne répondent pas à la même question :
+      </p>
+      <ul>
+        <li>
+          <strong>AROME France</strong> est le modèle régional de référence. Il tourne plusieurs fois par
+          jour, va jusqu’à 48&nbsp;heures et sert à planifier.
+        </li>
+        <li>
+          <strong>AROME PI</strong> (« prévision immédiate ») est la version rapide : un nouveau run chaque
+          heure, une échéance de 6&nbsp;heures seulement, un pas de 15&nbsp;minutes et une analyse qui
+          intègre les observations les plus récentes, notamment les radars et les stations.
+        </li>
+      </ul>
+      <p>
+        Le PI ne remplace donc pas AROME France : il le complète sur les prochaines heures, là où
+        l’écart entre la prévision et la réalité se creuse le plus vite.
+      </p>
+
+      <div class="note">
+        <strong>Ce que la carte RapidWind affiche</strong>
+        Le champ de vent coloré suit la même logique : pas de 15&nbsp;minutes pendant les six premières
+        heures (AROME PI), puis valeurs horaires (AROME France) jusqu’au lendemain. La prévision
+        ponctuelle, elle, va jusqu’à environ 31&nbsp;heures. En bas à gauche, la mention
+        «&nbsp;Updated … | Next ~…&nbsp;» donne l’heure de la dernière mise à jour et celle du prochain run.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="pourquoi">
+      <h2 id="pourquoi">Pourquoi 1,3&nbsp;km et 15&nbsp;minutes changent quelque chose</h2>
+
+      <h3>La brise thermique</h3>
+      <p>
+        Une brise de mer ou de lac naît d’un contraste de température entre l’eau et la terre, sur quelques
+        kilomètres seulement. Avec une maille de 10&nbsp;km, ce contraste est lissé : la carte montre une
+        brise uniforme là où il y a en réalité une zone de convergence bien marquée. À 1,3&nbsp;km, la
+        structure tient, et le cycle de la journée devient lisible : mise en route en fin de matinée,
+        maximum l’après-midi, chute en soirée. Les ascendances individuelles restent en revanche
+        paramétrées : le modèle montre le schéma, pas chaque bouffée.
+      </p>
+
+      <h3>Mistral, tramontane et effets de relief</h3>
+      <p>
+        Mistral et tramontane sont canalisés par les vallées du Rhône et de l’Aude, puis accélérés en
+        sortie de relief. Ces accélérations locales sont exactement ce qu’une maille fine capte et qu’une
+        maille large lisse. Sur la Côte d’Azur et en Provence, l’effet d’abri d’une colline ou d’un cap
+        change complètement le vent à l’échelle d’une baie.
+      </p>
+
+      <h3>Le moment plutôt que la valeur</h3>
+      <p>
+        L’erreur la plus coûteuse en navigation n’est pas la force du vent, mais l’heure. Un grain passe,
+        le vent tourne en une demi-heure, la brise se coupe. Un run réinitialisé toutes les heures corrige
+        ces décalages bien plus vite qu’un run vieux de trois ou six heures. Pour une session de 14&nbsp;h
+        à 17&nbsp;h, c’est précisément ce qui fait la différence.
+      </p>
+
+      <h3>Nuages et convection</h3>
+      <p>
+        Le PI fournit aussi les précipitations et la nébulosité. Une bande nuageuse peut couper la
+        thermique, un grain apporte des rafales et une rotation du vent. RapidWind n’en affiche qu’un
+        pictogramme météo dérivé, à côté du vent et des rafales : de quoi repérer un grain, pas d’en lire
+        le cumul. À noter : Météo-France ne publie pas de code météo WMO ; celui affiché par l’application
+        est calculé par Open-Meteo à partir des champs du modèle.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="limites">
+      <h2 id="limites">Les limites d’AROME PI</h2>
+      <p>Un modèle expliqué honnêtement vaut mieux qu’un argument commercial. À connaître :</p>
+      <ul>
+        <li>
+          <strong>Six heures, ce n’est pas une semaine.</strong> Au-delà, il faut AROME France, puis
+          ARPEGE, avec l’incertitude qui va avec.
+        </li>
+        <li>
+          <strong>Ce n’est pas du nowcasting radar.</strong> L’extrapolation d’images radar reste une autre
+          méthode ; le PI est un modèle complet, réinitialisé souvent.
+        </li>
+        <li>
+          <strong>1,3&nbsp;km ne connaît pas la plage.</strong> Dunes, digues, falaises et bâtiments ne sont
+          pas dans le modèle. Sur la ligne d’eau, le vent est plus irrégulier qu’à 500&nbsp;m au large.
+        </li>
+        <li>
+          <strong>Les rafales restent incertaines.</strong> Elles dépendent de la turbulence dans la couche
+          limite : elles donnent un ordre de grandeur, pas une valeur garantie à l’instant t.
+        </li>
+        <li>
+          <strong>La convection reste mal résolue.</strong> Cellules orageuses et grains localisés restent
+          le point faible de toute prévision à très courte échéance, même à 1,3&nbsp;km.
+        </li>
+        <li>
+          <strong>Hors couverture fine, un autre modèle.</strong> RapidWind n’affiche le PI que sur la
+          France et les zones proches ; au-delà, la prévision ponctuelle bascule sur ARPEGE (environ
+          11&nbsp;km). Pour l’Allemagne, l’app propose ICON-D2 RUC ; pour les États-Unis, HRRR.
+        </li>
+      </ul>
+      <div class="note">
+        <strong>Et le plus important :</strong>
+        Une prévision reste une prévision. Vérifiez sur place — le ciel, la couleur de l’eau, les
+        indicateurs locaux — et pas seulement le chiffre à l’écran.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="comparaison">
+      <h2 id="comparaison">AROME PI comparé aux autres échelles</h2>
+      <table>
+        <caption>Comparaison des modèles en un coup d’œil</caption>
+        <thead>
+          <tr>
+            <th scope="col">Caractéristique</th>
+            <th scope="col">AROME PI</th>
+            <th scope="col">AROME France</th>
+            <th scope="col">ARPEGE Europe</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td scope="row">Maille</td>
+            <td>env. 1,3&nbsp;km</td>
+            <td>1,3 à 2,5&nbsp;km</td>
+            <td>env. 11&nbsp;km</td>
+          </tr>
+          <tr>
+            <td scope="row">Nouveaux runs</td>
+            <td>toutes les heures</td>
+            <td>plusieurs fois par jour</td>
+            <td>plusieurs fois par jour</td>
+          </tr>
+          <tr>
+            <td scope="row">Échéance</td>
+            <td>6&nbsp;h</td>
+            <td>48&nbsp;h</td>
+            <td>4 jours</td>
+          </tr>
+          <tr>
+            <td scope="row">Point fort</td>
+            <td>corrections à très court terme, heure de bascule</td>
+            <td>planification du lendemain</td>
+            <td>situation générale, tendance</td>
+          </tr>
+          <tr>
+            <td scope="row">Usage vent</td>
+            <td>la session de la journée</td>
+            <td>le week-end</td>
+            <td>la semaine, les vacances</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="region-note">
+        Valeurs d’après les documentations Météo-France et Open-Meteo ; ARPEGE est cité comme repère
+        d’échelle.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="rafales">
+      <h2 id="rafales">Rafales et grains : ce que le modèle sait, ce qu’il ignore</h2>
+      <p>
+        La rafale affichée est un maximum sur l’intervalle du pas de temps : quinze minutes dans la zone
+        PI, une heure ailleurs. Elle donne une idée du pic, pas une garantie sur ce que vous recevrez au
+        bord de l’eau. Trois situations reviennent souvent :
+      </p>
+      <ul>
+        <li>
+          <strong>Brise thermique établie</strong> — rafales modestes, vent régulier : le modèle est
+          généralement fiable.
+        </li>
+        <li>
+          <strong>Grain ou passage de front</strong> — la rafale peut doubler en quelques minutes et la
+          direction tourner nettement.
+        </li>
+        <li>
+          <strong>Vent canalisé par le relief</strong> (mistral, tramontane) — les pointes sont bien
+          captées, mais l’effet local d’un cap ou d’une digue reste hors modèle.
+        </li>
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="lire">
+      <h2 id="lire">Comment lire la carte</h2>
+      <ul>
+        <li>
+          <strong>La couleur, c’est la vitesse du vent</strong>, calibrée sur la plage utile en kitesurf,
+          wingfoil, windsurf et foil — pas sur l’échelle d’un service météo généraliste. Les valeurs sont
+          en <strong>nœuds</strong> : 1&nbsp;nœud = 1,852&nbsp;km/h, donc 15&nbsp;nœuds ≈ 28&nbsp;km/h.
+        </li>
+        <li>
+          <strong>Les flèches indiquent d’où vient le vent</strong> : une flèche venue de l’ouest signifie
+          un vent de secteur ouest. Leur longueur croît avec la force.
+        </li>
+        <li>
+          <strong>Un clic sur la carte, c’est une prévision ponctuelle.</strong> Vous obtenez la série
+          temporelle pour ces coordonnées, avec les rafales et le code météo.
+        </li>
+        <li>
+          <strong>Les rafales sont des maxima sur l’intervalle du pas de temps.</strong> La valeur
+          affichée est la rafale maximale de l’intervalle qui précède — une heure hors zone PI, quinze
+          minutes dans la zone PI — pas un instantané. Une heure calme peut donc contenir quelques
+          pointes. Pour décider d’y aller, regardez le vent moyen <em>et</em> la rafale.
+        </li>
+        <li>
+          <strong>Le sélecteur en haut à gauche :</strong> ICON-D2 RUC pour l’Allemagne et le centre de
+          l’Europe, AROME PI pour la France, HRRR pour les États-Unis.
+        </li>
+      </ul>
+      <p>
+        Un point sur la résolution temporelle : dans la zone du PI, la série ponctuelle garde le pas natif
+        de 15&nbsp;minutes des premières heures, puis passe à l’heure. Aucune valeur n’est inventée entre
+        deux échéances du modèle.
+      </p>
+      <p>
+        <strong>Ce que la carte ne montre pas :</strong> ni houle, ni marée, ni courant, ni température de
+        l’eau. Le flux ne contient que le vent moyen, les rafales, la direction, un code météo et
+        l’alternance jour/nuit. Pour l’état de la mer, il faut une source dédiée.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="confiance">
+      <h2 id="confiance">Jusqu’où faire confiance au run ?</h2>
+      <p>
+        Un run horaire ne rend pas une prévision certaine. En navigation, cette gradation est utile :
+      </p>
+      <table>
+        <caption>Fiabilité selon l’échéance</caption>
+        <thead>
+          <tr>
+            <th scope="col">Échéance</th>
+            <th scope="col">Fiabilité</th>
+            <th scope="col">Ce que cela permet</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0 à 3 heures</td>
+            <td>très élevée</td>
+            <td>Analyse fraîche : on suit l’évolution réelle plus que la prévision.</td>
+          </tr>
+          <tr>
+            <td>3 à 6 heures</td>
+            <td>élevée</td>
+            <td>Passage de brise et de grain bien décrits dans leur déroulé.</td>
+          </tr>
+          <tr>
+            <td>6 à 24 heures</td>
+            <td>moyenne</td>
+            <td>Tendance fiable, force et horaire encore susceptibles de bouger.</td>
+          </tr>
+          <tr>
+            <td>24 à 48 heures</td>
+            <td>faible à moyenne</td>
+            <td>À lire comme une tendance, à réévaluer le matin même.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Au-delà de quelques heures, le PI perd son avantage propre : c’est AROME France qui porte la
+        prévision. Tout l’intérêt du PI est là : la prévision de 14&nbsp;h consultée à 11&nbsp;h le jour
+        même n’a pas la même valeur que celle consultée la veille au soir.
+      </p>
+    </section>
+
+    <section class="card" id="spots" aria-labelledby="spots-titre">
+      <h2 id="spots-titre">Les spots couverts par AROME PI</h2>
+      <p>
+        Un clic ouvre la carte sur ces coordonnées, avec AROME PI déjà actif et la prévision ponctuelle
+        du spot. Les coordonnées servent de point de référence — plage, port ou village — et non de zone
+        de navigation.
+      </p>
+
+      <h3>Méditerranée — Occitanie</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=42.9051&amp;lon=3.0531&amp;model=arome">Leucate-Plage</a></li>
+        <li><a href="/?lat=42.7877&amp;lon=3.0366&amp;model=arome">Le Barcarès</a></li>
+        <li><a href="/?lat=42.6924&amp;lon=3.0316&amp;model=arome">Canet-Plage</a></li>
+        <li><a href="/?lat=42.5471&amp;lon=3.0225&amp;model=arome">Argelès-sur-Mer</a></li>
+        <li><a href="/?lat=43.1076&amp;lon=3.0865&amp;model=arome">Gruissan</a></li>
+        <li><a href="/?lat=43.1601&amp;lon=3.1660&amp;model=arome">Narbonne-Plage</a></li>
+        <li><a href="/?lat=43.2481&amp;lon=3.2903&amp;model=arome">Valras-Plage</a></li>
+        <li><a href="/?lat=43.2766&amp;lon=3.5110&amp;model=arome">Cap d’Agde</a></li>
+      </ul>
+
+      <h3>Méditerranée — Hérault, Gard et Camargue</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=43.3567&amp;lon=3.5280&amp;model=arome">Marseillan</a></li>
+        <li><a href="/?lat=43.4028&amp;lon=3.6928&amp;model=arome">Sète</a></li>
+        <li><a href="/?lat=43.5297&amp;lon=3.9304&amp;model=arome">Palavas-les-Flots</a></li>
+        <li><a href="/?lat=43.5608&amp;lon=4.0848&amp;model=arome">La Grande-Motte</a></li>
+        <li><a href="/?lat=43.5388&amp;lon=4.1356&amp;model=arome">Le Grau-du-Roi</a></li>
+        <li><a href="/?lat=43.4521&amp;lon=4.4291&amp;model=arome">Saintes-Maries-de-la-Mer</a></li>
+      </ul>
+
+      <h3>Provence et Côte d’Azur</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=43.0809&amp;lon=6.1330&amp;model=arome">Hyères – Almanarre</a></li>
+        <li><a href="/?lat=43.0382&amp;lon=6.1318&amp;model=arome">Giens</a></li>
+        <li><a href="/?lat=43.0917&amp;lon=5.8247&amp;model=arome">Six-Fours-les-Plages</a></li>
+        <li><a href="/?lat=43.1425&amp;lon=5.7472&amp;model=arome">Bandol</a></li>
+        <li><a href="/?lat=43.1748&amp;lon=5.6045&amp;model=arome">La Ciotat</a></li>
+        <li><a href="/?lat=43.2970&amp;lon=5.3811&amp;model=arome">Marseille</a></li>
+        <li><a href="/?lat=43.4233&amp;lon=6.7735&amp;model=arome">Saint-Raphaël</a></li>
+        <li><a href="/?lat=43.5514&amp;lon=7.0128&amp;model=arome">Cannes</a></li>
+        <li><a href="/?lat=43.5813&amp;lon=7.1249&amp;model=arome">Antibes</a></li>
+        <li><a href="/?lat=43.7031&amp;lon=7.2661&amp;model=arome">Nice</a></li>
+      </ul>
+
+      <h3>Corse</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=42.5660&amp;lon=8.7571&amp;model=arome">Calvi</a></li>
+        <li><a href="/?lat=41.3872&amp;lon=9.1567&amp;model=arome">Bonifacio</a></li>
+        <li><a href="/?lat=41.5910&amp;lon=9.2795&amp;model=arome">Porto-Vecchio</a></li>
+      </ul>
+
+      <h3>Atlantique — Pays basque, Gironde et Charente</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=43.3581&amp;lon=-1.7744&amp;model=arome">Hendaye</a></li>
+        <li><a href="/?lat=43.6646&amp;lon=-1.3963&amp;model=arome">Soorts-Hossegor</a></li>
+        <li><a href="/?lat=44.6350&amp;lon=-1.2012&amp;model=arome">Pyla-sur-Mer</a></li>
+        <li><a href="/?lat=44.4485&amp;lon=-1.2471&amp;model=arome">Biscarrosse-Plage</a></li>
+        <li><a href="/?lat=45.0003&amp;lon=-1.2025&amp;model=arome">Lacanau-Océan</a></li>
+        <li><a href="/?lat=45.6281&amp;lon=-1.0315&amp;model=arome">Royan</a></li>
+        <li><a href="/?lat=46.1631&amp;lon=-1.1522&amp;model=arome">La Rochelle</a></li>
+      </ul>
+
+      <h3>Vendée et Loire-Atlantique</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=46.3430&amp;lon=-1.4370&amp;model=arome">La Tranche-sur-Mer</a></li>
+        <li><a href="/?lat=46.4969&amp;lon=-1.7847&amp;model=arome">Les Sables-d’Olonne</a></li>
+        <li><a href="/?lat=46.7931&amp;lon=-2.0608&amp;model=arome">Saint-Jean-de-Monts</a></li>
+        <li><a href="/?lat=47.1158&amp;lon=-2.1033&amp;model=arome">Pornic</a></li>
+        <li><a href="/?lat=47.2922&amp;lon=-2.3640&amp;model=arome">La Baule-Escoublac</a></li>
+        <li><a href="/?lat=46.1862&amp;lon=-1.3924&amp;model=arome">Le Bois-Plage-en-Ré</a></li>
+      </ul>
+
+      <h3>Bretagne</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=47.8379&amp;lon=-4.3363&amp;model=arome">La Torche</a></li>
+        <li><a href="/?lat=47.4837&amp;lon=-3.1199&amp;model=arome">Quiberon</a></li>
+        <li><a href="/?lat=47.5843&amp;lon=-3.0787&amp;model=arome">Carnac</a></li>
+        <li><a href="/?lat=47.5859&amp;lon=-3.0305&amp;model=arome">La Trinité-sur-Mer</a></li>
+        <li><a href="/?lat=47.7065&amp;lon=-3.3834&amp;model=arome">Larmor-Plage</a></li>
+        <li><a href="/?lat=47.5986&amp;lon=-3.1144&amp;model=arome">Plouharnel</a></li>
+        <li><a href="/?lat=48.2236&amp;lon=-4.5340&amp;model=arome">Morgat</a></li>
+        <li><a href="/?lat=48.3903&amp;lon=-4.4863&amp;model=arome">Brest</a></li>
+        <li><a href="/?lat=48.6474&amp;lon=-2.0088&amp;model=arome">Saint-Malo</a></li>
+      </ul>
+
+      <h3>Manche et mer du Nord</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=48.8379&amp;lon=-1.5971&amp;model=arome">Granville</a></li>
+        <li><a href="/?lat=50.4070&amp;lon=1.5645&amp;model=arome">Berck-Plage</a></li>
+        <li><a href="/?lat=50.5243&amp;lon=1.5857&amp;model=arome">Le Touquet-Paris-Plage</a></li>
+        <li><a href="/?lat=50.8853&amp;lon=1.6626&amp;model=arome">Wissant</a></li>
+        <li><a href="/?lat=51.0452&amp;lon=2.3997&amp;model=arome">Malo-les-Bains</a></li>
+      </ul>
+
+      <h3>Lacs</h3>
+      <ul class="spot-list">
+        <li><a href="/?lat=44.5265&amp;lon=6.4043&amp;model=arome">Lac de Serre-Ponçon (Savines)</a></li>
+        <li><a href="/?lat=45.6917&amp;lon=5.9086&amp;model=arome">Lac du Bourget (Aix-les-Bains)</a></li>
+        <li><a href="/?lat=45.8550&amp;lon=6.1720&amp;model=arome">Lac d’Annecy</a></li>
+      </ul>
+
+      <p class="region-note">
+        Hors de cette liste, la carte reste utilisable : ouvrez-la et cliquez à l’endroit voulu. Pour
+        l’Allemagne et le centre de l’Europe, ICON-D2 RUC est le modèle adapté ; pour les États-Unis,
+        HRRR.
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="faq">
+      <h2 id="faq">Questions fréquentes sur AROME PI</h2>
+
+      <details open>
+        <summary><h3>À quelle fréquence AROME PI est-il actualisé ?</h3></summary>
+        <p>
+          Toutes les heures. Chaque run repart d’une analyse qui intègre les observations les plus
+          récentes. Les données sont généralement disponibles quinze à vingt minutes après l’heure du
+          run ; en bas à gauche, la mention « Updated … | Next ~… » donne l’heure de la dernière mise à
+          jour et celle du run suivant.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Quelle est l’échéance d’AROME PI ?</h3></summary>
+        <p>
+          Six heures, avec un pas de temps de 15 minutes. C’est le prix de la cadence horaire : le PI est
+          conçu pour la toute courte échéance, pas pour la prévision de la semaine.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>AROME PI, est-ce du nowcasting ?</h3></summary>
+        <p>
+          Presque, mais ce n’est pas la même méthode. Le nowcasting classique extrapole les images radar
+          pour l’heure suivante. AROME PI est un vrai modèle numérique : il est réinitialisé chaque heure
+          avec une analyse qui intègre notamment les radars et les stations, puis il calcule la suite de
+          l’évolution.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Pourquoi la carte affiche-t-elle plus de 6 heures ?</h3></summary>
+        <p>
+          Parce que RapidWind combine deux échelles : AROME PI pour les premières heures, puis AROME
+          France, qui va jusqu’à 48 heures. La prévision ponctuelle garde le pas natif de 15 minutes dans
+          la zone couverte par le PI, puis passe à l’heure.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>AROME PI couvre-t-il mon spot ?</h3></summary>
+        <p>
+          Le domaine couvre la France métropolitaine et les zones proches. Les spots ci-dessus en font
+          partie. Pour l’Allemagne et les Alpes orientales, RapidWind utilise ICON-D2 RUC ; pour les
+          États-Unis, HRRR.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Pourquoi ma prévision diffère-t-elle d’une autre application ?</h3></summary>
+        <p>
+          Souvent à cause du modèle, de la maille ou de la cellule choisie : la valeur provient de la
+          maille la plus proche, pas d’une mesure sur la plage. En brise thermique et sous le vent d’un
+          relief, deux mailles voisines peuvent différer nettement. Les rafales restent par ailleurs plus
+          incertaines que le vent moyen.
+        </p>
+      </details>
+
+      <details>
+        <summary><h3>Est-ce gratuit ?</h3></summary>
+        <p>
+          Oui, sans inscription et sans publicité. Les données d’AROME sont publiées par Météo-France
+          en données ouvertes sous Licence Ouverte ; RapidWind les utilise avec mention de la source.
+        </p>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="sources">
+      <h2 id="sources">Sources et liens</h2>
+      <ul class="sources">
+        <li>
+          Météo-France — données publiques, « Données de modèle AROME pour la prévision immédiate » :
+          <a href="https://donneespubliques.meteofrance.fr/?fond=produit&amp;id_produit=259&amp;id_rubrique=42" rel="noopener">donneespubliques.meteofrance.fr</a>
+        </li>
+        <li>
+          Météo-France — portail des données publiques (conditions d’utilisation, Licence Ouverte) :
+          <a href="https://donneespubliques.meteofrance.fr/" rel="noopener">donneespubliques.meteofrance.fr</a>
+        </li>
+        <li>
+          Open-Meteo — API Météo-France (modèles AROME, mailles, échéances, pas de temps) :
+          <a href="https://open-meteo.com/en/docs/meteofrance-api" rel="noopener">open-meteo.com — Météo-France API</a>
+        </li>
+        <li>
+          Open-Meteo — horaires d’actualisation des modèles :
+          <a href="https://open-meteo.com/en/docs/model-updates" rel="noopener">open-meteo.com — Model Updates</a>
+        </li>
+        <li>
+          Météo-France — site grand public et prévisions :
+          <a href="https://meteofrance.com/" rel="noopener">meteofrance.com</a>
+        </li>
+      </ul>
+      <p class="region-note">
+        Dernière mise à jour : 13 novembre 2026. Les configurations de modèle évoluent — en cas d’écart, les
+        informations de Météo-France font foi.
+      </p>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <nav aria-label="Autres pages">
+      <a href="/">Ouvrir la carte</a>
+      <a href="./info">Projet, architecture et chaîne de traitement</a>
+      <a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC en détail (en allemand)</a>
+      <a href="https://kitespots.zink.tv" rel="noopener">Guides de spots sur kitespots.zink.tv</a>
+    </nav>
+    <p>
+      RapidWind est un projet indépendant. Une prévision peut se tromper — vérifiez toujours les
+      conditions sur place. Données de modèle : Météo-France (Licence Ouverte).
+    </p>
+  </footer>
+</body>
+</html>

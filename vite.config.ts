@@ -19,6 +19,8 @@ const infoContent = marked.parse(readmeContent);
 const devContentPages = new Map<string, string>([
   ['/icon-d2-ruc', 'icon-d2-ruc.html'],
   ['/icon-d2-ruc.html', 'icon-d2-ruc.html'],
+  ['/arome-pi', 'arome-pi.html'],
+  ['/arome-pi.html', 'arome-pi.html'],
 ]);
 
 const serveDevContentPages = (): Plugin => ({
@@ -76,6 +78,11 @@ export default defineConfig({
           // Static, JavaScript-free content page (German) for the ICON-D2 RUC model.
           filename: 'icon-d2-ruc.html',
           template: './icon-d2-ruc.html'
+        },
+        {
+          // Static, JavaScript-free content page (French) for the AROME PI model.
+          filename: 'arome-pi.html',
+          template: './arome-pi.html'
         }
       ],
       minify: true

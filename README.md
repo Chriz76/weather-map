@@ -25,6 +25,8 @@ Three rapid-update models are available; switch them with the toggle in the logo
 
 Background on the ICON-D2 RUC update cycle, its resolution and its limits:
 [ICON-D2 RUC im Detail (German)](https://rapidwind.app/icon-d2-ruc).
+Background on the AROME PI immediate forecast, its run cadence and its limits:
+[AROME PI en détail (French)](https://rapidwind.app/arome-pi).
 
 | Provider | Area | Resolution | Cycle / steps | Sources |
 | :--- | :--- | :--- | :--- | :--- |
