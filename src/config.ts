@@ -71,7 +71,7 @@ export const providers: Record<string, ProviderConfig> = {
   [HRRR]: {
     // NOAA HRRR (CONUS only). Origin of both the `index.json` and the tile pyramid its `tiles_url`
     // points at, so the timestamps of the index are exactly the ones the pyramid serves.
-    baseUrl: "https://hrrr.b-cdn.net/",
+    baseUrl: "https://rrfs.b-cdn.net/",
     // Same window as `bounds` of the index: point forecast and tiles cover the same area.
     imageBounds: [
       [21.138, -134.096114],
