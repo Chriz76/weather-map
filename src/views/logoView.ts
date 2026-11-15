@@ -26,7 +26,7 @@ export function registerLogoView(map: LeafletMap): void {
 
       container.innerHTML = `
         <div class="logo-view__container">
-          <a href="./info.html" class="logo-view__link" title="Show documentation and project information">
+          <a href="./info" class="logo-view__link" title="Show documentation and project information">
             <img class="logo-view__icon" src="/favicon.svg" alt="Wind map logo" />
           </a>
 
