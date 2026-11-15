@@ -5,6 +5,7 @@ import { weatherService } from '../services/weatherService';
 import { loadingSpinnerController } from './loadingSpinnerController';
 import { toastController } from './toastController';
 import { logger } from '../utils/logger';
+import * as versionUtils from '../utils/version';
 import type { IndexData, LatLng, PointForecast } from '../types';
 
 export class ApiMismatchError extends Error {
@@ -97,6 +98,47 @@ export async function loadWeatherDataForLocationAction(latlng: LatLng): Promise<
 }
 
 /**
+ * Gates a sync on the API contract version published in `index.json`.
+ *
+ * Only a server that is *ahead* of this build blocks the app, because this frontend cannot render
+ * data it does not know yet. A server that is behind (rollback, stale CDN copy) or a patch-only
+ * bump (backend fix) is tolerated with a warning: blocking there would trap the user in a reload
+ * loop that just reloads the same build. An unparsable version is treated as compatible, so a
+ * server change can never lock the app out.
+ * @param apiVersion `api_version` from the index, if the server publishes one.
+ * @throws {ApiMismatchError} When the server version is newer than `EXPECTED_API_VERSION`.
+ */
+function assertApiVersionCompatible(apiVersion: string | undefined): void {
+  if (!apiVersion) return;
+
+  const significant = versionUtils.compare(apiVersion, EXPECTED_API_VERSION, versionUtils.PRECISION_MAJOR_MINOR);
+  if (significant === null) {
+    logger.warn('⚠️ [SYNC CHECK] Unparsable api_version, skipping the compatibility check:', {
+      api_version: apiVersion,
+      expected: EXPECTED_API_VERSION
+    });
+    return;
+  }
+
+  if (significant > 0) throw new ApiMismatchError(apiVersion);
+
+  if (significant < 0) {
+    logger.warn('⚠️ [SYNC CHECK] Server api_version is older than this build, continuing:', {
+      api_version: apiVersion,
+      expected: EXPECTED_API_VERSION
+    });
+    return;
+  }
+
+  if (versionUtils.compare(apiVersion, EXPECTED_API_VERSION) !== 0) {
+    logger.warn('⚠️ [SYNC CHECK] Patch-level api_version difference, continuing:', {
+      api_version: apiVersion,
+      expected: EXPECTED_API_VERSION
+    });
+  }
+}
+
+/**
  * Retries an async operation up to `attempts` times.
  * Used per network step so that a retry does not re-execute unrelated work.
  * @param label Human-readable step name for logging.
@@ -131,9 +173,7 @@ export async function syncAppWithServerAction(background = true, force = false, 
 
   weatherProviderModel.setLastIndexSync(new Date());
 
-  if (indexData.api_version && indexData.api_version !== EXPECTED_API_VERSION) {
-    throw new ApiMismatchError(indexData.api_version);
-  }
+  assertApiVersionCompatible(indexData.api_version);
 
   logger.info('📊 [SYNC NETWORK] Index loaded successfully:', {
     api_version: indexData?.api_version,
