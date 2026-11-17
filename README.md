@@ -1,21 +1,46 @@
-# Interactive ICON-D2 RUC, AROME PI & HRRR Wind Map
+# RapidWind – ICON-D2 RUC, AROME PI & HRRR Wind Map
 
 [![Live App](https://img.shields.io/badge/Live-Demo-blue?style=flat-square)](https://rapidwind.app/)
 [![Data Pipeline Repo](https://img.shields.io/badge/Data-Repository-green?style=flat-square)](https://github.com/Chriz76/weather-data)
 
-The app visualizes localized wind forecast data for **Germany**, **France** and nearby regions, plus the **CONUS** area from HRRR. You can switch between **ICON-D2 RUC**, **AROME PI** and **HRRR** using the logo row.
+Free, ad-free wind and weather map for kite, wing foil and windsurfing. It renders three regional
+rapid-update models — **ICON-D2 RUC** (DWD, 2.2 km, hourly runs), **AROME PI** (Météo-France, 2.5 km
+with a 1.3 km gust field) and **HRRR** (NOAA, 3 km) — and turns any spot on the map into a point
+forecast with wind, gusts, direction and the WMO weather code.
 
 [![App Screenshot](public/Screenshot_20260814-120701_Chrome.png)](https://rapidwind.app/)
 
-The project uses the **ICON-D2 RUC (Rapid Update Cycle)** model provided by the Deutscher Wetterdienst (DWD) and **AROME PI** via Open-Meteo using Météo-France model data. Point forecasts for all three providers, including the WMO weather codes (WW), come from Open-Meteo; the ICON-D2 and AROME map overlays are rendered from the DWD/Météo-France runs. The map overlay utilizes a custom color-scale optimized for the specific velocity ranges relevant to kite and wing foiling.
-
-To our knowledge, this is a **unique free implementation** providing hourly updated, interactive point-forecast queries from these high-resolution models.
-
-[See my article on medium for some more background](https://medium.com/@christianzink/why-standard-wind-forecasts-fail-the-power-of-dwds-icon-d2-ruc-model-for-wind-sports-acf2ebd88412?sharedUserId=christianzink)
-
-[Related: kitespots.zink.tv](https://kitespots.zink.tv)
+To our knowledge this is a **unique free implementation** of hourly updated, interactive point
+forecasts from these high-resolution models.
 
 > ⚠️ **Disclaimer:** Always check the local weather at your spot. Forecasts can be wrong. This project is currently in active development.
+
+---
+
+## Documentation
+
+The user-facing documentation lives on the app itself, not in this README:
+
+| Page | Content |
+| :--- | :--- |
+| **[rapidwind.app/info](https://rapidwind.app/info)** | What the app shows, how to read the map, model overview, data sources, limits, privacy |
+| [ICON-D2 RUC](https://rapidwind.app/icon-d2-ruc) (German) | Update cycle, 27 h model run, resolution, where the model stops |
+| [AROME PI](https://rapidwind.app/arome-pi) (French) | Immediate forecast, 6 h PI range at 15-minute steps, limits |
+| [HRRR](https://rapidwind.app/hrrr-conus) (English) | 3 km grid, 15-minute steps for the first 6 h, radar assimilation, limits |
+
+Background reading: [Why standard wind forecasts fail](https://medium.com/@christianzink/why-standard-wind-forecasts-fail-the-power-of-dwds-icon-d2-ruc-model-for-wind-sports-acf2ebd88412) ·
+[Related project: kitespots.zink.tv](https://kitespots.zink.tv)
+
+---
+
+## Repositories
+
+Ingestion and frontend are kept in two repositories so deployment and data pipeline stay independent:
+
+| Repository | Role |
+| :--- | :--- |
+| [weather-map](https://github.com/Chriz76/weather-map) (this repo) | TypeScript/Vite frontend: map, timeline, point forecast, model pages |
+| [weather-data](https://github.com/Chriz76/weather-data) | Python pipeline: GRIB2 ingestion, cropping, JSON serialization |
 
 ---
 
@@ -23,47 +48,16 @@ To our knowledge, this is a **unique free implementation** providing hourly upda
 
 Three rapid-update models are available; switch them with the toggle in the logo row.
 
-Background on the ICON-D2 RUC update cycle, its resolution and its limits:
-[ICON-D2 RUC im Detail (German)](https://rapidwind.app/icon-d2-ruc).
-Background on the AROME PI immediate forecast, its run cadence and its limits:
-[AROME PI en détail (French)](https://rapidwind.app/arome-pi).
-Background on the HRRR model, its 15-minute window and where it stops:
-[HRRR in detail (English)](https://rapidwind.app/hrrr-conus).
+| Provider | Area | Resolution | Cycle / steps on the map | Map horizon | Sources |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, hourly steps | 24 h | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
+| **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min for 6 h, hourly after | 22 h | Météo-France via Open-Meteo |
+| **HRRR** | CONUS | 3 km | hourly runs, 15 min for 6 h, hourly after | 18 h | NOAA HRRR via Open-Meteo |
 
-| Provider | Area | Resolution | Cycle / steps | Sources |
-| :--- | :--- | :--- | :--- | :--- |
-| **ICON-D2 RUC** | Germany and Central Europe | 2.2 km | hourly runs, hourly steps | DWD ICON-D2 RUC (`dwd_icon_d2_ruc_native`) via Open-Meteo |
-| **AROME PI** | France and Western Europe | 2.5 km (1.3 km gusts) | hourly runs, 15 min steps | Météo-France via Open-Meteo |
-| **HRRR** | CONUS | 3 km | hourly runs, 15 min steps for 6 h, hourly afterwards | NOAA HRRR via Open-Meteo |
-
-ICON-D2 RUC is requested at its native hourly step: DWD publishes neither 10 m wind nor weather
-codes below one hour for the RUC, so a 15-minute series would only interpolate the hourly field.
-
-HRRR publishes its wind field not as a rendered image but as a static tile pyramid from the
-`hrrr-data` pipeline: `index.json` names the run and a `tiles_url` template, each tile is an
-int16-delta payload that the client decodes and draws as a colored field plus arrows (WebGL2 via
-deck.gl). Point forecasts come from Open-Meteo's `gfs_hrrr` model and only exist inside CONUS.
-
----
-
-## Technical Specifications & Advantages of ICON-D2 RUC / Arome PI
-Most mainstream consumer weather applications render global or regional models with coarse resolution and slow update cycles. This application visualizes premier high-resolution local models:
-
-| Parameter | ICON-D2 RUC / Arome PI | Standard Global Models (e.g., GFS) |
-| :--- | :--- | :--- |
-| **Horizontal Resolution** | **2.2/2.5(1.3) km** grid | 13 km – 27 km grid |
-| **Update Cycle** | **Hourly (Every 60 minutes)** | Every 6 hours |
-| **Interval** | **60 min** (D2 RUC) / **15 min** (Arome PI) | 60-360 min |
-| **Data Assimilation** | **Rapid Update Cycle (RUC)** (Continuous assimilation of local radar & station observations) | Intermittent batch assimilation |
-| **Forecast Range** | 28/6 hours | Multi-day extended range |
-
-Arome base wind is only available in the 2.5 km dataset. The forecasts use the 1.3 km resolution for gusts.
-
-### Application for Foiling:
-
-Micro-climatic shifts, thermal winds, and localized frontal systems near lakes or coastal structures are typically lost in >10km grids. The 2.2/2.5(1.3) km resolution of the ICON-D2 RUC/Arome PI model captures these thermodynamic anomalies. Updating the dataset hourly ensures near-term tactical wind window forecasts remain accurate.
-
-AROME PI 2.5/1.3 km adds another high-resolution option for nearby regions via Open-Meteo and Météo-France model data.
+The ranges above are what the data pipeline publishes. The models themselves reach further: ICON-D2 RUC
+runs cover 27 h, HRRR runs go out to 48 h. Point forecasts and the WMO weather codes for all three
+providers come from Open-Meteo. Why 2–3 km grids and hourly runs matter for wind sports is explained on
+[rapidwind.app/info](https://rapidwind.app/info).
 
 ---
 
@@ -80,18 +74,39 @@ The project implements a decoupled, entirely serverless **Two-Repository Archite
 ### 2. Frontend Visualization (`weather-map`)
 * The client-side application loads the lightweight spatial arrays on-demand based on the user's selected timeline node.
 * **Coordinate Interpolation:** When a user interacts with the map interface, the application translates the mouse pointer's geospatial coordinate (Latitude/Longitude) to extract the precise point-forecast value from the underlying data matrix.
+* **HRRR wind tiles:** HRRR publishes its wind field as a static tile pyramid instead of a rendered image. `index.json` names the run and a `tiles_url` template; each tile is an int16-delta payload that the client decodes and draws as a coloured field plus arrows (WebGL2 via deck.gl). Point forecasts come from Open-Meteo's `gfs_hrrr` model and only exist inside CONUS.
 
 ---
 
-## Development & Contribution
+## Tech Stack & Development
 
-As this is an actively developed project, contributions to optimize the JSON chunking sizes, add more rapid models like Netherlands Harmonie, improve the UI performance under heavy mobile rendering conditions, or add vector-based wind direction overlays or WebGL are welcome.
+| Layer | Stack |
+| :--- | :--- |
+| Frontend | TypeScript, Vite, Leaflet, deck.gl / luma.gl (WebGL2), pmtiles |
+| Architecture | MVC split into models, views and controllers; models hold no DOM logic |
+| Quality gates | `tsc --noEmit`, ESLint (`--max-warnings=0`), Vitest |
 
-This project is a private, free, and ad-free open-source web app. It is maintained strictly for hobby purposes and pursues no commercial interests.
+```bash
+npm install
+npm run dev        # dev server on :3000, content pages under /info, /icon-d2-ruc, /arome-pi, /hrrr-conus
+npm run typecheck
+npm run lint:ci
+npm test
+npm run build
+```
 
-* **Data Attribution:** Deutscher Wetterdienst (DWD) - OpenData.
-* **AROME Attribution:** [Open-Meteo](https://open-meteo.com/) using [Météo-France](https://meteofrance.com/) model data.
-* **HRRR Attribution:** NOAA HRRR model data, point forecasts via [Open-Meteo](https://open-meteo.com/), wind tiles from the `hrrr-data` pipeline.
+As this is an actively developed project, contributions to optimize the JSON chunking sizes, add
+more rapid models like Netherlands Harmonie, improve the UI performance under heavy mobile rendering
+conditions, or add vector-based wind direction overlays are welcome.
+
+This project is a private, free, and ad-free open-source web app. It is maintained strictly for
+hobby purposes and pursues no commercial interests.
+
+## Data Attribution
+
+* **ICON-D2 RUC:** Deutscher Wetterdienst (DWD) - OpenData.
+* **AROME PI:** [Open-Meteo](https://open-meteo.com/) using [Météo-France](https://meteofrance.com/) model data.
+* **HRRR:** NOAA HRRR model data, point forecasts via [Open-Meteo](https://open-meteo.com/), wind tiles from the `hrrr-data` pipeline.
 * **Icon Attribution:** [Weather Icons](https://erikflowers.github.io/weather-icons/) by Erik Flowers (SIL OFL 1.1 / MIT) for the forecast weather icons.
 * **Author:** [Chriz76](https://github.com/Chriz76)
 
@@ -102,27 +117,9 @@ This project is a private, free, and ad-free open-source web app. It is maintain
   
 This application is provided **free of charge** for personal and recreational use (e.g., wind/wing foiling planning). However, the source code, custom processing pipelines, and frontend logic remain the intellectual property of the author. You may not redistribute, modify, or commercially exploit this codebase without explicit written permission.
 
-## Privacy Policy
+## Privacy
 
-Because your privacy matters, this web app does not collect, store, or track any of your personal data. We do not use any marketing or tracking cookies, and there is no user registration required to use this app.
-
-However, to provide this web app in a stable, secure, and fast manner, we rely on modern cloud infrastructure. Due to technical requirements, a minimal amount of data processing occurs automatically in the background:
-
-### 1. Hosting via GitHub Pages
-This web app is hosted as a static site on GitHub Pages (Service Provider: GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA; Parent Company: Microsoft Corporation). When you access this app, GitHub automatically collects standard server log files (including your IP address, browser type, and the date and time of access). This is technically necessary to deliver the page securely and to prevent cyber attacks. GitHub/Microsoft is certified under the EU-US Data Privacy Framework, ensuring a GDPR-compliant level of data protection.
-
-### 2. Security & Content Delivery Network via Cloudflare
-Additionally, we use the Content Delivery Network (CDN) provided by Cloudflare (Service Provider: Cloudflare Inc., 101 Townsend St, San Francisco, CA 94107, USA). Cloudflare acts as a security shield between our host server and your browser. During this process, your IP address is briefly processed to block malicious traffic (e.g., DDoS attacks) and to optimize page loading speeds globally. Cloudflare may set technically necessary cookies for security purposes, which do not create user profiles. Cloudflare is also certified under the EU-US Data Privacy Framework.
-
-### 3. Error Tracking & Application Stability via Sentry
-To ensure technical stability, identify code bugs, and prevent app crashes, we use the error-tracking service Sentry (Functional Software, Inc., 45 Fremont Street, 8th Floor, San Francisco, CA 94105, USA). 
-
-When a technical error occurs, an anonymized error report is automatically transmitted to Sentry. This includes minimal technical details such as the timestamp, browser version, operating system, and the specific line of code that triggered the error. Sentry is configured to run without setting tracking cookies and immediately anonymizes IP addresses. Functional Software, Inc. is certified under the EU-US Data Privacy Framework.
-
-### 4. Privacy-Friendly Analytics via Umami
-To understand basic usage trends (such as daily visitor counts or model preferences) and improve the user experience, we use the privacy-focused analytics tool Umami. 
-
-Umami does not use cookies, does not store any personal data, does not track users across different websites, and does not generate unique persistent IDs. All analytics data is aggregated and completely anonymized.
-
-
-**Legal Basis:** The use of these third-party services is based on our legitimate interest (Art. 6 Abs. 1 lit. f GDPR) to offer this hobby project in a secure, high-performing, and reliable manner on the internet.
+The app collects no personal data, sets no marketing cookies, uses no cross-site tracking and needs
+no account. The only third parties involved are Cloudflare (Pages hosting and CDN), Sentry
+(anonymized error reports) and Umami (cookieless analytics). Full details, including legal basis:
+[rapidwind.app/info#privacy](https://rapidwind.app/info#privacy).
