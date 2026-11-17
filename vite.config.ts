@@ -1,13 +1,7 @@
 import fs from 'node:fs';
 import { resolve } from 'node:path';
-import { marked } from 'marked';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import { defineConfig, type Plugin } from 'vite';
-
-// README einlesen & "public/" für das spätere Web-Root durch "/" ersetzen
-const rawReadme = fs.readFileSync('README.md', 'utf-8');
-const readmeContent = rawReadme.replaceAll('public/', '/');
-const infoContent = marked.parse(readmeContent);
 
 /**
  * Extra HTML pages that live at the project root and are only built by Vite in
@@ -17,6 +11,8 @@ const infoContent = marked.parse(readmeContent);
  * identical without touching the build pipeline.
  */
 const devContentPages = new Map<string, string>([
+  ['/info', 'info.html'],
+  ['/info.html', 'info.html'],
   ['/icon-d2-ruc', 'icon-d2-ruc.html'],
   ['/icon-d2-ruc.html', 'icon-d2-ruc.html'],
   ['/arome-pi', 'arome-pi.html'],
@@ -66,15 +62,10 @@ export default defineConfig({
           template: './index.html'
         },
         {
+          // Static, JavaScript-free documentation page (English). Content is part of
+          // the file itself, so no template data is injected here.
           filename: 'info.html',
-          template: './info.html',
-          injectOptions: {
-            data: {
-              pageTitle: 'Documentation & Info | RapidWind – ICON-D2, AROME & HRRR Weather Map',
-              description: 'Documentation, technical background and project information for RapidWind, the hourly wind and weather map built on ICON-D2 RUC, AROME PI and HRRR.',
-              infoContent
-            }
-          }
+          template: './info.html'
         },
         {
           // Static, JavaScript-free content page (German) for the ICON-D2 RUC model.

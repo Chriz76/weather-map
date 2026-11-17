@@ -3,27 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= pageTitle %></title>
-  <meta name="description" content="<%= description %>">
+  <title>Documentation &amp; Info | RapidWind – ICON-D2 RUC, AROME PI &amp; HRRR Wind Map</title>
+  <meta name="description" content="What RapidWind shows, how to read the hourly wind map, which models it renders - ICON-D2 RUC, AROME PI and HRRR - where the data comes from and how privacy is handled.">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="https://rapidwind.app/info">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="article">
   <meta property="og:site_name" content="RapidWind">
   <meta property="og:locale" content="en_US">
-  <meta property="og:title" content="<%= pageTitle %>">
-  <meta property="og:description" content="<%= description %>">
+  <meta property="og:title" content="Documentation &amp; Info | RapidWind">
+  <meta property="og:description" content="How to read the hourly wind map, which models it renders, where the data comes from and how privacy is handled.">
   <meta property="og:url" content="https://rapidwind.app/info">
-  <meta property="og:image" content="https://rapidwind.app/og-image.png">
-  <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image" content="https://rapidwind.app/og-image.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1000">
+  <meta property="og:image:height" content="525">
   <meta property="og:image:alt" content="RapidWind – hourly wind and weather forecast maps">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="<%= pageTitle %>">
-  <meta name="twitter:description" content="<%= description %>">
-  <meta name="twitter:image" content="https://rapidwind.app/og-image.png">
+  <meta name="twitter:title" content="Documentation &amp; Info | RapidWind">
+  <meta name="twitter:description" content="How to read the hourly wind map, which models it renders, where the data comes from and how privacy is handled.">
+  <meta name="twitter:image" content="https://rapidwind.app/og-image.jpg">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://rapidwind.app/info#page",
+          "url": "https://rapidwind.app/info",
+          "name": "Documentation and project info | RapidWind",
+          "description": "How to read the hourly wind map, which models it renders, where the data comes from and how privacy is handled.",
+          "inLanguage": "en",
+          "isPartOf": { "@id": "https://rapidwind.app/#website" },
+          "breadcrumb": { "@id": "https://rapidwind.app/info#breadcrumb" }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://rapidwind.app/info#breadcrumb",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "RapidWind", "item": "https://rapidwind.app/" },
+            { "@type": "ListItem", "position": 2, "name": "Documentation and project info" }
+          ]
+        }
+      ]
+    }
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -151,6 +177,58 @@
       color: #e2e8f0;
     }
 
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 72ch;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      margin-top: 20px;
+      font-weight: 600;
+    }
+
+    .quick-links a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .quick-links a:hover,
+    .quick-links a:focus-visible {
+      text-decoration: underline;
+    }
+
+    .content section + section {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .content ul {
+      padding-left: 1.2rem;
+    }
+
+    .content li + li {
+      margin-top: 0.4rem;
+    }
+
+    .content th {
+      background: #f1f5f9;
+      text-align: left;
+    }
+
+    .content caption {
+      caption-side: top;
+      text-align: left;
+      padding-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
     @media (max-width: 640px) {
       main {
         padding-inline: 12px;
@@ -165,8 +243,298 @@
 </head>
 <body>
   <main>
+    <header class="hero">
+      <h1>RapidWind documentation</h1>
+      <p class="lead">
+        RapidWind is a free, ad-free wind and weather map for kite, wing foil and windsurfing.
+        It renders three regional rapid-update models – <strong>ICON-D2 RUC</strong>,
+        <strong>AROME PI</strong> and <strong>HRRR</strong> – and turns any spot on the map into a
+        point forecast with wind speed, gusts, wind direction and weather.
+      </p>
+      <nav class="quick-links" aria-label="Further information">
+        <a href="./">Open the map</a>
+        <a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC im Detail</a>
+        <a href="./arome-pi" hreflang="fr" lang="fr">AROME PI en détail</a>
+        <a href="./hrrr-conus" hreflang="en" lang="en">HRRR in detail</a>
+        <a href="https://github.com/Chriz76/weather-map">Source code on GitHub</a>
+      </nav>
+    </header>
+
     <article class="content">
-      <%- infoContent %>
+      <section id="what">
+        <h2>What RapidWind shows</h2>
+        <p>
+          Most consumer weather apps render global models with a 13–27 km grid and four runs per day.
+          RapidWind renders regional rapid-update models instead: 2.2 km for Germany and Central Europe,
+          2.5 km for France and Western Europe, 3 km for the continental United States. A new model run
+          arrives every hour, and the map is redrawn with it.
+        </p>
+        <p>
+          The wind field is drawn as a coloured overlay; a click or tap anywhere on the map opens the
+          point forecast for that coordinate. The colour scale is tuned to the range that matters for
+          kite and wing foiling, not to storm warning colours.
+        </p>
+      </section>
+
+      <section id="how-to-read">
+        <h2>How to read the map</h2>
+        <ul>
+          <li>
+            <strong>Model switch:</strong> the logo row at the top toggles between ICON-D2 RUC,
+            AROME PI and HRRR. Each model covers a different region.
+          </li>
+          <li>
+            <strong>Timeline:</strong> step through the forecast hours. Map and point forecast always
+            follow the selected hour.
+          </li>
+          <li>
+            <strong>Point forecast:</strong> click or tap a spot on the map to get wind, gusts,
+            direction and the WMO weather code for that coordinate.
+          </li>
+          <li>
+            <strong>Share:</strong> the share control copies a link to the current view so the same
+            location can be reopened later or sent to someone else.
+          </li>
+          <li>
+            <strong>GPS:</strong> centres the map on your own position, useful when you are at the spot
+            and want to compare forecast and reality.
+          </li>
+          <li>
+            <strong>Wind display:</strong> switches how the wind field is drawn – as the coloured
+            surface or with direction arrows.
+          </li>
+        </ul>
+      </section>
+
+      <section id="models">
+        <h2>The three models</h2>
+        <table>
+          <caption>Resolution, run cadence, output interval and horizon of what the map renders.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Model</th>
+              <th scope="col">Region</th>
+              <th scope="col">Grid</th>
+              <th scope="col">Runs</th>
+              <th scope="col">Steps on the map</th>
+              <th scope="col">Map horizon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">ICON-D2 RUC</th>
+              <td>Germany and Central Europe</td>
+              <td>2.2 km</td>
+              <td>hourly</td>
+              <td>60 min</td>
+              <td>24 h</td>
+            </tr>
+            <tr>
+              <th scope="row">AROME PI</th>
+              <td>France and Western Europe</td>
+              <td>2.5 km base, 1.3 km gusts</td>
+              <td>hourly</td>
+              <td>15 min for 6 h, then hourly</td>
+              <td>22 h</td>
+            </tr>
+            <tr>
+              <th scope="row">HRRR</th>
+              <td>Continental United States</td>
+              <td>3 km</td>
+              <td>hourly</td>
+              <td>15 min for 6 h, then hourly</td>
+              <td>18 h</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          ICON-D2 RUC is requested at its native hourly step: the DWD publishes neither 10 m wind nor
+          weather codes below one hour for the RUC, so a 15-minute series would only interpolate the
+          hourly field. AROME PI and HRRR do publish 15-minute steps; the map shows them for the first
+          six hours and switches to hourly values after that.
+        </p>
+        <p>
+          The models themselves reach further than the map. An ICON-D2 RUC run covers 27 h, AROME France
+          continues beyond AROME PI, and HRRR runs go out to 48 h. The map and the timeline end where the
+          data pipeline stops publishing – 24 h, 22 h and 18 h respectively. Point forecasts may extend a
+          little further, because they come from Open-Meteo instead of the pipeline.
+        </p>
+        <p>
+          Deeper background per model:
+          <a href="./icon-d2-ruc" hreflang="de" lang="de">ICON-D2 RUC</a>,
+          <a href="./arome-pi" hreflang="fr" lang="fr">AROME PI</a>,
+          <a href="./hrrr-conus" hreflang="en" lang="en">HRRR</a>.
+        </p>
+      </section>
+
+      <section id="why-resolution">
+        <h2>Why resolution and update cycle matter</h2>
+        <p>
+          Micro-climatic shifts, thermal winds, sea breeze and localized frontal systems near lakes or
+          coastal structures are lost in grids coarser than about 10 km. A 2–3 km grid resolves these
+          thermodynamic anomalies, and the 1.3 km gust field of AROME PI resolves them one step further.
+        </p>
+        <p>
+          The update cycle decides whether the forecast is still usable when the wind changes. Global
+          models are refreshed every six hours; the models shown here get a new run every hour, so a
+          front that arrives late still shows up in the near-term tactical window – the part of the day
+          that decides whether a session happens.
+        </p>
+      </section>
+
+      <section id="sources">
+        <h2>Data sources and attribution</h2>
+        <p>
+          None of the forecast data is measured by RapidWind itself. It is fetched from the following
+          sources, cropped to the map area and rendered; the attribution below is required by their
+          terms of use.
+        </p>
+        <ul>
+          <li>
+            <strong>ICON-D2 RUC:</strong> Deutscher Wetterdienst (DWD),
+            <a href="https://www.dwd.de/EN/ourservices/opendata/opendata.html">DWD Open Data</a>.
+            GRIB2 fields are cropped and serialized by the RapidWind data pipeline.
+          </li>
+          <li>
+            <strong>AROME PI:</strong> Météo-France model data, delivered through
+            <a href="https://open-meteo.com/">Open-Meteo</a>.
+          </li>
+          <li>
+            <strong>HRRR:</strong> NOAA HRRR model data; wind tiles from the RapidWind data pipeline,
+            point forecasts and weather codes through <a href="https://open-meteo.com/">Open-Meteo</a>.
+          </li>
+          <li>
+            <strong>Point forecasts and weather codes:</strong>
+            <a href="https://open-meteo.com/">Open-Meteo</a> for all three providers, including the
+            WMO weather codes.
+          </li>
+          <li>
+            <strong>Basemap:</strong> map data ©
+            <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, tiles ©
+            <a href="https://carto.com/attributions">CARTO</a>. The attribution is also shown in the
+            map corner of the app.
+          </li>
+          <li>
+            <strong>Weather icons:</strong>
+            <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.
+          </li>
+        </ul>
+        <p>
+          Author: <a href="https://github.com/Chriz76">Chriz76</a>. Project details, background
+          articles and related projects:
+          <a href="https://github.com/Chriz76/weather-map">github.com/Chriz76/weather-map</a>.
+        </p>
+      </section>
+
+      <section id="limits">
+        <h2>Limits and disclaimer</h2>
+        <blockquote>
+          <strong>Always check the local weather at your spot.</strong> A forecast can be wrong, and a
+          model cannot see the tree line, the building or the headland in front of you.
+        </blockquote>
+        <ul>
+          <li>
+            The models are regional. Outside their coverage area the map has no data; the app does not
+            fall back to a global model.
+          </li>
+          <li>
+            A point forecast is the value of the grid cell containing your coordinate, not a measurement
+            at your position.
+          </li>
+          <li>
+            Rapid updates sharpen the near term, they do not extend it. Beyond the model horizon you
+            need a second source.
+          </li>
+          <li>This project is under active development; behaviour and data coverage can change.</li>
+        </ul>
+      </section>
+
+      <section id="privacy">
+        <h2>Privacy</h2>
+        <p>
+          No account, no marketing cookies, no tracking across sites, and none of your personal data is
+          stored by RapidWind. A minimal amount of processing happens in the background to deliver the
+          site safely and quickly, on the basis of legitimate interest (Art. 6 (1) (f) GDPR):
+        </p>
+        <ul>
+          <li>
+            <strong>Hosting:</strong> the site is served as a static build through Cloudflare Pages
+            (Cloudflare Inc., 101 Townsend St, San Francisco, CA 94107, USA). Server logs contain the IP
+            address, browser type and time of access, which is technically required to deliver the page
+            and to block attacks.
+          </li>
+          <li>
+            <strong>Content delivery:</strong> Cloudflare acts as CDN and security layer in front of the
+            origin. Cloudflare may set technically necessary cookies for security purposes; they do not
+            create user profiles.
+          </li>
+          <li>
+            <strong>Error tracking:</strong> Sentry (Functional Software, Inc., San Francisco, USA)
+            receives anonymized error reports without tracking cookies and with IP addresses removed.
+          </li>
+          <li>
+            <strong>Analytics:</strong> Umami, operated without cookies, without persistent identifiers
+            and without cross-site tracking. All values are aggregated and anonymized.
+          </li>
+        </ul>
+        <p>
+          Forecast data itself is fetched from DWD, Open-Meteo and the RapidWind data pipeline; no user
+          data is sent to these sources.
+        </p>
+      </section>
+
+      <section id="license">
+        <h2>Licence and terms of use</h2>
+        <p>
+          RapidWind is a private hobby project: free of charge, ad-free and without commercial
+          interest. You may use the application free of charge for personal and recreational purposes
+          such as planning a kite, wing foil or windsurf session.
+        </p>
+        <ul>
+          <li>
+            <strong>Software:</strong> copyright © 2026 by Chriz76, all rights reserved. The source
+            code, the processing pipeline and the frontend logic remain the intellectual property of
+            the author. Redistribution, modification or commercial use requires explicit written
+            permission – this is not an open-source licence.
+          </li>
+          <li>
+            <strong>ICON-D2 RUC data:</strong> Deutscher Wetterdienst under the
+            <a href="https://www.dwd.de/EN/service/copyright/copyright_node.html">DWD Open Data
+            terms</a> (GeoNutzV). Attribution to the DWD is required and given above.
+          </li>
+          <li>
+            <strong>Open-Meteo data:</strong> published under
+            <a href="https://open-meteo.com/en/license">CC BY 4.0</a>; attribution to Open-Meteo and
+            Météo-France is required and given above.
+          </li>
+          <li>
+            <strong>HRRR:</strong> NOAA model output is public domain; attribution is given above.
+          </li>
+          <li>
+            <strong>Weather Icons:</strong> SIL OFL 1.1 (font) and MIT (code) by Erik Flowers.
+          </li>
+        </ul>
+      </section>
+
+      <section id="code">
+        <h2>Source code and repository</h2>
+        <p>
+          The project is developed in the open on GitHub. Issues, bug reports and suggestions are
+          welcome:
+          <a href="https://github.com/Chriz76/weather-map">github.com/Chriz76/weather-map</a>.
+        </p>
+        <ul>
+          <li>
+            <strong>weather-map</strong> – this application: TypeScript and Vite frontend with the map,
+            timeline and point forecast views.
+          </li>
+          <li>
+            <strong>weather-data</strong> – the Python pipeline that fetches, crops and serializes the
+            forecast fields:
+            <a href="https://github.com/Chriz76/weather-data">github.com/Chriz76/weather-data</a>.
+          </li>
+        </ul>
+      </section>
     </article>
   </main>
 </body>
