@@ -10,10 +10,6 @@
   />
   <meta name="robots" content="index,follow,max-image-preview:large" />
   <link rel="canonical" href="https://rapidwind.app/arome-pi" />
-  <link rel="alternate" hreflang="de" href="https://rapidwind.app/icon-d2-ruc" />
-  <link rel="alternate" hreflang="fr" href="https://rapidwind.app/arome-pi" />
-  <link rel="alternate" hreflang="en" href="https://rapidwind.app/hrrr-conus" />
-  <link rel="alternate" hreflang="x-default" href="https://rapidwind.app/hrrr-conus" />
 
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="RapidWind" />
@@ -25,10 +21,10 @@
     content="Prévision immédiate de Météo-France : maille 1,3 km, 6 h d'échéance, un run chaque heure. Ce que cela change pour la brise thermique et le passage des grains."
   />
   <meta property="og:url" content="https://rapidwind.app/arome-pi" />
-  <meta property="og:image" content="https://rapidwind.app/og-image.png" />
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+  <meta property="og:image" content="https://rapidwind.app/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1000" />
+  <meta property="og:image:height" content="525" />
   <meta property="og:image:alt" content="RapidWind – prévision de vent avec AROME PI" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="AROME PI : prévision de vent à 1,3 km, actualisée chaque heure" />
@@ -36,7 +32,7 @@
     name="twitter:description"
     content="AROME PI et AROME France expliqués : maille, échéances, pas de temps, limites. Et ce que la carte RapidWind affiche réellement."
   />
-  <meta name="twitter:image" content="https://rapidwind.app/og-image.png" />
+  <meta name="twitter:image" content="https://rapidwind.app/og-image.jpg" />
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -57,7 +53,7 @@
           "datePublished": "2026-11-13",
           "dateModified": "2026-11-13",
           "isAccessibleForFree": true,
-          "image": "https://rapidwind.app/og-image.png",
+          "image": "https://rapidwind.app/og-image.jpg",
           "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https://rapidwind.app/arome-pi"
@@ -141,7 +137,7 @@
               "name": "Pourquoi la carte affiche-t-elle plus de 6 heures ?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Parce que RapidWind combine deux échelles : AROME PI pour les premières heures, puis AROME France, qui va jusqu’à 48 heures. La prévision ponctuelle garde le pas natif de 15 minutes dans la zone couverte par le PI, puis passe à l’heure."
+                "text": "Parce que RapidWind combine deux échelles : AROME PI pour les six premières heures, puis AROME France, qui prend le relais jusqu’au lendemain. AROME France va lui-même jusqu’à 48 heures, mais la carte s’arrête à la fin du run publié. La prévision ponctuelle garde le pas natif de 15 minutes dans la zone couverte par le PI, puis passe à l’heure."
               }
             },
             {
@@ -685,9 +681,10 @@
       <details>
         <summary><h3>Pourquoi la carte affiche-t-elle plus de 6 heures ?</h3></summary>
         <p>
-          Parce que RapidWind combine deux échelles : AROME PI pour les premières heures, puis AROME
-          France, qui va jusqu’à 48 heures. La prévision ponctuelle garde le pas natif de 15 minutes dans
-          la zone couverte par le PI, puis passe à l’heure.
+          Parce que RapidWind combine deux échelles : AROME PI pour les six premières heures, puis AROME
+          France, qui prend le relais jusqu’au lendemain. AROME France va lui-même jusqu’à 48 heures, mais
+          la carte s’arrête à la fin du run publié. La prévision ponctuelle garde le pas natif de 15 minutes
+          dans la zone couverte par le PI, puis passe à l’heure.
         </p>
       </details>
 

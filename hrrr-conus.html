@@ -10,10 +10,6 @@
   />
   <meta name="robots" content="index,follow,max-image-preview:large" />
   <link rel="canonical" href="https://rapidwind.app/hrrr-conus" />
-  <link rel="alternate" hreflang="de" href="https://rapidwind.app/icon-d2-ruc" />
-  <link rel="alternate" hreflang="fr" href="https://rapidwind.app/arome-pi" />
-  <link rel="alternate" hreflang="en" href="https://rapidwind.app/hrrr-conus" />
-  <link rel="alternate" hreflang="x-default" href="https://rapidwind.app/hrrr-conus" />
 
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="RapidWind" />
@@ -26,10 +22,10 @@
     content="A new HRRR run every hour, 3 km grid, 15-minute steps for the first 18 hours. What it means for sea breeze, convection and timing at US spots."
   />
   <meta property="og:url" content="https://rapidwind.app/hrrr-conus" />
-  <meta property="og:image" content="https://rapidwind.app/og-image.png" />
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+  <meta property="og:image" content="https://rapidwind.app/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1000" />
+  <meta property="og:image:height" content="525" />
   <meta property="og:image:alt" content="RapidWind – hourly wind forecast with the HRRR model" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="HRRR model: 3 km hourly wind forecasts for the US" />
@@ -37,7 +33,7 @@
     name="twitter:description"
     content="HRRR explained for wind sports: 3 km grid, hourly runs, 15-minute steps for 18 hours, and where the model stops."
   />
-  <meta name="twitter:image" content="https://rapidwind.app/og-image.png" />
+  <meta name="twitter:image" content="https://rapidwind.app/og-image.jpg" />
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -58,7 +54,7 @@
           "datePublished": "2026-11-13",
           "dateModified": "2026-11-13",
           "isAccessibleForFree": true,
-          "image": "https://rapidwind.app/og-image.png",
+          "image": "https://rapidwind.app/og-image.jpg",
           "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https://rapidwind.app/hrrr-conus"
@@ -82,7 +78,7 @@
           "about": {
             "@type": "Dataset",
             "name": "High-Resolution Rapid Refresh (HRRR)",
-            "description": "NOAA/NCEP convection-allowing model for the contiguous United States with a 3 km grid and hourly updates.",
+            "description": "NOAA/NCEP convection-allowing model for the continental United States with a 3 km grid and hourly updates.",
             "creator": {
               "@type": "GovernmentOrganization",
               "name": "NOAA / National Centers for Environmental Prediction",
@@ -134,7 +130,7 @@
               "name": "Does HRRR cover Hawaii, Alaska or Puerto Rico?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No. The CONUS HRRR covers the contiguous United States only. Alaska runs as a separate HRRR sector on a three-hourly cycle; Hawaii and Puerto Rico have no HRRR product at all. The RapidWind map therefore shows HRRR for CONUS spots only."
+                "text": "No. The CONUS HRRR covers the continental United States only. Alaska runs as a separate HRRR sector on a three-hourly cycle; Hawaii and Puerto Rico have no HRRR product at all. The RapidWind map therefore shows HRRR for CONUS spots only."
               }
             },
             {
@@ -190,7 +186,7 @@
       <h1>HRRR: a 3 km wind forecast, recalculated every hour</h1>
       <p class="hero__lead">
         NOAA’s High-Resolution Rapid Refresh is a convection-allowing model on a 3&nbsp;km grid over the
-        contiguous United States. It gets a <strong>new run every hour</strong>, starts from an analysis
+        continental United States. It gets a <strong>new run every hour</strong>, starts from an analysis
         that includes the last hour of radar data, and puts out <strong>15-minute steps</strong> for the
         first 18 hours. That is exactly the window where sea breeze, outflow and thermal breeze decide
         whether a session happens.
@@ -262,9 +258,10 @@
       <div class="note">
         <strong>What the RapidWind map shows</strong>
         The colored wind field is a tile pyramid rendered in the browser, one tile set per model hour. The
-        point forecast comes from Open-Meteo’s HRRR feed, at 20 hours in 15-minute steps. Bottom left, the
-        line “Updated … | Next ~…” shows the last update and the next run; clicking it opens a short report
-        with the model run and the last sync time.
+        pipeline publishes 18 hours ahead, with 15-minute steps for the first six hours and hourly values
+        after that. The point forecast comes from Open-Meteo’s HRRR feed, at 20 hours in 15-minute steps.
+        Bottom left, the line “Updated … | Next ~…” shows the last update and the next run; clicking it
+        opens a short report with the model run and the last sync time.
       </div>
     </section>
 
@@ -436,7 +433,7 @@
         </li>
         <li>
           <strong>Every timeline step is a real model step</strong>, not an interpolated in-between value:
-          15 minutes for the first 18 hours, one hour after that.
+          15 minutes for the first six hours, one hour after that.
         </li>
         <li>
           <strong>No station overlay with HRRR.</strong> The measurement layer is built from European
@@ -695,7 +692,7 @@
       <details>
         <summary><h3>Does HRRR cover Hawaii, Alaska or Puerto Rico?</h3></summary>
         <p>
-          No. The CONUS HRRR covers the contiguous United States only. Alaska runs as a separate HRRR
+          No. The CONUS HRRR covers the continental United States only. Alaska runs as a separate HRRR
           sector on a three-hourly cycle; Hawaii and Puerto Rico have no HRRR product at all. The RapidWind
           map therefore shows HRRR for CONUS spots only.
         </p>

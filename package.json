@@ -37,7 +37,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "jsdom": "^29.1.1",
-    "marked": "^18.0.9",
     "typescript": "^5.2.2",
     "vite": "^8.2.1",
     "vite-plugin-html": "^3.2.2",
