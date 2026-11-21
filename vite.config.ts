@@ -19,6 +19,8 @@ const devContentPages = new Map<string, string>([
   ['/arome-pi.html', 'arome-pi.html'],
   ['/hrrr-conus', 'hrrr-conus.html'],
   ['/hrrr-conus.html', 'hrrr-conus.html'],
+  ['/rrfs', 'rrfs.html'],
+  ['/rrfs.html', 'rrfs.html'],
 ]);
 
 const serveDevContentPages = (): Plugin => ({
@@ -81,6 +83,12 @@ export default defineConfig({
           // Static, JavaScript-free content page (English) for the HRRR model.
           filename: 'hrrr-conus.html',
           template: './hrrr-conus.html'
+        },
+        {
+          // Static, JavaScript-free content page (English) for the RRFS model.
+          // Draft: built and reachable, but not linked from anywhere yet.
+          filename: 'rrfs.html',
+          template: './rrfs.html'
         }
       ],
       minify: true
