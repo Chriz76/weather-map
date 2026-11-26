@@ -90,6 +90,11 @@ const appleBox = squareBox(0.78);
 // Theme-dependent color is a job for `favicon.svg`, not for a raster file.
 await writeIcon(glyphMarkup, 'favicon-48x48.png', webBox, 48, {});
 
+// Large icon on an opaque white square, same idea as PayPal's pp196.png: browser and OS
+// surfaces that ignore the SVG favicon then draw a clean white box instead of a bare
+// glyph on a dark background. Square on purpose - the UI rounds it while drawing.
+await writeIcon(glyphMarkup, 'favicon-196x196.png', squareBox(0.78), 196, { background: '#ffffff' });
+
 // OS surface: brand plate, white glyph - same look as the maskable launcher icon.
 await writeIcon(glyphMarkup, 'icon-192.png', osBox, 192, { background: BRAND_COLOR, fill: '#ffffff', plateRadius: PLATE_RADIUS });
 await writeIcon(glyphMarkup, 'icon-512.png', osBox, 512, { background: BRAND_COLOR, fill: '#ffffff', plateRadius: PLATE_RADIUS });
