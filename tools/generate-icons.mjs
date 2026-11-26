@@ -2,11 +2,11 @@
  * Generates every raster icon (favicon PNG, PWA icons, Apple touch icon) from
  * `public/logo.svg`, which holds the plain glyph without any background.
  *
- * Browser chrome is handled by the adaptive `favicon.svg` (blue on light, white on dark),
- * so the raster variants only need to cover the surfaces that cannot adapt:
- * - the 48 px favicon fallback stays transparent, because browsers without SVG favicon
- *   support always draw it on a light tab strip,
- * - OS surfaces (PWA `any` icons, Apple touch icon) use the brand-blue plate with a
+ * `favicon.svg` uses a brand tile rather than a bare glyph, because Chrome on Android
+ * renders favicons without evaluating `prefers-color-scheme`; the raster variants follow
+ * that decision so every surface shows the same icon:
+ * - the 48 px favicon fallback repeats the brand tile of `favicon.svg`,
+ * - OS surfaces (PWA `any` icons, Apple touch icon) use the same brand plate with a
  *   white glyph, matching the installed app icon on Android,
  * - the maskable icon keeps the glyph inside the 80% safe zone, because Android
  *   crops maskable icons to a circle / squircle.
@@ -78,17 +78,16 @@ async function writeIcon(glyphMarkup, file, box, size, options) {
 
 const glyphMarkup = readGlyphMarkup();
 
-/** Corner radius as a share of the plate side; matches the rounded card of the in-app logo. */
+/** Corner radius as a share of the plate side; matches the tile of `favicon.svg`. */
 const PLATE_RADIUS = 0.22;
 
-const webBox = squareBox(0.86);
+const webBox = squareBox(0.82);
 const osBox = squareBox(0.8);
 const maskableBox = squareBox(0.62);
 const appleBox = squareBox(0.78);
 
-// Fallback for browsers without SVG favicons: transparent glyph, like `logo.svg`.
-// Dark browser chrome is covered by the adaptive `favicon.svg`, not by this raster file.
-await writeIcon(glyphMarkup, 'favicon-48x48.png', webBox, 48, {});
+// Fallback for browsers without SVG favicons: same brand tile as `favicon.svg`.
+await writeIcon(glyphMarkup, 'favicon-48x48.png', webBox, 48, { background: BRAND_COLOR, fill: '#ffffff', plateRadius: PLATE_RADIUS });
 
 // OS surface: brand plate, white glyph - same look as the maskable launcher icon.
 await writeIcon(glyphMarkup, 'icon-192.png', osBox, 192, { background: BRAND_COLOR, fill: '#ffffff', plateRadius: PLATE_RADIUS });

@@ -1,15 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
-  <!-- Browser chrome decides the surface: brand blue on light tabs, white on dark ones.
-       Chromium and Firefox evaluate prefers-color-scheme inside SVG favicons; browsers
-       without support simply keep the blue glyph. -->
-  <style>
-    .favicon-glyph { fill: #0077a4; }
-    @media (prefers-color-scheme: dark) {
-      .favicon-glyph { fill: #ffffff; }
-    }
-  </style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.932 1.684 30.514 30.514" width="100%" height="100%">
+  <!-- Static brand tile instead of a transparent glyph: Chrome on Android renders favicons
+       without evaluating prefers-color-scheme, so only a background guarantees contrast on
+       light and dark chrome alike. The in-app logo uses `/logo.svg` and stays blue on white. -->
+  <rect x="0.932" y="1.684" width="30.514" height="30.514" rx="6.713" fill="#0077a4"/>
   <g transform="translate(0.8, 1.8) scale(0.245)">
-    <g class="favicon-glyph" transform="translate(0.000000,115.000000) scale(0.050000,-0.050000)" fill="#0077a4" stroke="none">
+    <g transform="translate(0.000000,115.000000) scale(0.050000,-0.050000)" fill="#ffffff" stroke="none">
 
       <rect x="235" y="50" width="300" height="1980" rx="50" ry="50" />
 
