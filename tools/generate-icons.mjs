@@ -2,12 +2,12 @@
  * Generates every raster icon (favicon PNG, PWA icons, Apple touch icon) from
  * `public/logo.svg`, which holds the plain glyph without any background.
  *
- * Browser chrome is handled by the adaptive `favicon.svg` (blue on light, white on dark),
- * so the raster variants only need to cover the surfaces that cannot adapt:
+ * `favicon.svg` adapts to the browser theme (blue on light, white on dark chrome), which
+ * only SVG favicons can do, so the raster variants cover the other surfaces:
  * - the 48 px favicon fallback stays transparent, because browsers without SVG favicon
- *   support always draw it on a light tab strip,
- * - OS surfaces (PWA `any` icons, Apple touch icon) use the brand-blue plate with a
- *   white glyph, matching the installed app icon on Android,
+ *   support draw it on a light tab strip,
+ * - OS surfaces (PWA `any` icons, Apple touch icon) use the brand plate with a white
+ *   glyph, matching the installed app icon on Android,
  * - the maskable icon keeps the glyph inside the 80% safe zone, because Android
  *   crops maskable icons to a circle / squircle.
  *
@@ -78,7 +78,7 @@ async function writeIcon(glyphMarkup, file, box, size, options) {
 
 const glyphMarkup = readGlyphMarkup();
 
-/** Corner radius as a share of the plate side; matches the rounded card of the in-app logo. */
+/** Corner radius as a share of the plate side; matches the installed app icon. */
 const PLATE_RADIUS = 0.22;
 
 const webBox = squareBox(0.86);
@@ -87,8 +87,13 @@ const maskableBox = squareBox(0.62);
 const appleBox = squareBox(0.78);
 
 // Fallback for browsers without SVG favicons: transparent glyph, like `logo.svg`.
-// Dark browser chrome is covered by the adaptive `favicon.svg`, not by this raster file.
+// Theme-dependent color is a job for `favicon.svg`, not for a raster file.
 await writeIcon(glyphMarkup, 'favicon-48x48.png', webBox, 48, {});
+
+// Large icon on an opaque white square, same idea as PayPal's pp196.png: browser and OS
+// surfaces that ignore the SVG favicon then draw a clean white box instead of a bare
+// glyph on a dark background. Square on purpose - the UI rounds it while drawing.
+await writeIcon(glyphMarkup, 'favicon-196x196.png', squareBox(0.78), 196, { background: '#ffffff' });
 
 // OS surface: brand plate, white glyph - same look as the maskable launcher icon.
 await writeIcon(glyphMarkup, 'icon-192.png', osBox, 192, { background: BRAND_COLOR, fill: '#ffffff', plateRadius: PLATE_RADIUS });

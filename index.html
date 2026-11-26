@@ -146,6 +146,9 @@
     
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+    <!-- Large raster icon on opaque white: surfaces that ignore the SVG favicon (Chrome on
+         Android shows a cached raster) then get a white box, not a glyph on a dark tab. -->
+    <link rel="shortcut icon" type="image/png" sizes="196x196" href="/favicon-196x196.png">
     <!-- iOS ignores alpha and paints transparency black, so this one is opaque. -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
