@@ -144,9 +144,11 @@ describe('hrrrProvider', () => {
 
     expect(forecast!.items).toHaveLength(1);
     const url = String(fetchMock.mock.calls[0]?.[0]);
-    expect(url).toContain('models=gfs_hrrr');
+    expect(url).toContain('models=ncep_rrfs_seamless');
     expect(url).toContain('minutely_15=');
     expect(url).toContain('hourly=weather_code,is_day');
+    expect(url).toContain('past_minutely_15=24');
+    expect(url).toContain('past_hours=6');
     expect(url).toContain('latitude=39');
   });
 

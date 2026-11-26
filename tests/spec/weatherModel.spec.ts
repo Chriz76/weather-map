@@ -82,6 +82,49 @@ describe('WeatherProviderModel', () => {
         expect(weatherProviderModel.windData).toEqual({ speed: 11, gust: 15, direction: 180 });
     });
 
+    it('should trim the forecast to the window the run publishes', () => {
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
+
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, {
+            items: [
+                { hour: '11:00', wind: 9, gust: 14, direction: 175, fullKey: '20260706_11' },
+                { hour: '12:00', wind: 10, gust: 15, direction: 180, fullKey: '20260706_12' },
+                { hour: '15:00', wind: 11, gust: 16, direction: 185, fullKey: '20260706_15' },
+                { hour: '18:00', wind: 12, gust: 17, direction: 190, fullKey: '20260706_18' }
+            ],
+            modelCell: null
+        });
+
+        expect(weatherProviderModel.forecast!.map((item) => item.fullKey)).toEqual(['20260706_12', '20260706_15']);
+    });
+
+    it('should compare hour-precision map keys as time, not as text', () => {
+        // `20260706_15` is hour precision: a string comparison would keep `..._1515` and drop it
+        // only by luck, so the trim must work on parsed times.
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
+
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, {
+            items: [
+                { hour: '15:00', wind: 11, gust: 16, direction: 185, fullKey: '20260706_15' },
+                { hour: '15:15', wind: 12, gust: 17, direction: 190, fullKey: '20260706_1515' }
+            ],
+            modelCell: null
+        });
+
+        expect(weatherProviderModel.forecast!.map((item) => item.fullKey)).toEqual(['20260706_15']);
+    });
+
+    it('should keep the untrimmed forecast when no timestamp of the run matches', () => {
+        weatherProviderModel.setIndexMetadata({ available_timestamps: ['20260706_12', '20260706_15'], generated_at: null, current_hour: null });
+
+        weatherProviderModel.setPointData({ lat: 50.0, lng: 8.0 }, {
+            items: [{ hour: '21:00', wind: 12, gust: 17, direction: 190, fullKey: '20260707_21' }],
+            modelCell: null
+        });
+
+        expect(weatherProviderModel.forecast!.map((item) => item.fullKey)).toEqual(['20260707_21']);
+    });
+
     it('should change active timestamp index and dispatch timestamp event', () => {
         const events = [];
         const handler = (event) => {

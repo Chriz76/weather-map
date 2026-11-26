@@ -116,6 +116,51 @@ export class WeatherProviderModel extends EventTarget {
 
   private _getActiveModel(): ProviderState { return this.providerModels[this.activeProviderId]!; }
 
+  /**
+   * Trims a point forecast to the window the active run publishes.
+   *
+   * The point series comes from Open-Meteo and spans a window of its own, while the timeline, the
+   * map overlay and the forecast table's column clicks all follow `availableTimestamps` of the run.
+   * Steps outside that window would render columns that no frame can show, so they are dropped.
+   * Keys are compared as absolute time: the index mixes hour precision (`YYYYMMDD_HH`) with
+   * quarter-hour precision (`YYYYMMDD_HHmm`), and a string comparison would sort `..._1215`
+   * behind `..._12`.
+   *
+   * Only the range is trimmed, not the step density: a run that ends in hourly frames may still be
+   * covered by quarter-hour steps, which the table then shows while its column click resolves to
+   * the nearest frame of that hour.
+   * @param items Point series as delivered by the provider.
+   * @returns The trimmed series; the input unchanged when nothing has to be dropped.
+   */
+  private _clampForecastToModelWindow(items: ForecastItem[]): ForecastItem[] {
+    const timestamps = this._getActiveModel().availableTimestamps;
+    const firstKey = timestamps[0];
+    const lastKey = timestamps[timestamps.length - 1];
+    if (!firstKey || !lastKey) return items;
+
+    let windowStart: number;
+    let windowEnd: number;
+    try {
+      windowStart = timeUtils.parseModelTimestamp(firstKey).getTime();
+      windowEnd = timeUtils.parseModelTimestamp(lastKey).getTime();
+    } catch {
+      return items;
+    }
+
+    const inside = items.filter((item) => {
+      try {
+        const time = timeUtils.parseModelTimestamp(item.fullKey).getTime();
+        return time >= windowStart && time <= windowEnd;
+      } catch {
+        // Unparsable keys stay: hiding a step is worse than showing it at the edge.
+        return true;
+      }
+    });
+
+    // An empty table would hide the whole forecast, so the untrimmed series is the safer fallback.
+    return inside.length === 0 || inside.length === items.length ? items : inside;
+  }
+
   get availableTimestamps(): string[] { return this._getActiveModel().availableTimestamps; }
   get modelGeneratedAt(): string | null { return this._getActiveModel().modelGeneratedAt; }
   get modelCurrentHour(): string | null { return this._getActiveModel().modelCurrentHour; }
@@ -127,7 +172,16 @@ export class WeatherProviderModel extends EventTarget {
   get windSpeed(): number | null { return this._getActiveModel().windData?.speed ?? null; }
   get windDirection(): number | null { return this._getActiveModel().windData?.direction ?? null; }
   get windGust(): number | null { return this._getActiveModel().windData?.gust ?? null; }
-  get forecast(): ForecastItem[] | null { return this._getActiveModel().forecast; }
+  /**
+   * Point forecast of the clicked location, trimmed to the run's published window.
+   *
+   * Every consumer (forecast table, popup wind values) only needs the steps the timeline can show,
+   * so the trimming happens once here instead of in each view.
+   */
+  get forecast(): ForecastItem[] | null {
+    const items = this._getActiveModel().forecast;
+    return items ? this._clampForecastToModelWindow(items) : null;
+  }
   /**
    * Grid cell of the active point forecast.
    *
@@ -202,13 +256,14 @@ export class WeatherProviderModel extends EventTarget {
 
   private _setWindDataForActiveTimestamp(): void {
     const model = this._getActiveModel();
-    if (!model.forecast || !this.activeTimestamp) {
+    const forecast = this.forecast;
+    if (!forecast || !this.activeTimestamp) {
       model.windData = null;
       return;
     }
 
-    const matchingIndex = timeUtils.findMatchingTimestampIndexBy(model.forecast, this.activeTimestamp, (item) => item.fullKey);
-    const entry = matchingIndex >= 0 ? model.forecast[matchingIndex] : model.forecast[0];
+    const matchingIndex = timeUtils.findMatchingTimestampIndexBy(forecast, this.activeTimestamp, (item) => item.fullKey);
+    const entry = matchingIndex >= 0 ? forecast[matchingIndex] : forecast[0];
     model.windData = entry ? { speed: entry.wind, gust: entry.gust, direction: entry.direction ?? null } : null;
   }
 
