@@ -1,11 +1,11 @@
 /**
  * Generates every raster icon (favicon PNG, PWA icons, Apple touch icon) from
- * `public/favicon.svg`.
+ * `public/logo.svg`, which holds the plain glyph without any background.
  *
- * The favicon's viewBox is already framed on the plate, but each variant needs its
- * own framing because the target surfaces differ:
- * - web surfaces (48 px favicon fallback) keep the white plate of `favicon.svg`, so
- *   the blue glyph stays readable on light and dark browser chrome,
+ * Browser chrome is handled by the adaptive `favicon.svg` (blue on light, white on dark),
+ * so the raster variants only need to cover the surfaces that cannot adapt:
+ * - the 48 px favicon fallback stays transparent, because browsers without SVG favicon
+ *   support always draw it on a light tab strip,
  * - OS surfaces (PWA `any` icons, Apple touch icon) use the brand-blue plate with a
  *   white glyph, matching the installed app icon on Android,
  * - the maskable icon keeps the glyph inside the 80% safe zone, because Android
@@ -19,14 +19,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 
-/** Measured bounding box of the glyph in the favicon's coordinate system. */
+/** Measured bounding box of the glyph in the logo coordinate system. */
 const GLYPH_BOX = { x: 3.67875, y: 4.51952, w: 25.02168, h: 24.84298 };
 
 /** Brand color of the map (same value as `--weather-map-accent-blue`). */
 const BRAND_COLOR = '#0077a4';
 
 const PUBLIC_DIR = path.resolve('public');
-const SOURCE_SVG = path.join(PUBLIC_DIR, 'favicon.svg');
+const SOURCE_SVG = path.join(PUBLIC_DIR, 'logo.svg');
 
 /** Returns a square viewBox centered on the glyph; `ratio` is the glyph share of the box. */
 function squareBox(ratio) {
@@ -45,18 +45,17 @@ function viewBoxOf(box) {
 /**
  * Extracts the glyph markup from the root `<svg>` element.
  *
- * `favicon.svg` draws its own white plate before the glyph group; that plate is
- * dropped here, because every generated icon composites its own background and
- * would otherwise be covered by the white plate of the source file.
+ * Only the glyph group is kept: the source file carries no background, and any markup
+ * before the group (comments, a future plate) must not leak into the generated icons.
  */
 function readGlyphMarkup() {
     const source = fs.readFileSync(SOURCE_SVG, 'utf8');
     const match = source.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
-    if (!match) throw new Error('Unexpected favicon.svg structure');
+    if (!match) throw new Error('Unexpected logo.svg structure');
 
     const inner = match[1];
     const glyphStart = inner.indexOf('<g');
-    if (glyphStart === -1) throw new Error('Unexpected favicon.svg structure: no glyph group');
+    if (glyphStart === -1) throw new Error('Unexpected logo.svg structure: no glyph group');
 
     return inner.slice(glyphStart);
 }
@@ -82,13 +81,14 @@ const glyphMarkup = readGlyphMarkup();
 /** Corner radius as a share of the plate side; matches the rounded card of the in-app logo. */
 const PLATE_RADIUS = 0.22;
 
-const webBox = squareBox(0.84);
+const webBox = squareBox(0.86);
 const osBox = squareBox(0.8);
 const maskableBox = squareBox(0.62);
 const appleBox = squareBox(0.78);
 
-// Web surface: white plate, blue glyph - readable on light and dark browser chrome.
-await writeIcon(glyphMarkup, 'favicon-48x48.png', webBox, 48, { background: '#ffffff', plateRadius: PLATE_RADIUS });
+// Fallback for browsers without SVG favicons: transparent glyph, like `logo.svg`.
+// Dark browser chrome is covered by the adaptive `favicon.svg`, not by this raster file.
+await writeIcon(glyphMarkup, 'favicon-48x48.png', webBox, 48, {});
 
 // OS surface: brand plate, white glyph - same look as the maskable launcher icon.
 await writeIcon(glyphMarkup, 'icon-192.png', osBox, 192, { background: BRAND_COLOR, fill: '#ffffff', plateRadius: PLATE_RADIUS });

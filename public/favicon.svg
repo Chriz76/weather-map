@@ -1,8 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.296 2.047 29.788 29.788" width="100%" height="100%">
-  <!-- White plate: keeps the blue glyph readable on dark browser chrome (dark tabs, history, shortcuts). -->
-  <rect x="1.296" y="2.047" width="29.788" height="29.788" rx="6.553" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
+  <!-- Browser chrome decides the surface: brand blue on light tabs, white on dark ones.
+       Chromium and Firefox evaluate prefers-color-scheme inside SVG favicons; browsers
+       without support simply keep the blue glyph. -->
+  <style>
+    .favicon-glyph { fill: #0077a4; }
+    @media (prefers-color-scheme: dark) {
+      .favicon-glyph { fill: #ffffff; }
+    }
+  </style>
   <g transform="translate(0.8, 1.8) scale(0.245)">
-    <g transform="translate(0.000000,115.000000) scale(0.050000,-0.050000)" fill="#0077a4" stroke="none">
+    <g class="favicon-glyph" transform="translate(0.000000,115.000000) scale(0.050000,-0.050000)" fill="#0077a4" stroke="none">
 
       <rect x="235" y="50" width="300" height="1980" rx="50" ry="50" />
 
